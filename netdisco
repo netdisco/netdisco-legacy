@@ -1440,15 +1440,36 @@ sub port_control {
     
     # Check for port
     my $db_port = sql_hash('device_port',['*'],{ 'ip'=>$ip, 'port'=>$port });
+
+    # Categorize this port
+    my $is_phone      = (defined $db_port->{remote_type} and $db_port->{remote_type} =~ /ip.phone/i) ? 1 : 0;
+    my $is_vlan       = (defined $db_port->{type} and $db_port->{type} =~ /^(53|ethernet-csmacd|propVirtual|l2vlan|l3ipvlan|135|136|137)$/i) ? 1 : 0;
+    my $allow_phones  = (defined $CONFIG{portctl_nophones} and $CONFIG{portctl_nophones}) ? 0 : 1;
+    my $allow_uplinks = (defined $CONFIG{portctl_uplinks} and $CONFIG{portctl_uplinks}) ? 1 : 0;
+    my $allow_vlans   = (defined $CONFIG{portctl_vlans} and $CONFIG{portctl_vlans}) ? 1 : 0;
+
     unless (defined $db_port){
         print "Port : $port not found in database for device $switch\n";
         return undef;
     }
+
     # Check if uplink port
-    if (defined $db_port->{remote_ip}){
+    if (defined $db_port->{remote_ip} and !$is_phone and !$allow_uplinks){
         print "Port : $port is an uplink port. Control from netdisco not allowed.\n";
         return undef;
     } 
+    
+    # Check if Phone
+    if ($is_phone and !$allow_phones){
+        print "Port : $port has an IP Phone connected to it.  Netdisco configured to not allow its shutoff.\n";
+        return undef;
+    }
+
+    # Check if is VLAN
+    if ($is_vlan and !$allow_vlans){
+        print "Port : $port is a VLAN interface.  Netdisco Configured to not allow its shutoff.\n";
+        return undef;
+    }
 
     # SNMP connect
     my $device;
