@@ -1,6 +1,8 @@
 <h3>Intro</h3>
 Netdisco is an Open Source web-based network management tool.  
-<P>
+<TABLE>
+<TR>
+    <TD>
 Here are some of the favorite uses for this tool:
 <UL>
     <LI>Find a Switch Port from a MAC or IP address and the reverse.
@@ -13,7 +15,44 @@ Here are some of the favorite uses for this tool:
         that are in use, <i>and were in use</i> on what ports.
     <LI>Pretty pictures of your network.
 </UL>
-
+    </TD>
+    <TD VALIGN=TOP CLASS="box">
+    <B>New in 0.94</B>:
+    <HR NOSHADE>
+    <FORM>
+        New Features:<BR>
+        <TEXTAREA COLS=40 ROWS=3>
++ Improved IP Inventory shows IP usage in whole Subnet
++ Netbios information polled from nodes
++ Device Invetory by Location Field
++ Administrative Log to track Netdisco Users
++ ifLastChange info added to each port
++ Real Name and Notes fields added for users
++ Improved Node Search</TEXTAREA>
+        <BR>New Devices Supported:<BR>
+        <TEXTAREA COLS=40 ROWS=3>
+o Alteon AD
+o AP222x
+o BayRS
+o BayStack
+o Centillion
+o Contivity
+o Passport
+o Proxim / Orinoco
+o More Foundry Support
+o Cisco C3560</TEXTAREA>
+        <BR>Bugs Fixed:<BR>
+        <TEXTAREA COLS=40 ROWS=3>
+* Device Search and Node Search wildcards broken
+* MacSuck only works on VLANs in use, not just present
+* Some uplink ports could be turned off
+* Topology File resolves aliases to root device
+* Multiple enviornment variables in db_*_env allowed now.</TEXTAREA>
+    <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
+    </FORM>    
+        </TD>
+    </TR>
+</TABLE>
 <P>
 Things connected to the network are divided into two categories: 
 <UL>
@@ -31,7 +70,7 @@ If you have problems with Netdisco you should :
 <OL>
     <LI>Talk to your Network Administrator who installed Netdisco
     <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A>
-    <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&atid=558508">Check for Bugs</A>
+    <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&atid=408508">Check for Bugs</A>
     <LI><A HREF="http://sourceforge.net/mailarchive/forum.php?forum_id=33321">Read the Mailing List Archives</A>
     <LI><A HREF="http://lists.sourceforge.net/lists/listinfo/netdisco-users">Ask a Question on the Mailing List</A>
 </OL>
