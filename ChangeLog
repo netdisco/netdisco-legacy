@@ -69,6 +69,8 @@ Bugfixes:
     * Multiple enviornment variables in db_*_env allowed now.
     * create_device() checks error() method on new device after creation.
     * macsuck() - does not do l2/l3 check on ports with neighbor info anymore
+    * device.html - Aliases w/out DNS entries not being shown (bbaetz)
+    * port_sort() - Failing on various cases (bbaetz)
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
