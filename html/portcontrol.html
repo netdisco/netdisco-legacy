@@ -15,7 +15,7 @@ unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('
         and $cmd =~ /^(up|down|log|err|switch)$/) {
     # is there a better way to check if we're in using SSL?
     $m->clear_buffer;
-    $m->abort(401) 
+    $m->abort(401);
 }
 
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
