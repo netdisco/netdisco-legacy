@@ -593,6 +593,11 @@ make sure you have
 
 It is reported to be in C<DarwinPorts> or you can check out L<http://www.phil.uu.nl/~js/graphviz/>.
 
+=item Debian Woody
+
+Jordi Guijarro reported that the version that comes with Woody is too old.  Install a newer
+version by hand.
+
 =back
 
 =item [6.2] True Type Font
