@@ -1,11 +1,18 @@
 <h3>Intro</h3>
-Netdisco is an network management application.  
+Netdisco is an Open Source web-based network management tool. 
 <P>
-Netdisco collects statistics about the device that create a network, and the nodes that
-are attached to those devices.  
-
-<P>Layer 2 Network topology is automatically generated using Cisco Discovery Protocol (CDP),
-and Bay's Topology Discovery.  Topology information is also enterable manually.
+With Netdisco you can locate the switch port of an end-user system by IP or MAC address. 
+Data is stored using a SQL database for scalability and speed.
+<P>
+Cisco Discovery Protocol (CDP) optionally provides automatic discovery of the network topology. 
+The network is inventoried by both device model and operating system (like IOS). 
+Netdisco uses router ARP tables and L2 switch MAC forwarding tables to locate nodes on 
+physical ports and track them by their IP addresses. 
+For each node, a time stamped history of the ports it has visited and the IP addresses 
+it has used is maintained. Netdisco gets all its data, including CDP topology information, 
+with SNMP polls and DNS queries. 
+It does not use CLI access and has no need for privilege passwords. 
+Security features include a wire-side Wireless Access Point (AP) locator.
 <P>
 Things connected to the network are divided into two categories: 
 <UL>
@@ -16,12 +23,13 @@ Things connected to the network are divided into two categories:
         Printers, Computers, Servers... 
 </UL>
 <h3>Support</h3>
-If you have problems with Netdisco you can :
+If you have problems with Netdisco you should :
 
 <UL>
-    <LI>Talk to your Network Administrator that installed Netdisco
-    <LI><A HREF="http://sourceforge.net/projects/netdisco">Submit a Bug</A>
-    <LI><A HREF="http://www.netdisco.org">Check for a Newer Release</A>
+    <LI>Talk to your Network Administrator who installed Netdisco
+    <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A>
+    <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&atid=558508">Check for Bugs</A>
+    <LI><A HREF="http://sourceforge.net/mailarchive/forum.php?forum_id=33321">Read the Mailing List Archives</A>
     <LI><A HREF="http://lists.sourceforge.net/lists/listinfo/netdisco-users">Ask a Question on the Mailing List</A>
 </UL>
 
