@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE cat_module;
 
 CREATE TABLE cat_module (

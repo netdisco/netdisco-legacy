@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE oui;
 
 CREATE TABLE oui (

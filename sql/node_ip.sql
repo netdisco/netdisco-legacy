@@ -1,3 +1,5 @@
+-- $Id$
+
 drop TABLE node_ip;
 
 create TABLE node_ip (

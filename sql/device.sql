@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE device;
 
 CREATE TABLE device (

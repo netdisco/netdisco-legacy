@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE device_ip;
 
 CREATE TABLE device_ip (

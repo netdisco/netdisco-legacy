@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE log;
 DROP SEQUENCE log_id_seq;
 

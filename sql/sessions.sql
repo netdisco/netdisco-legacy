@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE sessions;
 
 CREATE TABLE sessions (

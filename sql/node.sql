@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE node;
 
 CREATE TABLE node (

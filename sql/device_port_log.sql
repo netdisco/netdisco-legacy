@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE device_port_log;
 DROP SEQUENCE device_port_log_id_seq;
 

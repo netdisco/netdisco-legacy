@@ -1,3 +1,5 @@
+-- $Id$
+
 DROP TABLE device_port;
 
 CREATE TABLE device_port (
