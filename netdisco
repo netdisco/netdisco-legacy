@@ -208,7 +208,9 @@ Calls discover() for each file already in device table.
 sub refresh_all {
     $start_time = time;
 
-    &batch_mode('refresh');
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/refresh");
 
     my $now = localtime();
     print "[Refresh All Devices]  Started at $now. \n";
@@ -249,7 +251,9 @@ Event loop that calls discover() as long as the @Discover_Queue has something in
 sub run {
     my $root_device = shift;
     
-    &batch_mode('logs/discover_net',1);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("discover/$month/discover_net",1);
 
     print "Network discovery starting from root $root_device at " . localtime() . "\n";
 
@@ -568,7 +572,8 @@ sub batch_mode{
     my ($file_name,$want_time,$no_header) = @_;
 
     my $file_path = $CONFIG{datadir} || 'data';
-    $file_path    = "$CONFIG{home}/$file_path";
+    my $home      = $CONFIG{home} || '/usr/local/netdisco';
+    $file_path    = "$home/$file_path";
 
     my $extension = defined $CONFIG{logextension} ? $CONFIG{logextension} : 'log';
     
@@ -581,6 +586,15 @@ sub batch_mode{
     my $timestamp = (defined $want_time and $want_time) ? "$date-$time" : $date;
     
     my $file = "$file_path/$file_name-$timestamp.$extension";
+
+    # Path is everything up to the last /
+    my $path = $file;
+    $path =~ s/\/[^\/]+$//;
+
+    # Make the target directory if not already there
+    unless (-d $path){
+        system("mkdir -m 0775 -p $path") and die "Can't make directory $path. $!\n";
+    }
 
     my $fh = new IO::File;
     my $old_umask = umask(0000);
@@ -857,7 +871,9 @@ Calls arpnip() for each device.
 sub arpwalk {
     $start_time = time;
     
-    &batch_mode('logs/arp',1);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/arp",1);
     print "Grabbing Arp Cache from all layer 3 devices (". localtime() . ")...\n";
 
     # Get our old devices, IP->Layer mapping
@@ -1330,7 +1346,9 @@ Runs macsuck() on each device that has layer2 capabilites.
 =cut
 sub macwalk {
     $start_time = time;
-    &batch_mode('logs/mac',1);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/mac",1);
     print "Grabbing Mac Addresses from all Layer 2 Devices (" . localtime() . ")...\n";
 
     # Get our old devices, IP->Layer mapping
@@ -2365,7 +2383,9 @@ sub nightly {
     my $no_batch = shift || 0;
     print "nightly() - Starting nightly cleanup and backup routines\n";
     # Log backup
-    &batch_mode('logs/back',1) unless (defined $no_batch and $no_batch);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/nightly",1) unless (defined $no_batch and $no_batch);
 
     print "  Cleaning and clearing data...\n";
 
@@ -2402,12 +2422,10 @@ sub nightly {
 
     die "Can't write to Data Directory.\n" unless -w $datadir;
 
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-    my $month = sprintf("%d%02d",$year+1900,$mon+1);
-
-    system("mkdir -m 0775 -p $datadir/mac/$month") unless (-d "$datadir/mac/$month");
-    system("mkdir -m 0775 -p $datadir/arp/$month") unless (-d "$datadir/arp/$month");
-    system("mkdir -m 0775 -p $datadir/dev/$month") unless (-d "$datadir/dev/$month");
+    # batch_mode() now makes the dir for us. 
+    #system("mkdir -m 0775 -p $datadir/mac/$month") unless (-d "$datadir/mac/$month");
+    #system("mkdir -m 0775 -p $datadir/arp/$month") unless (-d "$datadir/arp/$month");
+    #system("mkdir -m 0775 -p $datadir/dev/$month") unless (-d "$datadir/dev/$month");
 
     &nmis_dump;
 
@@ -2813,7 +2831,9 @@ sub admin_daemon {
 
     $DaemonMode = 1;
     $BatchMode = 1;
-    &batch_mode('daemon',1);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/daemon",1);
 
     my $end_flag = 0;
 
@@ -2840,7 +2860,7 @@ sub admin_daemon {
 
     # Create log dir
     my $datadir = $CONFIG{datadir};
-    system("mkdir -m 0775 -p $datadir/admin") unless (-d "$datadir/admin");
+    #system("mkdir -m 0775 -p $datadir/admin") unless (-d "$datadir/admin");
 
     # Mark left over jobs as bad
     sql_do("UPDATE admin SET status='error' WHERE status = 'running';"); 
