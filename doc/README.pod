@@ -9,20 +9,25 @@ Max Baker
 =head1 DESCRIPTION
 
 Netdisco is an Open Source web-based network management tool.
+
 Designed for moderate to large networks, configuration information and
 connection data for network devices are retrieved by SNMP.  With Netdisco
 you can locate the switch port of an end-user system by IP or MAC address.
 Data is stored using a SQL database for scalability and speed.
 
-Cisco Discovery Protocol (CDP) optionally provides automatic discovery of
-the network topology.  The network is inventoried by both device model and
-operating system (like IOS).  Netdisco uses router ARP tables and L2 switch  
-MAC forwarding tables to locate nodes on physical ports and track them by 
-their IP addresses.  For each node, a time stamped history of the ports it
-has visited and the IP addresses it has used is maintained.  Netdisco gets all
-its data, including CDP topology information, with SNMP polls and DNS queries.
-It does not use CLI access and has no need for privilege passwords.  Security 
-features include a wire-side Wireless Access Point (AP) locator.  
+Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP),
+and SynOptics Network Management Protocol (SONMP) optionally provide
+automatic discovery of the network topology.  
+
+The network is inventoried by both device model and operating system (like
+IOS).  Netdisco uses router ARP tables and L2 switch MAC forwarding tables to
+locate nodes on physical ports and track them by their IP addresses.
+
+For each node, a time stamped history of the ports it has visited and the IP
+addresses it has used is maintained.  Netdisco gets all its data, including 
+topology information, with SNMP polls and DNS queries.  It does not use CLI
+access and has no need for privilege passwords.  Security features include a
+wire-side Wireless Access Point (AP) locator.  
 
 Netdisco was designed and built at UCSC and is now hosted by Source Forge.
 
@@ -201,11 +206,15 @@ This process is what lets Netdisco map an Ethernet address to an IP address.
 Combined with the Macsuck process, Netdisco can ultimately resolve an IP address
 to a switch port.
 
-=item CDP
+If you have a small network that only has layer-2 devices on it, and you
+use a Linux or BSD box as your router, you will need to install net-snmp
+on the machine, and then have netdisco discover that machine.  Otherwise
+you will not be able to resolve a MAC address to an IP address.
 
+=item CDP / FDP / SONMP
 
 Having topology information is crucial for Netdisco to function.  So
-if you network is not Cisco centric or does not have CDP turned on,
+if you network does not support one of the above Layer2 discover protocols,
 you B<must> put the information in the F<netdisco-topology.txt> file. 
 
 See L<Toplogy Information> in this file.
@@ -219,6 +228,9 @@ likes CDP a lot for mapping out the network and automatically
 discovering the topology.   If your devices don't use CDP, then you need
 to work with the F<netdisco-topology.txt> file to create a layout of your
 network."
+
+Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported, and anywhere
+you see CDP you can assume we mean FDP and SSOMP too.
 
 =back
 
@@ -731,22 +743,24 @@ Procedure for doing a vacuum full :
 
 =head2 Topology Information
 
-Topology information is crucial to Netdisco's performance.  It allows the application to know
-which ports are uplink ports and which have connected nodes.  Ports that are uplink ports
-that are not marked so in Netdisco will appear to B<steal> MAC address entries from their 
-rightful ports.  So it is critical to use the topology file and CDP to maintain a topology.
-
+Topology information is crucial to Netdisco's performance.  It allows the
+application to know which ports are uplink ports and which have connected
+nodes.  Ports that are uplink ports that are not marked so in Netdisco will
+appear to B<steal> MAC address entries from their rightful ports.  So it is
+critical to use the topology file and CDP/FDP/SONMP to maintain a topology.
 
 =head3 Manual Topology Information
 
-Netdisco will auto-discover the layer-two topology of a network using CDP.  However, many networks 
-have parts of the topology that are not covered by CDP.
+Netdisco will auto-discover the layer-two topology of a network using CDP.
+However, many networks have parts of the topology that are not covered by CDP.
 
-Use the manual topology file C<netdisco-topology.txt> to supply the layout of the network
-if your network has devices that don't talk CDP or misreport information.
+Use the manual topology file C<netdisco-topology.txt> to supply the layout of
+the network if your network has devices that don't talk CDP or misreport
+information.
 
-The manual topology file only requires one side of the data to be entered.  Both directions 
-of a link will be forced to the given data if one side is listed.
+The manual topology file only requires one side of the data to be entered.
+Both directions of a link will be forced to the given data if one side is
+listed.
 
 B<File Format>
 
@@ -773,6 +787,10 @@ The outgoing port belongs to the device listed above the C<link:> line.
 
 The Destination Device and Port tell Netdisco who is on the other end of this link.
 The device can be a DNS name or an IP Address.
+
+B<NOTE>: The port names must match exactly how Netdisco sees it.  Go to the 
+device and check it out.  You might think of it as C<port 1> but Netdisco might
+think of it as C<RMONPort26onunit1>.
 
 =item alias:
 
@@ -1499,8 +1517,7 @@ Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), A.L.M Buxey
 George Pavel (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
 (saintmarys.edu), Revital Shvarzman (York U, Ontario), 
 Walter Gould (Auburn U), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ),
-Dusty Hall (Auburn U)
-
+Dusty Hall (Auburn U), Jon Monroe (center pointe), Eric Miller (jeneric).
 
 As well as these people for their donations :
 
