@@ -6,7 +6,8 @@
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
-
+    * [1100029] Nbtwalk whole network bug - would die if couldn't connect to a node.
+    * [] Log file was trying to be written not in batch mode.
 
 0.94beta (12/06/04)
 

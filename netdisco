@@ -22,7 +22,7 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use SNMP::Info;
+use SNMP::Info '0.10';
 use netdisco qw/:all/;  
 use Socket qw/:all/;
 
@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode/;
 
-$VERSION = '0.94';
+$VERSION = '0.95-cvs';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -104,7 +104,7 @@ $DEBUG             = $args{D} || 0;
 $netdisco::SQLCARP = $args{S} || 0;
 $BatchMode         = $args{b} || 0;
 $New_Only          = $args{N} || 0;
-$Log               = (!$BatchMode and ($DEBUG or defined $args{L})) ? 0 : 1;
+$Log               = $BatchMode && !defined $args{L};
 
 # Allow the -h or -v commands to run no matter what
 defined $args{h} and &usage;
@@ -2037,12 +2037,18 @@ sub nbtstat {
     socket(S, PF_INET, SOCK_DGRAM, getprotobyname('udp'))
          or die "Unable to create socket: $!";
     bind(S, $me) or die "Unable to bind socket: $!";
-    send(S, $nbts, 0, $peer) or warn "Couldn't send: $!";
+    unless (send(S, $nbts, 0, $peer)) {
+         print "Couldn't send: $!";
+         return 0;
+    }
 
     # receive udp until timeout
     vec($rin, fileno(S), 1) = 1;
     while (select($rin, undef, undef, $tout)) {
-        recv(S, $data, 1024, 0)        || die "recv: $!";
+        unless (recv(S, $data, 1024, 0)) {
+            print "Couldn't receive: $!";
+            return 0;
+        }
     }
     close(S);
 
