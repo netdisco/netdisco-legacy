@@ -112,7 +112,7 @@ defined $args{k} and &alias_clean;
 defined $args{g} and &graph;
 defined $args{t} and &test;
 defined $args{O} and &parse_oui;
-defined $args{B} and &backup;
+defined $args{B} and &nightly;
 defined $args{E} and &expire_device($args{E},defined $args{n});
 defined $args{e} and &expire_nodes($args{e},defined $args{V});
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
@@ -498,7 +498,7 @@ sub create_device {
     $objtype = $device->device_type() unless defined $objtype;
 
     # Try Version 1 if we haven't already
-    unless (defined $objtype and $ver != 1){
+    if (!defined $objtype and $ver != 1){
         # v1 screws up some hp switches that support 2, so we stick w/ 2 first
         $ver = 1; 
         print " [Trying SNMP Version 1] ";
@@ -1542,14 +1542,14 @@ sub graph_addnode {
     $gv->add_node($ip, %node);
 }
 
-=item backup() 
+=item nightly() 
 
 Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
 
 Calls mac_dump(), arp_dump(), and dev_dump().
 
 =cut
-sub backup {
+sub nightly {
     # Log backup
     &batch_mode('logs/back',1);
     my $datadir = $CONFIG{datadir};
@@ -1569,6 +1569,8 @@ sub backup {
     &arp_dump("arp/$month");
 
     &dev_dump("dev/$month");
+
+    &db_clean;
 
     print "Running Database Vacuum...\n";
     &sql_do("VACUUM ANALYSE;"),"\n";
@@ -2057,7 +2059,7 @@ Commands:
     -A device - Arp Nip single device
 
     -O        - Import oid.txt into database for node_search
-    -B        - Create backups of all data and put into $CONFIG{datadir}
+    -B        - Nightly Maintanance, Create backups of all data and put into $CONFIG{datadir}
     -g        - Create Graph and image-map files.
 
     -E device - Expire Device (-n to delete nodes too)
