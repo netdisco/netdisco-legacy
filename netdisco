@@ -81,7 +81,7 @@ $MacTotal = 0;
 %DeviceTopo = ();
 
 # Header
-&header if (join('',keys %args) =~ /[aABdeEFgikKmMOprRTu]+/);
+&header if ((join('',keys %args) =~ /[aABdeEFgikKmMOprRTu]+/) and !$BatchMode);
 
 # Commands
 defined $args{h} and die &usage;
@@ -92,7 +92,7 @@ defined $args{d} and &topo_load_file;
 defined $args{d} and &discover($args{d});
 defined $args{r} and &run($args{r});
 if (defined $args{F} or defined $args{T}) {
-    &schlop( defined $args{F} ? $args{F} : $CONFIG{topofile}, 
+    &schlop( defined $args{F} ? $args{F} : "$CONFIG{home}/$CONFIG{topofile}", 
              defined $args{T}
            );
 }
@@ -177,9 +177,6 @@ sub run {
         }
     }
     
-    #print "Reloading manual topology info...\n";
-    #schlop($CONFIG{topofile},1);
-
     &end;
     
 }
@@ -295,6 +292,8 @@ sub batch_mode{
     my $want_time = shift;
 
     my $file_path = $CONFIG{datadir} || 'data';
+    $file_path    = "$CONFIG{home}/$file_path";
+
     my $extension = defined $CONFIG{logextension} ? $CONFIG{logextension} : 'log';
     
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
@@ -320,7 +319,7 @@ sub batch_mode{
     # No Buffering output
     $| = 1;
 
-    print STDERR "Batch Mode - Output in $file\n";
+    print STDERR "Batch Mode - Output in $file\n" if $DEBUG;
     &header;
 }
 
@@ -347,7 +346,7 @@ sub batch_mode_end {
 
 
     if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} =~ /(true|1|y)/i and ! defined $no_compress){
-       print STDERR "\tCompressing $file\n";
+       print STDERR "\tCompressing $file\n" if $DEBUG;
        my $compress = defined $CONFIG{compress} ? $CONFIG{compress} : "/usr/bin/gzip -f";
        system("$compress $file") and warn "Compress of $file Failed.\n";
     }
@@ -868,6 +867,10 @@ sub macwalk {
             print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
         }
     }
+    print "Vacuuming node table...";
+    my $dbh = &dbh;
+    $dbh->do(qq{VACUUM ANALYZE node;}); 
+    print "\n";
 
     &end;
 }
@@ -1080,6 +1083,10 @@ sub arpwalk {
         arpnip($device) if ($has_3);
     }
 
+    my $dbh = &dbh;
+    print "Vacuuming node_ip table...";
+    $dbh->do(qq{VACUUM ANALYZE node_ip;}); 
+    print "\n";
     &end;
 }
 
@@ -1411,7 +1418,7 @@ sub graph_each  {
                      'bgcolor' => $CONFIG{graph_bg},
                      'color'   => $CONFIG{graph_color},
                      'overlap' => $CONFIG{graph_overlap},
-                     'fontpath'=> $CONFIG{graph_fontpath},
+                     'fontpath'=> $CONFIG{home},
                      'ranksep' => $CONFIG{graph_rank},
                      'splines' => $CONFIG{graph_splines},
                      'ratio'   => 'compress'
@@ -1491,14 +1498,18 @@ sub graph_each  {
         $gv->add_edge($link => $dest, %edge );
     }
 
-
-    #print "  Creating raw graph.\n";
-    #$gv->as_canon($CONFIG{graph_raw});
-    print "  Creating graph ...\n";
-    $gv->as_gif($CONFIG{graph});
-    print "  Creating ISMAP ...\n";
-    $gv->as_ismap($CONFIG{graph_map});
-
+    if (defined $CONFIG{graph_raw} and $CONFIG{graph_raw}){
+        print "  Creating raw graph.\n";
+        $gv->as_canon("$CONFIG{home}/$CONFIG{graph_raw}");
+    }
+    if (defined $CONFIG{graph} and $CONFIG{graph}){
+        print "  Creating graph ...\n";
+        $gv->as_gif("$CONFIG{home}/$CONFIG{graph}");
+    }
+    if (defined $CONFIG{graph_map} and $CONFIG{graph_map}){
+        print "  Creating ISMAP ...\n";
+        $gv->as_ismap("$CONFIG{home}/$CONFIG{graph_map}");
+    }
 }
 
 =item graph_addnode(graphviz_obj,node_ip) 
@@ -1565,7 +1576,8 @@ Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
 sub nightly {
     # Log backup
     &batch_mode('logs/back',1);
-    my $datadir = $CONFIG{datadir};
+    my $datadir = $CONFIG{datadir} || 'data';
+    $datadir = "$CONFIG{home}/$datadir";
 
     die "Can't write to Data Directory.\n" unless -w $datadir;
     print "Backing up Data to $datadir\n";
@@ -1800,7 +1812,9 @@ Loads and parses manual topography file.
 
 =cut
 sub topo_load_file {
-    my $file = shift || $CONFIG{topofile};
+    my $file = shift;
+
+    $file = "$CONFIG{home}/$CONFIG{topofile}" unless $file;
 
     my $dev;    # current config line
 
@@ -2056,9 +2070,9 @@ sub admin_daemon_ctl {
     if ($cmd eq 'status'){
         my $status = &admin_daemon_status;
         if ($status) {
-            print "Admin daemon is running under pid $status.\n";
+            print "Admin Daemon is running under pid $status.\n";
         } else {
-            print "Admin daemon is not currently running.\n";
+            print "Admin Daemon is not currently running.\n";
         }
     }
 
@@ -2094,7 +2108,8 @@ sub admin_daemon_status {
             print "Admin Daemon is already running. ($pid)\n" if $DEBUG;
             return $pid;
         } elsif ($! == EPERM) {             # changed uid
-            die "Admin Daemon ($pid) has escaped my control!\n";
+            warn "Admin Daemon ($pid) is running under another user, out of our control.\n";
+            return $pid;
         } elsif ($! == ESRCH) {
             print "Admin Daemon ($pid) is deceased, starting new one.\n" if $DEBUG;  # or zombied
             return 0;
@@ -2155,6 +2170,8 @@ sub admin_daemon {
 
     # Event Loop
     until ($end_flag){
+        # TODO - Die if the database isn't there. 
+
         my $jobs = sql_rows('admin',['job','extract(epoch from entered) as entered',
                                      'device','action','status', 'username','debug'],
                             {'status' => 'queued'} );
@@ -2181,6 +2198,7 @@ If supplied arguments, writes the pid out to that file.
 sub admin_daemon_pid {
     my $pid = shift;
     my $pid_file = $CONFIG{daemon_pid} || 'netdisco_daemon.pid';
+    $pid_file = "$CONFIG{home}/$pid_file";
 
     if (defined $pid) {
         print "Writing pid:$pid to $pid_file\n" if $DEBUG;
@@ -2309,7 +2327,22 @@ sub add_user {
 }
 
 sub test {
+
+    $start_time = time;
+
+    &load_old_devices;
+    &topo_load_file;
+    
+    my $odd = 0 ;
+
+    foreach my $dev (keys %$OldDevices){
+        next if ++$odd %2;
+        $Discovered{$dev}++;
+    }
+
+    &end;
 }
+
 
 sub header{
     print "n e t  d i s c o\n";
