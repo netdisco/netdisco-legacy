@@ -1515,7 +1515,8 @@ sub sql_vacuum{
         
         my $time1 = time;
         my $rv= sql_do($sql);    
-        my $time = $time1-time;
+        my $time2 = time;
+        my $time = $time2-$time1;
         
         print " $time seconds.\n" if $print;
     }
