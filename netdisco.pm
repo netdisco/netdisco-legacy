@@ -124,7 +124,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 =item $VERSION - Sync'ed with Netdisco releases
 
 =cut
-$VERSION = '0.94';
+$VERSION = '0.95-cvs';
 
 =back
 
@@ -695,7 +695,7 @@ sub sort_port {
     my $numeric        = qr{^([\d\.]+)$};
     my $dotted_numeric = qr{^(\d+)\.(\d+)$};
     my $letter_number  = qr{^([a-zA-Z]+)(\d+)$};
-    my $wordcharword   = qr{^([^:\/.]+)[\ :\/\.]+([^:\/.]+)$};
+    my $wordcharword   = qr{^([^:\/.]+)[\ :\/\.]+([^:\/.]+)(\d+)?$}; #port-channel45
     my $ciscofast      = qr{^
                             # Word Number (Gigabit0)
                             (\D+)(\d+)
@@ -719,7 +719,7 @@ sub sort_port {
     } elsif ($aval =~ $ciscofast) {
         @a = ($1,$2,$3,$4,$5,$6);
     } elsif ($aval =~ $wordcharword) {
-        @a = ($1,$2);
+        @a = ($1,$2,$3);
     } else { 
         @a = ($aval);
     }
@@ -733,7 +733,7 @@ sub sort_port {
     } elsif ($bval =~ $ciscofast) {
         @b = ($1,$2,$3,$4,$5,$6);
     } elsif ($bval =~ $wordcharword) {
-        @b = ($1,$2);
+        @b = ($1,$2,$3);
     } else { 
         @b = ($bval);
     }
