@@ -258,6 +258,16 @@ Discover Device.
 Expire Nodes for given device. Use L<-V> to archiVe instead of delete.  Specify a 
 port with L<-P> to delete or archive nodes on a per port basis.
 
+=item --expire-nodes-subnet {subnet}
+
+Finds all devices in given subnet and runs expire nodes on each.   Will 
+display devices effected and then ask for confirmation.
+
+Subnet is specified in CIDR format :
+
+    192.168.0.0/24
+
+
 =item -E 
 
 Expire given device. Use L<-n> to delete nodes as well.
@@ -470,6 +480,11 @@ Netdisco you need to add an admin user by running L<-u>.
 
 See "How the Switch Selects the IP Address To Include in Outbound CDP
 Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
+
+=item Device Model comes up as 'Products.'
+
+The device is probably newer than your Cisco MIBs.  Redownload the v2.tar.gz and install these 
+newest mibs into F</usr/local/share/snmp/mibs>.
 
 =item Things are getting Really slow
 
