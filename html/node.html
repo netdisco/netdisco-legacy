@@ -234,7 +234,7 @@ Did not find anything for <% $badmatch %>.
     (<% defined $match->{host} ? $match->{host} : '[No DNS]' %> )
     </TD>
 % } elsif ($match->{type} eq 'port') { 
-    <TD>MAC -> Switch</TD>
+    <TD>Switch Port</TD>
     <TD>
     <A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A>
     (<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)
