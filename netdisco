@@ -44,7 +44,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only/;
 
-getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOP:p:r:SRtTuV',\%args);
+getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuV',\%args);
 
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
@@ -81,7 +81,7 @@ $MacTotal = 0;
 %DeviceTopo = ();
 
 # Header
-&header if ((join('',keys %args) =~ /[aABdeEFgikKmMOprRTu]+/) and !$BatchMode);
+&header if ((join('',keys %args) =~ /[aABdeEFgIikKmMOprRTu]+/) and !$BatchMode);
 
 # Commands
 defined $args{h} and die &usage;
@@ -117,6 +117,7 @@ defined $args{O} and &parse_oui;
 defined $args{B} and &nightly;
 defined $args{E} and &expire_device($args{E},defined $args{n});
 defined $args{e} and &expire_nodes($args{e},defined $args{V},$args{P});
+defined $args{I} and &expire_ips;
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 defined $args{p} and &admin_daemon_ctl($args{p});
 defined $args{u} and &add_user;
@@ -1227,6 +1228,35 @@ sub expire_nodes {
     }
 }
 
+
+=item expire_ips()
+
+Expires IPs not in use in node or device_port
+
+ select i.mac from node_ip i where 
+    not exists 
+        (select 1 from node n where n.mac = i.mac limit 1 ) 
+    and 
+    not exists 
+        (select 1 from device_port p where p.mac = i.mac limit 1) 
+ group by i.mac;
+
+=cut
+sub expire_ips {
+    print "expire_ips()";
+    my $sql = 'DELETE FROM node_ip WHERE mac IN ';
+    $sql   .= '(SELECT i.mac FROM node_ip i WHERE';
+    $sql   .= ' NOT EXISTS (SELECT 1 FROM node n WHERE n.mac = i.mac LIMIT 1)';
+    $sql   .= ' AND NOT EXISTS';
+    $sql   .= ' (SELECT 1 FROM device_port p WHERE p.mac = i.mac LIMIT 1)';
+            
+    print "$sql\n";
+    my $rows;
+    #$rows = sql_do($sql);
+    $rows = $rows || 0;
+    print "Deleted $rows rows.\n";
+}
+
 =item change_device_ip(from_ip, to_ip)
 
 Used to move move over all the information from one device 
@@ -2284,7 +2314,13 @@ sub admin_daemon_job {
     return undef;
 }
 
+=item add_user()
 
+Takes 4 optional arguments from @ARGV = (user,pw,port,admin) 
+
+If all 4 are not there, then interactive mode is entered and prompts are given.
+
+=cut
 sub add_user {
     my ($user, $pw, $port, $admin) = @ARGV;
 
@@ -2368,6 +2404,7 @@ Device Commands:
     -A device  - Arp Nip single device
     -E device  - Expire/Delete Device                  (-n to delete nodes too)
     -e device  - Expire/Archive Nodes      (-V to archiVe) (-P to specify port)
+    -I         - Expire IPs not used in node or device_port
 
 Administration:
     -B         - Maintanance. Backups data to datadir. Database Cleanup.
