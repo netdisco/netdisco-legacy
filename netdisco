@@ -44,7 +44,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only/;
 
-getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOp:r:SRtTuV',\%args);
+getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOP:p:r:SRtTuV',\%args);
 
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
@@ -116,7 +116,7 @@ defined $args{t} and &test;
 defined $args{O} and &parse_oui;
 defined $args{B} and &nightly;
 defined $args{E} and &expire_device($args{E},defined $args{n});
-defined $args{e} and &expire_nodes($args{e},defined $args{V});
+defined $args{e} and &expire_nodes($args{e},defined $args{V},$args{P});
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 defined $args{p} and &admin_daemon_ctl($args{p});
 defined $args{u} and &add_user;
@@ -1188,15 +1188,17 @@ sub expire_device {
     }
 }
 
-=item expire_nodes(device,archive_only)
+=item expire_nodes(device,archive_only,port)
 
 Removes entries from node and node_ip for a given device.
+
+Set port to limit the expiration to a specific port.
 
 Set archive_only to 1 to archive the nodes on the device.
 
 =cut
 sub expire_nodes {
-    my ($dev,$archive) = @_;
+    my ($dev,$archive,$port) = @_;
     my $ip  = getip($dev);
 
     print "Expire Nodes($dev)\n";
@@ -1205,29 +1207,22 @@ sub expire_nodes {
         return;
     }
 
-    # grab mac's    
-    my $macs = sql_rows('node',['distinct(mac)'],{'switch'=>$ip});
+    my %where_hash = ('switch' => $ip);
+    my $where = "switch='$ip'";
+    $where .= " AND port='$port'" if defined $port; 
+    $where_hash{port} = $port if defined $port;
     
-
+    # grab mac count
+    my $macs = sql_rows('node',['count(mac)'],\%where_hash,undef,"GROUP BY mac");
+     
     if (defined $archive and $archive){
         # De-activate nodes
-        print "  Archiving " . scalar @$macs . " entries for $ip\n";
-        sql_do(qq/UPDATE node SET active=false WHERE switch='$ip'/);
-        # De-activate ip mappings
-        foreach my $mac (@$macs){
-            my $mac_addr = $mac->{mac};
-            #sql_do(qq/UPDATE node_ip SET active=false WHERE mac='$mac_addr'/);
-        }
+        print "  Archiving " . $macs->[0]->{count} . " entries for $where\n";
+        sql_do(qq/UPDATE node SET active=false WHERE $where/);
     } else {
         # Delete nodes
-        print "  Deleting " . scalar @$macs . " entries for $ip\n";
-        sql_do(qq/DELETE FROM node WHERE switch='$ip'/);
-        # Delete ip mappings
-        # Why would we do this??? 
-        foreach my $mac (@$macs){
-            my $mac_addr = $mac->{mac};
-            #sql_do(qq/DELETE FROM node_ip WHERE mac='$mac'/);
-        }
+        print "  Deleting " . $macs->[0]->{count} . " entries for $where\n";
+        sql_do(qq/DELETE FROM node WHERE $where/);
     }
 }
 
@@ -2357,7 +2352,7 @@ Device Commands:
     -M device  - Mac Suck single device
     -A device  - Arp Nip single device
     -E device  - Expire/Delete Device                  (-n to delete nodes too)
-    -e device  - Expire/Archive Nodes                  (-V to archiVe)
+    -e device  - Expire/Archive Nodes      (-V to archiVe) (-P to specify port)
 
 Administration:
     -B         - Maintanance. Backups data to datadir. Database Cleanup.
