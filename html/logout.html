@@ -4,7 +4,11 @@
 </FORM>
 <%init>
 my $user = $m->session->{user};
-$m->delete_session;
+$m->session->{_logged_in} = 0;
+delete $m->session->{user};
+delete $m->session->{user_port_ctl};
+delete $m->session->{user_admin};
+delete $m->session->{start};
 </%init>
 <%method title>
 - Logout \
