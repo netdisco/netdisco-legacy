@@ -7,5 +7,6 @@ CREATE TABLE log (
     id          serial,
     creation    TIMESTAMP DEFAULT now(),
     class       text,
-    entry       text
+    entry       text,
+    logfile     text
 );

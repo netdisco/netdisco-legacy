@@ -532,9 +532,9 @@ Inserts an entry in the C<log> table.
 
 =cut
 sub log {
-    my ($class,$entry) = @_;
+    my ($class,$entry,$file) = @_;
 
-    insert_or_update('log',undef,{'class' => $class, 'entry' => $entry});
+    insert_or_update('log',undef,{'class' => $class, 'entry' => $entry, 'logfile' => $file});
     
 }
 

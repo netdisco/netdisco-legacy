@@ -883,6 +883,7 @@ and their prerequisites automatically:
         install MasonX::Request::WithApacheSession
         install Graph
         install GraphViz     (you may need to do a 'force install')
+        install Compress::Zlib (probably already have this one)
 
 Some of these you will probably already have installed. Others you may need to force 
 with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!

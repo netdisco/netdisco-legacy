@@ -5,6 +5,8 @@
 
 ALTER TABLE device_port ADD COLUMN lastchange bigint;
 
+ALTER TABLE log ADD COLUMN logfile text;
+
 CREATE TABLE user_log (
     entry           serial,
     username        varchar(50),

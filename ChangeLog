@@ -19,12 +19,14 @@ New Device Support in SNMP::Info 0.9:
     * Added C3560s to the C3550 class. (Nicolai)
 
 Features:
+    + Log Files exposed to front-end.
     + IP Inventory (Node Inventory) can now show you all the unused IPs in a 
           given subnet, and if Netdisco has seen them or not.
     + Added Feature - Netbios polling of nodes. (Eric Miller)
             Nodes seen in last week are polled for NetBios (SMB) info. 
             Node Inventory by Netbios Domain (max)
             Search on node by netbios name
+    + Added MIB database and support to select MIB directories.
     + Added Feature - Device Inventory by SNMP location field.
             Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
     + Added Feature [ 836962 ]  - Admin Log

@@ -698,21 +698,21 @@ sub end {
 
     if ($ArpTotal > 0 ){
         print "Found $ArpTotal arp cache entries.\n";
-        log('arp',"$ArpTotal entries. $run_time minutes.") if $Log;
+        log('arp',"$ArpTotal entries. $run_time minutes.",$LogFile[-1]) if $Log;
     }
 
     if (defined $NbtTotal){
         my $nodes = scalar(keys(%$OldNodes));
         my $pct   = sprintf("%2.2f",($NbtTotal/$nodes)*100);
         print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
-        log('netbios',"$NbtTotal entries. $run_time minutes.") if $Log;
+        log('netbios',"$NbtTotal entries. $run_time minutes.",$LogFile[-1]) if $Log;
     }
     
     my $mac_seen = scalar keys(%MacSeen);
     if ($mac_seen){
         
         print "Saw $mac_seen distinct nodes in $MacTotal forwarding table entries.\n";
-        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.") if $Log;
+        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.",$LogFile[-1]) if $Log;
     }
 
     my $discover_count = scalar(keys(%Discovered));
@@ -733,7 +733,7 @@ sub end {
 
         print "Discovered : $new new devices.  Missed: $old old devices.\n";
 
-        log('discover',"$discover_count devices. ($new new) ($old old) $run_time minutes.") 
+        log('discover',"$discover_count devices. ($new new) ($old old) $run_time minutes.",$LogFile[-1]) 
             if $Log;
 
         if (scalar keys %NoCDP){
@@ -741,7 +741,7 @@ sub end {
             foreach my $dev (keys %NoCDP){
                 print "    $dev\n";
             } 
-            log('nocdp',join(' ',keys %NoCDP)) if $Log;
+            log('nocdp',join(' ',keys %NoCDP),$LogFile[-1]) if $Log;
         }
         
         if (scalar keys %UnDiscovered) {
@@ -749,7 +749,7 @@ sub end {
             foreach my $dev (keys %UnDiscovered){
                 print "    $dev\n";
             } 
-            log('nosnmp',join(' ',keys %UnDiscovered)) if $Log;
+            log('nosnmp',join(' ',keys %UnDiscovered),$LogFile[-1]) if $Log;
         }
 
         if (scalar keys %TimedOut){
@@ -757,7 +757,7 @@ sub end {
             foreach my $dev (keys %TimedOut){
                 print "    $dev\n";
             }
-            log('timeout',join(' ',keys %TimedOut)) if $Log;
+            log('timeout',join(' ',keys %TimedOut),$LogFile[-1]) if $Log;
         }
     }
     &batch_mode_end;
@@ -2776,11 +2776,6 @@ sub nightly {
     print "  Backing up Data to $datadir\n";
 
     die "Can't write to Data Directory.\n" unless -w $datadir;
-
-    # batch_mode() now makes the dir for us. 
-    #system("mkdir -m 0775 -p $datadir/mac/$month") unless (-d "$datadir/mac/$month");
-    #system("mkdir -m 0775 -p $datadir/arp/$month") unless (-d "$datadir/arp/$month");
-    #system("mkdir -m 0775 -p $datadir/dev/$month") unless (-d "$datadir/dev/$month");
 
     &nmis_dump;
 

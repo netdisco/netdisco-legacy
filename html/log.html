@@ -4,17 +4,20 @@
 <TR>
     <TH>Class</TH>
     <TH>Entry</TH>
+    <TH>Log File</TH>
     <TH>Time Stamp</TH>
 </TR>
 <%perl>
 my $odd = 0;
 foreach my $class (sort keys %log_sort){
     next unless grep(/^$class$/,@classes);
-    foreach my $log_hash 
-            (sort {$b->{timestamp} <=> $a->{timestamp} } 
-            @{$log_sort{$class}}) {
-        my $time = localtime($log_hash->{timestamp});
-        my $entry = $log_hash->{entry};
+    foreach my $l (sort {$b->{timestamp} <=> $a->{timestamp} } 
+                   @{$log_sort{$class}}
+                  ) {
+        my $uri  = $r->uri;
+        my $time = localtime($l->{timestamp});
+        my $entry = $l->{entry};
+        my $logfile = defined $l->{logfile} ? 1 : 0;
         # Make each nocdp log entry into links to device_search
         if ($class =~ /(nocdp|timeout)/){
             my @ret;
@@ -29,13 +32,19 @@ foreach my $class (sort keys %log_sort){
             }    
             $entry = join(' ',@ret);
         }
-        my $odd = ++$odd % 2;
+        my $details = $logfiles->{$l->{id}};
 </%perl>
-<TR CLASS="match-<%$odd%>">
-    <TD><% $log_hash->{class} %></TD>
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><% $l->{class} %></TD>
     <TD><% $entry %></TD>
+    <TD><% $logfile ? "<INPUT TYPE=SUBMIT NAME=\"log\" VALUE=\"$l->{id}\">" : '&nbsp;'%></TD>
     <TD><% $time %></TD>
 </TR>
+% if ($details){
+<TR CLASS="match-<%$odd%2%>">
+    <TD COLSPAN=4 ALIGN=LEFT><PRE><%$details |h%></PRE></TD>
+</TR>
+% }
 %   }
 %}
 </TABLE>
@@ -53,13 +62,14 @@ Number of Entries per category:
 <BR>
 <INPUT TYPE="submit" VALUE="Show Entries">
 </FORM>
-<%method title>
-- Log \
-</%method>
 <%args>
 @classes => qw/arp discover mac netbios/
-$number => 1
+$number  => 1
+@log     => ()
 </%args>
+<%shared>
+my $logfiles = {};
+</%shared>
 <%init>
 
 # Check for stuffing of non-numerics
@@ -73,19 +83,74 @@ foreach my $class (@classes){
     # Check for non existant
     next unless defined $db_classes->{$class};
     my $logs = sql_rows('log', 
-                    ['extract(epoch from creation) as timestamp','class','entry'],
+                    ['id','extract(epoch from creation) as timestamp','class','entry','logfile'],
                     {'class' => $class},undef,
                     "order by timestamp desc limit $number");
     push (@$log,@$logs);
 }
 
+# Get the Log Files if requested
+foreach my $l (@log){
+    my $db_entry = sql_hash('log',['id','logfile'],{'id'=>$l});
+    unless (defined $db_entry){
+        $logfiles->{$l} = 'Not found in Database'; 
+        last;
+    }
+    my $file = $db_entry->{logfile};
+    
+    # Uncompressed Log Files
+    if (-r $file){
+        $logfiles->{$l} = '';
+        my $ok = open (LOG, "<$file");
+        unless ($ok){
+            $logfiles->{$l} = "Couldn't open $file. $!\n";
+            next;
+        }
+        while (<LOG>){
+            $logfiles->{$l} .= $_;
+        }
+        close LOG;
+
+
+    # Gzipped Log Files
+    } elsif (-r "$file.gz"){
+        eval {
+            use Compress::Zlib;
+        };
+        if ($@){
+            $logfiles->{$l} = 'Log File is Gzipped. Please install Perl module Compress::Zlib';
+            next;
+        }
+        my $gz = gzopen("$file.gz", "rb");
+        unless (defined $gz){
+            $logfiles->{$l} = "Problem with gzcat. $gzerrno\n";
+            next;
+        }
+        my $buffer;
+        $logfiles->{$l} .= $buffer while $gz->gzread($buffer) > 0;
+        $gz->gzclose();
+
+    # Unknown / Permission files.
+    } else {
+        my $t1 = -r $file;  $t1 = $!;
+        my $t2 = -r "$file.gz";  $t2 = $!;
+        $logfiles->{$l} = "I can't read/find $file ($t1) or $file.gz ($t2).\n";
+    }
+}
+
 # Split them up by class into separate arrays stored in this hash
 my %log_sort;
-foreach my $log_hash (@$log){
-   my $class = $log_hash->{class};
-   push (@{$log_sort{$class}},$log_hash);
+foreach my $l (@$log){
+   my $class = $l->{class};
+   push (@{$log_sort{$class}},$l);
 }
 
 </%init>
+%#
+%# title()
+%#
+<%method title>
+- Log \
+</%method>
 %# $Id$
 %# vim:syntax=mason
