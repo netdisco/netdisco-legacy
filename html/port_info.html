@@ -1,0 +1,360 @@
+<& SELF:err &>
+% if      (scalar @$ports) {
+  <& SELF:show_ports &>
+% } elsif (scalar @$jacks) {
+  <& SELF:show_jacks &>
+% } elsif ($building) {
+  <& SELF:show_rooms &>
+% } elsif ($cmd eq 'list') {
+  <& SELF:list_buildings &>
+% } elsif (! $err){
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="list">
+<h3>Jack Search</h3>
+<h4>Search the Pinnacles database for switches connected to a building / room / jack.</h4>
+<P>
+Click <INPUT TYPE="submit" VALUE="List Buildings"> for a list of buildings. 
+<P>
+List will take up to 10 seconds to load from Pinnacles.
+</FORM>
+%}
+<%args>
+$cmd      => ''
+$hub      => ''
+$port     => ''
+$building => ''
+@rooms    => ()
+</%args>
+<%shared>
+my ($db_ports,$arg_port,$port_num,$hub_ip,$hub_num,$hub_dns,$arg_building,$jacks,$ports,$odd);
+my (%db_ports_cache,%hub_ip_cache);
+$jacks = $ports = [];
+my $err = '';
+my $domain = $netdisco::CONFIG{domain};
+</%shared>
+<%doc>
+Pinnacles Database on Oracle 8i 
+
+View 1 - netdisco_vw1
+    Any port, connected or not, no building name
+    HUB, PORT, BLDG, JACK, ROOM
+
+View 2 - netdisco_vw2
+    Connected Ports only.  Building Name
+    HUB, PORT, BLDG, BUILDING, JACK, ROOM
+</%doc>
+<%init>
+$arg_port = $port; $arg_building = $building; 
+
+# Lookup Pinnacle data for given Port
+if ($hub and $port){
+    $hub_dns = $hub;
+    $hub_dns .= $domain unless $hub =~ /\./;
+    $hub_ip = sql_scalar('device',['ip'],{'dns'=>$hub_dns});
+    if ($hub_dns =~ /hub(\d+)/i){
+        $hub_num = $1;
+    } else {
+        $err .= "Only switches with name HUBnnn are allowed.<BR>\n";
+    }
+
+    unless (defined $hub_ip) {
+        $err .= "Hub $hub not found.<BR>\n";
+    }
+
+    unless ($err) {
+        # Translate port name into Pinnacle port number
+        $port_num = $m->comp('SELF:map_port',hub_ip => $hub_ip, port => $port);
+        
+        $err .= "Port $port not resolved to number. <BR>\n" unless ($port_num =~ /^\d+$/);
+    }
+
+    unless ($err) {
+        local $netdisco::DB = 'Oracle';
+        # Try fetching from connected port first :
+        $ports = sql_rows('netdisco_vw2',['*'],{'HUB'=>$hub_num,'PORT'=>$port_num}) || [];
+    
+        # Next try the unconnected ports:
+        unless (scalar @$ports) {
+            $ports = sql_rows('netdisco_vw1',['*'],{'HUB'=>$hub_num,'PORT'=>$port_num}) || [];
+            foreach my $row (@$ports){
+                $row->{BUILDING} = 'Unconnected';   
+                $row->{BLDG} = '';
+                $row->{ROOM} = '-';
+                $row->{JACK} = '-';
+            }
+        }
+
+        unless (scalar @$ports){
+            $err .=  "$hub / $port ($port_num) not found in Pinnacles database.<BR>\n";
+        }
+    }
+}
+
+# Search for jack -> switch mappings    
+if ($building and scalar(@rooms)){
+    if (grep(/^all$/,@rooms)){
+        local $netdisco::DB = 'Oracle';
+        $jacks = sql_rows('netdisco_vw2',['*'],{'BLDG'=>$building});
+    } else {
+        local $netdisco::DB = 'Oracle';
+        $jacks = sql_rows('netdisco_vw2',['*'],{'BLDG'=>$building,'ROOM'=>[\@rooms]});
+    }
+
+    unless (scalar @$jacks){
+        $err .= "No Jacks found for building $building.<BR>\n";
+    }
+}
+</%init>
+%#
+%# show_jacks() - Display results
+%#
+<%method show_jacks>
+<h3>Jack List</h3>
+% unless (scalar @$jacks) {
+<h4>No Jacks found for Building <%$arg_building%>.</h4>
+% return; }
+<h4>Building : <A HREF="<%$r->uri%>?building=<%$arg_building%>"><%$jacks->[0]->{BUILDING}%> (<%$arg_building%>)</a></h4>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=2 WIDTH="100%">
+<TR>
+    <TH>Jack</TH>
+    <TH>Room</TH>
+    <TH>Switch / Port <BR>
+    <font size=-2>(Pinnacle Port)</font>
+    </TH>
+</TR>
+% foreach my $row (sort {$a->{ROOM} cmp $b->{ROOM}} @$jacks){
+%   my $hub = $row->{HUB};
+%   $hub_ip = $m->comp('SELF:hub_ip',hub_no => $hub);
+%   my $port = $m->comp('SELF:map_port_rev', port => $row->{PORT}, hub_ip => $hub_ip);
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><%$row->{JACK}%></TD>
+    <TD><A HREF="<%$r->uri%>?building=<%$arg_building%>&rooms=<%$row->{ROOM}%>"><%$row->{ROOM}%></A></TD>
+    <TD><A HREF="device.html?ip=<%$hub_ip|u%>&port=<%$port%>">Hub<%$hub%> / <%$port%></A>
+% if ($row->{PORT} ne $port) {
+        (<%$row->{PORT} %>) \
+% }
+    </TD>
+</TR>
+%}
+</TABLE>
+<% scalar @$jacks %> jacks found.
+</%method>
+%#
+%# show_ports() - Display results from port_info
+%#
+<%method show_ports>
+<h3>Port Info</h3>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=2 WIDTH="100%">
+<TR>
+    <TH>Switch / Port</TH>
+    <TH>Building</TH>
+    <TH>Room</TH>
+    <TH>Jack</TH>
+</TR>
+% foreach my $row (@$ports){
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><A HREF="device.html?ip=<%$hub_dns|u%>&port=<%$arg_port|u%>"><%$hub_dns%> / <%$arg_port%></A></TD>
+    <TD><A HREF="<%$r->uri%>?building=<%$row->{BLDG}|u%>"><%$row->{BUILDING}%> (<%$row->{BLDG}%>)</A></TD>
+    <TD><A HREF="<%$r->uri%>?building=<%$row->{BLDG}|u%>&rooms=<%$row->{ROOM}|u%>"><%$row->{ROOM}%></A></TD>
+    <TD><%$row->{JACK}%></TD>
+</TR>
+%}
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><FONT size=-2>(Click for Device View)</FONT></TD>
+    <TD><FONT size=-2>(Click to Find Jacks in Building)</FONT></TD>
+    <TD><FONT size=-2>(Click to Find Jacks in Room)</FONT></TD>
+    <TD>&nbsp;</TD>
+</TR>
+</TABLE>
+<P><P>
+Data imported live from Pinnacles database.
+</%method>
+%#
+%# show_rooms() - Fetch rooms in a building from pinnacle
+%#
+<%method show_rooms>
+<h3>Jack Search - Select Rooms</h3>
+<%perl>
+my $rooms;
+{
+    local $netdisco::DB = 'Oracle';
+    $rooms = sql_rows('netdisco_vw2',['distinct ROOM','BLDG','BUILDING'],{'BLDG'=>$arg_building}) || [];
+}
+unless (scalar @$rooms){
+    $m->out("No rooms found for building No. $arg_building.<BR>\n");
+    return;
+}
+</%perl>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<INPUT TYPE="HIDDEN" NAME="building" VALUE="<%$arg_building%>">
+<h4>Building : <%$rooms->[0]->{BUILDING}%> (<%$arg_building%>)</h4>
+<TABLE BORDER=0 CLASS="box" CELLSPACING=2 CELLPADDING=3>
+<TR>
+    <TD>Select Rooms : </TD>
+    <TD><SELECT NAME="rooms" MULTIPLE SIZE=5>
+        <OPTION VALUE="all" SELECTED>All Rooms
+% foreach my $row (sort {$a->{ROOM} <=> $b->{ROOM}} @$rooms){
+        <OPTION VALUE="<%$row->{ROOM}|h%>"><%$row->{ROOM}%>
+%}
+        </SELECT>
+    </TD>
+</TR>
+<TR>
+    <TD COLSPAN=2><INPUT TYPE="SUBMIT" VALUE="List Jacks"></TD?
+</TR>
+</TABLE>
+</FORM>
+</%method>
+%#
+%# list_buildings() - Populates drop-downs with options from Pinnacles
+%#
+<%method list_buildings>
+<h3>Jack Search - Building List</h3>
+<%perl>
+my $buildings;
+$m->flush_buffer;
+my $time1 = time;
+{
+    local $netdisco::DB = 'Oracle';
+    $buildings = sql_rows('netdisco_vw2',['DISTINCT BLDG,BUILDING']) || ();
+}
+</%perl>
+<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<SELECT NAME="building" SIZE=5>
+% foreach my $row (sort {lc($a->{BUILDING}) cmp lc($b->{BUILDING})} @$buildings){
+    <OPTION VALUE="<%$row->{BLDG} |h %>">(<%$row->{BLDG}%>) <%$row->{BUILDING}%>
+% }
+</SELECT>
+<BR>
+<INPUT TYPE="submit" VALUE="List Rooms">
+</FORM>
+%my $time2 = time;
+<font size=-2>Data took <%$time2 - $time1 %> seconds to load.</font>
+</%method>
+%#
+%# map_port() - Translates device port name into Pinnacle port number
+%#
+<%method map_port>
+<%args>
+$port
+$hub_ip
+</%args>
+<%perl>
+# Cisco 1900, Bay, HP 4000, ... - Just a number
+if ($port =~ /^\d+$/){
+    return $port;
+}
+
+# Load Ports from database :
+my $db_ports = $m->comp('SELF:db_ports',hub_ip => $hub_ip);
+
+my $parse_cards = 0; my $parse_reg = '';
+# Cisco 292x - FastEthernet1/35
+if ($port =~ /^FastEthernet\d+\/\d+$/){
+    $parse_cards++;
+    $parse_reg = '^FastEthernet(\d+)\/(\d+)$';
+}
+
+# Cisco 5500 - 10.1
+if ($port =~ /^\d+\.\d+$/){
+    $parse_cards++;
+    $parse_reg = '^(\d+)\.(\d+)$';
+}
+
+# HP 410x - C15
+if ($port =~ /^[a-zA-Z]{1}\d+$/){
+    $parse_cards++;
+    $parse_reg = '^([a-zA-z]{1})(\d+)$';
+}
+
+# Get number of ports in each card
+my %max_port;
+foreach my $dev_port (@$db_ports){
+    $dev_port = $dev_port->{port};
+    # find the largest port for each card: 
+    if ($dev_port =~ /$parse_reg/){
+        my $dev_card = $1; my $dev_sub_port = $2; 
+        $max_port{$dev_card} = $dev_sub_port 
+            if (! defined $max_port{$dev_card} 
+                  or $max_port{$dev_card} < $dev_sub_port
+               );
+    }
+}
+
+# Add on the number of ports for each card above
+if ($parse_cards and $port =~ /$parse_reg/){
+    my $card = $1;  my $sub_port = $2;
+
+    # Don't bother calculating if we're the first card
+    return $sub_port if ($card  =~ /^(0|a|A|FastEthernet0)$/);
+
+    # Go through each card and add ports if card is above us
+    foreach my $dev_card (keys %max_port){
+        # See if the card names are alpha, check for lower alpha
+        if ($dev_card =~ /^[a-z]$/i){
+            # hope that there is no case mixing in port names
+            $sub_port += $max_port{$dev_card} if (ord($dev_card) < ord($card));
+        }
+
+        # Numeric Card Names
+        if ($dev_card =~ /^\d+$/){
+            $sub_port += $max_port{$dev_card} if ($dev_card < $card);
+        }
+    }
+    return $sub_port;
+}
+</%perl>
+</%method>
+%#
+%# map_port_rev() - Reverse mapping from a pinnacle port number to a netdisco port
+%#                  Takes the list of ports, runs it through sort_port() and then
+%#                  returns the index of the given port.
+%#
+<%method map_port_rev>
+<%args>
+$hub_ip
+$port
+</%args>
+<%perl>
+my $db_ports = $m->comp('SELF:db_ports',hub_ip => $hub_ip);
+my @port_list = sort sort_port map {$_->{port}} @$db_ports;
+# Check for out of range index
+return undef if $port >= scalar @port_list;
+return $port_list[$port-1];
+</%perl>
+</%method>
+%#
+%# db_ports() - Returns info from device_ports, caches data.
+%#
+<%method db_ports>
+<%args>
+$hub_ip
+</%args>
+<%perl>
+return $db_ports_cache{$hub_ip} if defined $db_ports_cache{$hub_ip};
+$db_ports_cache{$hub_ip} = sql_rows('device_port',['ip','port'],{'ip'=>$hub_ip});
+return $db_ports_cache{$hub_ip};
+</%perl>
+</%method>
+%#
+%# hub_ip() - Returns IP address when given hub # from pinnacles.  Somewhat of a guess.
+%#
+<%method hub_ip>
+<%args>
+$hub_no
+</%args>
+<%perl>
+return $hub_ip_cache{$hub_no} if defined $hub_ip_cache{$hub_no};
+$hub_ip_cache{$hub_no} = sql_scalar('device',['ip'],{'dns'=>"hub$hub_no\.%"});
+return $hub_ip_cache{$hub_no};
+</%perl>
+</%method>
+<%method err>
+% return unless $err;
+<h3><%$err%></h3>
+</%method>
+<%method title>
+- Port Info \
+</%method>
+%# $Id$
+%# vim:syntax=mason

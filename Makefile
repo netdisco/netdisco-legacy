@@ -37,7 +37,7 @@ api_doc:
 readme:
 	echo "Creating README"
 	$(POD2TEXT) -l README.pod > README
-	$(POD2HTML) --htmlroot=/netdisco/doc --podpath=.  README.pod > html/doc/README.html
+	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc README.pod > html/doc/README.html
 
 test:
 	perl -cw netdisco.test

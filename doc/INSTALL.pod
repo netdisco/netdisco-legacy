@@ -16,7 +16,7 @@ Max Baker
 
 =item * Net-SNMP   (5.0.2 and newer advised)
 
-=item * PostgreSQL (7.2   and newer advised)
+=item * PostgreSQL (7.3   and newer advised)
 
 =item * Mason      (1.16 or newer required)
 

@@ -14,6 +14,8 @@ Netdisco will auto-discover the physical (layer 2) topology of a network using t
 
 Netdisco uses only SNMP to poll devices and does not require enable passwords.  
 
+Netdisco was designed and built at UCSC.
+
 =head1 FEATURES
 
 =over 
@@ -101,7 +103,6 @@ and the IP addresses that have been associated with it.
 
 =back 
 
-Netdisco was custom built for UCSC
 
 =head1 GLOSSARY
 
@@ -183,7 +184,7 @@ see L<INSTALL|INSTALL> for full instructions
 =item -b
 
 Batch Mode.  Redirect output to log file.  Log file directory set in configuration file 
-under L<"datadir">.
+under L<datadir>.
 
 =item -C
 
@@ -195,15 +196,19 @@ DEBUG.  Sends copious information to STDOUT
 
 =item -L 
 
-No Log.  This will not add entries to the L<"log"> table.
+No Log.  This will not add entries to the L<log|/"item_log"> table.
 
 =item -n
 
-Delete Nodes.  Used with L<"-E"> only.
+Delete Nodes.  Used with L<-E|/"item_-E"> only.
 
 =item -N 
 
-New Only.  On a network discovery L<"-r">, only discover found devices that aren't in the database. 
+New Only.  On a network discovery L</"-r">, only discover found devices that aren't in the database. 
+
+=item -P
+
+Port.  Specify Port for removal of nodes L<-e>.
 
 =item -S
 
@@ -211,7 +216,7 @@ Debug.  carp() SQL commands.  Sets $netdisco::SQLCARP to 1.
 
 =item -V
 
-archiVe nodes.  Used with L<"-e"> only.
+archiVe nodes.  Used with L<-e> only.
 
 =back
 
@@ -225,12 +230,12 @@ Arp Walk.  ArpNip each device that has Layer 3 capabilities.
 
 =item -A
 
-ArpNip.  ArpNip's a single device.  See L<"ArpNipper"> in Design.
+ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 
 =item -B
 
-Backup.  Create backup data files for node,node_ip,device, and device_ip tables.
-Calls database cleanup routines (-K) as well.
+Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
+Calls database cleanup routines (L<-K>) as well.
 
 =item -d 
 
@@ -238,16 +243,17 @@ Discover Device.
 
 =item -e
 
-Expire Nodes for given device. Use L<"-V"> to archiVe instead of delete.
+Expire Nodes for given device. Use L<-V> to archiVe instead of delete.  Specify a 
+port with L<-P> to delete or archive nodes on a per port basis.
 
 =item -E 
 
-Expire given device. Use L<"-n"> to delete nodes as well.
+Expire given device. Use L<-n> to delete nodes as well.
 
 =item -F 
 
-Discover Device from given File.   Used to restore backed up info from L<"-B">, and to 
-discover devices that are not available through topology information.  Use L<"-T"> to 
+Discover Device from given File.   Used to restore backed up info from L<-B>, and to 
+discover devices that are not available through topology information.  Use L<-T> to 
 only import Topology Information.
 
 =item -g
@@ -258,6 +264,11 @@ Graph.  Creates graph -- both GIF and ImageMap.
 
 Change IP address of device.  Creates new entry, removes old one and moves nodes
 over to the new one. 
+
+=item -I
+
+Expire IP Addresses from L<node_ip|"item_node_ip"> table.   This will delete entries from the node_ip table
+that are not matching entries (MAC Addresses) found in the node or device_port tables.
 
 =item -k
 
@@ -296,12 +307,19 @@ Control the Admin Daemon.  Takes arguments (start,stop,status,restart).
 
 =item  -r 
 
-Walk the network with the given root.  Use L<"-N"> to discover new devices only.  Given root device
+Walk the network with the given root.  Use L<-N> to discover new devices only.  Given root device
 will always be discovered.
 
 =item -R 
 
-Refresh devices.  Will run a discover (L<"-d">) for each device in the database.
+Refresh devices.  Will run a discover (L<-d>) for each device in the database.
+
+=item -T
+
+Import Topology Data.  Will import manual topology data stored in file specified by 
+configuration option L<topofile> . Use L<-F> to specify a different file from the
+command line. 
+
 
 =item -u
 
@@ -319,7 +337,7 @@ shell history file and exported to the process table.
 
 =item Refreshing a device
 
-To refresh the device and its ports, use the L<"-d"> command:
+To refresh the device and its ports, use the L<-d> command:
 
 C<netdisco -d mydevice>
 
@@ -329,7 +347,7 @@ manual topology data.
 =item Importing Topology Information
 
 To import topology information, make sure the topology filename is set in netdisco.conf
-and use the L<"-T"> command:
+and use the L<-T> command:
 
 C<netdisco -T>
 
@@ -361,24 +379,31 @@ Changing the IP address of a device will:
 
 =item Deleting a Device
 
-To delete a device use the L<"-E"> command followed by the device name or IP.  Set L<"-n"> to 
+To delete a device use the L<-E> command followed by the device name or IP.  Set L<-n> to 
 delete all the nodes seen on that device as well 
 
-This is rather permanent.  Make sure you run L<"-B">ackup before you do this.
+This is rather permanent.  Make sure you run L<-B>ackup before you do this.
 
 =item Deleting Nodes
 
-To delete nodes you have two options : Database Cleanup or Expire Nodes
+Nodes consist of two components -- the switch port to MAC address mapping in the C<node> table, 
+and the MAC address to IP mapping in the C<node_ip> table. 
 
-Expire Nodes will delete (or archive) all the nodes for one device using the L<"-e"> command.
+To remove nodes from a switch, use the Admin Panel on the web side and choose either
+C<Delete Nodes>  or C<Archive Nodes>.   Archving nodes will set the archive bit so that the 
+data will be available, but not always showing.   You can also delete nodes from the command 
+line using the L<-e> command with or without the L<-V> flag.
 
-Database Cleanup L<"-K"> will delete nodes that seem to be extraneous.  See L<"-K"> for more details.
+Database Cleanup L<-K> will delete nodes that seem to be extraneous.  See L<-K> for more details.
 
-This is rather permanent.  Make sure you run L<"-B">ackup before you do this.
+Once you have cleared out nodes from a switch, then run L<-I> to remove unused node to IP mappings.
+
+This is rather permanent.  Make sure you run L<-B>ackup before you do this.
 
 =item Adding / Changing Users
 
-C</usr/local/apache/bin/htpasswd /usr/local/netdisco/users.pw newusername>
+The easiest way to add a user is to use the C<Add User> form in the Admin Panel.  After first installing
+netdisco you need to add an admin user by running L<-u>.  
 
 =back
 
@@ -624,7 +649,7 @@ and so an oversized font is used.
 
 STRING. Colon separated list of values.  Multiple node_map entries can exist.
 Entry is in format:
-    
+
     Variable:Regular Expression:Attribute:Value
 
 Variables that you can use include : label,ip
@@ -657,6 +682,19 @@ STRING. Default style of device, normally filled.
 =back
 
 =head2 Logs
+
+More about logs here later.
+
+=head1 FAQ
+
+=over
+
+=item Localhost (127.0.0.1) is showing up on CDP Links
+
+See "How the Switch Selects the IP Address To Include in Outbound CDP
+Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
+
+=back
 
 =head1 DESIGN
 
@@ -732,9 +770,9 @@ The original MacSucker was written by Mark Boolootian (booloo@ucsc.edu)
 
 =item Helper Routines
 
-All the routines for creating backups, logging, etc.
-Extract more info with C<pod2text netdisco E<gt> netdisco.txt>, 
-or just browse the source code.
+The 40+ routines for creating backups, logging, etc.
+
+Browse the source code or check out netdisco-api for more info.
 
 =back
 
@@ -782,13 +820,13 @@ Holds log entries for human use.
 Holds an entry for each MAC address connected to the network that isn't a device. Tells
 on which switch port the node was seen, and when it was seen there.  Also holds the archived
 data on node location.  Archived data has the column ''active'' set to false. Data comes from 
-L<"MacSucker">
+L<MacSucker>
 
 =item node_ip
 
 Maps a MAC Address to an IP address.  Has no notion of where this node was seen.   Keeps
-time stamps of when this is from.  Data comes from L<"ArpNipper">.  Archived data is similar
-to the L<"node"> table, where ``active'' is set to false for archived data.
+time stamps of when this is from.  Data comes from L<ArpNipper>.  Archived data is similar
+to the L<node> table, where ``active'' is set to false for archived data.
 
 =item sessions
 
