@@ -2,6 +2,7 @@
 [<A HREF="#age">By Age</a>]
 [<A HREF="#model">By Model</a>]
 [<A HREF="#os">By OS</a>]
+[<A HREF="#location">By Location</a>]
 <h4><A NAME="age">By Age</A></h4>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <TABLE BORDER=0>
@@ -64,7 +65,7 @@
     <TH>Count</TH>
 </TR>
 <%perl>
-my $count = 0; $odd = 1;
+$count = 0; $odd = 1;
 foreach my $row (sort 
     {
         # Sort by vendor then model
@@ -86,7 +87,6 @@ foreach my $row (sort
     <TD><%$row->{count}%></TD>
 </TR>
 %                  }
-%#<TR CLASS="match-<%++$odd%2%>"><TD COLSPAN=3><HR NOSHADE></TD></TR>
 <TR CLASS="match-<%++$odd%2%>">
     <TD>&nbsp;</TD>
     <TD>Total:</TD>
@@ -128,21 +128,31 @@ foreach my $row (sort
     <TD><%$count%></TD>
 </TR>
 </TABLE>
+<h4><A NAME="location">By Location</A></h4>
+% if ($show_loc) {
+<& SELF:show_loc &>
+% } else {
+<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<INPUT TYPE="hidden" NAME="show_loc" VALUE=1>
+<INPUT TYPE="SUBMIT" VALUE="Inventory by Location">
+</FORM>
+% }
 <%args>
 $cmd      => undef
 $age_type => 'last'
 $age_val  => 2
 $age_mul  => 'months'
 $age_bool => 'not in'
+$show_loc => 0
 </%args>
 <%shared>
 my $age = [];
 my $domain = $netdisco::CONFIG{domain};
 my $odd = 1;
-my ($arg_cmd,$arg_age_type);
+my ($arg_cmd,$arg_age_type,$count,$arg_show_loc);
 </%shared>
 <%init>
-$arg_cmd = $cmd; $arg_age_type = $age_type;
+$arg_cmd = $cmd; $arg_age_type = $age_type; $arg_show_loc = $show_loc;
 my $old_vendor = '';
 my $model_count = sql_rows('device',['vendor','model','count(*)'],
                            undef,undef,'GROUP by model,vendor');
@@ -179,7 +189,7 @@ if ($cmd eq 'age'){
         $val = "$bool $interval"
     }
 
-    $age = sql_rows('device',['ip','dns','vendor','model','uptime',
+    $age = sql_rows('device',['ip','name','vendor','model','uptime',
                               'age(now(),creation) as creation_age',
                               'age(now(),last_discover) as last_discover_age'
                              ],
@@ -187,6 +197,9 @@ if ($cmd eq 'age'){
                    );
 }
 </%init>
+%#
+%#  show_age() -  Process by age requests
+%#
 <%method show_age>
 <H4>Results</H4>
 % unless (scalar @$age) {
@@ -230,6 +243,9 @@ foreach my $dev (@results) {
 
 Found <%scalar @$age%> devices.
 </%method>
+%#
+%# .trim_age(age=>string) - Trim postgres ugly age string
+%#
 <%method .trim_age>
     <%args>
         $age => ''
@@ -244,6 +260,56 @@ Found <%scalar @$age%> devices.
         return $age;
     </%perl>
 </%method>
+%#
+%# show_loc() - Sorts and shows by location
+%#
+<%method show_loc>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
+<TR>
+    <TH>Location</TH>
+    <TH>Name</TH>
+    <TH>IP Address</TH>
+    <TH>Vendor</TH>
+    <TH>Model</TH>
+</TR>
+<%perl>
+my $location_count = sql_rows('device',['location','name','ip','vendor','model'],
+                        undef,undef,undef);
+$count = 0; $odd = 1; my $old_loc = '';
+foreach my $row (sort 
+    {
+        # Sort by Location => Name => IP Address => Vendor => Model
+        return $a->{location} cmp $b->{location} if $a->{location} ne $b->{location};
+        return $a->{name}     cmp $b->{name}     if $a->{name}     ne $b->{name};
+        return $a->{ip}       cmp $b->{ip}       if $a->{ip}       ne $b->{ip};
+        return $a->{vendor}   cmp $b->{vendor}   if $a->{vendor}   ne $b->{vendor};
+        return $a->{model}    cmp $b->{model}    if $a->{model}    ne $b->{model};
+    } @$location_count
+                ) {
+
+        $count += $row->{count};
+        $odd++ if $row->{location} ne $old_loc;
+        $old_loc = $row->{location};
+</%perl>
+<TR CLASS="match-<%$odd%2%>">
+    <TD><A><%$row->{location}%></A></TD>
+    <TD><A><%$row->{name}%></A></TD>
+    <TD><A><%$row->{ip}%></A></TD>
+    <TD><A><%$row->{vendor}%></A></TD>
+    <TD><A><%$row->{model}%></A></TD>
+</TR>
+%                  }
+<TR CLASS="match-<%++$odd%2%>">
+    <TD COLSPAN=3>&nbsp;</TD>
+    <TD>Total:</TD>
+    <TD><%scalar(@$location_count)%></TD>
+</TR>
+</TABLE>
+[<A HREF="<%$r->uri%>">Hide</A>]
+</%method>
+%#
+%# title()
+%#
 <%method title>
 - Device Inventory \
 </%method>
