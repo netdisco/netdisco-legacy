@@ -7,7 +7,7 @@ CREATE TABLE node (
     switch      inet,
     port        text,
     active      boolean,
-    oui         text,   -- added because dynamic parsing of oui in selects too slow
+    oui         varchar(8),  -- fe:9a:57
     time_first  timestamp default now(),
     time_last   timestamp default now(),
     PRIMARY KEY(mac,switch,port) 
