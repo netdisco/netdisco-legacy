@@ -56,15 +56,13 @@ $done => undef
 <%init>
 
 my $err = '';
+my $secure = &is_secure;
 
 # Force us to login via HTTPS if configured
-if (defined $netdisco::CONFIG{secure_login} 
-        and $netdisco::CONFIG{secure_login} =~ /(true|1|yes)/
-        and $r->subprocess_env('https') ne 'on') {
-    my $server = $r->hostname;
+if (!$secure){ 
     my $page   = $r->uri;
     my $args   = $r->args;
-    my $url = "https://$server$page";
+    my $url    = url_secure($page); 
     HTML::Mason::Escapes::url_escape(\$args) if $args;
     $url .= "?$args" if ($args);
     $m->redirect($url); 

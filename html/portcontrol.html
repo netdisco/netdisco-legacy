@@ -17,17 +17,21 @@ $reason => ''
 # scope
 my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num);
 my $user      = $m->session->{user};
-my $port_ctl  = $m->session->{user_port_ctl};
-my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $userip    = $r->connection->remote_ip; 
-my $timeout   = $netdisco::CONFIG{port_control_timeout} || 60;
+my $port_ctl  = $m->session->{user_port_ctl};
+my $secure    = &is_secure;
+my $timeout   = $netdisco::CONFIG{portctl_timeout} || 60;
 my $odd = 1 ;
 my %Reasons = ( ''            => ['Select a Reason',''],
                 %netdisco::PORT_CONTROL_REASONS);
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
-if ($cmd =~ /^(up|down|switch)$/ and (!$port_ctl or !$secure)) {
+if ($cmd =~ /^(up|down|switch)$/ and !$secure) {
+    my $url = url_secure($r->uri);
+    $m->redirect($url);
+}
+if ($cmd =~ /^(up|down|switch)$/ and !$port_ctl) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }

@@ -9,19 +9,20 @@ $pw2 => undef
 $cmd => undef
 </%args>
 <%shared>
-my $user = $m->session->{user};
-my $secure = $r->subprocess_env('https') eq 'on';
-my $err = '';
+my $user   = $m->session->{user};
+my $secure = &is_secure;
+my $err    = '';
 </%shared>
 <%init>
-# Force us to login via HTTPS if configured
-if (defined $netdisco::CONFIG{secure_login} 
-        and $netdisco::CONFIG{secure_login} =~ /(true|1|yes)/
-        and !$secure) {
-    my $server = $r->hostname;
-    my $page   = $r->uri;
-    my $url = "https://$server$page";
-    $m->redirect($url); 
+# Send to https if not secure.
+unless ($secure){
+    my $url = url_secure($r->uri);
+    $m->redirect($url);
+}
+
+unless ($user){
+    $err = "Who are you?";
+    $cmd = undef;
 }
 
 if ($cmd eq 'change'){

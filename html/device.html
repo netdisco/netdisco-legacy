@@ -46,15 +46,10 @@ my %device_info = (
                     );
 
 # These are switches that we want a link to their web interface.
-my %web_vendors = ( 'hp' => 1,
-                    'bay' => 1);
-
-my %web_models  = ( 'wsc1900' => 1,
-                    'wsc1900c' => 1
-                  );
-
+my $web_vendors  = $netdisco::CONFIG{web_console_vendors} || {};
+my $web_models   = $netdisco::CONFIG{web_console_models} || {};
 my $user         = $m->session->{user};
-my $secure       = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $secure       = &is_secure;
 my $port_ctl     = $m->session->{user_port_ctl};
 my $port_control = ($port_ctl and $secure);
 my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
@@ -222,7 +217,7 @@ return unless defined $device;
 my $dns = $device->{dns} || '[No DNS]';
 my $vendor = $device->{vendor};
 my $model  = $device->{model};
-my $want_web_link = (defined $web_vendors{$vendor} or defined $web_models{$model});
+my $want_web_link = (defined $web_vendors->{$vendor} or defined $web_models->{$model});
 my $web_dns = $dns;
 $web_dns =~ s/\Q$domain\E//;
 </%perl>

@@ -44,7 +44,7 @@ $port     => ''
 <%shared>
 my $user      = $m->session->{user};
 my $is_admin  = $m->session->{user_admin};
-my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $secure    = &is_secure;
 my $domain    = $netdisco::CONFIG{domain};
 my %actions = ( 
             # action       => [longname, confirm action,show]
@@ -70,12 +70,17 @@ my @act_ignore_default = qw/portcontrol test/;
 %#
 %#
 <%init>
-# Check Authorization 
-unless ($secure and $is_admin){
+# Send to https if not secure.
+unless ($secure){
+    my $url = url_secure($r->uri);
+    $m->redirect($url);
+}
+
+# Send to login if not admin.
+unless ($is_admin) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
-
 # Move args to shared space for methods
 $arg_dev = $dev; $arg_act = $action;
 $arg_debug = $debug; 

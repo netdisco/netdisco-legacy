@@ -15,20 +15,24 @@ $confirm => 0
 $pw    => undef
 </%args>
 <%shared>
-my ($this_user,$users,$is_admin,$secure,%user_hash,$arg_user);
+my ($this_user,$users,$is_admin,%user_hash,$arg_user);
 my $odd =0;
 my $err = '';
+my $secure = &is_secure;
 </%shared>
 <%init>
 $this_user = $m->session->{user};
 $is_admin  = $m->session->{user_admin};
-$secure    = $r->subprocess_env('https');
 $arg_user = $user;
 
-# Check Authorization - User in portcontrol list in config file, and connected via https
-unless ($secure eq 'on' and $is_admin){
-    #$m->clear_buffer;
-    #$m->abort(401);
+# Send to https if not secure.
+unless ($secure){
+    my $url = url_secure($r->uri);
+    $m->redirect($url);
+}
+
+# Send to login if not admin.
+unless ($is_admin) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }

@@ -71,8 +71,10 @@
 % }
 <TR>
     <TD CLASS="sidebar-<% ++$odd%2 %>">
-% if ($secure) {
-<IMG SRC="<%$path%>/icon_lock.gif" ALT="SSL Connected" HEIGHT=15 WIDTH=15>
+% if ($secure and $netdisco::CONFIG{secure_server} ) {
+<IMG SRC="<%$path%>/icon_lock.gif" ALT="Secure Connection" TITLE="Secure Connection" HEIGHT=15 WIDTH=15>
+% } elsif (!$secure) {
+<A HREF="<%$url%>" ALT="Switch to Secure Connection for more features" TITLE="Switch to Secure Connection for more features"><IMG SRC="<%$path%>/icon_up.gif" WIDTH=11 HEIGHT=10 BORDER=0></A> 
 % }
 
 % if ($user) {
@@ -90,9 +92,13 @@
 my $odd    = 0;
 my $path   = $netdisco::CONFIG{webpath};
 my $user   = $m->session->{user};
-my $secure = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $secure = &is_secure;
 my $admin  = $m->session->{user_admin};
-my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
+my $port_info = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /^(1|t|y)/i) ? 1 : 0;
+my $url    = $r->uri;
+my $args   = $r->args;
+$url .= "?$args" if (defined $args and length($args));
+$url = url_secure($url);
 </%shared>
 %# $Id$
 %# vim:syntax=mason
