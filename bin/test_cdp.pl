@@ -6,10 +6,17 @@ $|=1;
 
 print "Perl Version $].  SNMP : $SNMP::VERSION\n";
 
-my $host = shift || 'commcat';
-my $comm = shift || 'public';
-my $ver  = shift || 2;
-my $debug = shift || 1;
+my ($host,$comm,$ver,$debug) = @ARGV;
+unless (scalar(@ARGV) >=3 ){
+       die << "end_usage";
+$0 - spit out cdp tables
+    USAGE: $0 hostname community version debug
+    
+    eg. $0 commcat public 2 1
+
+end_usage
+}
+$debug ||= 1;
 
 $cdp = new SNMP::Info(
         AutoSpecify => 1,
