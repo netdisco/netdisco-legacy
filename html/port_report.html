@@ -45,10 +45,6 @@
     </TD>
 </TR>
 <TR CLASS="match-1">
-    <TD>Time Frame:</TD>
-    <TD>All.</TD>
-</TR>
-<TR CLASS="match-0">
     <TD>User:</TD>
     <TD>
         <SELECT NAME="user" MULTIPLE SIZE=4>
@@ -59,7 +55,7 @@
         </SELECT>
     </TD>
 </TR>
-<TR CLASS="match-1">
+<TR CLASS="match-0">
     <TD>Sort By:</TD>
     <TD>
         <SELECT NAME="sort" SIZE=3>
@@ -69,21 +65,45 @@
         </SELECT>
     </TD>
 </TR>
-<TR CLASS="match-1"><TD COLSPAN=2><hr noshade></TD></TR>
 <TR CLASS="match-1">
+    <TD>Time Frame:</TD>
+    <TD>
+    <INPUT TYPE="radio" NAME="timeframe" VALUE=""<%$timeframe eq '' ? ' CHECKED' : ''%>          >All&nbsp;
+    <INPUT TYPE="radio" NAME="timeframe" VALUE="today"<%$timeframe eq 'today' ? ' CHECKED' : ''%>>Today
+    <INPUT TYPE="radio" NAME="timeframe" VALUE="week"<%$timeframe eq 'week' ? ' CHECKED' : ''%>  >This Week
+    <INPUT TYPE="radio" NAME="timeframe" VALUE="month"<%$timeframe eq 'month' ? ' CHECKED' : ''%>>This Month
+    <BR>
+    <INPUT TYPE="radio" NAME="timeframe" VALUE="interval"<%$timeframe eq 'interval' ? ' CHECKED' : ''%>>Within the last<font size=-2></font>&nbsp;
+    <SELECT NAME="timenumber">
+% for (1..31) {
+        <OPTION VALUE="<%$_%>"<%$timelength eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+    </SELECT>
+    <SELECT NAME="timelength">
+% for (qw/days months years/) {
+        <OPTION VALUE="<%$_%>"<%$timenumber eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+    </SELECT>
+    </TD>
+</TR>
+<TR CLASS="match-0"><TD COLSPAN=2><hr noshade></TD></TR>
+<TR CLASS="match-0">
     <TD COLSPAN=2 ALIGN=CENTER><INPUT TYPE=SUBMIT VALUE="Generate Report"> [<a href="<%$r->uri%>">Reset</A>]</TD>
 </TR>
 </TABLE>
 </FORM>
 <& SELF:report &>
 <%args>
-$cmd      => ''
-$text     => ''
-$dir      => 'disable'
-@reason   => ()
-$type     => '' 
-@user     => ()
-$sort     => 'Date'
+$cmd        => ''
+$text       => ''
+$dir        => 'disable'
+@reason     => ()
+$type       => '' 
+$timeframe  => ''
+$timelength => 'days'
+$timenumber => 1
+@user       => ()
+$sort       => 'Date'
 </%args>
 <%doc>
 TODO:
@@ -119,6 +139,21 @@ foreach my $row (@$db_temp){
 # Search for ports
 if ($cmd eq 'search'){
 
+    #Get current time
+    my ($second, $minute, $hour, $day, $month, $year, $weekDay, $dayofyear, $isDST) = localtime;
+    if($day < 10) {
+       $day = "0" . $day;
+    }
+    $month++;
+    if($month < 10) {
+    	$month = "0" . $month;
+    }
+    $year += 1900;
+    my $yearMonth = $year . "-" . $month;
+    my $yearMonthDay = $yearMonth . "-" . $day;
+    $timelength =~ s/[^a-z ]+//g;
+    $timenumber = 1 unless $timenumber =~ m/^\d+$/;
+    
     # Get ports from port device log
     my $tables = 'device_port_log l left join device d on d.ip = l.ip';
     my $cols = ['d.dns','l.reason','l.port','l.ip','l.log','l.username','l.userip','l.action','extract(epoch from l.creation) as creation'];
@@ -130,6 +165,21 @@ if ($cmd eq 'search'){
     if ($type eq 'now'){
         $tables .= ' left join device_port p on l.ip = p.ip and l.port = p.port';
         $where->{'p.up_admin'} = 'down';
+    }
+    if ($timeframe eq 'interval'){
+    	if ($timelength eq 'days'){
+		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber day\'";
+	} elsif ($timelength eq 'months'){
+		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber mon\'";
+	} else {
+		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber year\'";
+	}
+    } elsif ($timeframe eq 'today'){
+    	$where->{'l.creation'} = '%'.$yearMonthDay.'%';
+    } elsif ($timeframe eq 'week'){
+    	$where->{'age(l.creation)'} = \\"<= interval \'$weekDay day\'";
+    } elsif ($timeframe eq 'month'){
+    	$where->{'l.creation'} = '%'.$yearMonth.'%';
     }
     #$netdisco::SQLCARP=1;
     $matches = sql_rows($tables,$cols,$where) || [];
