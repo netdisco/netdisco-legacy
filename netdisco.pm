@@ -539,8 +539,8 @@ If passed two hashes, will sort on the key C<ip> or C<remote_ip>.
 
 =cut
 sub sort_ip {
-    my $aval = $::a || $HTML::Mason::Commands::a || $a;
-    my $bval = $::b || $HTML::Mason::Commands::b || $b;
+    my $aval = shift || $::a || $HTML::Mason::Commands::a || $a;
+    my $bval = shift || $::b || $HTML::Mason::Commands::b || $b;
     $aval = $aval->{ip} || $aval->{remote_ip} if ref($aval) eq 'HASH';
     $bval = $bval->{ip} || $bval->{remote_ip} if ref($bval) eq 'HASH';
     my ($a1,$a2,$a3,$a4) = split(/\./,$aval);
