@@ -134,7 +134,7 @@ Netdisco Requires:
 
 =item - Mason             (see L<INSTALL|INSTALL> or L<"http://www.masonhq.com">)
 
-=item - Apache/mod_perl   (recommended not required)
+=item - Apache/mod_perl   (Version 1 required until mod_perl 2.0 release)
 
 =item - OtherPerl Modules (see L<INSTALL|INSTALL>)
 
@@ -204,6 +204,7 @@ ArpNip.  ArpNip's a single device.  See L<"ArpNipper"> in Design.
 =item -B
 
 Backup.  Create backup data files for node,node_ip,device, and device_ip tables.
+Calls database cleanup routines (-K) as well.
 
 =item -d 
 
@@ -263,6 +264,10 @@ Mac Suck given device only.
 
 Import OUI information from oui.txt
 
+=item -p
+
+Control the Admin Daemon.  Takes arguments (start,stop,status,restart).
+
 =item  -r 
 
 Walk the network with the given root.  Use L<"-N"> to discover new devices only.  Given root device
@@ -271,6 +276,14 @@ will always be discovered.
 =item -R 
 
 Refresh devices.  Will run a discover (L<"-d">) for each device in the database.
+
+=item -u
+
+Add or Change a User.  Supply all four arguments (user pw port_control admin) for 
+command-line control, or supply less for interactive prompts.
+
+It's better to use interactive prompts so that the password doesn't get stored in your 
+shell history file and exported to the process table.
 
 =back
 
@@ -379,52 +392,77 @@ Multiple config files can be created, and then used by calling netdisco with the
 
 =over 
 
-=item domain
-
-Trimmed from all DNS names viewed.  Leave blank to show all domain names.
-
-=item topofile
-
-Full path of the file that contains manual topology information.  Defaults to
-netdisco-topology.txt
-
-=item datadir
-
-Full path to the directory that backups and logs will be stored in
-
 =item compress
 
-Full path and command line arguments to the compression program used in L<compresslogs>
+EXECUTABLE. Full path and command line arguments to the compression program used in L<compresslogs>
 
 =item compresslogs 
 
-Set to true to compress log files.  See L<compress> entry above.
+BOOLEAN. Compress log files?  See L<compress> entry above.
 
-=item logextension
+=item datadir
 
-The extension to add to log files.
+PATH. Full path to the directory that backups and logs will be stored in
+
+=item domain
+
+STRING. Trimmed from all DNS names viewed.  Leave blank to show all domain names.
 
 =item ignore_private_nets
 
-Set to true to ignore aliases that are part of private nets:
+BOOLEAN. Set to true to ignore aliases that are part of private nets:
 
     10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24  
 
-=item webpath
+Not fully implemented.
 
-URL Path added to the beginning of links on the web front-end
+=item logextension
 
-=item timeout
-
-Timeout for refreshing or discovering a device (in seconds).
+STRING. The extension to add to log files.
 
 =item macsuck_no
 
-Comma Separated list of devices not to use when macsucking.
+LIST:IPs. Comma Separated list of devices not to use when macsucking.
 
 =item macsuck_timeout
 
-Timeout in seconds for devices when mac sucking.
+SECONDS. Timeout for devices when mac sucking.
+
+=item secure_login
+
+BOOLEAN - Require web login to be under https
+
+=item topofile
+
+FILE. Full path of the file that contains manual topology information.  Defaults to
+F<netdisco-topology.txt>
+
+=item timeout
+
+SECONDS. Timeout for refreshing or discovering a device 
+
+=item webpath
+
+PATH. URL Path added to the beginning of links on the web front-end
+
+=back
+
+=head3 Admin Panel
+
+=over
+
+=item daemon_bg
+
+BOOLEAN.  Run daemon in the background?
+
+=item daemon_pid
+
+FILE.  Filename for the pid file used by admin daemon.  Must be writable by
+daemon user.
+
+=item daemon_poll
+
+SECONDS. Time to wait to check for new items in the queue.
 
 =back
 
@@ -434,15 +472,15 @@ Timeout in seconds for devices when mac sucking.
 
 =item db
 
-Database name
+STRING. Database name
 
 =item dbuser
 
-Database user
+STRING. Database user
 
 =item dbpw
 
-Database Password
+STRING. Database Password
 
 =back
 
@@ -452,15 +490,15 @@ Database Password
 
 =item community
 
-A comma separated list of community strings to try on each device.
+LIST:STRING. A comma separated list of community strings to try on each device.
 
 =item snmpver
 
-Default version to connect with via SNMP.
+INT. Default version to connect with via SNMP.
 
 =item snmpretries
 
-Settings for 'Retries' field passed to SNMP::Session
+INT. Settings for 'Retries' field passed to SNMP::Session
 
 =back
 
@@ -470,83 +508,83 @@ Settings for 'Retries' field passed to SNMP::Session
 
 =item graph
 
-Full path and name to the GIF graph of the network.  Path should be the same
+FILE. Full path and name to the GIF graph of the network.  Path should be the same
 as the netmap.html component.
 
 =item graph_timeout
 
-Time in minutes to allow C<neato> to try and solve the graph.  Default 60min.
+MINUTES. Time to allow C<neato> to try and solve the graph.  Default 60min.
 
 =item graph_map
 
-Full path and name to the ISMAP data for the network.  Path should be the 
+FILE. Full path and name to the ISMAP data for the network.  Path should be the 
 same as the netmap.html component.
 
 =item graph_epsilon
 
-Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
+INT. Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
 Set to an integer value.  This will improve the mapping and visual quality of
 them graph. Each integer step can mean an exponential time increase in the solving
 of the graph.
 
 =item graph_x, graph_y
 
-The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
+STRING. The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
 100 (96 actually).  So 30x30 will give you a graph that is about 3000x3000 pixels wide.
 
 =item graph_fontpath
 
-Full path to the True Type Font (TTF) used in L<node_font>.
+PATH. Full path to the True Type Font (TTF) used in L<node_font>.
 
 =item graph_bg
 
-Background color for the graph.
+STRING. Background color for the graph.
 
 =item graph_color
 
-Text color for the graph
+STRING. Text color for the graph
 
 =item graph_overlap 
 
-Parameter passed to GraphViz for the overlap="" feature.
+BOOLEAN. Parameter passed to GraphViz for the overlap="" feature.
 
 =item node_shape
 
-Default shape for device
+STRING. Default shape for device
 
 =item node_fillcolor
 
-Default background color for device
+STRING. Default background color for device
 
 =item node_font
 
-Name of the True Type Font used for label of node.  See L<graph_fontpath> above.
+FILE. Name of the True Type Font used for label of node.  See L<graph_fontpath> above.
 Exclude .ttf in name.
 
 =item node_fontsize
 
-Size of text in Pixels.  Note that for the graph_overlap=scale option, the font gets scaled down
+FLOAT. Size of text in Pixels.  Note that for the graph_overlap=scale option, the font gets scaled down
 and so an oversized font is used.
 
 =item node_fontcolor
 
-Color of text
+STRING. Color of text
 
 =item node_style
 
-Default style of device, normally filled.
+STRING. Default style of device, normally filled.
 
 =item node_problem
 
-Color to use for devices that are not accessable
+STRING. Color to use for devices that are not accessable
 
 =item edge_color
 
-Default color for link between devices.
+STRING. Default color for link between devices.
 
 =item node_map
 
-Colon separated list of values.  Multiple node_map entries can exist.
+STRING. Colon separated list of values.  Multiple node_map entries can exist.
 Entry is in format:
     
     Variable:Regular Expression:Attribute:Value
@@ -658,6 +696,10 @@ for more information.
 
 =over
 
+=item admin
+
+Queue for admin control panel tasks to be sent back and forth from the front-end.
+
 =item device
 
 Holds device information.  Each device is identified by unique IP Address. 
@@ -696,11 +738,20 @@ Maps a MAC Address to an IP address.  Has no notion of where this node was seen.
 time stamps of when this is from.  Data comes from L<"ArpNipper">.  Archived data is similar
 to the L<"node"> table, where ``active'' is set to false for archived data.
 
+=item sessions
+
+Web sessions created by MasonX::Request::WithApacheSessions.  Stores information about
+a current session in the global $m->session hash under mason.
+
 =item oui
 
 Populated with data from oui.txt  Oui.txt contains the Organizationally Unique Identifiers (OUI) that 
 map a MAC address to a vendor.  The database is controlled by the IEEE.  See L<INSTALL|INSTALL> for more
 information.
+
+=item users
+
+User information for web front end.
 
 =back
 
