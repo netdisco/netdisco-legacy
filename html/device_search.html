@@ -57,12 +57,15 @@
 </FORM>
 <h4>Specific Searches</h4>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
-<INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries"><BR>
-<INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries"><BR>
-<INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info"><BR>
-<INPUT TYPE="submit" name="specific" VALUE="Device Ports with multiple nodes attached."><BR>
-<INPUT TYPE="submit" name="specific" VALUE="Device Ports that are blocking."><BR>
-<INPUT TYPE="submit" name="specific" VALUE="Ports Administratively disabled">
+<DL>
+    <DT>
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Ports with multiple nodes attached.">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Ports that are blocking.">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Ports Administratively disabled">
+</DL>
 </FORM>
 
 <h4>Hints</h4>
