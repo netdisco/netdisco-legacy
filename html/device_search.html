@@ -4,7 +4,9 @@
 
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
 <TR>
+    <TD ROWSPAN=8 WIDTH="8">&nbsp;</TD>
     <TD COLSPAN=4><h4>Search All</h4></TD>
+    <TD ROWSPAN=8 WIDTH="8">&nbsp;</TD>
 </TR>
 <TR>
     <TD colspan=4>
@@ -67,6 +69,7 @@
     <TD COLSPAN=2>
         <P>
         <INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]
+        <P>
     </TD>
     <TD COLSPAN=2>
         Search Term Match: Any<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
@@ -80,6 +83,7 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
     <DT>
+    <DD><INPUT TYPE="submit" name="specific" VALUE="Broken Topology Links">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info">
@@ -98,7 +102,7 @@ entries that have "cat" in them.
     <LI>You can add your own wildcards with *
     <LI>If you want to find blank entries, search on "is null" or conversely,
         "is not null"
-    <LI>You can select multiple for Model,Vendor, and Layers by holding down CTRL as you click.
+    <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
 </UL>
 <!-- took <%$time2 - $time1%> seconds to load -->
 <%args>
@@ -217,6 +221,26 @@ if ($specific =~ /alias/i){
 
     push (@$matches,@$matches_blocking);
     
+} elsif ($specific =~ /broken/i){
+# select d.ip,d.dns,p.port,p.remote_ip,p.remote_port from device_port p , device d
+#        where 
+#           d.ip = p.ip 
+#        and not exists 
+#           (select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port) 
+#        and not exists 
+#           (select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port) 
+#        and p.remote_ip is not null and p.remote_port is not null 
+#        order by p.ip;
+    $matches = sql_rows('device_port p, device d',
+                           ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port'],
+                           {'d.ip' => \'p.ip',
+                            'not exists' => \\'(select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port)',
+                            'not exists ' => \\'(select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port)',
+                            'p.remote_ip' => \\'is not null', 'p.remote_port' => \\'is not null'}
+                          ); 
+    $where->{port}++;
+    $where->{remote_port}++;
+    $where->{remote_ip}++;
 }
 
 # Generalized Search Terms
@@ -287,14 +311,12 @@ if (length($desc)){
 if (length($name)){
     my $match = $m->comp('.match', 'match' => $name);
     push(@{$where->{'d.dns/i.dns'}}, $match);
-    #push(@{$a_where->{'dns'}}, $match);
 }
 
 # Search on IP
 if (length($ip)){
     my $match = $m->comp('.match', 'match' => $ip);
     push(@{$where->{'d.ip/i.alias'}}, $match);
-    #push(@{$a_where->{'alias'}}, $match);
 }
 
 # Run Query
@@ -379,15 +401,22 @@ foreach my $result (@sort_matches){
 %#    <TD><% $ip %></TD>
 <%perl>
     foreach my $col (sort keys %$where){
-       # Trim off table name for column
-       $col =~ s/^[^.]+\.//;
-       next if $col =~ /^(ip|dns|port)$/i; </%perl>
-   <TD><%$result->{$col}%></TD>
+        # Trim off table name for column
+        $col =~ s/^[^.]+\.//;
+        my $val = $result->{$col};
+        next if $col =~ /^(ip|dns|port)$/i; 
+        # Column Specfic stuff
+        if ($col eq 'remote_ip') {
+            $val = "<A HREF=\"node.html?node=$val\">$val</A>";
+        }
+
+</%perl>
+   <TD><%$val%></TD>
 %    }
     </TR>
 %}
   </TABLE>
-<% $count %> Devices matching.
+<% $count %> matches.
 </%method>
 %# $Id$
 %# vim:syntax=mason
