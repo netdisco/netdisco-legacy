@@ -1,0 +1,49 @@
+#!/usr/local/bin/perl -w
+#
+# parse_mac - Used to chew up output from netsnort or other 
+#       Wardriving programs to make lists of known Wireless 
+#
+# $Id$
+
+use DBI;
+use DBD::Pg;
+my $DB      = 'netdisco';
+my $DB_USER = 'user';
+my $DB_PW   = 'pw';
+
+$hex = '[0-9a-h]';
+while (my $file = shift) {
+    open (FILE,"<$file") or die "Can't open $file\n";
+    my @lines = (<FILE>);
+
+    foreach $line (@lines){
+        $line = lc($line);
+        next if $line =~ /ad.{1}?hoc/;
+        if ($line =~ /($hex{2}:$hex{2}:$hex{2}:$hex{2}:$hex{2}:$hex{2})/){
+            $macs{$1}++;
+        }
+    }
+    close FILE;
+}
+
+foreach my $mac (keys %macs){
+    my $oui = substr($mac,0,8);
+    $ouis{$oui}++;
+}
+print join ("\n", sort keys %macs);
+
+print "\n\nFound ", scalar keys %macs, " MACs \n\n";
+
+my $dbh = DBI->connect("dbi:Pg:dbname=$DB",$DB_USER,$DB_PW)
+    or die "Can't connect to DB.\n";
+
+foreach my $oui (sort keys %ouis){
+    $ucoui = uc($oui);
+    my $r = $dbh->selectrow_hashref(qq/SELECT company from oui where oui = '$ucoui'/);
+    my $comp = $r->{company};
+    $comp = defined $comp ? $comp : '[none]';
+    printf "%s %-4d %s\n",$oui,$ouis{$oui},$comp;
+}
+
+$dbh->disconnect();
+print "\nFound ",scalar keys %ouis, " ouis\n";
