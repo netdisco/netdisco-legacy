@@ -350,22 +350,39 @@ sub sort_ip {
     return 0;
 }
 
-#=item sort_port($a , $b) - for use by sort() - Sort by 1.2 vs 1.3
+=item sort_port()
 
-#=cut
+Used by sort() - Sort by 1.2 vs 1.3, C3 vs D3. 
+
+Works on hashes if a key named port exists. 
+
+=cut
 sub sort_port {
-    my $aport = $a->{port};
-    my $bport = $b->{port};
+    my $aval = $::a || $HTML::Mason::Commands::a || $a;
+    my $bval = $::b || $HTML::Mason::Commands::b || $b;
+    $aval = $aval->{port} if ref($aval) eq 'HASH';
+    $bval = $bval->{port} if ref($bval) eq 'HASH';
 
+    my $numeric        = '^(\d+)$';
+    my $dotted_numeric = '^(\d+)\.(\d+)$';
+    my $letter_number  = '^([a-zA-Z]{1})(\d+)$';
 	my ($aleft,$aright,$bleft,$bright);
     
-    if ($aport =~ /^(\d+)\.(\d+)$/) {
-        $aleft = $1;  $aright = $2;
-    } else { return 0; }
+    if ($aval =~ /$numeric/ and $bval =~ /$numeric/) {
+        return $aval <=> $bval;
+    }
 
-    if ($bport =~ /^(\d+)\.(\d+)$/) {
+    if ($aval =~ /$dotted_numeric/) {
+        $aleft = $1;  $aright = $2;
+    } elsif ($aval =~ /$letter_number/) {
+        $aleft = ord($1);  $aright = $2;
+    } else { return $aval cmp $bval; }
+
+    if ($bval =~ /$dotted_numeric/) {
         $bleft = $1;  $bright = $2;
-    } else { return 0; }
+    } elsif ($bval =~ /$letter_number/) {
+        $bleft = ord($1);  $bright = $2;
+    } else { return $bval cmp $aval; }
 
 	if ($aleft > $bleft ) { return 1; }
 	if ($aleft < $bleft ) { return -1; }
