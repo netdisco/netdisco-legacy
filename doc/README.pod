@@ -242,6 +242,9 @@ Arp Walk.  ArpNip each device that has Layer 3 capabilities.
 
 ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 
+Devices listed in C<arpnip_no> in the config file are excluded.  See the 
+entry below.
+
 =item -B || --backup
 
 Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
@@ -252,6 +255,9 @@ For a full backup run C<sql/pg_dump>.
 =item -d || --discover device
 
 Discover Device.   
+
+Devices listed in C<discover_no> in the config file are excluded.  See the 
+entry below.
 
 =item -e || --expirenodes device
 
@@ -322,6 +328,9 @@ Mac Suck each device in the database that has Layer 2 capabilities.
 =item -M || --macsuck device
 
 Mac Suck given device only.
+
+Devices listed in C<macsuck_no> in the config file are excluded.  See the 
+entry below.
 
 =item -O || --oui
 
@@ -707,6 +716,16 @@ PATH.  Full path to where netdisco lives.  Is the root path for all other files 
 
 =over
 
+=item arpnip_no
+
+LIST:IPs and Subnets. Comma Separated list of devices and subnets not to include in arpnipping.
+
+You can put in a CIDR style subnet or a single IP address :
+
+    arpnip_no = 192.168.0.0/24,192.168.0.1,192.168.1.0/24
+
+You can NOT use an abbrievated CIDR subnet like C<192/8>.
+
 =item compress
 
 EXECUTABLE. Full path and command line arguments to the compression program used in L<compresslogs>
@@ -718,6 +737,13 @@ BOOLEAN. Compress log files?  See L<compress> entry above.
 =item datadir
 
 PATH. Full or relative path to the directory that backups and logs will be stored in
+
+=item discover_no
+
+LIST:IPs and Subnets. Comma Separated list of devices and subnets that will not get hit with 
+an SNMP disovery event.
+
+See L<arpnip_no> for more details.
 
 =item ignore_private_nets
 
@@ -733,7 +759,9 @@ STRING. The extension to add to log files.
 
 =item macsuck_no
 
-LIST:IPs. Comma Separated list of devices not to use when macsucking.
+LIST:IPs and Subnets. Comma Separated list of devices and subnets not to macsuck.
+
+See L<arpnip_no> for more details.
 
 =item macsuck_no_vlan
 

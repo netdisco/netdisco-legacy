@@ -109,7 +109,7 @@ Create a user and group named C<netdisco>
 
 =item BSD
 
-    useradd netdisco
+    adduser netdisco
 
 =back
 
@@ -233,7 +233,7 @@ Linux :
 
 FreeBSD :
     
-    /usr/local/etc/rc.d/*postgres* restart
+    /usr/local/etc/rc.d/*pgsql* restart
 
 If there are problems with this step you will receieve an error that mentions something
 about F<pg_hba.conf>.
@@ -897,7 +897,7 @@ Check Apache's F<error_log> for possible errors.
 =item HomeGrown Copies of Apache
 
 
-    /usr/local/apache/apachebin start
+    /usr/local/apache/bin/apachectl start
 
 =back
 
