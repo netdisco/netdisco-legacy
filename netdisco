@@ -882,6 +882,8 @@ sub arpnip {
     print "  Processed $arp_count ARP Cache entries.\n";
     $ArpTotal += $arp_count;
     
+    insert_or_update('device',{'ip'=> $dev->{ip} },{'last_arpnip'=> scalar localtime});
+
     # Fetch Subnets - Feature not implemented yet.
     #get_subnets($device);
 }
