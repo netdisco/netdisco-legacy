@@ -1180,22 +1180,60 @@ Example :
 
 =over
 
-=item bulkwalk_no
+=item bulkwalk_off
 
 BOOLEAN.  Set to true to use GETNEXT instead of BULKWALK for every device.  
 This slows things down, but might be necessary for problem devices. 
 
-The final solution should be to add C< sub bulkwalk_no { 1; } > to the device
+Other solutions include addding C< sub bulkwalk_off { 1; } > to the device
 class that is misbehaving in SNMP::Info.  This will turn off bulkwalk for a
 class of devices, not all.
 
-Default is on.  SNMP::Info 0.10 or higher required.
+Also see L<bulkwalk_no> to turn BULKWALK off on a per-device or device class level.
+
+Default is on.  SNMP::Info 1.0 or higher required.
+
+=item bulkwalk_no
+
+LIST:STRING.   A comma separated list of devices to not bulkwalk
+
+This list can take four different inputs
+
+=over
+
+=item Hostname or IP
+
+Simply put the device's name or IP address in the list.
+
+    switch1, switch2, switch3
+
+=item model:regex
+
+Add an entire model type for exclusing from bulkwalking.
+
+This can be a simple string like C<6500> or it could be a regular expression like
+C<(2512|65\d\d)>.  The regex must match the whole string (it's anchored).
+
+=item vendor:regex
+
+Add an entire vendor type for exclusing form bulkwalking.
+
+This can be a simple string like C<hp> or it could be a regular expression like
+C<(cisco|hp)>. The regex must match the whole string (it's anchored).
+
+=item Subnet
+
+You can exclude a whole subnet of devices from bulkwalking.  Use CIDR notation.
+
+ 128.1.0.0/16
+
+=back
 
 =item bulkwalk_repeaters
 
 INT.  Sets MaxRepeaters on BULKWALK operations.  See C<perldoc SNMP> for more info.
 
-Default is 20.  SNMP::Info 0.10 or higher required.
+Default is 20.  SNMP::Info 1.0 or higher required.
 
 =item community
 
