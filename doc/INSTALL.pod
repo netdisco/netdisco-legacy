@@ -482,11 +482,18 @@ Your C<httpd.conf> will live in C</usr/local/apache/conf> if you installed using
 
 =item a. In the Global Section
 
-Add this line in the end of C<httpd.conf> not in a VirtualHost section.
+Add this line B<once> in the end of C<httpd.conf> not in a VirtualHost section.
 
     Include /usr/local/netdisco/netdisco_apache.conf
 
-=item b. In each VirtualHost
+=item b. No virtualhosts
+
+If you do not have virtual hosts setup and/or you have a main server, add this line right after the 
+first include :
+
+    Include /usr/local/netdisco/netdisco_apache_dir.conf
+
+=item c. In each VirtualHost
 
 If you have Virtual Hosts or are setting up a secure server, put the following
 line in each of them that you want Netdisco turned on for:
