@@ -891,6 +891,10 @@ FILE.  Set to create the raw (.dot) graph file as well.
 
 BOOLEAN.  Turn on GraphViz's spline engine? (Is very processor intensive).
 
+=item graph_svg
+
+FILE.  Set to create an SVG version of the graph.  Requires GraphViz 0.8 or greater.
+
 =item graph_timeout
 
 MINUTES. Time to allow C<neato> to try and solve the graph.  Default 60min.
