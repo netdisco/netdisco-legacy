@@ -840,6 +840,34 @@ PATH.  Full path to where netdisco lives.  Is the root path for all other files 
 
 =back
 
+=head2 Database Maintenance
+
+New in version 0.93 these directives are included to help make
+Netdisco more self-maintaining.
+
+B<Setting these will result in permanent data removal.>
+
+=over 
+
+=item expire_devices
+
+DAYS. Devices that have not been refreshed in this number 
+of days will be removed.   All nodes connected to this device will be removed 
+as well.
+
+=item expire_nodes
+
+DAYS.  Nodes that have not been refreshed in this number of days will be removed from
+the database.  Archived and non-archived nodes are removed.  This includes SwitchPort/MAC
+and MAC/IP mappings.
+
+=item expire_nodes_archive
+
+DAYS.  Archived data for switch-port/MAC and MAC/IP mappings older than this number
+of days will be removed. 
+
+=back
+
 =head2 Back-End Items
 
 =over
