@@ -4,7 +4,7 @@ Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
 =head1 VERSION
 
-Netdisco 0.93
+Netdisco 0.94
 
 B<PLEASE> check the latest version of this document at 
 L<http://netdisco.org/install.html> in case of bugs.
@@ -51,7 +51,7 @@ Listed below
 
 =item * PostgreSQL
 
-Developed under version 7.3
+Version 7.4 B<strongly> recommended.  
 
 Reported working for versions 7.2, 7.3, 7.4
 
@@ -69,9 +69,9 @@ Version to match Apache - 1.28 or higher recommended.
 
 Do not install version 1.99.
 
-=item * GraphViz
+=item * GraphViz [Optional]
 
-Version 0.10 or higher recommended.
+Version 0.12 or higher recommended.
 
 =back
 
@@ -523,7 +523,7 @@ Install all of the V2 and some of the V1 MIBs into F</usr/local/share/snmp/mibs>
     mkdir /usr/local/share/snmp/mibs
     cd /usr/local/share/snmp/mibs
     tar xvfz /path/to/v2.tar.gz
-    tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my TOKEN-RING-RMON-MIB.my
+    tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my TOKEN-RING-RMON-MIB.my FDDI-SMT73-MIB.my
 
 =item 3. Fix CISCO-TC-MIB
 
