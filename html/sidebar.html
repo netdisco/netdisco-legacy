@@ -1,16 +1,16 @@
 <TABLE class="sidebar-bg" cellpadding=5 cellspacing=0 border=1>
 <TR>
-    <TD CLASS="sidebar-2">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     <A HREF="<%$path%>/index.html"><IMG SRC="<%$path%>/netdiscoball.gif" BORDER=0 width=82 height=90 alt="[Disco Ball]"></A><BR>
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-1">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/netmap.html">Network Map</A>]
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-2">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/device_search.html">Device Search</A>]
     <FORM ACTION="<%$path%>/device.html" METHOD=GET>
     <INPUT TYPE="text" size=10 maxlength=60 NAME="ip">
@@ -18,7 +18,7 @@
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-1">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/node.html">Node Search</A>]
     <FORM ACTION="<%$path%>/node.html" METHOD=GET>
     <INPUT TYPE="text" size=10 maxlength=60 NAME="node">
@@ -26,38 +26,54 @@
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-2">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>]
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-1">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/duplex.html">Duplex Mismatch Finder</A>]
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-2">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/log.html">Log</A>]
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-1">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/stats.html">Network Statistics</A>]
     </TD>
 </TR>
 <TR>
-    <TD CLASS="sidebar-2">
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/doc">Documentation</A>]
     </TD>
 </TR>
+% if ($admin and $secure) {
 <TR>
-    <TD CLASS="sidebar-1">
-    User <TT><% $r->connection->user %></TT> logged in.
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    <A HREF="<%$path%>/admin.html">Administration Panel</A>
+    </TD>
+</TR>
+% }
+<TR>
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
+% if ($secure) {
+<IMG SRC="<%$path%>/icon_lock.gif" ALT="SSL Connected" HEIGHT=15 WIDTH=15>
+% }
+    User <TT><%$user%></TT> [<A HREF="<%$path%>/logout.html">Logout</A>]
     </TD>
 </TR>
 </TABLE>
 <%once>
-my $path = $netdisco::CONFIG{webpath};
 </%once>
+<%shared>
+my $odd  = 0;
+my $path = $netdisco::CONFIG{webpath};
+my $user = $r->connection->user;
+my $secure = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $admin = defined $netdisco::CONFIG{admin}->{$user};
+</%shared>
 %# $Id$
 %# vim:syntax=mason
