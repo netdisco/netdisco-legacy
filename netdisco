@@ -410,6 +410,17 @@ sub topo_add_link {
                             { 'ip' => $link->{to}, 'port' => $link->{to_port}  }
                             );
 
+        # Check for destinations
+        unless (defined $link_from) {
+            print "    !topo_add_link() -  Topology file error! Source Port Doesn't exist in this link : $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n";
+            next;
+        }
+        # Check for destinations
+        unless (defined $link_to) {
+            print "    !topo_add_link() -  Topology file error! Destination Port Doesn't exist in this link : $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n";
+            next;
+        }
+
         # See if from -> to direction conflicts
         if ((defined $link_from->{remote_ip} and $link_from->{remote_ip} ne $link->{to})
           or(defined $link_from->{remote_port} and $link_from->{remote_port} ne $link->{to_port})) {
@@ -1040,6 +1051,11 @@ sub find_neighbors {
         my $iid = $c_if->{$key};
         my $port = $interfaces->{$iid};
 
+        unless (defined $port){
+           print "find_neighbors($ip) - Port for IID:$iid not resolved.\n";
+           next;
+        }
+
         my $remote_ip   = $c_ip->{$key};
         my $remote_port = undef;
         my $remote_type = $c_platform->{$key};
@@ -1439,7 +1455,7 @@ sub port_control {
     my $rv = $device->set_i_up_admin(lc($direction),$iid);
     
     unless (defined $rv){
-        my $error = $device->erorr() || '';
+        my $error = $device->error() || '';
         print "Set failed. $error\n";
         return undef;
     }
