@@ -39,8 +39,8 @@
     <BR><font size=-1>Choose to see a report of past port control, or currently disabled ports.</font>
     </TD>
     <TD>
-    <INPUT TYPE="radio" NAME="type" VALUE=""<%$type eq '' ? ' CHECKED' : ''%>>Historical&nbsp;
-    <INPUT TYPE="radio" NAME="type" VALUE="now"<%$type eq 'now' ? ' CHECKED' : ''%>>Current&nbsp;
+    <INPUT TYPE="radio" NAME="type" VALUE=""<%$type eq '' ? ' CHECKED' : ''%>>Historical Log Entries&nbsp;
+    <INPUT TYPE="radio" NAME="type" VALUE="now"<%$type eq 'now' ? ' CHECKED' : ''%>>Current Only <font size=-2>(slow)</font>&nbsp;
     </TD>
 </TR>
 <TR CLASS="match-1">
@@ -84,18 +84,23 @@ $type     => ''
 @user     => ()
 $sort     => 'Date'
 </%args>
+<%doc>
+TODO:
+    - Implement Time frames for reports.
+</%doc>
 <%shared>
 my %Reasons = %netdisco::PORT_CONTROL_REASONS;
 my $matches = undef;
 my $argsort = undef;
+my $argtype = undef;
 </%shared>
 <%init>
-
 # Get rid of \n's in the long reasons
 foreach my $reason (keys %Reasons){
     $Reasons{$reason}->[1] =~ s/\n//g;
 }
 $argsort = $sort;
+$argtype = $type;
 
 # Grab the reasons and people out of the port log
 # todo: sql_column has no way of doing a 'group by', so this kludge
@@ -114,14 +119,19 @@ foreach my $row (@$db_temp){
 if ($cmd eq 'search'){
 
     # Get ports from port device log
-    my $cols = ['reason','port','ip','log','username','userip','action','extract(epoch from creation) as creation'];
+    my $tables = 'device_port_log l left join device d on d.ip = l.ip';
+    my $cols = ['d.dns','l.reason','l.port','l.ip','l.log','l.username','l.userip','l.action','extract(epoch from l.creation) as creation'];
     my $where = {};
-    $where->{log} = '%'.$text.'%'  if $text;
-    $where->{reason} = [\@reason] if (scalar @reason and grep(/\S+/,@reason));
-    $where->{action} = $dir if $dir;
-    $where->{username} = [\@user] if (scalar @user and grep(/\S+/,@user));
+    $where->{'l.log'} = '%'.$text.'%'  if $text;
+    $where->{'l.reason'} = [\@reason] if (scalar @reason and grep(/\S+/,@reason));
+    $where->{'l.action'} = $dir if $dir;
+    $where->{'l.username'} = [\@user] if (scalar @user and grep(/\S+/,@user));
+    if ($type eq 'now'){
+        $tables .= ' left join device_port p on l.ip = p.ip';
+        $where->{'p.up_admin'} = 'down';
+    }
     #$netdisco::SQLCARP=1;
-    $matches = sql_rows('device_port_log',$cols,$where) || [];
+    $matches = sql_rows($tables,$cols,$where) || [];
     #$netdisco::SQLCARP=0;
 }
 </%init>
@@ -173,9 +183,12 @@ if ($argsort eq 'Port'){
 </%perl>
 <h3>Matching Ports</h3>
 % unless (scalar @$matches) {
-No Ports Matching.
+No Ports Matching.<BR>
 %return;}
 <%scalar @$matches%> Ports matching.<BR>
+% if ($argtype eq 'now'){
+<B>Showing log entries for ports that are currently disabled only.</b><bR>
+% }
 <P>
 <TABLE CELLSPACING=0 CELLPADDING=0 BORDER=0 WIDTH="100%">
 <TR>
@@ -188,8 +201,10 @@ No Ports Matching.
 <TR><TD COLSPAN=6><HR NOSHADE></TD></TR>
 % my $count = 0;
 % foreach my $port (@$matches) {
+%   my $dev = $port->{dns} || $port->{ip};
+%   $dev =~ s/\Q$netdisco::CONFIG{domain}\E//;
 <TR CLASS="match-<%++$count % 2 %>">
-    <TD><font size=-1><A HREF="device.html?ip=<%$port->{ip}|u%>&port=<%$port->{port}|u%>"><%$port->{ip}%> [<%$port->{port}%>]</A></font></TD>
+    <TD><font size=-1><A HREF="device.html?ip=<%$port->{ip}|u%>&port=<%$port->{port}|u%>"><%$dev%> [<%$port->{port}%>]</A></font></TD>
     <TD><%$port->{username}%><BR><font size=-1><a href="node.html?node=<%$port->{userip}%>"><%$port->{userip}%></a></font></TD>
     <TD><%$port->{reason}%>/<%$port->{action}%></TD>
     <TD><font size=-2><%$port->{log} || '&nbsp;'%></font></TD>
