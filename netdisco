@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION/;
 
-$VERSION = '0.91-cvs';
+$VERSION = '0.91';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -749,6 +749,7 @@ sub arpnip {
 
     my $device = get_device($hostname) or return;
 
+    # Fetch ARP Cache
     my $at_paddr = $device->at_paddr();
     my $at_netaddr = $device->at_netaddr();
 
@@ -768,9 +769,11 @@ sub arpnip {
         add_arp($mac,$ip);
         $arp_count++;
     }
-    print "  Processed $arp_count entries.\n";
+    print "  Processed $arp_count ARP Cache entries.\n";
     $ArpTotal += $arp_count;
     
+    # Fetch Subnets - Feature not implemented yet.
+    #get_subnets($device);
 }
 
 =item arpwalk() 
@@ -1061,6 +1064,27 @@ sub get_device {
         return undef;
     }
     return $device;
+}
+
+=item get_subnets(device)
+
+This feature not yet implemented.
+
+=cut
+sub get_subnets {
+    my $device = shift;
+    my $nets = $CONFIG{networks};
+    return unless defined $nets;
+    foreach my $net (split(/\s*,\s*/,$nets)){
+        # TODO - Parse nets with there bitmask
+        my $subnets = $device->ipr_mask($net);
+        foreach my $route (sort sort_ip keys %$subnets){
+            my $mask = mask_to_bits($subnets->{$route});
+            next if $mask == 32;
+            # TODO - Compare with net given above
+            print "$route/$mask\n";
+        }
+    }  
 }
 
 =item get_vlan(host,vlan number,community,snmp ver,snmp::info object type) 
@@ -1642,7 +1666,7 @@ sub arp_dump {
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
                           {'active' => 1}
-                         );
+                        );
 
     &batch_mode("$dir/arp_current");
     foreach my $row (sort sort_ip @$nodes){
@@ -2593,6 +2617,7 @@ sub admin_daemon_job {
 =cut
 
 sub test {
+
 }
 
 

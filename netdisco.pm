@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure 
-                       url_secure/;
+                       url_secure mask_to_bits bits_to_mask/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -122,7 +122,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =item $VERSION - Sync'ed with Netdisco releases
 =cut
-$VERSION = '0.91-cvs';
+$VERSION = '0.91';
 
 =back
 
@@ -178,6 +178,17 @@ sub add_node {
     my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port );
     insert_or_update('node', \%hash,
         { 'time_last' => scalar(localtime), 'active' => 1, 'oui' => $oui, %hash });
+}
+
+=item bits_to_mask(bits)
+
+Takes a CIDR style network mask in number of bits (/24) and returns the older style 
+bitmask.
+
+=cut
+sub bits_to_mask {
+    my $bits = shift;
+    return join(".",unpack("C4",pack("N", 2**32 - (2 ** (32-$bits)))));
 }
 
 =item  config() 
@@ -363,6 +374,27 @@ sub mail {
     print SENDMAIL "Subject: $subject\n\n";
     print SENDMAIL $body;
     close (SENDMAIL) or die "Can't send letter. $!\n";
+}
+
+=item mask_to_bits(mask)
+
+Takes a netmask and returns the CIDR integer number of bits.
+
+    mask_to_bits('255.255.0.0') = 16
+
+=cut
+sub mask_to_bits{
+    my $mask = shift;
+    
+    my $sum = undef;
+    for my $oct (split(/\./,$mask)){
+        return undef if ($oct > 255 or $oct < 0 );
+        for my $bits (split(//,unpack("B*",pack("C",$oct)))) {
+            $sum += $bits;
+        }
+    }
+
+    return $sum;
 }
 
 =item is_secure
