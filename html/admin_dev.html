@@ -9,6 +9,12 @@ Finished Jobs: <SELECT NAME="old_jobs">
     <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
 % }
 </SELECT>
+Ignore Actions of type: 
+<SELECT NAME="act_ignore" SIZE=3 MULTIPLE>
+% foreach my $act (sort keys %$action_types) {
+    <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
+% }
+</SELECT>
 </FORM>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
@@ -31,11 +37,12 @@ $nodes    => ''
 $confirm  => ''
 $old_jobs => 3
 $port     => ''
+@act_ignore => ('portcontrol','test')
 </%args>
 <%shared>
 my $user      = $m->session->{user};
 my $is_admin  = $m->session->{user_admin};
-my $secure    = $r->subprocess_env('https');
+my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my %actions = ( 
             # action       => [longname, confirm action?]
              'arpnip'      => ['ArpNip Device',0],
@@ -46,7 +53,7 @@ my %actions = (
              'refresh'     => ['Refresh Device',0]
            );
 # Globals
-my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction);
+my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,@arg_act_ignore);
 my $need_confirm = 0; my $commit = 0; my $odd = 0;
 my %logs = ();
 my $err =  '';
@@ -55,14 +62,14 @@ my $err =  '';
 %#
 <%init>
 # Check Authorization 
-unless ($secure eq 'on' and $is_admin){
+unless ($secure and $is_admin){
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
 
 # Move args to shared space for methods
 $arg_dev = $dev; $arg_act = $action;
-$arg_debug = $debug;
+$arg_debug = $debug; @arg_act_ignore = @act_ignore;
 %logs = map {$_ => 1} @logs;
 
 
@@ -171,16 +178,26 @@ $devices = sql_rows('device',['ip','dns']);
 # Taint check (head between legs)
 $old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
 
-# Queue
+# Fetch action types
+$action_types = sql_column('admin',['distinct(action)','true']);
+
+# Create NOT IN list if we are ignoring certain types.
+my $where = {};
+my @ignore = @act_ignore;
+$ignore[0] = "!$ignore[0]" if scalar @ignore;
+$where->{action} = [\@ignore] if scalar @ignore;
+
+# Fetch running jobs
+$where->{status} = [['queued','running']];
 $queue = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
                            'extract(epoch from started) as started','device','action','status','username'],
-                  {'status' => [['queued','running']]}
-                 );
+                  $where);
+
+# Fetch done jobs.
+$where->{status} = [['done','error']];
 my $done = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
                              'extract(epoch from started) as started','device','action','status','username'],
-                    {'status' => [['done','error']]},undef,
-                     "order by entered desc limit $old_jobs"
-                   );
+                    $where,undef,"order by entered desc limit $old_jobs");
 push (@$queue,@$done);
 
 # Log entries are fetched separately, as these can be rather large, and should
@@ -302,6 +319,8 @@ Debug Output
   </TR>
 <%perl>
 foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
+    my $act    = $job->{action};
+    #next if grep(/^$act$/,@arg_act_ignore);
     my $entered = scalar localtime($job->{entered});
     my $start   = defined $job->{started} ? scalar localtime($job->{started}) : undef;
     my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : undef;
@@ -313,7 +332,6 @@ foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
     $timestamp = "Start: $start" if (! defined $timestamp and defined $start);
     $timestamp = "Queued: $entered" if (! defined $timestamp and ! defined $start);
     my $status = $job->{status};
-    my $act    = $job->{action};
     my $dev    = $job->{device};
     my $id     = $job->{job};
     $act .= " (<A HREF=\"device.html?ip=$dev\">$dev</A>)" if $dev;
