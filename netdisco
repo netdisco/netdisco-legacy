@@ -22,7 +22,7 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use SNMP::Info 0.9;
+use SNMP::Info;
 use netdisco qw/:all/;  
 use Socket qw/:all/;
 
@@ -1004,15 +1004,19 @@ sub create_device {
          if $DEBUG;
 
     # Get Device Info
-    my $device = new $class( 
+    my %class_opts =       (
                             'Debug'       => $DEBUG,
                             'AutoSpecify' => $autospecify,
                             'DestHost'    => $hostname,
                             'Community'   => $community,
                             'Version'     => $ver,
                             'Retries'     => $retries,
-                            'MibDirs'     => $CONFIG{mibdirs} || [],
                            );
+    $class_opts{MibDirs}       = $CONFIG{mibdirs}            if defined $CONFIG{mibdirs};
+    $class_opts{BulkWalk}     = !$CONFIG{bulkwalk_no}        if defined $CONFIG{bulkwalk_no};
+    $class_opts{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if defined $CONFIG{bulkwalk_repeaters};
+
+    my $device = new $class( %class_opts );
     
 
     # Test for connectivity
@@ -1024,15 +1028,9 @@ sub create_device {
         
         print " [Trying SNMP Version 1] ";
         printf("create_device(%s,%s,1)\n",$hostname,substr($community,-1,1)) if $DEBUG;
-        $device = new $class(
-                             'Debug'       => $DEBUG, 
-                             'AutoSpecify' => $autospecify,
-                             'DestHost'    => $hostname,
-                             'Community'   => $community,
-                             'Version'     => 1,
-                             'Retries'     => $retries,
-                             'MibDirs'     => $CONFIG{mibdirs} || [],
-                            );
+        $class_opts{Version} = 1;
+        
+        $device = new $class(%class_opts);
     }
     
     unless (defined $device) {
@@ -1050,6 +1048,13 @@ sub create_device {
         my $layers = $device->layers();
         print "  Device Talks SNMP but only has layers $layers.  Skipping\n";
         return -1;
+    }
+
+    my $error = $device->error() || '';
+    if ($error){
+        # Debug already spit it out, no need to see it twice.
+        print "  $error" unless $DEBUG;
+        return undef;
     }
 
     $DEBUG and print "  Device Type : $class \n";
@@ -1395,8 +1400,9 @@ sub macsuck{
     my $entries1 = $MacTotal;
 
     my $interfaces = $device->interfaces();
+    my $fw_cache = {};
 
-    walk_fwtable($device,\%dbports,$interfaces);
+    walk_fwtable($device,\%dbports,$interfaces,$fw_cache);
 
     # For certain Cisco switches you have to connect to each
     # VLAN and get the forwarding table out of it.
@@ -1452,10 +1458,11 @@ sub macsuck{
                 print "!\n";
                 next;
             }
-            walk_fwtable($vlan_device,\%dbports,$interfaces);
+            walk_fwtable($vlan_device,\%dbports,$interfaces,$fw_cache);
 
         }
     }
+    mac_savecache($fw_cache,\%dbports);
 
     # Log This
     my $entries2 = $MacTotal;
@@ -1464,6 +1471,47 @@ sub macsuck{
     print " Saw : ",$entries2-$entries1, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
 
 }
+
+=item mac_savecache({},{})
+
+Does two things  : 
+
+1. Checks for detected uplinks, warns of such and removes nodes on these uplinks from additions list
+
+2. Stores the found forwarding table entries to the database.
+
+=cut
+sub mac_savecache {
+    my $fw_cache = shift;
+    my $dbports  = shift;
+
+    # No entries to add?
+    return unless scalar keys %$fw_cache;
+
+    # Check for detected uplinks
+    foreach my $ip (keys %$fw_cache){
+        foreach my $port (sort {sort_port} keys %{$fw_cache->{$ip}}){
+            my $remote_ip = $dbports->{$port}->{remote_ip} || '';
+
+            # Check for detected uplink
+            next unless $remote_ip eq 'uplink';
+            print "  Port $port detected as uplink, topology broken.  Not adding nodes from this port.\n";
+            delete $fw_cache->{$ip}->{$port};
+        }
+    }
+
+    foreach my $ip (keys %$fw_cache){
+        foreach my $port (sort {sort_port} keys %{$fw_cache->{$ip}}){
+            my $macs = $fw_cache->{$ip}->{$port};
+            print "  $ip -> $port : ", scalar keys %$macs, " nodes\n" if $DEBUG;
+            foreach my $mac (keys %$macs){
+                add_node($mac,$ip,$port); 
+            }
+        }
+    }
+
+}
+
 
 =item macwalk() 
 
@@ -1832,7 +1880,7 @@ for the given device, and then adds MAC addresses to the C<node> table.
 
 =cut
 sub walk_fwtable {
-    my ($device,$dbports,$interfaces) = @_;
+    my ($device,$dbports,$interfaces,$fw_cache) = @_;
 
     my $ip = $device->{ip};
     my $fw_mac     = $device->fw_mac();
@@ -1844,17 +1892,13 @@ sub walk_fwtable {
     #      fw_port -> bp_index -> interfaces
     
     foreach my $fw_index (keys %$fw_mac){    
-    #foreach my $fw_index (keys %$fw_port){
-        # Convert the 0.254.123.456 index entry to a MAC address.
-        my $mac = $fw_mac->{$fw_index};
-        #my $mac    = join(':',map {sprintf("%02x",$_)} split(/\./,$fw_index));
+        my $mac    = $fw_mac->{$fw_index};
         my $bp_id  = $fw_port->{$fw_index};
 
         $MacTotal++;
 
         unless (defined $bp_id) {
             print " Port $fw_mac->($fw_index)has no fw_port mapping.  Skipping\n"
-            #print "  MAC $mac has no fw_port mapping. Skipping\n"
                 if $DEBUG;
             next;
         }
@@ -1887,24 +1931,22 @@ sub walk_fwtable {
         #If we dont see the device in the db, but there is a neighbor, then we capture anyways,
         #   since we want all the macs at the other end. 
 
-        #If the device is not layer 2 or 3, then we capture anyways.
         my $remote_ip = $dbports->{$port}->{remote_ip};
-        if (defined $remote_ip and 
-                (defined $OldDevices->{$remote_ip} or defined $Aliases->{$remote_ip})) {
-            my $ip = defined $Aliases->{$remote_ip} ? $Aliases->{$remote_ip} : $remote_ip;
-            my $layers = $OldDevices->{$ip};
-        
-            if (has_layer($layers,2) or has_layer($layers,3)){
-                print "  ($mac) $port has neighbor: $remote_ip. Skipped.\n"
-                    if $DEBUG;
+        if (defined $remote_ip) {
+            if (defined $OldDevices->{$remote_ip} or defined $Aliases->{$remote_ip}) {
+                my $ip = $Aliases->{$remote_ip} || $remote_ip;
+                print "  $mac: Port $port has neighbor: $ip. Skipped.\n" if $DEBUG;
+                next;
+            } elsif ($remote_ip eq 'uplink') {
+                print "  $mac: Port $port is detected uplink. Skipped.\n" if $DEBUG;
                 next;
             } else {
-                print "  ($mac) $port has neighbor, but has layers $layers. Included.\n"
-                    if $DEBUG;
+                # Can be edge of network, but that would be a L3 device.
+                print "  $mac: Port $port has neighbor: $remote_ip, but not in Netdisco. Included.\n" if $DEBUG;
             } 
         }
 
-        # Check if Port Channel (patch from Derek Andree)
+        # Check if Port Channel
         if ($port =~ /port.channel/i) {
             print "  Port ($port) is a Port Channel Interface.  Skipped.\n" if $DEBUG;
             next;
@@ -1914,19 +1956,26 @@ sub walk_fwtable {
         if (defined $PortMAC->{$mac}) {
             my $switch_ip = $PortMAC->{$mac};
             if ($ip eq $switch_ip){
-                print "  ($mac) Port on this switch.  Skipped.\n" if $DEBUG;
+                print "  $mac: Port on this switch.  Skipped.\n" if $DEBUG;
                 next;
             } 
 
-            print "   ($mac) Port:$port - Port on device $switch_ip. Included.\n"
-                if $DEBUG;
-
-            # TODO : This is an uplink port, mark here and have another process
+            # TODO: This is an uplink port, mark here and have another process
             #        add a loopback if no topo info is there. 
             #        Also need some sort of process to show all the loopbacks
+            
+            # Mark port as uplink
+            $dbports->{$port}->{remote_ip}='uplink';
+    
+            my $bleed = $CONFIG{macsuck_bleed} || 0;
+            print "  $mac: Port $port -> Device $switch_ip. " if $DEBUG;
 
-            # Removed to help debugging of topology info.  Uplink check should be enough.
-            #next;  
+            if ($bleed) {
+                print "Included.\n" if $DEBUG;
+            } else {
+                print "Skipped.\n" if $DEBUG;
+                next;  
+            }
         }
 
         # Check for Multicast MACs
@@ -1944,7 +1993,7 @@ sub walk_fwtable {
             print ".";
         }
         
-        add_node($mac,$ip,$port); 
+        $fw_cache->{$ip}->{$port}->{$mac}++;
         $MacSeen{$mac}++;
     }
     print "\n" unless $DEBUG;
