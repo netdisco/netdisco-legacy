@@ -128,7 +128,7 @@ if ($cmd eq 'search'){
     $where->{'l.action'} = $dir if $dir;
     $where->{'l.username'} = [\@user] if (scalar @user and grep(/\S+/,@user));
     if ($type eq 'now'){
-        $tables .= ' left join device_port p on l.ip = p.ip';
+        $tables .= ' left join device_port p on l.ip = p.ip and l.port = p.port';
         $where->{'p.up_admin'} = 'down';
     }
     #$netdisco::SQLCARP=1;
