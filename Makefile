@@ -16,10 +16,7 @@ back:
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
 doc: $(SNMPLIBS) INSTALL README api_doc
-	ln -fs README doc/
-	ln -fs README-API-BACKEND doc/
-	ln -fs README-API-SHARED doc/
-	ln -fs INSTALL doc/
+	cd doc && ln -fs ../README* ../INSTALL .
 	rm -f pod2htm*
 
 # Makes documentation for all .pm's 
