@@ -42,6 +42,17 @@ View 1 - netdisco_vw1
 View 2 - netdisco_vw2
     Connected Ports only.  Building Name
     HUB, PORT, BLDG, BUILDING, JACK, ROOM
+
+View 3 - netdisc_vw3
+    Same as one but w/ email only
+
+    HUB   VARCHAR2(6)
+    PORT  NOT NULL NUMBER
+    BLDG  VARCHAR2(6)
+    ROOM  VARCHAR2(6)
+    JACK  VARCHAR2(6)
+    EMAIL VARCHAR2(30)
+
 </%doc>
 <%init>
 $arg_port = $port; $arg_building = $building; 
@@ -90,6 +101,14 @@ if ($hub and $port){
             }
         }
 
+        # Try to grab Email Addresses
+        foreach my $prt (@$ports){
+            my $email = sql_scalar('netdisco_vw3',['EMAIL'],
+                {'HUB'=>$hub_num,'PORT'=>$port_num});
+
+            $prt->{EMAIL} = $email;
+        }
+
         unless (scalar @$ports){
             $err .=  "$hub / $port ($port_num) not found in Pinnacles database.<BR>\n";
         }
@@ -104,6 +123,28 @@ if ($building and scalar(@rooms)){
     } else {
         local $netdisco::DB = 'Oracle';
         $jacks = sql_rows('netdisco_vw2',['*'],{'BLDG'=>$building,'ROOM'=>[\@rooms]});
+    }
+
+    # Try to grab Email Addresses
+    foreach my $jack (@$jacks){
+        local $netdisco::DB = 'Oracle';
+        my $jjack    = $jack->{JACK};
+        my $jroom    = $jack->{ROOM};
+        my $jbldg    = $jack->{BLDG};
+        my $jhub     = $jack->{HUB};
+        my $jport    = $jack->{PORT};
+        my $email = undef;
+
+        # looks like some entries are missing hub/port info
+        #   using jack/room/bldg instead of hub/port
+        unless (defined $jhub and defined $jport){
+            $email  = sql_scalar('netdisco_vw3',['EMAIL'],{'JACK'=>$jjack,'ROOM'=>$jroom,'BLDG'=>$jbldg});
+        } else {
+            # this is faster, hence default.
+            $email  = sql_scalar('netdisco_vw3',['EMAIL'],{'HUB'=>$jhub,'PORT'=>$jport});
+        }
+
+        $jack->{EMAIL} = $email;
     }
 
     unless (scalar @$jacks){
@@ -127,11 +168,13 @@ if ($building and scalar(@rooms)){
     <TH>Switch / Port <BR>
     <font size=-2>(Pinnacle Port)</font>
     </TH>
+    <TH>Email</TH> 
 </TR>
 % foreach my $row (sort {$a->{ROOM} cmp $b->{ROOM}} @$jacks){
 %   my $hub = $row->{HUB};
 %   $hub_ip = $m->comp('SELF:hub_ip',hub_no => $hub);
 %   my $port = $m->comp('SELF:map_port_rev', port => $row->{PORT}, hub_ip => $hub_ip);
+%   my $email = $row->{EMAIL} || '';
 <TR CLASS="match-<%++$odd%2%>">
     <TD><%$row->{JACK}%></TD>
     <TD><A HREF="<%$r->uri%>?building=<%$arg_building%>&rooms=<%$row->{ROOM}%>"><%$row->{ROOM}%></A></TD>
@@ -140,6 +183,7 @@ if ($building and scalar(@rooms)){
         (<%$row->{PORT} %>) \
 % }
     </TD>
+    <TD><%$email ? "<A HREF=\"mailto:$email\">" : ''%><%$email |h%><%$email ? '</A>' : ''%></TD>
 </TR>
 %}
 </TABLE>
@@ -156,19 +200,23 @@ if ($building and scalar(@rooms)){
     <TH>Building</TH>
     <TH>Room</TH>
     <TH>Jack</TH>
+    <TH>Email</TH>
 </TR>
 % foreach my $row (@$ports){
+%   my $email = $row->{EMAIL} || '';
 <TR CLASS="match-<%++$odd%2%>">
     <TD><A HREF="device.html?ip=<%$hub_dns|u%>&port=<%$arg_port|u%>"><%$hub_dns%> / <%$arg_port%></A></TD>
     <TD><A HREF="<%$r->uri%>?building=<%$row->{BLDG}|u%>"><%$row->{BUILDING}%> (<%$row->{BLDG}%>)</A></TD>
     <TD><A HREF="<%$r->uri%>?building=<%$row->{BLDG}|u%>&rooms=<%$row->{ROOM}|u%>"><%$row->{ROOM}%></A></TD>
     <TD><%$row->{JACK}%></TD>
+    <TD><%$email ? "<A HREF=\"mailto:$email\">" : ''%><%$email |h%><%$email ? '</A>' : ''%></TD>
 </TR>
 %}
 <TR CLASS="match-<%++$odd%2%>">
     <TD><FONT size=-2>(Click for Device View)</FONT></TD>
     <TD><FONT size=-2>(Click to Find Jacks in Building)</FONT></TD>
     <TD><FONT size=-2>(Click to Find Jacks in Room)</FONT></TD>
+    <TD>&nbsp;</TD>
     <TD>&nbsp;</TD>
 </TR>
 </TABLE>
@@ -237,7 +285,7 @@ my $time1 = time;
 <font size=-2>Data took <%$time2 - $time1 %> seconds to load.</font>
 </%method>
 %#
-%# map_port() - Translates device port name into Pinnacle port number
+%# map_port(hub_ip,port) - Translates device port name into Pinnacle port number
 %#
 <%method map_port>
 <%args>
@@ -311,7 +359,7 @@ if ($parse_cards and $port =~ /$parse_reg/){
 </%perl>
 </%method>
 %#
-%# map_port_rev() - Reverse mapping from a pinnacle port number to a netdisco port
+%# map_port_rev(hub_ip,port) - Reverse mapping from a pinnacle port number to a netdisco port
 %#                  Takes the list of ports, runs it through sort_port() and then
 %#                  returns the index of the given port.
 %#
@@ -322,8 +370,22 @@ $port
 </%args>
 <%perl>
 my $db_ports = $m->comp('SELF:db_ports',hub_ip => $hub_ip);
-my @port_list = sort sort_port map {$_->{port}} @$db_ports;
-# Check for out of range index
+# Remove VLANs from port list
+my @db_ports_cleansed = ();
+
+foreach my $p (@$db_ports){
+    foreach my $k (keys %$p){
+        #warn "$k $p->{$k}\n";
+    }
+    #warn keys(%$p),"\n";
+    next if (defined $p->{type} and $p->{type} =~ /(^53)/i );
+    push(@db_ports_cleansed,$p->{port});
+}
+# TODO: WTF
+#warn ("port list1 : ",join(',',@db_ports_cleansed),"\n");
+my @port_list = sort sort_port @db_ports_cleansed;
+#warn ("port list2: ",join(',',@port_list),"\n");
+## Check for out of range index
 return undef if $port >= scalar @port_list;
 return $port_list[$port-1];
 </%perl>
@@ -337,7 +399,7 @@ $hub_ip
 </%args>
 <%perl>
 return $db_ports_cache{$hub_ip} if defined $db_ports_cache{$hub_ip};
-$db_ports_cache{$hub_ip} = sql_rows('device_port',['ip','port'],{'ip'=>$hub_ip});
+$db_ports_cache{$hub_ip} = sql_rows('device_port',['ip','port','type'],{'ip'=>$hub_ip});
 return $db_ports_cache{$hub_ip};
 </%perl>
 </%method>
@@ -354,10 +416,16 @@ $hub_ip_cache{$hub_no} = sql_scalar('device',['ip'],{'dns'=>"hub$hub_no\.%"});
 return $hub_ip_cache{$hub_no};
 </%perl>
 </%method>
+%#
+%# err()
+%#
 <%method err>
 % return unless $err;
 <h3><%$err%></h3>
 </%method>
+%#
+%# title()
+%#
 <%method title>
 - Port Info \
 </%method>
