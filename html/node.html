@@ -5,7 +5,7 @@
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
 <TR>
     <TD ROWSPAN=5 WIDTH="8">&nbsp;</TD>
-    <TD>MAC, Hostname, IP: &nbsp;</TD>
+    <TD>MAC, Hostname, IP, NetBIOS: &nbsp;</TD>
     <TD><INPUT TYPE="text" name="node" maxlength=20 size=20 VALUE="<%$node%>">
         <BR><font size=-2><B>*</B> and <B>?</B> are wildcards.</font>
     </TD>
@@ -67,7 +67,7 @@ $specific  => ''
 $sort      => 'mac'
 </%args>
 <%shared>
-my $matches = [];
+my $matches = []; my $Node_IP_Seen = {};
 my $domain = $netdisco::CONFIG{domain};
 my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node,$arg_sort);
 my $odd=1; my $ran_query = 0;
@@ -249,7 +249,8 @@ my %MatchMAP = ('ip'      => 'MAC -> IP',
                 'host_ip' => 'IP -> MAC',
                 'dev'     => 'IP -> Device',
                 'swport'  => 'Switch Port',
-                'alias'   => 'Deivce IP w/out MAC',
+                'alias'   => 'Device IP w/out MAC',
+                'nbname'  => 'NetBIOS',
                );
 my $hex = "[0-9a-fA-F]";
 </%shared>
@@ -292,18 +293,7 @@ if ($node){
         $where->{'active'} = 1 unless $arg_archive;
 
         # Lookup IPs associated with this MAC
-        my $ips = sql_rows('node_ip',
-                    ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                    $where
-                    );
-
-        foreach my $node_ip (@$ips){
-            $node_ip->{type} = 'ip';
-            $node_ip->{host} = hostname($node_ip->{ip});
-            $node_ip->{host} =~ s/\Q$domain\E//;
-            $node_ip->{oui}  = substr($node_ip->{mac},0,8);
-            push (@$matches,$node_ip);
-        }
+        $m->comp('SELF:add_node_ips','where'=>$where);
 
         # Lookup what switch ports this MAC was seen at.
         my $ports = sql_rows('node',
@@ -318,6 +308,18 @@ if ($node){
             push (@$matches,$port);
         }
 
+        # Lookup NetBIOS names.
+        my $nbnames = sql_rows('node_nbt',
+                ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                $where
+                );   
+
+        foreach my $node_nbt (@$nbnames) {
+            $node_nbt->{type} = 'nbname';
+            $node_nbt->{oui}  = substr($node_nbt->{mac},0,8);
+            push (@$matches,$node_nbt);
+        }
+    
         # Check the posibilty that this could be a switch port's MAC
         my $switch_ports = sql_rows('device_port', 
                 ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
@@ -332,12 +334,13 @@ if ($node){
             push (@$matches,$sp);
         }
 
-    } else {
+    }
 
+    my $realip = &getip($node);
     # Search by HOST 
+    if (!$is_mac and defined $realip) {
         my $hostname = &hostname($node);
         $hostname =~ s/\Q$domain\E//;
-        my $realip = &getip($node);
 
         # see if this is a listed device or one of its aliases.
         my $device = root_device($realip);
@@ -360,6 +363,7 @@ if ($node){
             $node_ip->{oui}  = substr($node_ip->{mac},0,8);
             push (@$matches,$node_ip);
             push (@foundmacs, $node_ip->{mac});
+            push(@{$Node_IP_Seen->{$node_ip->{mac}}},$realip);
         }
 
         # Get details for each MAC associated with this IP
@@ -376,6 +380,21 @@ if ($node){
                 $port->{switchname} =~ s/\Q$domain\E//;
                 push(@$matches,$port);
             }
+
+            # Get additional/other IPs for each MAC
+            $m->comp('SELF:add_node_ips','where'=>$where);
+
+            # Lookup NetBIOS names.
+            my $nbnames = sql_rows('node_nbt',
+                ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                $where
+                );   
+
+            foreach my $node_nbt (@$nbnames) {
+               $node_nbt->{type} = 'nbname';
+               $node_nbt->{oui}  = substr($node_nbt->{mac},0,8);
+               push (@$matches,$node_nbt);
+            }
         }
 
         # If the IP belongs to a device, but we have no info, must be a VLAN or unused ALIAS
@@ -390,8 +409,49 @@ if ($node){
             $entry->{ip} = $realip;
             push (@$matches,$entry);
         }
-        
     }
+    
+    # Search by NetBIOS Name
+    unless ($is_mac) {
+        # Find MACs associated with this NetBIOS Name
+        my $where = { 'nbname'=>sql_match($node)};
+        $where->{'active'} = 1 unless $archive;
+        my $macs = sql_rows('node_nbt',
+                ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                $where
+                    );
+
+        my @foundmacs = ();
+        my %macseen = ();
+
+        # Add info to each entry
+        foreach my $node_nbt (@$macs){
+            $node_nbt->{type} = 'nbname';
+            $node_nbt->{oui}  = substr($node_nbt->{mac},0,8);
+            push (@$matches,$node_nbt);
+            push (@foundmacs, $node_nbt->{mac}) unless $macseen{$node_nbt->{mac}}++;
+        }
+
+        # Get details for each MAC associated with this NetBIOS Name
+        foreach my $mac (@foundmacs){
+            $where = { 'mac' => $mac };
+            $where->{'active'} = 1 unless $archive;
+            my $ports = sql_rows('node',
+                    ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                    $where
+                        );   
+            foreach my $port (@$ports) {
+                $port->{type} = 'port';
+                $port->{switchname} = sql_scalar('device',['dns'],{'ip'=>$port->{switch}});
+                $port->{switchname} =~ s/\Q$domain\E//;
+                push(@$matches,$port);
+            }
+
+           # Get additional/other IPs for each MAC
+           $m->comp('SELF:add_node_ips','where'=>$where);
+        }
+    }
+    
     $ran_query++;
 }
 
@@ -492,7 +552,7 @@ foreach my $match (@$matches){
 <h3>Search Results</H3>
 <& SELF:oui_matches &>
 %unless (scalar @$matches){
-No results found.
+No results found.  Try checking Archived Data.
 % return; }
 <TABLE cellspacing=0 cellpadding=4 border=0 width=100%>
 <TR>
@@ -501,51 +561,59 @@ No results found.
 % }
 </TR>
 <%perl>
-my @sorted_matches; $odd=0;
+my @sorted_matches; $odd=0;my $group;
 if ($arg_sort eq 'dev'){
     # sort by dns/ip then by port
     @sorted_matches = sort { ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch}) 
                              or &sort_port } @$matches;
+    $group = 'switch';
 } elsif ($arg_sort eq 'oui'){
     # sort by vendor then device then port
     @sorted_matches = sort { $a->{oui} cmp $b->{oui} or
                              ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch})  or
                              &sort_port
                            } @$matches;
+    $group = 'oui';
 } else {
-    # if sort = 'mac' or other
+    # by mac
     @sorted_matches = sort {$a->{mac} cmp $b->{mac}} @$matches;
+    $group = 'mac';
 }
+
+my $last_match = {'oui'=>'','mac'=>''};
 foreach my $match (@sorted_matches) {
     my $active = $match->{active};
     my $type   = $match->{type};
+    my $last_group = $last_match->{$group} || '';
+    $odd++ if $last_group ne $match->{$group};
 </%perl>
-<TR CLASS="match-<% ++$odd % 2 %>">
+<TR CLASS="match-<% $odd % 2 %>">
 %     foreach my $c (@cols) {
 %           my $col = $c->[0];
     <TD>\
-%        if ($col eq 'mac') {
-        <A HREF="node.html?node=<% $match->{mac} |u %><% $active ? '': '&archive=1' %>"><%$match->{mac}%></A>
-        <% $active ? '' : '<SUP>*</SUP>' %>
-%     } elsif ($col eq 'oui') {
-        <%$match->{oui}|h%>
+%        if ($col eq 'mac' and $last_match->{mac} ne $match->{mac}) {
+        <A HREF="node.html?node=<% $match->{mac} |u %><% $active ? '': '&archive=1' %>"><%$match->{mac}%></A>\
+        <% $active ? '' : '<SUP>*</SUP>' %>\
+%     } elsif ($col eq 'oui' and ($last_match->{mac} ne $match->{mac})){
+        <%$match->{oui}|h%>\
 %     } elsif ($col eq 'match') {
-        <%$MatchMAP{$type}  || 'Bad Match'%>
+        <%$MatchMAP{$type}  || 'Bad Match'%>\
 %     } elsif ($col eq 'type') {
-        <& SELF:type_map, type=>$type, match =>$match &>
+        <& SELF:type_map, type=>$type, match =>$match &>\
 %     } elsif ($col eq 'time_first') {
-        <% scalar localtime($match->{time_first}) || '&nbsp;' %>
+        <% scalar localtime($match->{time_first}) || '&nbsp;' %>\
 %     } elsif ($col eq 'time_last') {
-        <% scalar localtime($match->{time_last}) || '&nbsp;' %>
+        <% scalar localtime($match->{time_last}) || '&nbsp;' %>\
 %     } elsif ($col eq 'location') {
 %           my $loc = $match->{dns} || $match->{switch};
 %           $loc =~ s/\Q$domain\E//;
-        <A HREF="device.html?ip=<%$match->{switch}%>&port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>
+        <A HREF="device.html?ip=<%$match->{switch}%>&port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>\
 %     } else {
-        <% $col %>
+        &nbsp;\
 %     }
     </TD>
 %   }
+%   $last_match=$match;
 </TR>
 % }
 </TABLE>
@@ -561,23 +629,24 @@ $type
 $match
 </%args>
 %if ($type eq 'ip'){
-    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
-    <NOBR>(<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)</NOBR>
-%} elsif ($type eq 'port') {
-    <NOBR><A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></NOBR>
-    <NOBR>(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</NOBR>
+    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>\
+    <NOBR>(<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)</NOBR>\
+%} elsif ($type eq 'port' or $type eq 'swport') {
+    <NOBR><A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></NOBR>\
+    <NOBR>(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</NOBR>\
 %} elsif ($type eq 'host_ip') {
-    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
-    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
+    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>\
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)\
 %} elsif ($type eq 'dev') {
-    <A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>
-    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
-%} elsif ($type eq 'swport') {
-    <A HREF="device.html?ip=<%$match->{ip}|u%>&port=<%$match->{port}|u%>"><%$match->{switchname}%> / <%$match->{port}%></A></TD>
+    <A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>\
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)\
 %} elsif ($type eq 'alias') {
-    <A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> (<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A>
+    <A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> (<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A>\
+%} elsif ($type eq 'nbname') {
+    \\<%$match->{domain}%>\<A HREF="node.html?node=<% $match->{nbname} |u %>"><%$match->{nbname}%></A>
+    <BR><%$match->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$match->{ip}|u%>"><%$match->{ip}|h%></A>\
 %} else {
-    <% $match->{type} %>
+    <% $match->{type} %>\
 %} 
 </%method>
 %#
@@ -696,11 +765,57 @@ foreach my $search (sort {$ouicount{$b} <=> $ouicount{$a} } @search) {
 <h4>Node Matches</h4>
 </%method>
 %#
+%# add_node_ips(\%where) - Adds to @$matches all the IPs
+%#                        for the matching mac sent in %$where
+%#                        Resolves IPs to DNS as well.
+%#
+<%method add_node_ips>
+<%args>
+$where
+</%args>
+<%perl>
+# Lookup IPs associated with this MAC
+my $ips = sql_rows('node_ip',
+            ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+            $where
+            );
+
+foreach my $node_ip (@$ips){
+    my $mac = $node_ip->{mac};
+    my $ip  = $node_ip->{ip};
+    # Kill Duplicates
+    my $ips_seen = $Node_IP_Seen->{$mac} || [];
+    if (grep(/^\Q$ip\E$/,@$ips_seen)){
+        next;
+    } else {
+        push(@{$Node_IP_Seen->{$mac}},$ip);
+    }
+    $node_ip->{type} = 'ip';
+    $node_ip->{host} = hostname($ip);
+    $node_ip->{host} =~ s/\Q$domain\E//;
+    $node_ip->{oui}  = substr($mac,0,8);
+    push (@$matches,$node_ip);
+}
+
+
+</%perl>
+</%method>
+%#
 %# title()
 %#
 <%method title>
 - Node Search\
 </%method>
+%#
+%# FILTER: highlight search term
+%#
+<%filter>
+my $open = '<SPAN CLASS="highlight">';
+my $close = '</SPAN>';
+# find things after > but before < to make sure we don't mess w/
+#   the HTML.
+s{(>[^<]*)($arg_node)([^<]*<)} {$1$open$2$close$3}ig;
+</%filter>
 %#
 %# $Id$
 %# vim:syntax=mason
