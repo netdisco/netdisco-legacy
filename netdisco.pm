@@ -34,7 +34,7 @@ use Digest::MD5;
 our @EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_port sql_scalar root_device log
-                       make_graph is_mac user_add user_del/;
+                       make_graph is_mac user_add user_del mail/;
 
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
@@ -57,6 +57,13 @@ our %CONFIG;
 =cut
 our %GRAPH;
 our %GRAPH_SPEED;
+
+=item $netdisco::SENDMAIL 
+
+Full path to sendmail executable -- For mail()
+
+=cut
+our $SENDMAIL = '/usr/sbin/sendmail';
 
 =item $netdisco::SQLCARP - Carps SQL!
 
@@ -192,6 +199,7 @@ sub config {
 
     }
     *::CONFIG = \%CONFIG;
+    return \%CONFIG;
 }
 
 =item has_layer(bit string,layer) 
@@ -280,6 +288,23 @@ sub log {
 
     insert_or_update('log',undef,{'class' => $class, 'entry' => $entry});
     
+}
+
+=item mail(to,subject,body)
+
+Sends an E-Mail as Netdisco
+
+=cut
+sub mail {
+    my ($to,$subject,$body) = @_;
+    my $domain = $CONFIG{domain} || 'localhost';
+    $domain =~ s/^\.//;
+    open (SENDMAIL, "| $SENDMAIL -t") or die "Can't open sendmail at $SENDMAIL.\n";
+    print SENDMAIL "To: $to\n";
+    print SENDMAIL "From: Netdisco <netdisco\@$domain>\n";
+    print SENDMAIL "Subject: $subject\n\n";
+    print SENDMAIL $body;
+    close (SENDMAIL) or die "Can't send letter. $!\n";
 }
 
 #=item sort_port($a , $b) - for use by sort() - Sort by 1.2 vs 1.3
