@@ -191,40 +191,40 @@ on the devices.
 
 =over
 
-=item -b
+=item -b || --batchmode
 
 Batch Mode.  Redirect output to log file.  Log file directory set in configuration file 
 under L<datadir>.
 
-=item -C
+=item -C || --configfile file
 
 Set Config file. Default is netdisco.conf.
 
-=item -D
+=item -D || --debug
 
 DEBUG.  Sends copious information to STDOUT
 
-=item -L 
+=item -L || --nologging
 
 No Log.  This will not add entries to the L<log|/"item_log"> table.
 
-=item -n
+=item -n || --nodestoo
 
-Delete Nodes.  Used with L<-E|/"item_-E"> only.
+Delete Nodes.  Used with --expiredevice only.
 
-=item -N 
+=item -N || --newonly
 
 New Only.  On a network discovery L</"-r">, only discover found devices that aren't in the database. 
 
-=item -P
+=item -P || --port port
 
 Port.  Specify Port for removal of nodes L<-e>.
 
-=item -S
+=item -S || --dumpsql
 
 Debug.  carp() SQL commands.  Sets $netdisco::SQLCARP to 1.
 
-=item -V
+=item -V || --archive
 
 archiVe nodes.  Used with L<-e> only.
 
@@ -234,31 +234,31 @@ archiVe nodes.  Used with L<-e> only.
 
 =over
 
-=item -a
+=item -a || --arpwalk
 
 Arp Walk.  ArpNip each device that has Layer 3 capabilities.
 
-=item -A
+=item -A || --arpnip device
 
 ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 
-=item -B
+=item -B || --backup
 
 Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
 Calls database cleanup routines (L<-K>) as well.  Will export an NMIS config file if L<nmis_dump> is set.
 
 For a full backup run C<sql/pg_dump>.
 
-=item -d 
+=item -d || --discover device
 
 Discover Device.   
 
-=item -e
+=item -e || --expirenodes device
 
 Expire Nodes for given device. Use L<-V> to archiVe instead of delete.  Specify a 
 port with L<-P> to delete or archive nodes on a per port basis.
 
-=item --expire-nodes-subnet {subnet}
+=item --expire-nodes-subnet subnet
 
 Finds all devices in given subnet and runs expire nodes on each.   Will 
 display devices effected and then ask for confirmation.
@@ -268,38 +268,42 @@ Subnet is specified in CIDR format :
     192.168.0.0/24
 
 
-=item -E 
+=item -E || --expiredevice device
 
-Expire given device. Use L<-n> to delete nodes as well.
+Delete a device. Use L<-n> to delete nodes as well.
 
-=item -F 
+=item -F || --discoverfile file
 
 Discover Device from given File.   Used to restore backed up info from L<-B>, and to 
 discover devices that are not available through topology information.  Use L<-T> to 
 only import Topology Information.
 
-=item -g
+=item -g || --graph
 
 Graph.  Creates graph -- both GIF and ImageMap.
 
-=item -i
+=item -h || --help
+
+Prints out command line usage.
+
+=item -i || --changeip old_ip new_ip
 
 Change IP address of device.  Creates new entry, removes old one and moves nodes
 over to the new one. 
 
-=item -I
+=item -I || --expireips
 
 Expire IP Addresses from L<node_ip|"item_node_ip"> table.   This will delete entries from the node_ip table
 that are not matching entries (MAC Addresses) found in the node or device_port tables.
 
-=item -k
+=item -k || --cleanalias
 
 alias klean-up.  DANGEROUS.  Deletes from the F<device> table any 
 IP address that is found as an alias in the F<alias> table.
 
-=item -K
+=item -K || --cleannodes
 
-node Klean-up. DANGEROUS.  Deletes nodes matching: 
+Datbase Node Klean-up. Permanently deletes nodes matching: 
 
 =over 
 
@@ -311,44 +315,46 @@ node Klean-up. DANGEROUS.  Deletes nodes matching:
 
 =back
 
-=item -m
+=item -m || --macwalk
 
 Mac Suck each device in the database that has Layer 2 capabilities.
 
-=item -M
+=item -M || --macsuck device
 
 Mac Suck given device only.
 
-=item -O
+=item -O || --oui
 
 Import OUI information from oui.txt
 
-=item -p
+=item -p || --daemon [start,stop,status,restart]
 
 Control the Admin Daemon.  Takes arguments (start,stop,status,restart).
 
-=item  -r 
+=item  -r || --discoverall root_device
 
 Walk the network with the given root.  Use L<-N> to discover new devices only.  Given root device
 will always be discovered.
 
-=item -R 
+=item -R || --refresh
 
 Refresh devices.  Will run a discover (L<-d>) for each device in the database.
 
-=item -T
+=item -T || --topofile
 
 Import Topology Data.  Will import manual topology data stored in file specified by 
 configuration option L<topofile> . Use L<-F> to specify a different file from the
 command line. 
 
-=item -u
+=item -u || --user [user] [password] [port_control?] [admin?]
 
 Add or Change a User.  Supply all four arguments (user pw port_control admin) for 
 command-line control, or supply less for interactive prompts.
 
 It's better to use interactive prompts so that the password doesn't get stored in your 
 shell history file and exported to the process table.
+
+=item -v || --version
 
 =back
 
@@ -587,6 +593,8 @@ The device can be a DNS name or an IP Address.
 
 =item alias:
 
+NOT IMPLEMENTED!
+
 Many network devices like routers have multiple IP addresses assigned to them.  If the device
 cannot or does not supply this information to Netdisco in a standard way, you can add IP
 addresses used here.
@@ -726,6 +734,14 @@ STRING. The extension to add to log files.
 =item macsuck_no
 
 LIST:IPs. Comma Separated list of devices not to use when macsucking.
+
+=item macsuck_no_vlan
+
+LIST:Strings.  Comma separated list of VLAN names not to visit when MACsucking.
+
+This option was used to speed up MACsucking on certain Cisco Catalyst family devices
+where you have to connect to each VLAN with SNMP to get the forwarding tables.   Certain
+default VLANs will not answer to SNMP, and Netdisco has to wait for them to timeout. 
 
 =item macsuck_timeout
 
