@@ -705,7 +705,7 @@ sub end {
         my $nodes = scalar(keys(%$OldNodes));
         my $pct   = sprintf("%2.2f",($NbtTotal/$nodes)*100);
         print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
-        log('netbios',"$NbtTotal entries. $run_time minutes.",$LogFile[-1]) if $Log;
+        log('netbios',"$NbtTotal/$nodes ($pct\%) nodes w/ NetBIOS. $run_time minutes.",$LogFile[-1]) if $Log;
     }
     
     my $mac_seen = scalar keys(%MacSeen);
@@ -836,8 +836,7 @@ sub parse_oui {
         $oui_count++;
     }
     print "Added $oui_count entries from oui.txt\n";
-    print "Cleaning up Database table OUI.\n";
-    sql_vacuum('oui',full=>1,verbose=>1,'print'=>1);
+    sql_vacuum('oui',full=>1,'print'=>1);
 }
 
 =item timeout()
@@ -1264,6 +1263,25 @@ sub get_device {
     return $device;
 }
 
+=item get_device_rw(device[,version])
+
+Returns a SNMP::Info object for a given device, using the Read-Write Community
+Strings in the config file.
+
+Returns undef or -1 on error.
+
+=cut
+sub get_device_rw {
+    my ($host,$ver) = @_;
+
+    my $device;
+    foreach my $comm (@{$CONFIG{community_rw}}) {
+        $device = create_device($host,$comm,$ver);
+        last if (defined $device and $device != -1); 
+    }
+    return $device;
+}
+
 =item get_subnets(device)
 
 This feature not yet implemented.
@@ -1549,12 +1567,8 @@ sub port_control {
     }
 
     # SNMP connect
-    my $device;
     my $snmp_ver = $db_dev->{snmp_ver} || 2;
-    foreach my $comm (@{$CONFIG{community_rw}}) {
-        $device = create_device($ip,$comm,$snmp_ver);
-        last if (defined $device and $device != -1); 
-    }
+    my $device = get_device_rw($ip,$snmp_ver);
 
     unless (defined $device){
         print "Could not connect to device with read-write community string.\n";
@@ -2975,9 +2989,19 @@ sub graph_each  {
 
     my $gv = new GraphViz(%gv);
 
+    my %node_map = ();
     my @nodes = $G->vertices;
     foreach my $dev (@nodes){
-        graph_addnode($gv,$dev);
+        my $node_name = graph_addnode($gv,$dev);
+        $node_map{$dev} = $node_name;
+    }
+
+    my $root_ip = defined $CONFIG{root_device} ? getip($CONFIG{root_device}) : undef;
+    if (defined $root_ip and defined $node_map{$root_ip}){
+        my $gv_root_name = $gv->_quote_name($root_ip);
+        if (defined $gv_root_name){
+            $gv->{GRAPH_ATTRS}->{root}=$gv_root_name;
+        }
     }
 
     my @edges = $G->edges;
@@ -3033,8 +3057,8 @@ sub graph_each  {
     }
     if (defined $CONFIG{graph_map} and $CONFIG{graph_map}){
         my $graph_map = "$CONFIG{home}/$CONFIG{graph_map}";
-        print "  Creating ISMAP : $graph_map\n";
-        $gv->as_ismap($graph_map);
+        print "  Creating CMAP : $graph_map\n";
+        $gv->as_cmap($graph_map);
     }
 
     if (defined $CONFIG{graph_svg} and $CONFIG{graph_svg}){
@@ -3095,7 +3119,7 @@ sub graph_addnode {
         }
     }
 
-    $gv->add_node($ip, %node);
+    return $gv->add_node($ip, %node);
 }
 
 =back
