@@ -54,9 +54,7 @@ Netdisco was designed and built at UCSC.
 
 =item * Automatic inventory and search of network hardware
 
-=item * Database backend for speed and scalability
-
-=item * Administratively enable/disable switch ports
+=item * Administratively enable/disable switch ports from web interface with logging.
 
 =item * Duplex Mismatch Finder
 
@@ -68,12 +66,14 @@ Netdisco was designed and built at UCSC.
 
 =over
 
+=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
+
 =item * Statistics for number of actual nodes connected to network
 
 =item * Auto-archiving of data.  History of where a MAC address has shown up,
 and the IP addresses that have been associated with it.
 
-=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
+=item * Integration with Pinnacle Database.
 
 =back
 
@@ -482,6 +482,10 @@ LIST:IPs. Comma Separated list of devices not to use when macsucking.
 =item macsuck_timeout
 
 SECONDS. Timeout for devices when mac sucking.
+
+=item port_info
+
+BOOLEAN.  Turns on the port_info.html features in Sidebar and Device
 
 =item portctl_email
 
