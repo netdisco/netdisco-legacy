@@ -666,18 +666,18 @@ sub make_graph {
         my $dest   = $link->{remote_ip};
         my $speed  = $link->{speed};
 
-        # Remove loopback
-        if ($source eq $dest) {
-            print "Loopback on $source\n" if $::DEBUG;
-            next;
-        }
-    
         # Check for Aliases 
         if (defined $aliases->{$dest} ){
             # Set to root device
             $dest = $aliases->{$dest};
         }
 
+        # Remove loopback - After alias check (bbaetz)
+        if ($source eq $dest) {
+            print "Loopback on $source\n" if $::DEBUG;
+            next;
+        }
+    
         next if exists $link_seen{$source}->{$dest};
 
         push(@{$linkmap{$source}},$dest);
