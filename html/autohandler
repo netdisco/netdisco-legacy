@@ -8,12 +8,14 @@
     A { text-decoration:none; }
     H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
          background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
-    H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; }
+    H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; margin-bottom:5px;}
     TH { font-family:arial,helvetica,sans-serif; font-size:12pt; text-align:center;}
     TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
     INPUT { font-family:monospace; font-size:9pt; }
     BODY { position:absolute; top:0; left:0; }
     BODY, #page { margin:0; padding:0; width:100%; height:100%; }
+    FORM { margin-bottom:0; margin-top:0; }
+    UL,DL,OL { margin-top:0; margin-bottom:0; }
     .topbar { background-color:#8b7e66; color:#eed8ae; height:16pt;
               font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; 
@@ -43,7 +45,7 @@
 <BODY bgcolor="#f5deb3" text="black" LINK="#000099" ALINK="#000099" VLINK="#000099">
 <TABLE width="95%" HEIGHT="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0 id="page">
 <TR VALIGN=TOP>
-    <TD COLSPAN=2 class="topbar" height="20">
+    <TD COLSPAN=3 class="topbar" height="20">
         <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
     </TD>
 </TR>
@@ -51,12 +53,13 @@
     <TD ALIGN=LEFT WIDTH="15%">
         <& sidebar.html &>
     </TD>
+    <TD>&nbsp;</TD>
     <TD VALIGN=TOP ALIGN=LEFT WIDTH="85%">
 %       $m->call_next;
     </TD>
 </TR>
 <TR>
-    <TD VALIGN=BOTTOM colspan=2 class="botbar" ALIGN=CENTER>
+    <TD VALIGN=BOTTOM colspan=3 class="botbar" ALIGN=CENTER>
         Netdisco <%$netdisco::VERSION%> 
     </TD>
 </TR>
