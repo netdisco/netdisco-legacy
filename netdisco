@@ -22,7 +22,7 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use SNMP::Info '0.10';
+use SNMP::Info 1.0;
 use netdisco qw/:all/;  
 use Socket qw/:all/;
 
@@ -192,7 +192,7 @@ sub discover{
     print "Discover($hostname) : ";
 
     my $ip = getip($hostname);
-    if (in_subnets($ip,'discover_no')) {
+    if (in_device($ip,$CONFIG{discover_no})) {
         print " Excluded from discovery in config file.\n";
         return;
     }
@@ -873,17 +873,17 @@ sub arpnip {
         return;
     }
 
-    if (in_subnets($ip,'arpnip_no')) {
-        print " Excluded from arpnipping in config file.\n";
-        return;
-    }
-
     &mac_getportmacs unless defined $PortMAC;
 
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
 
     unless (defined $dev->{ip}) { 
         print "  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        return;
+    }
+
+    if (in_device($dev,$CONFIG{arpnip_no})) {
+        print " Excluded from arpnipping in config file.\n";
         return;
     }
 
@@ -974,7 +974,17 @@ sub arpwalk {
     &end;
 }
 
-=item  create_device(host,snmp_community[,snmp_version,snmp::info subclass]) 
+=item create_device(%args)
+
+All %args are passed straight through to SNMP::Info except 'Class' which when set 
+turns off C<AutoSpecify>.
+
+ my $dev = create_device(
+            'DestHost'  => host,
+            'Community' => public,
+            'Version'   => 2,
+            'Retries'   => 2,
+            'Class'     => 'SNMP::Info::Layer2',
 
 Connect to a device via SNMP::Info with a given host and community string.
 
@@ -984,14 +994,22 @@ If a more specific device type is not found  (is probably not a network device) 
 
 =cut
 sub create_device {
-    my ($hostname,$community,$version,$objtype) = @_;
+    my %args = @_;
+    return undef unless defined $args{DestHost} and defined $args{Community};
 
-    my $ver     = $version || $CONFIG{snmpver} || 2;
-    my $retries = $CONFIG{snmpretries} || 2;  
-    my $class   = $objtype || 'SNMP::Info';
-    my $autospecify = defined $objtype ? 0 : 1;
+    # Default Values
+    $args{Debug}         = $DEBUG;
+    $args{Verison}       = $CONFIG{snmpver} || 2       unless defined $args{Version};
+    $args{Retries}       = $CONFIG{snmpretries} || 2   unless defined $args{Retries};
+    $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
+    $args{BulkWalk}      = 0                           if     defined $CONFIG{bulkwalk_off} and $CONFIG{bulkwalk_off};
+    $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
+    $args{AutoSpecify}   = defined $args{Class} ? 0 : 1;
+
+    my $class            = $args{Class}   || 'SNMP::Info';
+    delete $args{Class} if exists $args{Class};
    
-    my $print_comm = $community;
+    my $print_comm = $args{Community};
     # If it's vlan, do last letter @ vlan
     if ($print_comm =~ /\@/){
         $print_comm =~ s/^.*(.\@\d+)$/$1/;  # VLAN Comm
@@ -999,24 +1017,15 @@ sub create_device {
         # else do last letter
         $print_comm = substr($print_comm,-1,1);
     }
-    printf("  create_device(%s,%s,%d,%s,%d)\n",
-           $hostname,$print_comm,$ver, $objtype || 'undef',$retries)
+    printf("  create_device(%s,%s,%d,%s,bw:%s)\n",
+           $args{DestHost},$print_comm,$args{Version}, 
+           $args{AutoSpecify} ? 'AutoSpecify' : $class,
+           defined $args{BulkWalk} ? $args{BulkWalk} : 'default',
+          )
          if $DEBUG;
 
-    # Get Device Info
-    my %class_opts =       (
-                            'Debug'       => $DEBUG,
-                            'AutoSpecify' => $autospecify,
-                            'DestHost'    => $hostname,
-                            'Community'   => $community,
-                            'Version'     => $ver,
-                            'Retries'     => $retries,
-                           );
-    $class_opts{MibDirs}       = $CONFIG{mibdirs}            if defined $CONFIG{mibdirs};
-    $class_opts{BulkWalk}     = !$CONFIG{bulkwalk_no}        if defined $CONFIG{bulkwalk_no};
-    $class_opts{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if defined $CONFIG{bulkwalk_repeaters};
 
-    my $device = new $class( %class_opts );
+    my $device = new $class( %args );
     
 
     # Test for connectivity
@@ -1024,23 +1033,23 @@ sub create_device {
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
-    if (!defined $device or !defined $layers and $ver != 1){
+    if (!defined $device or !defined $layers and $args{Version} != 1){
         
         print " [Trying SNMP Version 1] ";
-        printf("create_device(%s,%s,1)\n",$hostname,substr($community,-1,1)) if $DEBUG;
-        $class_opts{Version} = 1;
+        printf("create_device(%s,%s,1)\n",$args{DestHost},$print_comm) if $DEBUG;
+        $args{Version} = 1;
         
-        $device = new $class(%class_opts);
+        $device = new $class(%args);
     }
     
     unless (defined $device) {
-        $DEBUG and print "  Can't connect to $hostname\n";
+        $DEBUG and print "  Can't connect to $args{DestHost}\n";
         return undef;
     }
 
     $class = $device->class();
     if (!defined $device or !defined $class){
-        $DEBUG and print "  Could not connect to $hostname.\n";
+        $DEBUG and print "  Could not connect to $args{DestHost}.\n";
         return undef;
     }
         
@@ -1060,7 +1069,7 @@ sub create_device {
     $DEBUG and print "  Device Type : $class \n";
 
     # Tag on some netdisco specific info to the SNMP::Info object.
-    $device->{ip}        = &getip($hostname);
+    $device->{ip}        = &getip($args{DestHost});
     $device->{dns}       = &hostname($device->{ip});
 
     return $device;
@@ -1230,27 +1239,45 @@ sub get_device {
 
     # Call with stored comm/ver unless supplied $ver
     if (defined $dev_ip) { 
-        my $row     = sql_hash('device',['snmp_ver','snmp_comm'],{'ip'=>$dev_ip});
+        my $row     = sql_hash('device',['*'],{'ip'=>$dev_ip});
         my $version = $row->{snmp_ver};
-           $comm    = $row->{snmp_comm};
+        $comm       = $row->{snmp_comm};
 
         printf("  get_device(%s) - Connecting using cached info: %s/%s/%s\n",$hostname,$dev_ip,substr($comm,-1,1),$version)
             if $DEBUG;
-        $device = create_device($dev_ip,$comm,$version);
 
+        my %args = ('DestHost'  => $dev_ip,
+                    'Community' => $comm,
+                    'Version'   => $version, 
+                   );
+
+        # Check for bulkwalk disabling
+        $args{BulkWalk} = 0 if in_device($row,$CONFIG{bulkwalk_no});
+
+        $device = create_device(%args);
+                               
         print "!  Could not connect to $dev_ip with SNMP community and version info in database.\n"
             unless defined $device;
     }
 
     # Stored community not available, or didn't work. 
     if (!defined $device){
+
+        # Check for bulkwalk disabling
+        my $no_bw = in_device($hostname,$CONFIG{bulkwalk_no});
+
         # Try each community string
         foreach my $config_comm (@{$CONFIG{community}}) {
 
             # Don't bother retrying the failed one.
             next if (defined $comm and ($config_comm eq $comm));
 
-            $device = create_device($hostname,$config_comm);
+            my %args = ('DestHost'  => $hostname,
+                        'Community' => $config_comm,
+                       );
+            $args{BulkWalk} = 0 if $no_bw;
+
+            $device = create_device(%args);
 
             if (defined $device and $device == -1){
                 $device = undef;
@@ -1278,10 +1305,19 @@ Returns undef or -1 on error.
 =cut
 sub get_device_rw {
     my ($host,$ver) = @_;
-
     my $device;
+
+    # Check for bulkwalk disabling
+    my $no_bw = in_device($host,$CONFIG{bulkwalk_no});
+
     foreach my $comm (@{$CONFIG{community_rw}}) {
-        $device = create_device($host,$comm,$ver);
+        %args = ('DestHost'  => $host,
+                 'Community' => $comm,
+                 'Version'   => $ver
+                );
+        $args{BulkWalk} = 0 if $no_bw;
+        
+        $device = create_device(%args);
         last if (defined $device and $device != -1); 
     }
     return $device;
@@ -1306,20 +1342,6 @@ sub get_subnets {
             print "$route/$mask\n";
         }
     }  
-}
-
-=item get_vlan(host,vlan number,community,snmp ver,snmp::info object type) 
-
-Calls create_device() for a given VLAN using the modified community string.
-
-=cut
-sub get_vlan {
-    my ($hostname,$vlan,$community,$version,$objtype) = @_;
-
-    my $device = undef;
-    $community .= '@'.$vlan; 
-    
-    return create_device($hostname,$community,$version,$objtype);
 }
 
 =item mac_getportmacs() 
@@ -1369,11 +1391,6 @@ sub macsuck{
         return;
     }
 
-    if (in_subnets($ip,'macsuck_no')) {
-        print " Excluded from macsucking in config file.\n";
-        return;
-    }
-
     # Get the device info and its interfaces
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
     my $ports = sql_rows('device_port',['*'],
@@ -1381,6 +1398,11 @@ sub macsuck{
 
     unless (defined $dev->{ip}) { 
         print "\n  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        return;
+    }
+
+    if (in_device($dev,$CONFIG{macsuck_no})) {
+        print " Excluded from macsucking in config file.\n";
         return;
     }
 
@@ -1410,11 +1432,12 @@ sub macsuck{
     my $cisco_comm_indexing = $device->cisco_comm_indexing() || 0;
     if ($cisco_comm_indexing){
         print " Device supports Cisco commuinty string indexing. Connecting to each VLAN:\n";
-        my $v_name = $device->v_name() || {};
-        my $i_vlan = $device->i_vlan() || {};
-        my $ver    = $device->snmp_ver();
-        my $comm   = $device->snmp_comm();
-        my $obj    = $device->class();
+        my $v_name   = $device->v_name() || {};
+        my $i_vlan   = $device->i_vlan() || {};
+        my $ver      = $device->snmp_ver();
+        my $comm     = $device->snmp_comm();
+        my $obj      = $device->class();
+        my $bulkwalk = $device->bulkwalk();
 
         # Get list of VLANs currently in use by ports
         my %vlans;
@@ -1453,7 +1476,14 @@ sub macsuck{
 
             # feeding all the connect info as a speedup, instead of
             #   retrying all the versions and communities
-            my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver,$obj);
+            my %args = ('DestHost'  => $hostname,
+                        'Community' => $comm . '@' . $vlan,
+                        'Version'   => $ver,
+                        'Class'     => $obj,
+                       );
+            $args{BulkWalk} = $bulkwalk if defined $bulkwalk;
+            my $vlan_device = create_device(%args);
+
             unless (defined $vlan_device){
                 print "!\n";
                 next;
