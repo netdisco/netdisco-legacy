@@ -67,7 +67,7 @@ should be possible.
 
 =head1 INSTALL
 
-This is not a terribly easy install.  If you aren't comforatable 
+This is not a terribly easy install.  If you aren't comfortable 
 installing programs from source and using a text editor, get some help.  Hopefully
 this will all be rolled up into an install script by the time Netdisco comes out of Beta.
 
@@ -98,7 +98,7 @@ Give this user permission to the files:
 Once Netdisco is up and running most administration
 can be done from the Web interface.  Whoever will be doing
 the back-end administration will need to have write access and will need
-write access on netdisco's files.
+write access on Netdisco's files.
 
 Add the unix account names of administrators that will modify the 
 source code or use the command line interface interface to the C<netdisco>
@@ -130,7 +130,7 @@ and in F<netdisco.conf>.
 
 =item ii. Check Settings
 
-Now as a non-privledged user make sure you can get into the database by running 
+Now as a non-privileged user make sure you can get into the database by running 
 C<sql/pg_run>.  Enter the database user password given above. 
 
     cd /usr/local/netdisco
@@ -164,7 +164,7 @@ F<postgresql.conf>.
 =head2 5. Perl Modules and Mason
 
 Below is a list of required modules for Netdisco, freely available from
-CPAN (http://www.cpan.org).   Many of these modules have pre-requisite 
+CPAN (http://www.cpan.org).   Many of these modules have prerequisite 
 modules.   
 
 Use the CPAN module that comes with Perl to install the modules
@@ -389,7 +389,7 @@ Netdisco will not run under Apache2 until that point.
 =item Install Apache 1.3.x and mod_perl 1.x and mod_ssl
 
 Netdisco is designed to work in a secure (https) or non-secure
-enviornment.  Due to the security and privacy concerned associated with
+environment.  Due to the security and privacy concerned associated with
 this data, using a secure server is recommended.
 
 Below is my method if you haven't installed apache and mod_perl before.
@@ -556,6 +556,8 @@ Add more users from the web C<Admin Panel> once Netdisco is up and running.
 
 =item Make Documentation
 
+This step is only necessary if you have installed from CVS.
+
 =over 
 
 =item i. Perl Location
@@ -609,7 +611,7 @@ You may want to fine-tune these jobs to your network.
 
 =head2 15. Start Admin Daemon
 
-The admin deaemon performs administartion jobs that are requested from the
+The admin deaemon performs administration jobs that are requested from the
 web front-end.  See F<README> for a description of the admin daemon.  
 
     su - netdisco -c "/usr/local/netdisco/netdisco -p start"

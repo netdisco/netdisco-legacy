@@ -26,7 +26,7 @@ Netdisco is hosted by Source Forge and lives at L<http://www.netdisco.org>.
 
 =item -> Database store for scalability and speed (Postgresql)
 
-=item -> Easily extendable to new network devices
+=item -> Easily extendible to new network devices
 
 =item -> User system to restrict access and features 
 

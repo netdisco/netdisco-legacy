@@ -25,7 +25,7 @@ FEATURES - OVERVIEW
 
     -> Controllable through Web Interface or Command Line Interface (CLI)
     -> Database store for scalability and speed (Postgresql)
-    -> Easily extendable to new network devices
+    -> Easily extendible to new network devices
     -> User system to restrict access and features
    Network Security
 
