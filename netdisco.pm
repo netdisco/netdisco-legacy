@@ -221,7 +221,7 @@ sub hostname {
 }
 
 
-=item ip(host) 
+=item getip(host) 
     
      Returns the IP Address of a given IP or hostname. If the 
      given argument appears to be in dotted octet notation, it
