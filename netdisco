@@ -3,7 +3,6 @@
 # Created for UCSC
 # Changes from 0.92 on (C) 2003 Max Baker - All rights Reserved.
 # (C) 2002,2003 UC Regents.  See bottom of this file.
-# Author: Max Baker 
 # $Id$
 
 =head1 NAME
@@ -23,7 +22,6 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use GraphViz;
 use SNMP::Info;         
 use netdisco qw/:all/;  
 
@@ -622,8 +620,7 @@ sub batch_mode_end {
     my $fh = pop @LogFH;
     $fh->close() or die "Can't write $file. $!\n";
 
-
-    if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} =~ /(true|1|y)/i and ! defined $no_compress){
+    if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} and ! defined $no_compress){
        print STDERR "\tCompressing $file\n" if $DEBUG;
        my $compress = defined $CONFIG{compress} ? $CONFIG{compress} : "/usr/bin/gzip -f";
        system("$compress $file") and warn "Compress of $file Failed.\n";
@@ -982,7 +979,7 @@ sub device_root {
 
 
     # Check the reverse of sysName.0 and use it for our real_ip?
-    if (defined $CONFIG{reverse_sysname} and $CONFIG{reverse_sysname} =~ /^(1|t|y|si)/i){
+    if (defined $CONFIG{reverse_sysname} and $CONFIG{reverse_sysname} ){
         my $name   = $device->name();
         my $nameip = &getip($name);
 
@@ -1162,7 +1159,7 @@ sub get_subnets {
     foreach my $net (split(/\s*,\s*/,$nets)){
         # TODO - Parse nets with their bitmask
         my $subnets = $device->ipr_mask($net);
-        foreach my $route (sort sort_ip keys %$subnets){
+        foreach my $route (sort {sort_ip} keys %$subnets){
             my $mask = mask_to_bits($subnets->{$route});
             next if $mask == 32;
             # TODO - Compare with net given above
@@ -1488,7 +1485,7 @@ Calls all the global methods and sends the results off to the database
 sub store_device {
     my $device = shift;
 
-    print "  Fetching Device Info           : \n";
+    print "\n  Fetching Device Info           : \n";
 
     # Deal w/ devices with multiple IP address like most routers
     my $foundip = $device->{ip};
@@ -1517,7 +1514,7 @@ sub store_device {
         # Local Host
         next if $ip =~ /^127\.0\.0\./;
 
-        if ($CONFIG{ignore_private_nets} =~ /(true|1|yes)/i) {
+        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets}) {
             my $ignore =0;
             # Class A Private
             $ignore++ if $ip =~ /^10\./;
@@ -1806,7 +1803,7 @@ sub arp_dump {
                         );
 
     &batch_mode("$dir/arp_current");
-    foreach my $row (sort sort_ip @$nodes){
+    foreach my $row (sort {sort_ip} @$nodes){
         my $active = $row->{active};
         next unless $active;
         my $mac = $row->{mac};  
@@ -1825,7 +1822,7 @@ sub arp_dump {
                           {'active' => 0}
                            );
     &batch_mode("$dir/arp_archive");
-    foreach my $row (sort sort_ip @$nodes){
+    foreach my $row (sort {sort_ip} @$nodes){
         my $active = $row->{active};
         next if $active;
         my $mac = $row->{mac};  
@@ -2000,10 +1997,10 @@ sub dev_dump {
         push @{$alias_map{$dev}},$alias;
     }
 
-    foreach my $dev (sort sort_ip keys %$OldDevices){
+    foreach my $dev (sort {sort_ip} keys %$OldDevices){
         print "$dev\n";
         if (defined $alias_map{$dev}){
-            foreach my $alias (sort sort_ip @{$alias_map{$dev}}){
+            foreach my $alias (sort {sort_ip} @{$alias_map{$dev}}){
                 print "\talias:$alias\n";
             }
         }
@@ -2012,7 +2009,7 @@ sub dev_dump {
         my $neighbors = sql_rows('device_port',['remote_ip','remote_port','port'],
                                 {'remote_ip'=>'is not null','ip'=>$dev});
 
-        foreach my $neighbor (sort sort_ip @$neighbors){
+        foreach my $neighbor (sort {sort_ip} @$neighbors){
 
             my $port = $neighbor->{port};
             my $remote_ip = $neighbor->{remote_ip};
@@ -2024,6 +2021,74 @@ sub dev_dump {
     &batch_mode_end;
 
     $BatchMode=$old_batch;
+}
+
+=item expire_data(type,days,archive_only)
+
+C<type> can be : node,device
+
+C<days> is a positive integer number of days in which an entry
+has not been updated.
+
+C<archive_only> for node only.
+
+Removes devices and nodes that haven't been updated in C<days> days.
+Called from nightly() and controlled through the C<expire_*> directives
+in the config file.
+
+Cheers to Brian Wilson for his patch for the start of this feature.
+
+=cut
+sub expire_data {
+    my ($type, $days, $archive_only) = @_;
+    $archive_only ||=0;
+
+    unless (defined $type and $type =~ /^(node|device)$/i){
+        print "expire_data : Data type (1st argument) must be either node or device.\n";
+        return;
+    }
+    
+    unless (defined $days and $days =~ /^\d+$/ and $days > 0){
+        print "expire_data : Age of data must be a positive number of days (2nd argument).\n";
+        return;
+    }
+    
+    print "expire_data($type,$days days,archive_only:$archive_only)\n";
+
+    if ($type eq 'device'){
+        my $devices = sql_rows('device',['ip','dns','age(last_discover) as age'],
+                               {'age(last_discover)' => \\ "> interval '$days days'"}
+                              );
+        foreach my $dev (sort {sort_ip} @$devices){
+            my $name = $dev->{dns} || $dev->{ip};
+            printf("Removing %-15s %25s   Last Seen: %s\n",$dev->{ip},$name,$dev->{age});
+
+            # TODO - Ping device first.  Some devices stop responding to SNMP but still exist.
+            #        then issue warning and don't delete?
+            # expire_device($dev->{ip},1);
+        }   
+    }
+
+    if ($type eq 'node'){
+        my $sql = qq/DELETE from node where age(time_last) > interval '$days days'/;
+        $sql .= " and not active" if $archive_only;
+        
+        my $rows;
+        print "$sql\n";
+        #$rows = sql_do($sql);
+        # note:expire_ips() should be run after this, and is in nightly() through db_clean()
+        $rows = 0 if $rows < 1;
+        print "Deleted $rows rows from node.\n";
+
+        $sql = qq/DELETE from node_ip where age(time_last) > interval '$days days'/;
+        $sql .= " and not active" if $archive_only;
+        
+        print "$sql\n";
+        #$rows = sql_do($sql);
+        $rows = 0 if $rows < 1;
+        print "Deleted $rows rows from node_ip.\n";
+
+    }
 }
 
 =item expire_device(device,expire_nodes?)
@@ -2268,13 +2333,44 @@ Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
 =cut
 sub nightly {
     my $no_batch = shift || 0;
+    print "nightly() - Starting nightly cleanup and backup routines\n";
     # Log backup
     &batch_mode('logs/back',1) unless (defined $no_batch and $no_batch);
+
+    print "  Cleaning and clearing data...\n";
+
+    # Expire Devices that are X days old
+    if (defined $CONFIG{expire_devices} and $CONFIG{expire_devices} =~ /^\d+$/
+        and $CONFIG{expire_devices} > 0) 
+    {
+        print "  Deleting Devices that are older than $CONFIG{expire_devices} days old.\n\n";
+        expire_data('device',$CONFIG{expire_devices});
+    }
+    
+    # Expire Archived Node Data X days old
+    if (defined $CONFIG{expire_nodes_archive} and $CONFIG{expire_nodes_archive} =~ /^\d+$/
+        and $CONFIG{expire_nodes_archive} > 0) 
+    {
+        print "  Deleting Archived Node data older than $CONFIG{expire_nodes_archive} days old.\n\n";
+        expire_data('node',$CONFIG{expire_nodes_archive},1);
+    }
+
+    # Expire Nodes that are X days old
+    if (defined $CONFIG{expire_nodes} and $CONFIG{expire_nodes} =~ /^\d+$/
+        and $CONFIG{expire_nodes} > 0) 
+    {
+        print "  Deleting Nodes older than $CONFIG{expire_nodes} days old.\n\n";
+        expire_data('node',$CONFIG{expire_nodes});
+    }
+    
+    # This will clean all node entries on unused ports and uplinks etc. Also runs expire_ips()
+    &db_clean;
+
     my $datadir = $CONFIG{datadir} || 'data';
     $datadir = "$CONFIG{home}/$datadir";
+    print "  Backing up Data to $datadir\n";
 
     die "Can't write to Data Directory.\n" unless -w $datadir;
-    print "Backing up Data to $datadir\n";
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     my $month = sprintf("%d%02d",$year+1900,$mon+1);
@@ -2291,9 +2387,8 @@ sub nightly {
 
     &dev_dump("dev/$month");
 
-    &db_clean;
 
-    print "Running Database Vacuum...\n";
+    print "  Running Database Vacuum...\n";
     sql_vacuum('');
 
     &batch_mode_end unless $no_batch;
@@ -2366,7 +2461,17 @@ Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
 sub graph {
     my $no_batch = shift || 0;
     &batch_mode('logs/graph') unless $no_batch;
-    print "Creating Graphs.\n";
+    print "graph() - Creating Graphs.\n";
+
+    eval "use GraphViz;";
+    if ($@) {
+        my $err = $@;
+        $err =~ s/\n/ /g;
+        print "  GraphViz module not installed. See INSTALL.\n";
+        print "  Error Reported : $err\n";
+        print "\n\nGraphn not created.\n";
+        return;
+    }
 
     my $G = make_graph();
 
@@ -2687,7 +2792,7 @@ sub admin_daemon {
     $SIG{PIPE} = 'IGNORE';
 
     # Throw Daemon in bg if wanted.
-    if (defined $CONFIG{daemon_bg} and $CONFIG{daemon_bg} =~ /(true|1|yes)/ ){
+    if (defined $CONFIG{daemon_bg} and $CONFIG{daemon_bg} ){
         die "Can't fork: $!\n" unless defined($pid = fork());
         # Exit parent thread
         exit if $pid;
@@ -2890,6 +2995,8 @@ sub admin_daemon_job {
 =cut
 
 sub test {
+    #expire_data('device',30);
+    expire_data('node',30,1);
 }
 
 sub header{
@@ -2946,7 +3053,7 @@ Administration:
     -g --graph                  Create network map files 
     -k --cleanalias             Deletes devices listed as aliases of another
     -K --cleannodes             Clean out nodes listed on uplink ports
-    -O --oui                    Import oid.txt into database
+    -O --oui                    Import oui.txt into Netdisco
     -p (start,stop,status,restart) Admin Daemon Control
     -u [user] [pw] [port] [admin]  Add/Change User 
     -v --version                Version info for Netdisco components
