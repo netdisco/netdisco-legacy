@@ -177,6 +177,14 @@ sub run {
         }
     }
     
+    my $time1 = time;
+    print "Vacuuming device, device_port and device_alias ... ";
+    sql_do(qq/VACUUM ANALYZE device/); 
+    sql_do(qq/VACUUM ANALYZE device_port/); 
+    sql_do(qq/VACUUM ANALYZE device_alias/); 
+    my $time2 = time;
+    print $time2-$time1," seconds.\n";
+
     &end;
     
 }
@@ -868,8 +876,7 @@ sub macwalk {
         }
     }
     print "Vacuuming node table...";
-    my $dbh = &dbh;
-    $dbh->do(qq{VACUUM ANALYZE node;}); 
+    sql_do(qq{VACUUM ANALYZE node;}); 
     print "\n";
 
     &end;
@@ -1083,9 +1090,8 @@ sub arpwalk {
         arpnip($device) if ($has_3);
     }
 
-    my $dbh = &dbh;
     print "Vacuuming node_ip table...";
-    $dbh->do(qq{VACUUM ANALYZE node_ip;}); 
+    sql_do(qq{VACUUM ANALYZE node_ip;}); 
     print "\n";
     &end;
 }
@@ -1499,16 +1505,19 @@ sub graph_each  {
     }
 
     if (defined $CONFIG{graph_raw} and $CONFIG{graph_raw}){
-        print "  Creating raw graph.\n";
-        $gv->as_canon("$CONFIG{home}/$CONFIG{graph_raw}");
+        my $graph_raw = "$CONFIG{home}/$CONFIG{graph_raw}";
+        print "  Creating raw graph: $graph_raw\n";
+        $gv->as_canon($graph_raw);
     }
     if (defined $CONFIG{graph} and $CONFIG{graph}){
-        print "  Creating graph ...\n";
-        $gv->as_gif("$CONFIG{home}/$CONFIG{graph}");
+        my $graph_gif = "$CONFIG{home}/$CONFIG{graph}";
+        print "  Creating graph: $graph_gif \n";
+        $gv->as_gif($graph_gif);
     }
     if (defined $CONFIG{graph_map} and $CONFIG{graph_map}){
-        print "  Creating ISMAP ...\n";
-        $gv->as_ismap("$CONFIG{home}/$CONFIG{graph_map}");
+        my $graph_map = "$CONFIG{home}/$CONFIG{graph_map}";
+        print "  Creating ISMAP : $graph_map\n";
+        $gv->as_ismap($graph_map);
     }
 }
 
@@ -2015,6 +2024,13 @@ sub refresh_all {
         }
     }
 
+    my $time1 = time;
+    print "Vacuuming device, device_port and device_alias ... ";
+    sql_do(qq/VACUUM ANALYZE device/); 
+    sql_do(qq/VACUUM ANALYZE device_port/); 
+    sql_do(qq/VACUUM ANALYZE device_alias/); 
+    my $time2 = time;
+    print $time2-$time1," seconds.\n";
     &end;
 
 }
