@@ -26,6 +26,8 @@
     * Bug Fixed [ 1046252 ] SQL 'like' queries broken in PG 7.3/7.4
             As found by Walter Gould
 
+
+
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
     + Added Feature - Search for and show IP phones that speak CDP
