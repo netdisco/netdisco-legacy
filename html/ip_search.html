@@ -33,19 +33,26 @@
     <TD><INPUT TYPE="checkbox" NAME="never" VALUE=1<%$never ? ' CHECKED' : ''%>></TD>
 </TR>
 <TR>
-    <TD COLSPAN=2>
-        <INPUT TYPE="submit" VALUE="Find IPs">
-    </TD>
+    <TD>Resolve IPs:</TD>
+    <TD><INPUT TYPE="radio" NAME="dns" VALUE=1<%$dns ? ' CHECKED': ''%>>On
+        <INPUT TYPE="radio" NAME="dns" VALUE=0<%!$dns ? ' CHECKED': ''%>>Off</TD>
     <TD>Limit :</TD>
     <TD><SELECT NAME="max" SIZE=1>
 % for (qw/10 50 100 200 500 1000 5000 100000/){
         <OPTION VALUE="<%$_%>"<%$max eq $_ ? ' SELECTED' : ''%>><%$_%>
 %}
     </TD>
+</TR>
+<TR>
+    <TD COLSPAN=4>
+        <INPUT TYPE="submit" VALUE="Find IPs">
+    </TD>
+</TR>
 </TABLE>
 </FORM>
 Finds IP Addresses used by nodes.
 <BR>To find IP addresses that have never been used in a subnet, select "12 Years" and Check the Checkbox.
+<P>
 <h3>Netbios Inventory</h3>
 % $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
@@ -74,7 +81,7 @@ Finds IP Addresses used by nodes.
 </FORM>
 <%args>
 $subnet  => ''
-$sort    => 'Age'
+$sort    => 'IP'
 $age_val => 2
 $age_mul => 'months'
 $cmd     => ''
@@ -82,11 +89,13 @@ $max     => 200
 @domain  => ()
 $archive => 0
 $never   => 0
+$dns     => 1
 </%args>
 <%shared>
 my @sorts = qw/IP Age/;
 my ($ips,$arg_sort,$odd,$arg_max,$arg_domain,$addrs,$err);
 my $nodes = [];  my $domain_count = {}; my $nbt_domains={};
+my $domain = $netdisco::CONFIG{domain} || '';
 </%shared>
 <%init>
 $arg_sort = $sort; $arg_max = $max; $arg_domain = \@domain;
@@ -124,6 +133,7 @@ if ($cmd eq 'age'){
     # Find IPs that are not active but still in subnet
     if (scalar @active_ips){
         $active_ips[0] = "!$active_ips[0]";
+        # Question: Is there any limit to IN (LIST) with DBD::Pg / Postgres?
         $where = {'ip' => [\\"<< inet $safenet",[@active_ips]], active => \'false' };
     } else {
         $where = {'ip' => \\"<< inet $safenet", active => \'false' };
@@ -132,6 +142,8 @@ if ($cmd eq 'age'){
                                'extract(epoch from time_last) as time_last','ip','active'],
                     $where
                    ); 
+
+    # Find the newest archived data
     my %seen; my %results;
     foreach my $r (@$archive_ips){
         my $ip = $r->{ip};
@@ -176,6 +188,14 @@ if ($cmd eq 'age'){
             push @$ips, { 'age' => 'Never', 'time_first' => 'Never',
                           'ip' => $ip, 'active' => 1, 'time_last' => 'Never',
                         };
+        }
+    }
+
+    # Do DNS lookups on results
+    if ($dns){
+        foreach my $i (@$ips){
+            my $ip = $i->{ip};
+            $i->{dns} = hostname($ip);
         }
     }
 
@@ -272,6 +292,7 @@ No Results Found.
 <TABLE WIDTH="100%" BORDER=0 CELLSPACING=0>
     <TR>
         <TH>Node</TH>
+        <TH>Host Name</TH>
         <TH>Last Used</TH>
         <TH>First<BR>Discovered</TH>
     </TR>
@@ -290,12 +311,15 @@ if (scalar @rows > $arg_max) {
 }
 foreach my $row (@rows){
     my $ip = $row->{ip};
+    my $dns = $row->{dns} || '&nbsp;';
+    $dns =~ s/\Q$domain\E//;
     my $age = $m->comp('device_inv.html:.trim_age', age => $row->{age});
     my $time_first = scalar(localtime($row->{time_first}));
     my $active = $row->{active};
 </%perl>
 <TR CLASS="match-<%++$odd%2%>">
     <TD><A HREF="node.html?node=<%$ip|u%><%!$active ? '&archive=1' : ''%>"><%$ip%></A><%!$active ? '*' : ''%></TD>
+    <TD><A HREF="node.html?node=<%$dns|u%><%!$active ? '&archive=1' : ''%>"><%$dns%></A><%!$active ? '*' : ''%></TD>
     <TD><%$age%><%!$active ? '*' : ''%></TD>
     <TD><%$time_first%></TD>
 </TR>
