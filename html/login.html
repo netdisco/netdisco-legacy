@@ -23,18 +23,7 @@
 <UL>
     <LI>Sessions Last for <%$session_time%> minutes.
     <LI>If you are having login problems (Appears to accept password but still sends you back to the 
-        login page)  
-        <P>Something in login is broken, seems to be something in sending the cookies.
-        If you are having problems logging in, try turning on the warning to show you 
-        when cookies are being sent, and see if a cookie IS being sent. 
-        <P>
-        If you're having problems, try deleting any cookie labeled <b>ucsc.edu</B> and then
-        restarting your browser.
-        <UL>
-            <LI>IE: <u>T</u>ools :: Internet <u>O</u>ptions :: Delete Cook<u>i</u>es
-            <LI>Mozilla / NS6 : <u>T</u>ools :: <u>C</u>ookie Manager :: <u>M</u>anage stored cookies
-            <LI>NS4: Exit the browser.  Go into <tt>$HOME/.netscape</tt> and edit the file <tt>cookies</tt>
-        </ul>
+        login page) see the comments in <i>netdisco_apache.conf</i> and then remove these lines.
 </UL>
 <!-- 
 <% join("\n",join('=',each(%{$m->session}))) %>
