@@ -1,27 +1,24 @@
-<FORM ACTION="<%$r->uri%>" METHOD="get">
-<INPUT TYPE="hidden" NAME="oldip" VALUE="<%$ip%>">
-% foreach my $port (@port){
-    <INPUT TYPE="hidden" NAME="port" VALUE="<%$port%>">
-%}
-<& SELF:matches &>
-<h3>Search for a Device</h3>
-<h4>Quick Search</h4>
+<H3>Device View</H3>
+<& SELF:show_device &>
+<h4>Device Search - Quick</h4>
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
 Device name or IP :<INPUT TYPE="text" name="ip" maxlength=20 size=20>
 <INPUT TYPE="submit" Value="Search">
-<A HREF="<%$r->uri%>">[Clear]</A>
+<A HREF="<%$r->uri%>">[Reset Page]</A>
 </FORM>
 <h4>[<A href="device_search.html">Full Search</A>]</h4>
 <%args>
-$ip         => undef
-$oldip      => undef
-@port       => undef
-@portcol    => undef
-$submit     => undef
+$ip         => ''   # Can be IP or hostname
+@port       => ()   # Ports to be shown
+@portcol    => ()   # Columns to Show for each port
+$submit     => ''   # Can have all/hide to control ports
 $device_age => 'off'
 $archive    => 'off'
 </%args>
 <%shared>
-my ($dev_age,$dev_arch,$device,$ports,$devip) = undef;
+my ($arg_age,$arg_arch,$device,$devip);
+my $ports = [];
+my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
 my $now    = time;
 my $match  = 0;
@@ -39,27 +36,13 @@ my %port_cols = (
 
 my %device_info = (
                    'Aliases'  => 'aliases',
-                   'Name' => 'name',
-                   'Vendor' => 'vendor',
-                   'Model' => 'model',
-                   'Description' => 'description',
-                   'Contact' => 'contact',
                    'First Discovered' => 'creation',
-                   'Last Updated' => 'last_discover',
                    'Last MacSuck' => 'last_macsuck',
                    'Last ArpNip' => 'last_arpnip',
-                   'Location' => 'location',
                    'Mac Address' => 'mac',
-                   'Uptime' => 'uptime',
                    'OSI Layers' => 'layers',
-                   'Ports' => 'ports',
-                   'Serial Number '=> 'serial',
-                   'Power Supply 1' => 'ps1_type',
-                   'Power Supply 2' => 'ps2_type',
-                   'Power Supply 1 Status' => 'ps1_status',
-                   'Power Supply 2 Status' => 'ps2_status',
-                   'Fan' => 'fan',
-                   'Backplane Slots' => 'slots',
+                   #'Ports' => 'ports',
+                   #'Backplane Slots' => 'slots',
                     );
 
 # These are switches that we want a link to their web interface.
@@ -75,14 +58,15 @@ my $secure       = (defined $r->subprocess_env('https') and $r->subprocess_env('
 my $port_ctl     = $m->session->{user_port_ctl};
 my $port_control = ($port_ctl and $secure);
 my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
+my $admin        = defined $m->session->{user_admin} and $m->session->{user_admin} ? 1 : 0;
 </%shared>
 <%init>
 #  Parsing of Arguments
-$dev_age  = $device_age; $dev_arch = $archive;
+$arg_age  = $device_age; $arg_arch = $archive; 
+@arg_port = @port;
 
-if ($ip or $oldip) {
-    # Form input vs new input
-    $ip = $oldip unless length($ip);
+if ($ip) {
+    # Save Search Term
     $match = $ip;
     
     # Resolve input
@@ -90,11 +74,11 @@ if ($ip or $oldip) {
     my $ip = &getip($ip);
 
     # Check if we're an alias of another device
-    my $realip = &root_device($ip);
+    $devip = &root_device($ip);
     
     # YOU ARE HERE
     # redirect to search if no match
-    $m->redirect("device_search.html?text=$match") unless (defined $realip and length($realip));
+    $m->redirect("device_search.html?text=$match") unless $devip;
 
     # Grab Device INFO
     $device = sql_hash('device',
@@ -105,7 +89,7 @@ if ($ip or $oldip) {
                          'extract(epoch from last_discover) as last_discover',
                          'extract(epoch from last_macsuck) as last_macsuck',
                          'extract(epoch from last_arpnip) as last_arpnip' ],
-                        {'ip'=>$realip});
+                        {'ip'=>$devip});
 
 
     # This could take a while.
@@ -113,22 +97,29 @@ if ($ip or $oldip) {
 
     # Grab aliases  
     my $aliases = sql_rows('device_ip',['alias','dns','port'],
-                           {'ip'=>$realip});
+                           {'ip'=>$devip});
 
     $device->{aliases} = $aliases;
     
-    # Grab requested ports:
+    # Hide Ports
+    if ($submit =~ /hide/i) {
+        @port = @arg_port = (); 
+    } 
+
+    # All Ports
     if ($submit =~ /all/i or join(' ',@port) =~ /all/i) {
         @port=('all'); 
-        $ports = sql_rows('device_port',['*'],{'ip'=>$realip});         
-    } else {
+        $ports = sql_rows('device_port',['*'],{'ip'=>$devip}) || [];         
+    } 
+    else 
 
-        # Look for each port given to us
+    # Selected Ports 
+    {
         foreach my $portreq (@port) {
             next unless defined $portreq;
         
             my $db_ports = sql_rows('device_port',['*'],
-                            {'ip'=>$realip,'port'=>$portreq});
+                            {'ip'=>$devip,'port'=>$portreq});
 
             # add our results to the list
             if (defined $db_ports and scalar @$db_ports){
@@ -137,8 +128,8 @@ if ($ip or $oldip) {
         }
     }
 
-    # Find the nodes connected to ports, aliases assigned, and log entries
-    foreach my $portreq (@$ports){
+    # PORTS - Connected Nodes, aliases and log entries
+    foreach my $portreq (@$ports) {
         my $switch = $portreq->{ip};
         my $port   = $portreq->{port}; 
 
@@ -166,15 +157,9 @@ if ($ip or $oldip) {
                 $portreq->{port} .= "<BR> $alias ($dns)";
             }
         }
-
-        # Add log file icon
-        #if ($portreq->{logs}) {
-        #    $portreq->{port} .= "<IMG SRC=\"icon_note.png\" ALT=\"$portreq->{logs} Log Entries\">";
-        #}
     }
 }
 
-# Pass the form arguments to global space
 # Change the columns of ports shown
 if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
     # Set all to not seen
@@ -195,64 +180,116 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
 %#
 %# END MAIN COMPONENT
 %#
-%# show_all() - Prints out the Ports show_all link and the column choices
+%# port_view() - Prints out the Port View control form
 %#
-<%method show_all>
-% my $link = $r->uri() . "?ip=$devip";
-<h4>Ports</h4>
+<%method port_view>
+<h4>Port View</h4>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip%>">
+% foreach my $port (@arg_port){
+    <INPUT TYPE="hidden" NAME="port" VALUE="<%$port%>">
+%}
 <INPUT TYPE="submit" VALUE="Show All Ports" NAME="submit" >
 % if (defined $ports and scalar @$ports) {
-[ <A HREF="<% $link %>">Hide Ports</A> ]  
-%} 
-<h4>View</h4>
+<INPUT TYPE=SUBMIT VALUE="Hide Ports">
+% }
+<P>
+<B>Columns:</B>
 % foreach my $col (keys %port_cols) {
 %   my $name  = $port_cols{$col}->[0];
 %   my $check = $port_cols{$col}->[1];
 %   $name =~ s/<BR>.*$//;
-    <%$name%>:<INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>> 
+   <%$name%><INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>>&nbsp;
 % }
 <BR>
-Connected Device Age Stamp:
-<INPUT TYPE="radio" NAME="device_age" VALUE="off" <%$dev_age eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="device_age" VALUE="on"  <%$dev_age eq 'on'  ? 'CHECKED' : '' %>>On
+<B>Connected Device Age Stamp</B>:
+<INPUT TYPE="radio" NAME="device_age" VALUE="off" <%$arg_age eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="device_age" VALUE="on"  <%$arg_age eq 'on'  ? 'CHECKED' : '' %>>On
 &nbsp; &nbsp; &nbsp; &nbsp;
-Show Archived Data:
-<INPUT TYPE="radio" NAME="archive" VALUE="off" <%$dev_arch eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$dev_arch eq 'on'  ? 'CHECKED' : '' %>>On
+<B>Show Archived Data</B>:
+<INPUT TYPE="radio" NAME="archive" VALUE="off" <%$arg_arch eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$arg_arch eq 'on'  ? 'CHECKED' : '' %>>On
 <P>
 <INPUT TYPE="submit" VALUE="Change View" NAME="submit">
+</FORM>
 </%method>
 %#
-%# matches() - Display device and port info
+%# show_device() - Display device Info.
 %#
-<%method matches>
+<%method show_device>
 <%perl>
-# %device_info maps A textual description to a DB column.
+return unless defined $device;
 
-# [ No Matches Found ]
-if (!defined $device and !$match) {
-    # Page loaded, no args
-    return; 
-} elsif (!defined $device){
-    $m->out("No Matching device found.\n");
-    return;
-}
-
-$devip = $device->{ip};
-my $dns = defined $device->{dns} ? $device->{dns} : '[No DNS]';
+my $dns = $device->{dns} || '[No DNS]';
 my $vendor = $device->{vendor};
 my $model  = $device->{model};
 my $want_web_link = (defined $web_vendors{$vendor} or defined $web_models{$model});
 my $web_dns = $dns;
 $web_dns =~ s/\Q$domain\E//;
 </%perl>
-<h3>Device Information</h3>
 <B><%$dns%></B> (<%$devip%>)
+% if ($want_web_link or $admin) {
+<BR>
+%}
 % if ($want_web_link) {
-<BR>[<A HREF="switch/<%$web_dns|u%>/">Web Console</A>]
+[<A HREF="switch/<%$web_dns|u%>/">Web Console</A>]
 % } 
+% if ($admin) {
+[<A HREF="admin_dev.html?dev_text=<%$device->{dns} || $devip |u%>">Device Control</A>]
+% }
 <HR NOSHADE>
 <TABLE CELLSPACING=0 CELLPADDING=3 BORDER=0>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Name</U></TD>
+    <TD ALIGN=LEFT><%$device->{name}|h%></TD>
+</TR>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Location / Contact</U></TD>
+    <TD ALIGN=LEFT><%$device->{location}|h%>
+        / <%$device->{contact} |h%>
+    </TD>
+</TR>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Model / Serial</U></TD>
+    <TD ALIGN=LEFT><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&models=<%$device->{model}|u%>&boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
+    / <%$device->{serial}%>
+    </TD>
+</TR>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Description</U></TD>
+    <TD ALIGN=LEFT><%$device->{description}|h%></TD>
+</TR>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Uptime</U></TD>
+    <TD ALIGN=LEFT><% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
+    on <% scalar localtime($device->{last_discover}) %>
+    </TD>
+</TR>
+% if (defined $device->{fan} or $device->{ps1_status}) {
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>Power</U></TD>
+    <TD ALIGN=LEFT>
+%   if (defined $device->{fan}) {
+    Fan : <%$device->{fan}%> &nbsp;&nbsp;
+% }
+%   if (defined $device->{ps1_status}) {
+    PS1 [<%$device->{ps1_type}%>] :  <%$device->{ps1_status}%>&nbsp;&nbsp;
+% }
+%   if (defined $device->{ps2_status}) {
+    PS2 [<%$device->{ps2_type}%>] :  <%$device->{ps2_status}%>&nbsp;&nbsp;
+% }
+
+    </TD>
+</TR>
+% }
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U></U></TD>
+    <TD ALIGN=LEFT></TD>
+</TR>
+<TR>
+    <TD><U></U></TD>
+    <TD ALIGN=LEFT></TD>
+</TR>
 <%perl>
 # Print out each item in the database that we have using the 
 #   %device_info map.
@@ -262,24 +299,6 @@ foreach my $item (sort keys %device_info) {
     next unless defined $val;
 
     # Munge
-    if ($db_col eq 'uptime'){
-        # uptime is in 100ths of seconds
-        $val = int($val/100);
-        my $sec = $val % 60;
-        $val = ( $val - $sec ) / 60;
-        my $min = $val % 60;
-        $val = ( $val - $min ) / 60;    
-        my $hour = $val % 24;
-        $val = ( $val - $hour ) / 24;
-        my $day = $val % 7;
-        my $week = ($val - $day) / 7;
-        my @times;
-        push (@times,"$week weeks") if $week;
-        push (@times,"$day days") if ($week or $day);
-        push (@times,"$hour hours") if ($week or $day or $hour);
-        push (@times,"$min min.") if ($week or $day or $hour or $min);
-        $val = join(',',@times);
-    }
     if ($db_col eq 'aliases'){
         next unless scalar @$val;
         my @vals;
@@ -318,11 +337,9 @@ if (defined $log and length($log)){
 </%perl>
     <TR CLASS="match-<%$logclass%>"><TD ALIGN=CENTER><u>Log</u></TD>
     <TD ALIGN=LEFT><TEXTAREA ROWS=3 COLS="50" WRAP="soft"><%$log|h%></TEXTAREA></TD></TR>
-<%perl>
-}
-$m->out("</TABLE>\n");
-$m->comp('SELF:port_matches');
-</%perl>
+%}
+</TABLE>
+<& SELF:show_ports &>
 </%method>
 %#
 %# port_header() - Prints out the header block depending on the columns selected
@@ -336,21 +353,20 @@ $m->comp('SELF:port_matches');
 %   next unless $on;
     <TH><%$desc%></TH>
 %}
-    <TH>Connected<BR>Devices<% $dev_age eq 'on' ? '<BR><font size=-2>(Last Seen)</font>' : ''%></TH>
+    <TH>Connected<BR>Devices<% $arg_age eq 'on' ? '<BR><font size=-2>(Last Seen)</font>' : ''%></TH>
 %# if ($port_control) {
     <TH>Port<BR>Control</TH>
 %#}
 </TR>
 </%method>
 %#
-<%method port_matches>
-<P>
-%#<H4> Device Ports</h4>
+%# show_ports()
+%#
+<%method show_ports>
 <%perl>
-
 # No ports specified
-if (!defined $ports or (defined $ports and !scalar @$ports)){
-    $m->comp('SELF:show_all' );
+unless (scalar @$ports) { 
+    $m->comp('SELF:port_view' );
     return;
 }
 
@@ -435,8 +451,8 @@ foreach my $port (sort sort_port @$ports){
             my $time_last = $node->{time_last};
             my $age       = $now - $time_last;
             $age = sprintf("%d", ($age / (60*60*24)));
-            my $show_age  = ($dev_age eq 'on' and $age > 0) ? " ($age days)" : '';
-            next unless ($active or $dev_arch eq 'on');
+            my $show_age  = ($arg_age eq 'on' and $age > 0) ? " ($age days)" : '';
+            next unless ($active or $arg_arch eq 'on');
             $seen_macs++;
 </%perl>
         <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR> 
@@ -467,6 +483,10 @@ foreach my $port (sort sort_port @$ports){
 % # Print out the legend again if we have lots of results
 % $m->comp('SELF:port_header') if (scalar @$ports > 10);
 % 
+<& SELF:port_key &>
+<& SELF:port_view &>
+</%method>
+<%method port_key>
 </TABLE>
 <h4>Key</h4>
 <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
@@ -483,14 +503,14 @@ foreach my $port (sort sort_port @$ports){
 <TR CLASS="tr-data-2">
     <TD>Admin :</TD>
     <TD>
-    <NOBR> <IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
-    <NOBR> <IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
-    <NOBR> <IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
-    <NOBR> <IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
+    <NOBR><IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
+    <NOBR><IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
+    <NOBR><IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
+    <NOBR><IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
     </TD>
 </TR>
 %}
-% if ($dev_arch eq 'on' or $dev_age eq 'on'){
+% if ($arg_arch eq 'on' or $arg_age eq 'on'){
 <TR CLASS="tr-data-1">
     <TD>Settings :</TD>
     <TD>
@@ -500,8 +520,32 @@ foreach my $port (sort sort_port @$ports){
 </TR>
 % }
 </TABLE>
-<P>
-<& SELF:show_all &>
+</%method>
+%#
+%# uptime() - Returns pretty-print of uptime values
+%#
+<%method uptime>
+<%args>
+$uptime
+</%args>
+<%perl>
+# uptime is in 100ths of seconds
+my $val = int($uptime/100);
+my $sec = $val % 60;
+$val = ( $val - $sec ) / 60;
+my $min = $val % 60;
+$val = ( $val - $min ) / 60;    
+my $hour = $val % 24;
+$val = ( $val - $hour ) / 24;
+my $day = $val % 7;
+my $week = ($val - $day) / 7;
+my @times;
+push (@times,"$week weeks") if $week;
+push (@times,"$day days") if ($week or $day);
+push (@times,"$hour hours") if ($week or $day or $hour);
+push (@times,"$min min.") if ($week or $day or $hour or $min);
+return join(',',@times);
+</%perl>
 </%method>
 <%method title>
 - Device View \
