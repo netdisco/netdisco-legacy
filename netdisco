@@ -519,8 +519,7 @@ Can be called recursively.  call batch_mode_end() to return to previous Output.
 sub batch_mode{
     return unless $BatchMode;
 
-    my $file_name = shift;
-    my $want_time = shift;
+    my ($file_name,$want_time,$no_header) = @_;
 
     my $file_path = $CONFIG{datadir} || 'data';
     $file_path    = "$CONFIG{home}/$file_path";
@@ -533,7 +532,7 @@ sub batch_mode{
     my $date = sprintf("%d%02d%02d",$year+1900,$mon+1,$mday);
     my $time = sprintf("%02d:%02d",$hour,$min);
 
-    my $timestamp = (defined $want_time) ? "$date-$time" : $date;
+    my $timestamp = (defined $want_time and $want_time) ? "$date-$time" : $date;
     
     my $file = "$file_path/$file_name-$timestamp.$extension";
 
@@ -551,7 +550,7 @@ sub batch_mode{
     $| = 1;
 
     print STDERR "Batch Mode - Output in $file\n" if $DEBUG;
-    &header;
+    &header unless (defined $no_header and $no_header);
 }
 
 =item batch_mode_end(no_compress_flag)
@@ -2066,6 +2065,8 @@ sub nightly {
     system("mkdir -m 0775 -p $datadir/arp/$month") unless (-d "$datadir/arp/$month");
     system("mkdir -m 0775 -p $datadir/dev/$month") unless (-d "$datadir/dev/$month");
 
+    &nmis_dump;
+
     &mac_dump("mac/$month");
 
     &arp_dump("arp/$month");
@@ -2078,6 +2079,59 @@ sub nightly {
     &sql_do("VACUUM ANALYSE;");
 
     &batch_mode_end unless $no_batch;
+}
+
+=item nmis_dump()
+
+Dumps the device table out to NMIS (http://www.sins.com.au/nmis/) style config file.
+
+=cut
+sub nmis_dump {
+    
+    my $dump_file = $CONFIG{nmis_dump};
+    unless (defined $dump_file){
+        $DEBUG and print "nmis_dump() Config option nmis_dump not set.\n";
+        return;
+    }
+
+    print "nmis_dump() - Dumping to $dump_file.csv \n";
+
+    # Force to batch mode to not output to screen.
+    local $CONFIG{logextension} = 'csv';
+    my $old_batch = $BatchMode;
+    $BatchMode=1;
+    &batch_mode($dump_file,0,1);    # no header, no timestamp
+print << "end_print";
+#
+# Netdisco - NMIS config file dump
+#
+# Header
+#
+node	community	snmpport	net	devicetype	role	group	collect	active
+#
+# Data
+#
+end_print
+    my $devices = sql_rows('device',['ip','dns','snmp_comm','layers']);
+
+    foreach my $dev (sort { ($a->{dns}||$a->{ip}) cmp ($b->{dns}||$b->{ip}) } @$devices){
+        my $ip = $dev->{ip};
+        my $layers = $dev->{layers};
+        my $device_type = 'switch';
+           $device_type = 'router' if has_layer($layers,3);
+        my $node        = $dev->{dns}           || $ip;
+        my $community   = $dev->{snmp_comm}     || 'public';
+        my $snmpport    = $CONFIG{nmis_port}    || 161;
+        my $net         = $CONFIG{nmis_net}     || 'lan';
+        my $role        = $CONFIG{nmis_role}    || 'core';
+        my $group       = $CONFIG{nmis_group}   || 'Network';
+        my $collect     = $CONFIG{nmis_collect} || 'true'; 
+        my $active      = $CONFIG{nmis_active}  || 'true';
+        print join("\t",($node,$community,$snmpport,$net,$device_type,$role,$group,$collect,$active)),"\n";
+    }
+    batch_mode_end(1);      # dont compress
+    $BatchMode=$old_batch;
+
 }
 
 =back
@@ -2617,7 +2671,6 @@ sub admin_daemon_job {
 =cut
 
 sub test {
-
 }
 
 
