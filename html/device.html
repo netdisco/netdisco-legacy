@@ -107,14 +107,13 @@ if ($ip) {
     } 
 
     # All Ports
-    if ($submit =~ /all/i or join(' ',@port) =~ /all/i) {
-        @port=('all'); 
+    if ($submit =~ /all/i or grep(/^all$/,@port)){
+        @arg_port = @port = ('all'); 
         $ports = sql_rows('device_port',['*'],{'ip'=>$devip}) || [];         
     } 
-    else 
 
     # Selected Ports 
-    {
+    else {
         foreach my $portreq (@port) {
             next unless defined $portreq;
         
