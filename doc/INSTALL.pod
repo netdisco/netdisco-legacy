@@ -858,7 +858,7 @@ and their prerequisites automatically:
         install GraphViz     (you may need to do a 'force install')
 
 Some of these you will probably already have installed. Others you may need to force 
-with C<force install ModuleName>
+with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!
 
 =head3 8.2. Perl Location header in executables.
 

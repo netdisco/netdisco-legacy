@@ -15,6 +15,7 @@
       insert_or_update(INSERT into device_port (remote_port,remote_ip)... 
       Fail to add null value in not null attribute ip
 
+    * Fixed Bug [ 976039 ] Won't use Config files in non-default dir
     * Update wireless access point list
     + Organized output into the data directory a little better.
     * batch_mode() now makes all directories automatically.
