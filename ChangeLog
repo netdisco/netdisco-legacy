@@ -3,8 +3,9 @@
 # $Id$
 
 0.94beta ()
-    + Device Inventory drill down now shows model/vendor/os/version for every subsearch
-
+    + Added support for ifLastChange... almostdone
+    * Device Inventory drill down now shows model/vendor/os/version for every subsearch
+    * Added Real Name and Notes field for users in User Admin.
     * Added last_arpnip timestamp for arpnips that was never there??
 
 0.93beta (6/19/04)
