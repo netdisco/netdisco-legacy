@@ -17,7 +17,7 @@ README for how to use Netdisco.
 =cut
 
 use strict;
-use Getopt::Std;
+use Getopt::Long;
 use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
@@ -62,7 +62,42 @@ $MacTotal = 0;
 # --------------------------------------------------------------
 #              Command Line Flags                               
 # --------------------------------------------------------------
-getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuvV',\%args);
+#getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuvV',\%args);
+Getopt::Long::Configure('no_ignore_case');
+GetOptions(\%args,'a|arpwalk',
+                  'A|arpnip=s',
+                  'b|batchmode',
+                  'B|backup',
+                  'C|configfile=s',
+                  'd|discover=s',
+                  'D|debug',
+                  'e|expirenodes=s',
+                  'E|expiredevice=s',
+                  'F|discoverfile=s',
+                  'g|graph',
+                  'h|help',
+                  'I|expireips',
+                  'i|changeip=s',
+                  'k|cleanalias',
+                  'K|cleannodes',
+                  'L|nologging',
+                  'm|macwalk',
+                  'M|macsuck=s',
+                  'n|nodestoo',
+                  'N|newonly',
+                  'O|oid',
+                  'P|port=s',
+                  'p|daemon=s',
+                  'r|discoverall=s',
+                  'S|dumpsql',
+                  'R|refresh',
+                  't|test',
+                  'T|topofile',
+                  'u|user',
+                  'v|version|ver',
+                  'V|archive',
+                  'expire-nodes-subnet=s',
+          );
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
 $configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
@@ -116,6 +151,7 @@ defined $args{I} and &expire_ips;
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 defined $args{p} and &admin_daemon_ctl($args{p});
 defined $args{u} and &add_user;
+defined $args{'expire-nodes-subnet'} and &expire_nodes_subnet($args{'expire-nodes-subnet'});
 
 # Make sure we ran a command, else spit out the usage
 &usage unless (join('',keys %args) =~ /[aABdeEFgiIkKmMnNOprRtTu]+/);
@@ -194,9 +230,9 @@ sub refresh_all {
 
     my $time1 = time;
     print "Vacuuming device, device_port and device_ip ... ";
-    sql_do(qq/VACUUM ANALYZE device/); 
-    sql_do(qq/VACUUM ANALYZE device_port/); 
-    sql_do(qq/VACUUM ANALYZE device_ip/); 
+    sql_vacuum('device');
+    sql_vacuum('device_port');
+    sql_vacuum('device_ip');
     my $time2 = time;
     print $time2-$time1," seconds.\n";
     &end;
@@ -262,9 +298,9 @@ sub run {
     
     my $time1 = time;
     print "Vacuuming device, device_port and device_ip ... ";
-    sql_do(qq/VACUUM ANALYZE device/); 
-    sql_do(qq/VACUUM ANALYZE device_port/); 
-    sql_do(qq/VACUUM ANALYZE device_ip/); 
+    sql_vacuum('device');
+    sql_vacuum('device_port');
+    sql_vacuum('device_ip');
     my $time2 = time;
     print $time2-$time1," seconds.\n";
 
@@ -418,6 +454,10 @@ sub topo_load_file {
         if ($line =~ /^link:(.*)/){
             my ($from_port,$to,$to_port) = split(/,/,$1);
 
+            unless (defined $dev){
+                print "Skipping $line. No dev defined.\n" if $DEBUG;
+                next;
+            }
             #print "    $dev $from_port $to $to_port \n" if $DEBUG;
 
             my $to_ip = &getip($to);
@@ -431,6 +471,10 @@ sub topo_load_file {
             push (@{$DeviceTopo{$to_ip}}, {'from' => $to_ip,'from_port' => $to_port,   'to' => $dev,   'to_port' => $from_port});
 
         } elsif ($line =~ /^alias:(.*)/){
+            unless (defined $dev){
+                print "Skipping $line. No dev defined.\n" if $DEBUG;
+                next;
+            }
             print "  Alias : $1 found.\n" if $DEBUG;
             next;
 
@@ -707,7 +751,7 @@ sub parse_oui {
     }
     print "Added $oui_count entries from oui.txt\n";
     print "Cleaning up Database table OUI.\n";
-    sql_do(qq/VACUUM FULL ANALYZE VERBOSE oui/);
+    sql_vacuum('oui',full=>1,verbose=>1);
 }
 
 =item timeout()
@@ -800,7 +844,7 @@ sub arpwalk {
     }
 
     print "Vacuuming node_ip table...";
-    sql_do(qq{VACUUM ANALYZE node_ip;}); 
+    sql_vacuum('node_ip');
     print "\n";
     &end;
 }
@@ -1021,7 +1065,7 @@ sub get_device {
 
     # Warn if we are using an alias
     if (defined $dev_ip and $dev_ip ne $ip){
-        print "!  $ip is an alias of $dev_ip.  Using $ip instead.\n";
+        print "!  $ip is an alias of $dev_ip.\n";
         $dev_ip = undef;
     }
 
@@ -1213,7 +1257,7 @@ sub macwalk {
         }
     }
     print "Vacuuming node table...";
-    sql_do(qq{VACUUM ANALYZE node;}); 
+    sql_vacuum('node');
     print "\n";
 
     &end;
@@ -1903,6 +1947,7 @@ sub expire_device {
     if (defined $expire_nodes and $expire_nodes){
       &expire_nodes($ip);  
     }
+
 }
 
 =item expire_nodes(device,archive_only,port)
@@ -1944,6 +1989,60 @@ sub expire_nodes {
     }
 }
 
+=item expire_nodes_subnet(subnet)
+
+Subnet is in CIDR format, or any other format that Postgres likes.
+
+    192.168.0.0/24
+
+Runs expire_ips afterwards to cleanup.
+
+=cut
+sub expire_nodes_subnet {
+    my $subnet  = shift;
+    my $confirm = shift;
+    
+    print "expire_nodes_subnet($subnet)\n";
+    my $dbsubnet = dbh_quote($subnet);
+
+    my $devices = sql_rows('device',['ip','dns','location'],{'ip' => \\"<< $dbsubnet"});
+
+    unless (defined $devices and scalar @$devices){
+        print "No devices found in subnet $subnet.\n";
+        return;
+    }
+
+    print "Found Matching Devices : \n";
+    foreach my $dev (sort { ($a->{dns}||$a->{ip}) cmp ($b->{dns}||$b->{ip}) } @$devices){
+        my $name = $dev->{dns} || $dev->{ip};
+        $name =~ s/\Q$CONFIG{domain}\E//;
+        my $ip   = $dev->{ip};
+        my $location = $dev->{location} || '';
+        printf "  %-15s %-15s %s\n",$ip, substr($name,0,15), substr($location,0,46);
+    }
+
+    my $dev_count = scalar(@$devices);
+
+    unless (defined $confirm){
+        print "Enter 'delete' to confirm Exipration of nodes on these $dev_count devices.\n";
+        print "Confirm : ";
+        $confirm = <STDIN>;
+        chomp $confirm;               
+    } 
+    
+    unless ($confirm eq 'delete'){
+        print "Never Mind.\n";
+        return;
+    }
+
+    foreach my $dev (@$devices){
+        my $ip = $dev->{ip};
+        expire_nodes($ip);
+    }
+
+    &expire_ips;
+
+}
 
 =item expire_ips()
 
@@ -1973,7 +2072,7 @@ sub expire_ips {
     $rows = $rows || 0;
     print "Deleted $rows rows.\n";
     print "Vacuuming node_ip\n";
-    sql_do("VACUUM ANALYZE node_ip");
+    sql_vacuum('node_ip');
 }
 
 =item mac_dump() 
@@ -2076,7 +2175,7 @@ sub nightly {
     &db_clean;
 
     print "Running Database Vacuum...\n";
-    &sql_do("VACUUM ANALYSE;");
+    sql_vacuum('');
 
     &batch_mode_end unless $no_batch;
 }
@@ -2716,6 +2815,7 @@ Device Commands:
     -E device  - Expire/Delete Device                  (-n to delete nodes too)
     -e device  - Expire/Archive Nodes      (-V to archiVe) (-P to specify port)
     -I         - Expire IPs not used in node or device_port
+    --expire-nodes-subnet subnet - Run -E for all devices in a subnet. 
 
 Administration:
     -B         - Maintanance. Backups data to datadir. Database Cleanup.
