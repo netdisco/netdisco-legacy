@@ -191,7 +191,7 @@ unless (scalar @$rooms){
 <TABLE BORDER=0 CLASS="box" CELLSPACING=2 CELLPADDING=3>
 <TR>
     <TD>Select Rooms : </TD>
-    <TD><SELECT NAME="rooms" MULTIPLE SIZE=5>
+    <TD><SELECT NAME="rooms" MULTIPLE SIZE=15>
         <OPTION VALUE="all" SELECTED>All Rooms
 % foreach my $row (sort {$a->{ROOM} <=> $b->{ROOM}} @$rooms){
         <OPTION VALUE="<%$row->{ROOM}|h%>"><%$row->{ROOM}%>
@@ -212,7 +212,6 @@ unless (scalar @$rooms){
 <h3>Jack Search - Building List</h3>
 <%perl>
 my $buildings;
-$m->flush_buffer;
 my $time1 = time;
 {
     local $netdisco::DB = 'Oracle';
@@ -220,7 +219,7 @@ my $time1 = time;
 }
 </%perl>
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
-<SELECT NAME="building" SIZE=5>
+<SELECT NAME="building" SIZE=15>
 % foreach my $row (sort {lc($a->{BUILDING}) cmp lc($b->{BUILDING})} @$buildings){
     <OPTION VALUE="<%$row->{BLDG} |h %>">(<%$row->{BLDG}%>) <%$row->{BUILDING}%>
 % }
