@@ -34,7 +34,7 @@ use Digest::MD5;
 our @EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_port sql_scalar root_device log
-                       make_graph is_mac user_add/;
+                       make_graph is_mac user_add user_del/;
 
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
@@ -455,17 +455,30 @@ sub user_add {
             $db_args{password} = Digest::MD5::md5_hex($val);
         }
         
-        if ($arg eq 'admin' and $val =~ /^(1|true|yes|y)$/i){
-            $db_args{admin} = 1; 
+        if ($arg eq 'admin') {
+            $db_args{admin} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
         }
 
-        if ($arg eq 'port' and $val =~ /^(1|true|yes|y)$/i){
-            $db_args{port_control} = 1; 
+        if ($arg eq 'port') {
+            $db_args{port_control} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
         }
 
     }
 
     return insert_or_update('users',{'username'=>$user},{'username'=>$user,%db_args});
+}
+
+=item user_del(user)
+
+Returns result from DBI->do() - Integer for number of rows deleted, or 
+undef if error.
+
+=cut
+sub user_del{
+    my $user = shift;
+    my $dbh = &dbh;
+    $user = $dbh->quote($user);
+    return sql_do(qq/DELETE from users where username=$user/);
 }
 
 =back
@@ -544,6 +557,7 @@ sub insert_or_update {
 
         carp($sql) if $SQLCARP;
         my $row = $dbh->selectrow_hashref($sql);
+        warn "insert_or_update($sql) ". $dbh->errstr . "\n" if $dbh->err;
 
         my $diff = &hash_diff($row,$values);
 
