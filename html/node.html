@@ -1,281 +1,666 @@
-<FORM ACTION="<%$r->uri%>" METHOD="get">
 <& SELF:matches &>
 
-<h3>Search for a Node</h3>
-Enter a MAC, Hostname or IP:<INPUT TYPE="text" name="node" maxlength=20 size=20 VALUE="<%$node%>"><BR>
-Time Stamps: 
-<INPUT TYPE="radio" NAME="showdates" VALUE="1" <%$showdates ? 'CHECKED' : '' %>>On
-<INPUT TYPE="radio" NAME="showdates" VALUE="0" <%$showdates ? '' : 'CHECKED' %>>Off 
-<BR>
-Archived Data:
-<INPUT TYPE="checkbox" NAME="archives" VALUE="1" <%$archives ? 'CHECKED' : '' %>
-<BR>
-Show Vendor :
-<INPUT TYPE="radio" NAME="showoui" VALUE="1" <%$showoui ? 'CHECKED' : ''%>>On
-<INPUT TYPE="radio" NAME="showoui" VALUE="0" <%$showoui ? '' : 'CHECKED' %>>Off
-<BR>
-<INPUT TYPE="submit" Value="Search">
-<A HREF="<%$r->uri%>">[Clear]</A>
+<h3>Node Search</h3>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
+<TR>
+    <TD ROWSPAN=5 WIDTH="8">&nbsp;</TD>
+    <TD>MAC, Hostname, IP: &nbsp;</TD>
+    <TD><INPUT TYPE="text" name="node" maxlength=20 size=20 VALUE="<%$node%>">
+        <BR><font size=-2><B>*</B> and <B>?</B> are wildcards.</font>
+    </TD>
+    <TD ROWSPAN=5 WIDTH="8">&nbsp;</TD>
+</TR>
+<TR>
+    <TD>Time Stamps: </TD>
+    <TD> <INPUT TYPE="radio" NAME="dates" VALUE="1" <%$dates ? 'CHECKED' : '' %>>On
+         <INPUT TYPE="radio" NAME="dates" VALUE="0" <%$dates ? '' : 'CHECKED' %>>Off 
+    </TD>
+</TR>
+<TR>
+    <TD>Archived Data: </TD>
+    <TD><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$archive ? 'CHECKED' : '' %></TD>
+</TR>
+<TR>
+    <TD>Show Vendor : </TD>
+    <TD> <INPUT TYPE="radio" NAME="showoui" VALUE="1" <%$showoui ? 'CHECKED' : ''%>>On
+         <INPUT TYPE="radio" NAME="showoui" VALUE="0" <%$showoui ? '' : 'CHECKED' %>>Off
+    </TD>
+</TR>
+<TR>
+    <TD COLSPAN=2> <INPUT TYPE="submit" Value="Search">
+        <A HREF="<%$r->uri%>">[Clear]</A>
+    </TD>
+</TR>
+</TABLE>
 </FORM>
 
-<h3>Advanced Search</h3>
+<h3>Advanced Node Search</h3>
 
-<BR>
-Search:
+% if ($expandoui){
+<& SELF:ouiform &>
+% } else {
+<h4>[<TT><FONT SIZE=+3><A HREF="<%$r->uri%>?expandoui=1">+</A></FONT></TT>]
+<A HREF="<%$r->uri%>?expandoui=1">Search on Vendor or OUI</a> </h4>
+% }
+
+<h4>Specific Searches</h4>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
 <UL>
-<LI>by OUI
-<LI>by Partial MAC Address
-<LI>for Wireless Access Points (APs)
+<LI><INPUT TYPE="SUBMIT" NAME="specific" VALUE="Search for possible Wireless Access Points (APs)">
+<BR>These aren't guranteed to be wireless access points, they just have MACs that fall into 
+the right range.  Also remember people can hide them under fake MAC addresses as well.
+<LI><INPUT TYPE="SUBMIT" NAME="specific" VALUE="Search for nodes with multiple active IP addresses">
 </UL>
-<P>
-<FORM METHOD="GET" ACTION="node_search.html">
-<INPUT TYPE="submit" VALUE="Advanced Search">
-
-<P>
-* <font size=-2>Advanced Search takes a few seconds to load.</font>
 </FORM>
+<P>
+* <font size=-1>Advanced Searches can be slow to load.</font>
 <%args>
-$node => undef
-$showdates => 1
-$archives => 0
-$showoui => 1
+$node      => ''
+$dates     => 1
+$archive   => 0
+$showoui   => 1
+$expandoui => 0
+@vendors   => ()
+@oui       => ()
+$specific  => ''
 </%args>
-%#
-<%method title>
-- Node Search\
-</%method>
-%#
 <%shared>
-my @matches = ();
-my $badmatch = 0;
-my $dates = 0;
-my $archive = 0;
-my $oui = 0;
+my $matches = [];
 my $domain = $netdisco::CONFIG{domain};
-</%shared>
-%#
-<%init>
-# Pass the form argument to the global for <%methods>
-$dates = $showdates;
-$archive = (defined $archives and $archives == 1) ? 1 : 0;
-$oui = $showoui;
+my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node);
+my $odd=1; my $ran_query = 0;
+my @search = (); my $ouis = undef; my @cols = ();
+my $vendors = {
+            'Cisco' => qr/cisco/i,
+            '3Com'  => qr/3 ?com/i,
+            'Compaq' => qr/compaq/i,
+            'Intel'  => qr/intel/i,
+            'Apple'  => qr/apple/i,
+            'Sun'    => qr/sun\s+/i,
+            'HP'     => qr/(hp|hewlett.*packard)/i,
+            'Linksys' => qr/linksys/i,
+            'SGI'   => qr/silicon.*graphics/i,
+            'D-Link' => qr/d-link/i,
+            'IBM'  => qr/ibm/i,
+            'Dell'  => qr/dell/i,
+            'Bay'   => qr/bay.*networks/i,
+            'APC'   => qr/american.*power.*conversion/i,
+            'Lexmark' => qr/lexmark/i,
+            'Kingston' => qr/kingston/i,
+            'GW2000' => qr/gateway.*2000/i,
+            'VMWare' => qr/vmware/i,
+            '[No OUI]' => qr/\[NA\]/,
+            'Avaya'  => qr/avaya/i,
+              }; 
 
-# Search by MAC
-if (defined $node){
+# Cheers to the makers of Kismet for their extensive AP list
+# which is added to here.
+my $wireless = {
+                '00:00:94:CB' => 'Asante',
+                '00:01:03:7C' => '3Com',
+                '00:01:24:24' => 'SMC SMC7004AWBR',
+                '00:01:24:F0' => 'Acer',
+                '00:01:24:F1' => 'Acer',
+                '00:01:f4' => 'Enterasys Networks',
+                '00:02:2d' => 'Agere / Lucent Systems',
+                '00:02:a5:6e:46' => 'Compaq Computer Corporation',
+                '00:02:a5:6e:47' => 'Compaq Computer Corporation',
+                '00:02:a5:6f' => 'Compaq Computer Corporation',
+                '00:02:b3:65' => 'Intel Corporation',
+                '00:02:b3:86' => 'Intel Corporation',
+                '00:02:b3:92' => 'Intel Corporation',
+                '00:02:b3:94' => 'Intel Corporation',
+                '00:02:b3:B1' => 'Intel Corporation',
+                '00:02:6F' => 'Senao',
+                '00:03:2f' => 'Global Sun Technology, Inc.',
+                '00:04:3A:3A' => 'Avaya ad-01444',
+                '00:04:5a:0c' => 'The Linksys Group, Inc.',
+                '00:04:5A:0E' => 'Linksys WAP11',
+                '00:04:5a:0f' => 'The Linksys Group, Inc.',
+                '00:04:5a:23' => 'The Linksys Group, Inc.',
+                '00:04:5a:26' => 'The Linksys Group, Inc.',
+                '00:04:5A:2E' => 'Linksys BEFW11S4',
+                '00:04:5a:2f' => 'The Linksys Group, Inc.',
+                '00:04:5A:5A' => 'Linksys BEFW11S4',
+                '00:04:5a:cc' => 'The Linksys Group, Inc.',
+                '00:04:5a:cd' => 'The Linksys Group, Inc.',
+                '00:04:5a:ce' => 'The Linksys Group, Inc.',
+                '00:04:5a:cf' => 'The Linksys Group, Inc.',
+                '00:04:5a:d0' => 'The Linksys Group, Inc.',
+                '00:04:5a:d1' => 'The Linksys Group, Inc.',
+                '00:04:5a:d2' => 'The Linksys Group, Inc.',
+                '00:04:5a:d8' => 'The Linksys Group, Inc.',
+                '00:04:5a:da' => 'The Linksys Group, Inc.',
+                '00:04:5a:db' => 'The Linksys Group, Inc.',
+                '00:04:5a:dd' => 'The Linksys Group, Inc.',
+                '00:04:5a:e4' => 'The Linksys Group, Inc.',
+                '00:04:5a:e8' => 'The Linksys Group, Inc.',
+                '00:04:5a:eb' => 'The Linksys Group, Inc.',
+                '00:04:5a:ee' => 'The Linksys Group, Inc.',
+                '00:04:5a:f6' => 'The Linksys Group, Inc.',
+                '00:04:5a:f9' => 'The Linksys Group, Inc.',
+                '00:04:5a:fa' => 'The Linksys Group, Inc.',
+                '00:04:5a:fc' => 'The Linksys Group, Inc.',
+                '00:04:5a:fd' => 'The Linksys Group, Inc.',
+                '00:04:75:62' => '3 Com Corporation',
+                '00:04:75:75' => '3Com 3CRWE20096A AP2000 Version 1',
+                '00:04:76:a5' => '3 Com Corporation',
+                '00:04:8a' => 'Temia Vertriebs GmbH',
+                '00:04:db' => 'Tellus Group Corp.',
+                '00:04:e2'    => 'SMC Networks, Inc.',
+                '00:04:E2:E2' => 'SMC 7004AWBR',
+                '00:05:5d:25' => 'D-Link Systems, Inc.',
+                '00:05:5D:5D' => 'D-Link DWL-1000AP',
+                '00:05:5d:ea' => 'D-Link Systems, Inc.',
+                '00:05:5d:ec' => 'D-Link Systems, Inc.',
+                '00:05:5d:ed' => 'D-Link Systems, Inc.',
+                '00:05:5d:ee' => 'D-Link Systems, Inc.',
+                '00:05:5d:f1' => 'D-Link Systems, Inc.',
+                '00:05:5d:f2' => 'D-Link Systems, Inc.',
+                '00:05:5f' => 'Cisco Systems, Inc.',
+                '00:06:25'    => 'The Linksys Group, Inc.',
+                '00:06:25:25' => 'Linksys BEFW11S4 v2',
+                '00:06:25:50' => 'The Linksys Group, Inc.',
+                '00:06:25:51' => 'The Linksys Group, Inc.',
+                '00:06:25:53' => 'The Linksys Group, Inc.',
+                '00:06:25:54' => 'The Linksys Group, Inc.',
+                '00:06:25:59' => 'The Linksys Group, Inc.',
+                '00:06:25:5d' => 'The Linksys Group, Inc.',
+                '00:06:25:61' => 'The Linksys Group, Inc.',
+                '00:06:25:64' => 'The Linksys Group, Inc.',
+                '00:06:25:66' => 'The Linksys Group, Inc.',
+                '00:06:25:6d' => 'The Linksys Group, Inc.',
+                '00:06:25:75' => 'The Linksys Group, Inc.',
+                '00:06:25:76' => 'The Linksys Group, Inc.',
+                '00:07:0E' => 'Cisco',
+                '00:07:50' => 'Cisco Systems, Inc.',
+                '00:08:21' => 'Cisco',
+                '00:09:43' => 'Cisco',
+                '00:09:5b' => 'Netgear, Inc.',
+                '00:09:7C' => 'Cisco',
+                '00:09:92:92' => 'Sweex LC000010',
+                '00:09:E8' => 'Cisco',
+                '00:0A:41' => 'Cisco',
+                '00:0A:8A:8A' => 'Cisco AIR-AP1200',
+                '00:0C:41'    => 'Linksys',
+                '00:0D:88'    => 'D-Link',
+                '00:10:e7' => 'BreezeCom',
+                '00:20:d8' => 'Nortel Networks',
+                '00:30:65:03' => 'Apple',
+                '00:30:65:04' => 'Apple',
+                '00:30:65:05' => 'Apple',
+                '00:30:65:13' => 'Apple',
+                '00:30:65:15' => 'Apple',
+                '00:30:65:1B' => 'Apple',
+                '00:30:65:1C' => 'Apple',
+                '00:30:65:1D' => 'Apple',
+                '00:30:65:1E' => 'Apple',
+                '00:30:65:1F' => 'Apple',
+                '00:30:65:2D' => 'Apple',
+                '00:30:65:65' => 'Apple Snow Base Station',
+                '00:30:ab:07' => 'Netgear',
+                '00:30:ab:0a' => 'Netgear',
+                '00:30:ab:0c' => 'Netgear',
+                '00:30:ab:0d' => 'Netgear',
+                '00:30:ab:16' => 'Netgear',
+                '00:30:AB:AB' => 'Netgear MR314NA',
+                '00:30:BD'    => 'Belkin',
+                '00:30:BD:BD' => 'Belkin F5D6230-3',
+                '00:30:f1:10' => 'Accton Technology Corp.',
+                '00:30:f1:26' => 'Accton Technology Corp.',
+                '00:40:05'    => 'ANI',
+                '00:40:05:05' => 'D-Link DI-614+',
+                '00:40:05:ac' => 'ANI COMMUNICATIONS INC.',
+                '00:40:05:de' => 'ANI COMMUNICATIONS INC.',
+                '00:40:05:df' => 'ANI COMMUNICATIONS INC.',
+                '00:40:26:26' => 'Buffalo WLAR-L11G-L',
+                '00:40:96' => 'Aironet Wireless Communication',
+                '00:40:96:96' => 'Cisco AIR-AP342E2R',
+                '00:50:18' => 'ADVANCED MULTIMEDIA INTERNET TECHNOLOGY INC.',
+                '00:50:8B:8B' => 'Compaq WL400 - ETSI region',
+                '00:50:8b:99' => 'COMPAQ COMPUTER CORPORATION',
+                '00:50:da:97' => '3COM CORPORATION',
+                '00:50:DA:DA' => '3Com 3CRWE747A',
+                '00:50:F2:F2' => 'Microsoft MN-500',
+                '00:60:1d' => 'LUCENT TECHNOLOGIES',
+                '00:60:1D:1D' => 'Orinoco RG1000',
+                '00:60:b3' => 'Z-COM, INC.',
+                '00:80:37:37' => 'Ericsson A11 (AP-4121-105M-ER-EU)',
+                '00:80:c6:e3' => 'SOHOWare',
+                '00:80:C6:C6' => 'SOHOware NetBlaster II',
+                '00:80:C8'    => 'D-Link',
+                '00:90:4B:4B' => 'Linksys BEFW11S4',
+                '00:90:D1:D1' => 'SMC SMC2652W',
+                '00:A0:04:04' => '3Com 3CRWE51196',
+                '00:a0:f8' => 'SYMBOL TECHNOLOGIES, INC.',
+                '00:e0:03' => 'NOKIA WIRELESS BUSINESS COMMUN',
+                '00:E0:29' => 'OEM',
+                '00:e0:63' => 'CABLETRON - YAGO SYSTEMS, INC.',
+               };
+my %MatchMAP = ('ip'      => 'MAC -> IP',
+                'port'    => 'Switch Port',
+                'host_ip' => 'IP -> MAC',
+                'dev'     => 'IP -> Device',
+                'swport'  => 'Switch Port',
+                'alias'   => 'Deivce IP w/out MAC',
+               );
+my $hex = "[0-9a-fA-F]";
+</%shared>
+<%init>
+# remove other search criteria if specific search
+if ($specific) {
+    @oui = (); $node=''; @vendors = (); $showoui=0;
+}
+
+# Pass the form argument to the global for <%methods>
+$arg_dates = $dates; @arg_vendors = @vendors; @arg_oui = @oui;
+$arg_archive = $archive; $arg_showoui = $showoui; $arg_node = $node;
+
+
+# ----------------- Node Search -------------------------
+if ($node){
+    # Choose columns to show and order to show them in matches()
+    @cols = (['mac','MAC']);
+    push (@cols,['oui','Vendor']) if $arg_showoui;
+    push (@cols,['match','Match'],['type','Device or Node']);
+    push (@cols,['time_first','First Seen']) if $arg_dates;
+    push (@cols,['time_last','Last Seen']) if $arg_dates;
+    
     $m->flush_buffer;
+
     $node =~ s/^\s+//;
     $node =~ s/\s+$//;
-
     # Translate space separated octets into colon separated.
-    my $hex = "[0-9a-fA-F]";
     if ($node =~ /^${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2}$/){
         $node =~ s/\s+/:/g;
     }
-}
-my $is_mac = defined $node ? &is_mac($node) : 0;
-if (defined $node and $is_mac) {
-    my $where = { 'mac' => $node };
-    $where->{'active'} = 1 unless $archive;
+    my $is_mac = &is_mac($node);
+    my $is_partial_mac = ($node =~ /^(${hex}{2}:)+(${hex}{2})$/);
 
-    # Lookup IPs associated with this MAC
-    my $ips = sql_rows('node_ip',
-                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                $where
-                );
+    # Search by MAC Address
+    if ($is_mac or $is_partial_mac) {
+        my $where = { 'mac' => $is_mac ? $node : sql_match($node,0) };
+        $where->{'active'} = 1 unless $arg_archive;
 
-    foreach my $node_ip (@$ips){
-        $node_ip->{type} = 'ip';
-        $node_ip->{host} = hostname($node_ip->{ip});
-        $node_ip->{host} =~ s/\Q$domain\E//;
-        $node_ip->{oui}  = substr($node_ip->{mac},0,8);
-        push (@matches,$node_ip);
-    }
+        # Lookup IPs associated with this MAC
+        my $ips = sql_rows('node_ip',
+                    ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                    $where
+                    );
 
-    # Lookup what switch ports this MAC was seen at.
-    my $ports = sql_rows('node',
-                ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                $where
-                );   
+        foreach my $node_ip (@$ips){
+            $node_ip->{type} = 'ip';
+            $node_ip->{host} = hostname($node_ip->{ip});
+            $node_ip->{host} =~ s/\Q$domain\E//;
+            $node_ip->{oui}  = substr($node_ip->{mac},0,8);
+            push (@$matches,$node_ip);
+        }
 
-    foreach my $port (@$ports) {
-        $port->{type} = 'port';
-        #TODO - Switch to db call
-        $port->{switchname} = &hostname($port->{switch});
-        $port->{switchname} =~ s/\Q$domain\E//;
-        push (@matches,$port);
-    }
-
-    # Check the posibilty that this could be a switch port's MAC
-    my $switch_ports = sql_rows('device_port', 
-            ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
-            {'mac' => $node});
-
-    foreach my $sp (@$switch_ports){
-        $sp->{type} = 'swport';
-        $sp->{active} = 1;
-        $sp->{oui}  = substr($sp->{mac},0,8);
-        $sp->{switchname} = sql_scalar('device',['dns'],{'ip' => $sp->{ip}});
-        $sp->{switchname} =~ s/\Q$domain\E//;
-        push (@matches,$sp);
-    }
-}
-
-# Search by HOST 
-if (defined $node and !$is_mac) {
-    my $hostname = &hostname($node);
-    $hostname =~ s/\Q$domain\E//;
-    my $realip = &getip($node);
-    # see if this is a listed device or one of its aliases.
-    my $device = root_device($realip);
-
-    # Find MACs associated with this IP
-    my $where = { 'ip'=>$realip};
-    $where->{'active'} = 1 unless $archive;
-    my $macs = sql_rows('node_ip',
-                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                $where
-                       );
-
-    my @foundmacs = ();
-
-    # Add info to each entry
-    foreach my $node_ip (@$macs){
-        $node_ip->{host} = $hostname;
-        $node_ip->{type} = 'host_ip';
-        $node_ip->{dev}  = $device;
-        $node_ip->{oui}  = substr($node_ip->{mac},0,8);
-        push (@matches,$node_ip);
-        push (@foundmacs, $node_ip->{mac});
-    }
-
-    # Get details for each MAC associated with this IP
-    foreach my $mac (@foundmacs){
-        $where = { 'mac' => $mac };
-        $where->{'active'} = 1 unless $archive;
+        # Lookup what switch ports this MAC was seen at.
         my $ports = sql_rows('node',
                     ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                     $where
-                        );   
+                    );   
+
         foreach my $port (@$ports) {
             $port->{type} = 'port';
-            # TODO - switch this to a db lookup,
-            $port->{switchname} = &hostname($port->{switch});
+            $port->{switchname} = sql_scalar('device',['dns'],{'ip'=>$port->{switch}}) || '';
             $port->{switchname} =~ s/\Q$domain\E//;
-            push(@matches,$port);
+            push (@$matches,$port);
+        }
+
+        # Check the posibilty that this could be a switch port's MAC
+        my $switch_ports = sql_rows('device_port', 
+                ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
+                {'mac' => $node});
+
+        foreach my $sp (@$switch_ports){
+            $sp->{type} = 'swport';
+            $sp->{active} = 1;
+            $sp->{oui}  = substr($sp->{mac},0,8);
+            $sp->{switchname} = sql_scalar('device',['dns'],{'ip' => $sp->{ip}});
+            $sp->{switchname} =~ s/\Q$domain\E//;
+            push (@$matches,$sp);
+        }
+
+    } else {
+
+    # Search by HOST 
+        my $hostname = &hostname($node);
+        $hostname =~ s/\Q$domain\E//;
+        my $realip = &getip($node);
+
+        # see if this is a listed device or one of its aliases.
+        my $device = root_device($realip);
+
+        # Find MACs associated with this IP
+        my $where = { 'ip'=>$realip};
+        $where->{'active'} = 1 unless $archive;
+        my $macs = sql_rows('node_ip',
+                    ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                    $where
+                           );
+
+        my @foundmacs = ();
+
+        # Add info to each entry
+        foreach my $node_ip (@$macs){
+            $node_ip->{host} = $hostname;
+            $node_ip->{type} = $device ? 'dev' : 'host_ip';
+            $node_ip->{dev}  = $device;
+            $node_ip->{oui}  = substr($node_ip->{mac},0,8);
+            push (@$matches,$node_ip);
+            push (@foundmacs, $node_ip->{mac});
+        }
+
+        # Get details for each MAC associated with this IP
+        foreach my $mac (@foundmacs){
+            $where = { 'mac' => $mac };
+            $where->{'active'} = 1 unless $archive;
+            my $ports = sql_rows('node',
+                        ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                        $where
+                            );   
+            foreach my $port (@$ports) {
+                $port->{type} = 'port';
+                $port->{switchname} = sql_scalar('device',['dns'],{'ip'=>$port->{switch}});
+                $port->{switchname} =~ s/\Q$domain\E//;
+                push(@$matches,$port);
+            }
+        }
+
+        # If the IP belongs to a device, but we have no info, must be a VLAN or unused ALIAS
+        if (!scalar @$matches and $device) {
+            my $entry = {};
+            $entry->{type} = 'alias';
+            $entry->{mac} = $realip;
+            $entry->{active} = 1;
+            $entry->{dev}  = $device;
+            $entry->{dns}  = sql_scalar('device',['dns'],{'ip'=>$device});
+            $entry->{dns}  =~ s/\Q$domain\E//;
+            $entry->{ip} = $realip;
+            push (@$matches,$entry);
+        }
+        
+    }
+    $ran_query++;
+}
+
+
+# ----------------- Advanced Searches -------------------------
+
+# Search for wireless access points
+if ($specific =~ /wireless/i) {
+    push (@search,keys %$wireless);
+}
+
+# Search for multiple IP per node
+if ($specific =~ /ip/i) {
+    @cols = (['mac','MAC'],['oui','Vendor'],['location','Location']);
+
+    # select n.mac,n.switch,n.port,count(distinct(i.ip)),d.dns
+    # from node_ip i, node n left join device d on d.ip = n.switch
+    # where n.mac = i.mac and i.active = true and n.active = true 
+    # group by n.mac, n.switch, n.port,d.dns
+    # having count(distinct(i.ip)) > 1 
+    # order by count desc;
+    
+    $matches = sql_rows('node_ip i, node n left join device d on d.ip = n.switch',
+                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))'],
+                        {'n.mac' => \'i.mac', 'i.active' => 1, 'n.active' => 1},
+                        undef,
+                        'group by n.mac, n.switch, n.port, d.dns having count(distinct(i.ip)) > 1'
+                       );
+    $ran_query++;
+}
+
+# OUI Search
+push(@search,@oui);
+
+# Vendor Search
+foreach my $vendor_search (@vendors){
+    $m->comp('SELF:init_ouis');
+    next unless defined $vendors->{$vendor_search};
+    my $regex = $vendors->{$vendor_search};
+    # Look for OUIs that match our regex
+    foreach my $oui (keys %$ouis){
+        my $company = $ouis->{$oui};
+        if ($company =~ m/$regex/){
+            push(@search,$oui) 
         }
     }
+}
 
-    # If the IP belongs to a device, but we have no info, must be a VLAN or unused ALIAS
-    if (!scalar @matches and $device) {
-        my $entry = {};
-        $entry->{type} = 'alias';
-        $entry->{mac} = $realip;
-        $entry->{active} = 1;
-        $entry->{dev}  = $device;
-        $entry->{dns}  = sql_scalar('device',['dns'],{'ip'=>$device});
-        $entry->{dns}  =~ s/\Q$domain\E//;
-        $entry->{ip} = $realip;
-        push (@matches,$entry);
+if (scalar @search){
+    @cols = (['mac','MAC'],['oui','Vendor'],['location','Location']);
+    # These are taking a while, so we put this here
+    #   to let em know we're still working...
+    $m->flush_buffer;
+
+    # Sort search by length
+    my %search_length;
+    foreach my $search (@search){
+        my $length = length($search);
+        # add to queue matching length
+        push @{$search_length{$length}},lc($search);
+    } 
+
+    # New method using substr() and IN (list) for speed
+    foreach my $length (keys %search_length){
+        next unless defined $length and scalar @{$search_length{$length}};
+        next unless $length > 0;
+        my $where = {"substr(text(n.mac),1,$length)" => [$search_length{$length}]};
+
+        $where->{'n.active'} = 1 unless $archive;
+
+        my $submatch = sql_rows('node n left join device d on d.ip = n.switch',
+                               ['n.mac','d.dns','n.switch','n.port','n.active','n.oui'], $where);
+        push @$matches, @$submatch;
     }
-    
+
+    # don't list OUI matches for wireless 
+    if (defined $specific and $specific =~ /wireless/i){
+        @search = ();
+    }
+    $ran_query++;
 }
 
 # Lookup OUI for matches
-my %ouis;
-foreach my $match (@matches){
-    #my $mac = $match->{mac};
-    #my $oui = substr(uc($mac),0,8);
+foreach my $match (@$matches){
     my $oui = uc($match->{oui});
     # only look each up once.
-    unless ( defined $ouis{$oui} ){
-        $ouis{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
+    unless ( defined $ouis->{$oui} ){
+        $ouis->{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
     }
-    $match->{oui} = $ouis{$oui};
-}
-
-if ($node and ! scalar @matches ){
-    $badmatch = $node;
-    $node = undef;
+    $match->{oui} = $ouis->{$oui};
 }
 </%init>
 %#
 %# matches() - Outputs each match depending on type
 %#
 <%method matches>
-% return unless (scalar @matches or $badmatch);
+% return unless $ran_query;
 <h3>Search Results</H3>
-% if (! scalar(@matches) and $badmatch) {
-Did not find anything for <% $badmatch %>.
+<& SELF:oui_matches &>
+%unless (scalar @$matches){
+No results found.
 % return; }
 <TABLE cellspacing=0 cellpadding=4 border=0 width=100%>
 <TR>
-    <TH>MAC</TH>
-% if ($oui) {
-    <TH>NIC Vendor</TH>
-%}
-    <TH>Match</TH>
-    <TH>Device or Node</TH>
-% if ($dates) {
-    <TH>First Seen</TH>
-    <TH>Last Seen</TH>
+% foreach my $c (@cols){
+    <TH><%$c->[1]%></TH>
 % }
 </TR>
-% my $odd=0;
-% foreach my $match (@matches) {
-%     my $mac = $match->{mac};
+% $odd=0;
+% foreach my $match (@$matches) {
 %     my $active = $match->{active};
-%     next if (!$active and !$archive);
+%     my $type   = $match->{type};
 <TR CLASS="match-<% ++$odd % 2 %>">
-<TD>
-    <A HREF="node.html?node=<% $mac |u %>"><%$mac%></A>
-    <% $active ? '' : '<SUP>*</SUP>' %>
-</TD>
-% if ($oui){
-    <TD><%$match->{oui}%></TD>
-%}
-% if ($match->{type} eq 'ip') {
-    <TD>MAC -> IP</TD>
-    <TD><A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
-    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %> )
+%     foreach my $c (@cols) {
+%           my $col = $c->[0];
+    <TD>\
+%        if ($col eq 'mac') {
+        <A HREF="node.html?node=<% $match->{mac} |u %><% $active ? '': '&archive=1' %>"><%$match->{mac}%></A>
+        <% $active ? '' : '<SUP>*</SUP>' %>
+%     } elsif ($col eq 'oui') {
+        <%$match->{oui}|h%>
+%     } elsif ($col eq 'match') {
+        <%$MatchMAP{$type}  || 'Bad Match'%>
+%     } elsif ($col eq 'type') {
+        <& SELF:type_map, type=>$type, match =>$match &>
+%     } elsif ($col eq 'time_first') {
+        <% scalar localtime($match->{time_first}) || '&nbsp;' %>
+%     } elsif ($col eq 'time_last') {
+        <% scalar localtime($match->{time_last}) || '&nbsp;' %>
+%     } elsif ($col eq 'location') {
+%           my $loc = $match->{dns} || $match->{switch};
+%           $loc =~ s/\Q$domain\E//;
+        <A HREF="device.html?ip=<%$match->{switch}%>&port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>
+%     } else {
+        <% $col %>
+%     }
     </TD>
-% } elsif ($match->{type} eq 'port') { 
-    <TD>Switch Port</TD>
-    <TD>
-    <A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A>
-    (<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)
-    </TD>
-%} elsif ($match->{type} =~ /^host/ and defined $match->{dev}) {
-    <TD>IP -> Device</TD>
-    <TD><A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>
-    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
-    </TD>
-% } elsif ($match->{type} =~ /^host/){
-    <TD>IP -> MAC</TD>
-    <TD><A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
-    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
-    </TD>
-% } elsif ($match->{type} eq 'swport'){
-    <TD>Switch Port</TD>
-    <TD><A HREF="device.html?ip=<%$match->{ip}|u%>&port=<%$match->{port}|u%>"><%$match->{switchname}%> / <%$match->{port}%></A></TD>
-% } elsif ($match->{type} eq 'alias'){
-    <TD>Device IP w/out MAC</TD>
-    <TD><A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> \
-(<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A></TD>
-%} else  {
-    <TD>Bad Match</TD>
-    <TD>Type : <%$match->{type}%></TD>
-%}
-% if ($dates) {
-%   my $time_first = $match->{time_first} ? localtime($match->{time_first}) : '&nbsp;';
-%   my $time_last = $match->{time_last} ? localtime($match->{time_last}) : '&nbsp;';
-    <TD><% $time_first %></TD>
-    <TD><% $time_last %></TD>
-% }
-
-</TD></TR>
+%   }
+</TR>
 % }
 </TABLE>
-% $m->out("* - Denotes archived data.") if $archive;
+% $m->out("* - Denotes archived data.<BR>") if $arg_archive;
+Matched <% scalar $odd %> nodes.
 </%method>
+%#
+%# type_map(type) - For displaying data in 'type' column.
+%#
+<%method type_map>
+<%args>
+$type
+$match
+</%args>
+%if ($type eq 'ip'){
+    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
+    <NOBR>(<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)</NOBR>
+%} elsif ($type eq 'port') {
+    <NOBR><A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></NOBR>
+    <NOBR>(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</NOBR>
+%} elsif ($type eq 'host_ip') {
+    <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
+%} elsif ($type eq 'dev') {
+    <A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
+%} elsif ($type eq 'swport') {
+    <A HREF="device.html?ip=<%$match->{ip}|u%>&port=<%$match->{port}|u%>"><%$match->{switchname}%> / <%$match->{port}%></A></TD>
+%} elsif ($type eq 'alias') {
+    <A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> (<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A>
+%} else {
+    <% $match->{type} %>
+%} 
+</%method>
+%#
+%# init_ouis() - Populate %$ouis
+%#
+<%method init_ouis>
+<%perl>
+    return if defined $ouis;
+    $m->flush_buffer;
+    $ouis = sql_column('node',['distinct(oui)','true']); 
+    # Grab OUIs  that are present in our network
+    # Now lookup company for each
+
+    # old way
+    #foreach my $oui (keys %$ouis){
+    #    my $company = sql_scalar('oui',['company'],{'oui' => uc($oui) } );
+    #    $company = defined $company ? $company : '[NA]' ;
+    #    
+    #    $ouis->{$oui}=$company;
+    #}
+
+    # New Way - This is a lot faster.
+    my @uc_ouis = map(uc,keys %$ouis);
+    my $size = 40;
+
+    # Lookup the OUIs $size at a time.
+    while (my @chunk = splice(@uc_ouis,0,$size)){
+        my $comps = sql_rows('oui',['oui','company'],{'oui' =>[\@chunk]});
+
+        foreach my $comp (@$comps){
+            $ouis->{lc($comp->{oui})}=$comp->{company};
+        }
+
+    }
+
+    foreach my $oui (keys %$ouis){
+        next unless $ouis->{$oui} eq '1';
+        $ouis->{$oui} = '[NA]';
+    }
+</%perl>
+</%method>
+%#
+%# ouiform() - Show the Search on OUI
+%#
+<%method ouiform>
+<& SELF:init_ouis &>
+<h4>Search on Vendor or Organizationally Unique Identifier (OUI)</h4>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<INPUT TYPE="hidden" NAME="expandoui" VALUE=1>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
+<TR>
+    <TD>Vendor:</TD>
+    <TD><SELECT MULTIPLE NAME="vendors" SIZE=5>
+%       foreach my $vendor (sort keys %$vendors){
+            <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@arg_vendors) ? 'SELECTED' : ''%>><%$vendor%>
+%       } 
+        </SELECT></TD>
+    <TD>OUI:</TD>
+    <TD><SELECT MULTIPLE NAME="oui" SIZE=5>
+%       foreach my $oui (sort keys %$ouis){
+%           next if $ouis->{$oui} eq '[NA]';
+            <OPTION VALUE="<%$oui%>" <% grep(/^$oui$/,@arg_oui) ? 'SELECTED' : ''%>><%$oui%> : <%$ouis->{$oui}%>
+%       } 
+        
+        </SELECT></TD>
+</TR>
+<TR>
+    <TD>Archived Data:</TD>
+    <TD COLSPAN=3><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$arg_archive ? 'CHECKED' : '' %></TD>
+</TR>
+<TR>
+    <TD COLSPAN=4><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
+<TR>
+</TABLE>
+</FORM>
+</%method>
+%#
+%# oui_matches() - Counts how many nodes use each OUI
+%#
+<%method oui_matches>
+% return unless scalar @search;
+<h4>OUI Matches</h4>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0>
+<TR>
+    <TH>OUI</TH>
+    <TH>Count</TH>
+    <TH>Company</TH>
+</TR>
+%foreach my $search (@search){
+%   my $count   = sql_scalar('node',['count(distinct(mac))'],
+%                                   {'mac' => "$search\%" });
+%   my $oui = lc(substr($search,0,8));
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><%$search%></TD>
+    <TD>(<%$count%>)</TD>
+    <TD><% $ouis->{$oui} %></TD>
+</TR>
+%}
+</TABLE>
+<h4>Node Matches</h4>
+</%method>
+%#
+%# title()
+%#
+<%method title>
+- Node Search\
+</%method>
+%#
 %# $Id$
 %# vim:syntax=mason
