@@ -9,7 +9,7 @@ POD2HTML = /usr/local/bin/pod2html
 SNMPLIBS := $(shell find SNMP -name "*.pm")
 
 all:
-    echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."
+	echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."
 	echo "Available targets: docs,snmp,oui"
 
 back: 
