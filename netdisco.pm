@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure 
-                       url_secure mask_to_bits bits_to_mask dbh_quote $sql_vacuum/;
+                       url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
