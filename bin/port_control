@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl -w
 # port_control - Script that used to be called by front-end of netdisco to 
 #                enable and disable ports.
-# Max Baker <max@warped.org>
+# Max Baker
 #
 # Usage : port_control [-d] switch port up/down
 # exits non zero on problems

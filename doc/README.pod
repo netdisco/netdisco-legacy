@@ -4,7 +4,7 @@ Netdisco 0.92 - README
 
 =head1 AUTHOR
 
-Max Baker <max@warped.org>
+Max Baker
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 # run_sql [sql source file]
 #		Will either source a SQL file, or drop you in interactive mode
-# Max Baker <max@warped.org>
+# Max Baker
 # $Id$
 
 

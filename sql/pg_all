@@ -1,5 +1,5 @@
 #!/bin/sh
-# pg_all - Max Baker <max@warped.org>
+# pg_all - Max Baker 
 # 	run pg_run on all the tables in this dir.
 # $Id$
 

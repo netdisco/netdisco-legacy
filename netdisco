@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 # n e t  d i s c o
 # Created for UCSC
+# Changes from 0.92 on (C) 2003 Max Baker - All rights Reserved.
 # (C) 2002,2003 UC Regents.  See bottom of this file.
-# Author: Max Baker <max@warped.org>
+# Author: Max Baker 
 # $Id$
 
 =head1 NAME
@@ -2936,6 +2937,10 @@ _end_usage_
 
 =head1 COPYRIGHT AND LICENCE
 
+Changes in code from 0.92 on:
+Copyright (c) 2003 Max Baker - All Rights Reserved
+
+Original Code:
 Copyright (c) 2002,2003 Regents of the University of California
 All rights reserved.
 

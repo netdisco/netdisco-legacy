@@ -4,7 +4,7 @@ Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
 =head1 AUTHOR
 
-Max Baker C<max@warped.org>
+Max Baker 
 
 =head1 SUPPORT
 
