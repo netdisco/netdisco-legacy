@@ -9,7 +9,7 @@
     H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
          background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
     H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; }
-    TH { font-family:arial,helvetica,sans-serif; font-size:12pt; }
+    TH { font-family:arial,helvetica,sans-serif; font-size:12pt; text-align:center;}
     TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
     INPUT { font-family:monospace; font-size:9pt; }
     BODY { position:absolute; top:0; left:0; }
