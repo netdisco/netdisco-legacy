@@ -398,11 +398,11 @@ foreach my $port (@newports){
     my $stp      = $port->{stp};
     my $up       = $port->{up};
     # Check for current up
-    my $class = $up eq 'down' ? 'port_down' : 'port_up';
+    my $class = $up eq 'down' ? 'port-down' : 'port-up';
     # Check for admin down
-    $class    = $up_admin eq 'down' ? 'port_off' : $class;
+    $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking
-    $class    = (defined $stp and $stp =~ /(blocking|broken)/) ? 'port_block' : $class;
+    $class    = (defined $stp and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
     my $rowclass = (++$odd % 2 ) ? 'match-0': 'match-1';
 </%perl>
 <TR CLASS="<%$rowclass%>">
@@ -447,7 +447,7 @@ foreach my $port (@newports){
             $name .= " ($remote_port)";
             $link = "device.html?ip=$remote_ip&port=$remote_port";
         } else {
-            $name = "<SPAN CLASS=\"dead_link\">$remote_ip</SPAN>";
+            $name = "<SPAN CLASS=\"dead-link\">$remote_ip</SPAN>";
             $link = "node.html?node=$remote_ip";
         }
 </%perl>
@@ -495,17 +495,17 @@ foreach my $port (@newports){
 </TABLE>
 <h4>Key</h4>
 <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
-<TR CLASS="tr_data-1">
+<TR CLASS="tr-data-1">
     <TD>Ports:</TD>
     <TD>
-    [<SPAN CLASS="port_off">Admin Disabled</SPAN>]
-    [<SPAN CLASS="port_down">Link Down</SPAN>]
-    [<SPAN CLASS="port_block">Blocking</SPAN>]
-    (<SPAN CLASS="dead_link">Discovered Neighbor not accessable</SPAN>)
+    [<SPAN CLASS="port-off">Admin Disabled</SPAN>]
+    [<SPAN CLASS="port-down">Link Down</SPAN>]
+    [<SPAN CLASS="port-block">Blocking</SPAN>]
+    (<SPAN CLASS="dead-link">Discovered Neighbor not accessable</SPAN>)
     </TD>
 </TR>
 % if ($port_control) { 
-<TR CLASS="tr_data-2">
+<TR CLASS="tr-data-2">
     <TD>Admin :</TD>
     <TD>
     <NOBR> <IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
@@ -515,7 +515,7 @@ foreach my $port (@newports){
 </TR>
 %}
 % if ($dev_arch eq 'on' or $dev_age eq 'on'){
-<TR CLASS="tr_data-1">
+<TR CLASS="tr-data-1">
     <TD>Settings :</TD>
     <TD>
     <Font size=-2>Entries without timestamps are less than 1 day old.</font>

@@ -209,9 +209,9 @@ my $odd = 0;
 <TABLE CELLSPACING=2 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>&nbsp;</TH>
-    <TH class="tr_head">Port<BR>In</TH>
-    <TH class="tr_head"> Device </TH>
-    <TH class="tr_head">Port<BR>Out</TH>
+    <TH class="tr-head">Port<BR>In</TH>
+    <TH class="tr-head"> Device </TH>
+    <TH class="tr-head">Port<BR>Out</TH>
 </TR>
 <TR><TD COLSPAN=4><% '-' x 60 %></TD></TR>
 <%perl>
@@ -228,11 +228,11 @@ while (my $this = shift(@$path)){
     $odd++;
 </%perl>
 
-<TR class="tr_data-<%$odd % 2 %>">
-    <TD class="tr_data-<%$odd % 2 %>"><%$odd%>.</TD>
-    <TD class="tr_data-<%$odd % 2 %>"><% defined $from_port ? "[$from_port]" : '&nbsp;' %></TD>
-    <TD class="tr_data-<%$odd % 2 %>"><A HREF="<%$link%>"><%$path_info{$this}->{dns}%></A></TD>
-    <TD class="tr_data-<%$odd % 2 %>"><% defined $to_port ? "[$to_port]" : '&nbsp;' %></TD>
+<TR class="tr-data-<%$odd % 2 %>">
+    <TD class="tr-data-<%$odd % 2 %>"><%$odd%>.</TD>
+    <TD class="tr-data-<%$odd % 2 %>"><% defined $from_port ? "[$from_port]" : '&nbsp;' %></TD>
+    <TD class="tr-data-<%$odd % 2 %>"><A HREF="<%$link%>"><%$path_info{$this}->{dns}%></A></TD>
+    <TD class="tr-data-<%$odd % 2 %>"><% defined $to_port ? "[$to_port]" : '&nbsp;' %></TD>
 </TR>
 %}
 </TABLE>
