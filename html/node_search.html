@@ -32,6 +32,7 @@ Archived Data:
     <TD>OUI:</TD>
     <TD><SELECT MULTIPLE NAME="oui" SIZE=5>
 %       foreach my $oui (sort keys %$ouis){
+%           next if $ouis->{$oui} eq '[NA]';
             <OPTION VALUE="<%$oui%>" <% grep(/^$oui$/,@oui) ? 'SELECTED' : ''%>><%$oui%> : <%$ouis->{$oui}%>
 %       } 
         
@@ -58,6 +59,7 @@ the right range.  Also remember people can hide them under fake MAC addresses as
 </FORM>
 <!--
 search 1 :<%$time2 - $time1%> search 2 :<%$time3 - $time2%>
+total : <%$time4 - $time1%>
 -->
 <%args>
 @vendors    => undef
@@ -70,7 +72,6 @@ $archive    => 'off'
 - Node Search \
 </%method>
 <%shared>
-#$netdisco::SQLCARP=1;
 my $vendors = {
             'Cisco' => qr/cisco/i,
             '3Com'  => qr/3 ?com/i,
@@ -212,12 +213,30 @@ my $time1 = time;
 $ouis = sql_column('node',['distinct(oui)','true']); 
 my $time2 = time;
 
-foreach my $oui (keys %$ouis){
-    my $company = sql_scalar('oui',['company'],{'oui' => uc($oui) } );
-    $company = defined $company ? $company : '[NA]' ;
-    
-    $ouis->{$oui}=$company;
+#foreach my $oui (keys %$ouis){
+#    my $company = sql_scalar('oui',['company'],{'oui' => uc($oui) } );
+#    $company = defined $company ? $company : '[NA]' ;
+#    
+#    $ouis->{$oui}=$company;
+#}
+
+# This is a lot faster.
+my @uc_ouis = map(uc,keys %$ouis);
+my $size = 20;
+while (my @chunk = splice(@uc_ouis,0,$size)){
+    my $comps = sql_rows('oui',['oui','company'],{'oui' =>[\@chunk]});
+
+    foreach my $comp (@$comps){
+        $ouis->{lc($comp->{oui})}=$comp->{company};
+    }
+
 }
+
+foreach my $oui (keys %$ouis){
+    next unless $ouis->{$oui} eq '1';
+    $ouis->{$oui} = '[NA]';
+}
+
 my $time3 = time;
 
 # --- Search ---
@@ -317,6 +336,7 @@ if (scalar @search){
     }
 }
 
+my $time4 = time;
 </%init>
 <%method oui_matches>
 % return unless scalar @search;
