@@ -30,7 +30,7 @@ use Digest::MD5;
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
-                       sql_hash sql_column sql_rows add_node add_arp dbh
+                       sql_hash sql_column sql_rows add_node add_arp dbh sql_match
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
@@ -202,7 +202,7 @@ sub config {
 
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_splines portctl_uplinks
-                      portctl_nophones portctl_vlans
+                      portctl_nophones portctl_vlans macsuck_all_vlans
                      /;
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
@@ -640,11 +640,13 @@ sub sort_port {
 
         # A has more components - wins
         unless (defined $b1){
+            #warn("$a1 no b1\n");
             $val = -1;
         }
 
         # A has less components, loses
         unless (defined $a1) {
+            #warn("$b1 no b1\n");
             $val = 1;
         }
 
@@ -656,6 +658,7 @@ sub sort_port {
         } elsif ($a1 ne $b1) {
             $val = $a1 cmp $b1;
         }
+        #warn ("$a1 $val $b1\n");
     }
     
     return $val;
@@ -1117,7 +1120,7 @@ sub sql_hash {
         foreach my $index (keys %$wherehash){
             my $value = $wherehash->{$index};
             unless (defined $value){
-                carp("sql_hash($table,$column,$index) value for index is undef.\n");
+                carp("sql_hash($table,$index) value for where:$index is undef.\n");
                 next;
             }
             my $con ;
@@ -1140,6 +1143,39 @@ sub sql_hash {
     carp($sql) if $SQLCARP;
 
     return $dbh->selectrow_hashref($sql);
+}
+
+=item sql_match(text,exact_flag)
+
+Parses text to substitue wildcards * and ? for % and _
+
+Optional exact_flag specifies whether or not to search for that exact text
+search or to do a *text*.
+
+Default is non_exact.
+
+=cut
+sub sql_match{
+    my $text = shift;
+    my $exact_flag = shift || 0;
+
+    return undef unless defined $text;
+
+    # Trim white space
+    $text =~ s/^\s+//;
+    $text =~ s/\s+$//;
+
+    # Leave IS (not) NULL queries alone
+    unless ($text =~ /^is\s+(not)?\s*null$/i){
+        # Otherwise, make  * and ? into % and _
+        $text =~ s/[*]+/%/g;
+        $text =~ s/[?]/_/g;
+        # Non-exact text means we add a * to both sides.
+        $text = '%'. $text . '%' unless $exact_flag;
+        $text =~ s/\%+/%/g;
+    }
+
+    return $text;
 }
 
 =item sql_rows(table, [columns] , {where} ,OR, orderbystring)
@@ -1314,8 +1350,12 @@ sub sql_rows {
                 } elsif ($value =~  m/^\s*is\s+(not)?\s*null$/i ){
                     $con = '';
                 } elsif ($value =~ m/\%/ ) {
+                    # Regex matching
                     $con = $not ? 'not ilike' : 'ilike';
                     $value = $dbh->quote($value) if $quote;
+
+                    # Change the column to cast to text
+                    @indicies = map { "${_}::text" } @indicies;
                 } else {
                     $con = $not ? '!=' : '=';
                     $value = $dbh->quote($value) if $quote;
