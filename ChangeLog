@@ -25,6 +25,8 @@
     * !Bug Fixed [1037790] - Some uplink ports were allowed to be switched
     * Bug Fixed [ 1046252 ] SQL 'like' queries broken in PG 7.3/7.4
             As found by Walter Gould
+    * Bug Fixed - DBD::Pg::db unterminated quoted string bug .
+      Problem turned out to be Postgres barfing on null terminated strings.
 
 
 

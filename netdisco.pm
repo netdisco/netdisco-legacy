@@ -963,6 +963,7 @@ sub insert_or_update {
         foreach my $index (keys %$indexes){
             my $value = $indexes->{$index};
             $value = $dbh->quote($value);
+            $value =~ s/\0//g;
             push(@where, "$index = $value ");
         }
 
@@ -981,6 +982,8 @@ sub insert_or_update {
             $sql = sprintf("UPDATE $table SET %s WHERE $wherestr",
                 join(',',map { sprintf("$_=%s",$dbh->quote($values->{$_})) } keys %$values));
 
+            # Certain devices were null padding and postgres barfs on nulls in text fields.
+            $sql =~ s/\0//g;
             carp($sql) if $SQLCARP;
 
             $dbh->do($sql); 
@@ -1000,6 +1003,8 @@ sub insert_or_update {
             join(',',keys(%$values)), 
             join(',',map {$dbh->quote($_)} values(%$values)));
 
+    # Certain devices were null padding and postgres barfs on nulls in text fields.
+    $sql =~ s/\0//g;
     carp($sql) if $SQLCARP;
 
     my $sth = $dbh->prepare($sql);
@@ -1344,6 +1349,9 @@ sub sql_rows {
     
     # Just tag it on there for now.
     $sql .= " $orderby" if (defined $orderby);
+
+    # Certain devices were null padding and postgres barfs on nulls in text fields.
+    $sql =~ s/\0//g;
 
     carp($sql) if $SQLCARP;
 
