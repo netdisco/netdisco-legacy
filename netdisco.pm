@@ -695,8 +695,18 @@ sub sort_port {
     my $numeric        = qr{^([\d\.]+)$};
     my $dotted_numeric = qr{^(\d+)\.(\d+)$};
     my $letter_number  = qr{^([a-zA-Z]+)(\d+)$};
-    my $wordcharword   = qr{^([^:\/.]+)[:\/\.]+([^:\/.]+)$};
-    my $ciscofast      = qr{^(\D)+(\d+)[:\/\.]+([\d\.]+)(-.*)?$};
+    my $wordcharword   = qr{^([^:\/.]+)[\ :\/\.]+([^:\/.]+)$};
+    my $ciscofast      = qr{^
+                            # Word Number (Gigabit0)
+                            (\D+)(\d+)
+                            # Groups of symbol float (/5.5/5.5/5.5)
+                            (?:                     # group, don't capture to $1 
+                              # /5.5
+                              [:\/\.]+([\d\.]+)     # capture float
+                            )+
+                              # Optional dash (-Bearer Channel)
+                            (-.*)?
+                            $}x;
 
     my @a = (); my @b = ();
     
@@ -706,10 +716,10 @@ sub sort_port {
         @a = ($1,$2);
     } elsif ($aval =~ $numbers) {
         @a = ($1);
+    } elsif ($aval =~ $ciscofast) {
+        @a = ($1,$2,$3,$4,$5,$6);
     } elsif ($aval =~ $wordcharword) {
         @a = ($1,$2);
-    } elsif ($aval =~ $ciscofast){
-        @a = ($1,$2,$3,$4);
     } else { 
         @a = ($aval);
     }
@@ -720,10 +730,10 @@ sub sort_port {
         @b = ($1,$2);
     } elsif ($bval =~ $numbers) {
         @b = ($1);
+    } elsif ($bval =~ $ciscofast) {
+        @b = ($1,$2,$3,$4,$5,$6);
     } elsif ($bval =~ $wordcharword) {
         @b = ($1,$2);
-    } elsif ($bval =~ $ciscofast){
-        @b = ($1,$2,$3,$4);
     } else { 
         @b = ($bval);
     }
@@ -731,30 +741,29 @@ sub sort_port {
     # Equal until proven otherwise
     my $val = 0;
     while (scalar(@a) or scalar(@b)){
+        # carried around from the last find.
+        last if $val != 0;
+
         my $a1 = shift @a;
         my $b1 = shift @b;
 
-        # A has more components - wins
+        # A has more components - loses
         unless (defined $b1){
-            #warn("$a1 no b1\n");
-            $val = -1;
-        }
-
-        # A has less components, loses
-        unless (defined $a1) {
-            #warn("$b1 no b1\n");
             $val = 1;
+            last;
         }
 
-        # carried around from the last find.
-        last if $val != 0;
+        # A has less components - wins
+        unless (defined $a1) {
+            $val = -1;
+            last;
+        }
 
         if ($a1 =~ $numeric and $b1 =~ $numeric){
             $val = $a1 <=> $b1;
         } elsif ($a1 ne $b1) {
             $val = $a1 cmp $b1;
         }
-        #warn ("$a1 $val $b1\n");
     }
     
     return $val;
