@@ -1446,6 +1446,7 @@ As well as these people for their donations :
  Linda Rosewood (UCSC)
  "6pax4max!"    (???)
  Dusty Hall     (Auburn University)
+ Walter Gould   (Auburn University)
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.
