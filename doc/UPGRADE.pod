@@ -64,6 +64,8 @@ the changes for you.   Please run :
  cd /usr/local/netdisco/sql
  ./pg_run upgrade-0.92-to-0.93.sql
 
+IGNORE the warning about nuking all the data in the table. It won't.
+But even if you did, YOU ALREADY MADE A BACKUP RIGHT? (C<sql/pg_back>)
 
 =item New MIB Files
 

@@ -52,6 +52,10 @@ VERSION SPECIFIC NOTES
              cd /usr/local/netdisco/sql
              ./pg_run upgrade-0.92-to-0.93.sql
 
+            IGNORE the warning about nuking all the data in the table. It
+            won't. But even if you did, YOU ALREADY MADE A BACKUP RIGHT?
+            ("sql/pg_back")
+
         New MIB Files
             I added the Q-BRIDGE-MIB for Vlan features that are new in 0.93,
             and one of the MIB dependencies comes from v1.tar.gz from Cisco

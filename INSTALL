@@ -6,15 +6,14 @@ VERSION
 
     Netdisco 0.93 (Beta/CVS)
 
+    PLEASE check the latest version of this document at
+    <http://netdisco.org/install.html> in case of bugs.
+
 AUTHOR
 
-    Originally created by Max Baker, See list at the end of README of all
-    the contributors.
+    Created by Max Baker.
 
-CURRENT VERSION
-
-    It is a good idea to check the latest version of this document at
-    <http://netdisco.org> for corrections and additions.
+    See list at the end of README of all the contributors.
 
 SUPPORT
 
@@ -34,16 +33,21 @@ REQUIREMENTS
     Netdisco is built using lots of fine Open-Source tools:
 
     * Perl
-        5.6.1 and newer advised
+        5.6.1 and newer advised.
+
+        5.8.1 on Mandrake 9.x may be a problem (if you get an "out of
+        memory" error, you may need to change to 5.6.1 or 5.8.2).
 
     * Perl Modules
         Listed below
 
     * Net-SNMP
-        5.0.2 and newer advised
+        5.0.2 and newer advised. Untested on 5.1.x
 
     * PostgreSQL
         Developed under version 7.3
+
+        Reported working for versions 7.2, 7.3, 7.4
 
     * Mason
         1.16 or newer required
@@ -52,26 +56,28 @@ REQUIREMENTS
         1.3.x advised, Version 2.x not supported by mod_perl.
 
     * mod_perl
-        Version to match Apache
+        Version to match Apache - 1.28 or higher recommended.
+
+        Do not install version 1.99.
 
     * GraphViz
+        Version 0.10 or higher recommended.
 
     See *INSTALL* below for details on how to retrieve and install each one.
 
   OS
 
-    Netdisco was developed on a BSD system but should work on any system
-    that Postgres, Perl, Apache, and Net-SNMP run on.
+    Netdisco was developed on a Free BSD system but should work on any
+    system that Postgres, Perl, Apache, and Net-SNMP run on.
 
     Linux is a sure bet. Netdisco has been tested with Mandake 9.1 and
     includes specific notes to install with it. Successful installs have
-    been reported under Redhat, Mandrake and Debian.
+    been reported under Redhat, Mandrake, Gentoo and Debian.
+
+    One user has reported getting Netdisco running on OS X.
 
     Windows will take a lot of massaging but should be possible under
     Cygwin.
-
-    For Debian Linux, read this whole document then see the install script
-    in bin/debian_install.sh.
 
 INSTALL
 
@@ -126,9 +132,9 @@ INSTALL
     Netdisco runs Postgres as its database back-end. A mySQL port is
     reported to be in development.
 
-   Install Postgres
+   4.1. Install Postgres
 
-    i. BSD
+    1. BSD
         First install Postgres from ports:
 
             cd /usr/ports/database/postgresql7
@@ -139,7 +145,7 @@ INSTALL
             more /usr/local/pgsql/post-install-notes
             su -l pgsql -c initdb 
 
-    ii. Mandrake Linux
+    2. Mandrake Linux
         Installing PostgreSQL the easy way:
 
             urpmi postgresql postgresql-devel postgresql-server postgresql-docs
@@ -163,16 +169,16 @@ INSTALL
 
         Remember this for the Apache setup too.
 
-    iii. MAC OS X
+    3. MAC OS X
         See <http://developer.apple.com/internet/macosx/postgres.html> for
         detailed instructions on installing PostgreSQL with OS X.
 
-    iv. All Others
+    4. All Others
         There is probably a binary package all ready for you. See your
         distribution's instructions for more help. Otherwise download and
         compile the source code from <http://www.postgresql.org>.
 
-   Configure Postgres
+   4.2. Configure Postgres
 
     Netdisco's settings in PostgreSQL are
 
@@ -182,10 +188,10 @@ INSTALL
 
     Follow these steps to setup Netdisco in PostgreSQL.
 
-    i. Permissions
+    1. Permissions
         If you have just setup Postgres for the first time you may have to
         change the default permissions in $PG_DATA/pg_hba.conf. $PG_DATA
-        might be in "usr/local/pgsql" or in "var/db", depends on your OS.
+        might be in /usr/local/pgsql or in /var/db, depends on your OS.
         Check the postgres users' homedir files for the location of
         $PG_DATA.
 
@@ -204,13 +210,16 @@ INSTALL
         Postgres 7.2
                 local sameuser md5
 
-            You may have to change "md5" to "crypt", Actual mileage may
-            vary.
-
         Postgres 7.3
                 local sameuser all md5
 
-        Restart Postgres
+        Postgres 7.4
+                local sameuser all crypt
+
+        You may have to swap "md5" for "crypt", Actual mileage may vary.
+
+    2. Restart Postgres
+        You must now restart Postgres
 
         Linux :
 
@@ -223,7 +232,7 @@ INSTALL
         If there are problems with this step you will receieve an error that
         mentions something about pg_hba.conf.
 
-    ii. Create Database.
+    3. Create Database.
         Make sure your copy of the database is running.
 
         Next, find out the name of your database user. The default name for
@@ -245,7 +254,7 @@ INSTALL
             cd /usr/local/netdisco/sql
             ./pg_init
 
-    iii. Check Settings
+    4. Check Settings
         Now as a non-privileged user make sure you can get into the database
         by running "sql/pg_run". Enter the database user password given
         above.
@@ -253,7 +262,7 @@ INSTALL
             cd /usr/local/netdisco/sql
             ./pg_run
 
-    iv. Create Tables
+    5. Create Tables
         Once you are sure the database is setup correctly, create the
         database tables with "sql/pg_all". Type in the database user
         password once when prompted.
@@ -261,7 +270,7 @@ INSTALL
             cd /usr/local/netdisco/sql
             ./pg_all
 
-    v. Optimizations
+    6. Optimizations
         If you have freshly installed Postgresql then the default memory
         usage needs to be increased for efficiency. See the PostgreSQL
         documentation for postgresql.conf. Specifically you really need to
@@ -270,7 +279,7 @@ INSTALL
         benefit to get a Postgres guru in there to tune things for you. See
         README for more info about how to speed things up now and again.
 
-    vi. Postgres Startup
+    7. Postgres Startup
         Make sure that Postgres is set to start automatically.
 
         Linux
@@ -282,9 +291,54 @@ INSTALL
 
     There are three components to setup for SNMP
 
-   A) Net-SNMP
+   5.1. Net-SNMP
 
     Net-SNMP 5 lives at <http://net-snmp.sourceforge.net>.
+
+    1. Download Net-SNMP from http://net-snmp.sourceforge.net
+        This used to be called ucd-snmp.
+
+    2. Install Net-SNMP to include Perl module that comes inside the
+    distribution.
+        When you run "./configure", make sure you add the switch
+        "--with-perl-modules"
+
+            ./configure --with-perl-modules
+            make 
+            make install
+
+        If you already have net-snmp installed, then go to the source
+        directory and in the "perl" subdirectory and run "perl Makefile.PL"
+
+            cd /path/to/net-snmp-5.0.x/perl
+            perl Makefile.PL
+            make
+            make install
+
+         ********************************************************************
+
+        DO NOT INSTALL the SNMP:: modules off of CPAN or the NET::SNMP
+        module off of CPAN.
+
+         ********************************************************************
+
+        Reread the above line.
+
+    3. [OPTIONAL] Configure Net-SNMP for a non-standard setup
+        You probably will not have to do this step unless you have installed
+        net-snmp somewhere other than /usr/local/ or have some specific SNMP
+        defaults to change for these tools.
+
+            snmpconf
+
+        Make sure to set the MIB dir if non-standard (Textual mib Parsing ->
+        Specifies directories to be searched for mibs) (default directory is
+        /usr/local/share/snmp/mibs)
+
+        Make sure this newly created snmp.conf lives in
+        /usr/local/share/snmp or wherever you put a custom install.
+
+    OS Notes :
 
     BSD For BSD install Net SNMP with ports :
 
@@ -311,50 +365,7 @@ INSTALL
         Same goes for Debian. DO NOT use the apt-get version of Net-SNMP
         install by hand (it's easy!).
 
-    i. Download Net-SNMP from http://net-snmp.sourceforge.net
-        This used to be called ucd-snmp.
-
-    ii. Install Net-SNMP to include Perl module that comes inside the
-    distribution.
-        When you run "./configure", make sure you add the switch
-        "--with-perl-modules"
-
-            ./configure --with-perl-modules
-            make 
-            make install
-
-        If you already have net-snmp installed, then go to the source
-        directory and in the "perl" subdirectory and run "perl Makefile.PL"
-
-            cd /path/to/net-snmp-5.0.x/perl
-            perl Makefile.PL
-            make
-            make install
-
-         ********************************************************************
-
-        DO NOT INSTALL the SNMP:: modules off of CPAN or the NET::SNMP
-        module off of CPAN.
-
-         ********************************************************************
-
-        Reread the above line.
-
-    iii. [OPTIONAL] Configure Net-SNMP for a non-standard setup
-        You probably will not have to do this step unless you have installed
-        net-snmp somewhere other than /usr/local/ or have some specific SNMP
-        defaults to change for these tools.
-
-            snmpconf
-
-        Make sure to set the MIB dir if non-standard (Textual mib Parsing ->
-        Specifies directories to be searched for mibs) (default directory is
-        /usr/local/share/snmp/mibs)
-
-        Make sure this newly created snmp.conf lives in
-        /usr/local/share/snmp or wherever you put a custom install.
-
-   B) SNMP::Info
+   5.2. SNMP::Info
 
     This Perl module is an integral part of Netdisco. It is available from
     <http://snmp-info.sourceforge.net>. It requires that you have net-snmp
@@ -368,12 +379,12 @@ INSTALL
 
     You have three different options in installing SNMP::Info
 
-    a. CPAN
+    1. CPAN
             perl -MCPAN -e shell
                 o conf prerequisites_policy ask
                 install SNMP::Info
 
-    b. From Source
+    2. From Source
         Download newest version from <http://snmp-info.sourceforge.net>
 
             tar xvfz SNMP-Info-0.x.tar.gz 
@@ -381,7 +392,7 @@ INSTALL
             perl Makefile.PL
             make install
 
-    c. From CVS
+    3. From CVS
         If you plan to add or change device support in SNMP::Info to
         customize Netdisco to your devices, you should install SNMP::Info
         this way.
@@ -396,17 +407,17 @@ INSTALL
         To update to the most current CVS version. For BSD or Solaris
         systems, use "gmake" instead of "make"
 
-   C) MIBs
+   5.3. MIBs
 
     MIBs are required for SNMP::Info.
 
-    Download MIBs
+    1. Download MIBs
         Download the Version 1 and Version 2 MIBs from
 
             ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
             ftp://ftp.cisco.com/pub/mibs/v2/v2.tar.gz
 
-    Install MIBs
+    2. Install MIBs
         Install all of the V2 and some of the V1 MIBs into
         /usr/local/share/snmp/mibs.
 
@@ -415,7 +426,7 @@ INSTALL
             tar xvfz /path/to/v2.tar.gz
             tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my TOKEN-RING-RMON-MIB.my
 
-    Fix CISCO-TC-MIB
+    3. Fix CISCO-TC-MIB
         There is a problem with the Cisco file CISCO-TC.my which is included
         from lots of other MIBs. Make the following changes if you run into
         errors about "Unsigned32" in this file.
@@ -447,7 +458,7 @@ INSTALL
 
     It lives at <http://www.research.att.com/sw/tools/graphviz/>.
 
-    i. Download
+    1. Download
 
         BSD For BSD use ports:
 
@@ -474,16 +485,16 @@ INSTALL
             It is reported to be in "DarwinPorts" or you can check out
             <http://www.phil.uu.nl/~js/graphviz/>.
 
-    ii. True Type Font
+    2. True Type Font
         Copy a True Type Font file (.ttf) into the Netdisco directory and
         change "node_font" in netdisco.conf to match.
 
             cp /path/to/windows/fonts/lucon.ttf /usr/local/netdisco
 
-    iii. Graph Settings
+    3. Graph Settings
         Review other graph settings in netdisco.conf
 
-    iv. Check Path
+    4. Check Path
         Make sure that neato/twopi is in your path, and/or in the crontab
         path that creates the graphs.
 
@@ -502,7 +513,7 @@ INSTALL
     Until mod_perl 2.0 is released as stable, Mason will not run under
     Apache2. Netdisco will not run under Apache2 until that point.
 
-   MAC OS X
+   7.1. MAC OS X
 
     See the following three links in addition to this document :
 
@@ -510,7 +521,7 @@ INSTALL
     <http://www.oreillynet.com/pub/a/mac/2002/12/18/apache_modssl.html>
     <http://www.oreillynet.com/pub/a/mac/2003/02/07/libapreq_update.html>
 
-   Mandrake 9.1
+   7.2. Mandrake 9.1
 
     Mandrake 9.1 comes with Apache2. It also has the option of installing a
     version of Apache1/mod_perl on a different port and then reverse
@@ -518,7 +529,7 @@ INSTALL
 
     mod_ssl with Mandrake to come...
 
-    Install Apache1
+    1. Install Apache1
         Install Apache1 and Mod_Perl 1 and their development packages :
 
             urpmi apache-devel-1 mod_perl-devel-1 apache-mod_perl-1 mod_perl-common-1
@@ -528,7 +539,7 @@ INSTALL
             ln -s /usr/include/db1/* /usr/include
             ln -s /usr/lib/libdb1.so.2 /usr/lib/libdb.so
 
-    Configure Both Apaches
+    2. Configure Both Apaches
         Mandrake and some Redhats come with two copies of Apache installed.
         The mod_perl server sits on a weird port and is reversed proxied by
         a normal Apache server.
@@ -557,138 +568,156 @@ INSTALL
         In the file commonhttpd.conf add the Alias line :
 
             Alias /netdisco /netdisco/
-                    
-    Restart Apache
+
+    3. Restart Apache
             /etc/rc.d/init.d/httpd restart
 
-   Apache From Scratch
+   7.3. Apache From Scratch
 
     Install Apache 1.3.x and mod_perl 1.x and mod_ssl
-        Netdisco is designed to work in a secure (https) or non-secure
-        environment. Due to the security and privacy concerned associated
-        with this data, using a secure server is recommended.
 
-        Below is my method if you haven't installed apache and mod_perl
-        before. I statically compile mod_perl, and mod_ssl then leave the
-        rest of the modules as dynamically loadable objects (DSO).
+    Netdisco is designed to work in a secure (https) or non-secure
+    environment. Due to the security and privacy concerned associated with
+    this data, using a secure server is recommended.
 
-        i. Download and Unarchive
-            Get Apache from <http://httpd.apache.org>
+    Below is my method if you haven't installed apache and mod_perl before.
+    I statically compile mod_perl, and mod_ssl then leave the rest of the
+    modules as dynamically loadable objects (DSO).
 
-            Get mod_perl from <http://perl.apache.org>
+    1. Download and Unarchive
+        Get Apache from <http://httpd.apache.org>
 
-            Get mod_ssl from <http://www.modssl.org>
+        Get mod_perl from <http://perl.apache.org>
 
-            Unarchive all three to the same directory, maybe /usr/local/src
+        Get mod_ssl from <http://www.modssl.org>
 
-        ii. In apache_1.3.x/
-             ./configure 
+        Unarchive all three to the same directory, maybe /usr/local/src
 
-            Sets up the directory scheme.
+    2. Inital Apache Setup
+        This step makes the framework that mod_ssl and mod_perl need.
 
-        iii. In mod_ssl
+         cd apache_1.3*
+         ./configure 
 
-            BSD
-                Installing OpenSSL :
+        No need to make it yet.
 
-                    cd /usr/ports/devel/mm && make install
-                    cd /usr/ports/security/openssl && make install
+    3. mod_ssl
+        Mod_SSL gives us a secure server (https) for Netdisco to run under.
 
-                Setup mod_ssl :
+        The OpenSSL library is a prerequirement for mod_ssl and may or may
+        not already be on your system. If not :
 
-                    cd /path/to/mod_ssl_1.x.x
-                    SSL_BASE=SYSTEM \
-                        ./configure \
-                            --with-apache=../apache_1.3.x \
-                            --disable_rule=SSL_COMPAT
+        a. BSD
+            Installing OpenSSL :
 
-            RedHat / Mandrake
-                OpenSSL is installed by default.
+                cd /usr/ports/devel/mm && make install
+                cd /usr/ports/security/openssl && make install
 
-                You will have to tell the OS to look for the Kerberos
-                libraries used in this version of OpenSSL:
+            Setup mod_ssl :
 
+                cd /path/to/mod_ssl_1.x.x
+                SSL_BASE=SYSTEM \
                     ./configure \
-                        --with-apache=../apache_1.3.x \        
+                        --with-apache=../apache_1.3.x \
                         --disable_rule=SSL_COMPAT
-                    make C_INCLUDE_PATH=/usr/kerberos/include
 
-                Thanks to David Martin for this info.
+        b. RedHat / Mandrake
+            OpenSSL is installed by default.
 
-            By Hand (other OSs)
-                Follow the instructions in the INSTALL that comes with
-                "mod_ssl"
+            You will have to tell the OS to look for the Kerberos libraries
+            used in this version of OpenSSL:
 
-                 SSL_BASE=/path/to/openssl-0.9.x \
-                 ./configure \
+                ./configure \
                     --with-apache=../apache_1.3.x \        
                     --disable_rule=SSL_COMPAT
+                make C_INCLUDE_PATH=/usr/kerberos/include
 
-        iv. In mod_perl-1.2x/
-             /usr/local/bin/perl Makefile.pl \
-                    APACHE_SRC=../apache_1.3.x/src \
-                    EVERYTHING=1 \
-                    DO_HTTPD=1 \
-                    USE_APACI=1 \
-                    PREP_HTTPD=1
+            Thanks to David Martin for this info.
 
-             make
+        c. By Hand (other OSs)
+            Follow the instructions in the INSTALL that comes with "mod_ssl"
 
-        v. Back in apache_1.3.x/
+             SSL_BASE=/path/to/openssl-0.9.x \
              ./configure \
-                    --prefix=/usr/local/apache \
-                    --enable-module=most \
-                    --enable-shared=max \
-                    --activate-module=src/modules/perl/libperl.a \
-                    --with-perl=/usr/local/bin/perl \
-                    --enable-module=ssl
-             make
-             make certificate
-             make install
+                --with-apache=../apache_1.3.x \        
+                --disable_rule=SSL_COMPAT
 
-        vi. Back in mod_perl-1.2x/
-             make install
+    4. mod_perl
+        This step sets up mod_perl for this copy of apache :
 
-    httpd.conf
-        Add the following lines in your "httpd.conf".
+         cd ../mod_perl-1.x
+         /usr/local/bin/perl Makefile.pl \
+                APACHE_SRC=../apache_1.3.x/src \
+                EVERYTHING=1 \
+                DO_HTTPD=1 \
+                USE_APACI=1 \
+                PREP_HTTPD=1
 
-        Your "httpd.conf" will live in "/usr/local/apache/conf" if you
-        installed using my method.
+         make
 
-        a. In the Global Section
-            Add this line once in the end of "httpd.conf" not in a
-            VirtualHost section.
+    5. Apache Again
+        Now we're ready to make the main apache and install all of the above
+        (mod_ssl, mod_perl, and Apache).
 
-                Include /usr/local/netdisco/netdisco_apache.conf
+         cd ../apache_1.3*
+         ./configure \
+                --prefix=/usr/local/apache \
+                --enable-module=most \
+                --enable-shared=max \
+                --activate-module=src/modules/perl/libperl.a \
+                --with-perl=/usr/local/bin/perl \
+                --enable-module=ssl
+         make
+         make certificate
+         make install
 
-        b. No virtualhosts
-            If you do not have virtual hosts setup and/or you have a main
-            server, add this line right after the first include :
+    6. Install mod_perl
+         cd ../mod_perl*
+         make install
 
-                Include /usr/local/netdisco/netdisco_apache_dir.conf
+   7.4.  Apache Configuration Files
 
-        c. In each VirtualHost
-            If you have Virtual Hosts or are setting up a secure server, put
-            the following line in each of them that you want Netdisco turned
-            on for:
+    Add the following lines in your "httpd.conf".
 
-            If you are not using Virtual Hosts, then add this line under the
-            *netdisco_apache.conf* line.
+    Your "httpd.conf" will live in "/usr/local/apache/conf" if you installed
+    using my method.
 
-                Include /usr/local/netdisco/netdisco_apache_dir.conf
+    1. In the Global Section
+        Add this line once in the end of "httpd.conf" not in a VirtualHost
+        section.
 
-    Mason Data Directory
-        Set the mason data directory writable to the apache user that does
-        the requests.
+            Include /usr/local/netdisco/netdisco_apache.conf
 
-        Assuming "nobody" is the user that apache requests run this as
-        "root" :
+    2. No virtualhosts
+        If you do not have virtual hosts setup and/or you have a main
+        server, add this line right after the first include :
 
-            mkdir /usr/local/netdisco/mason
-            chown nobody.netdisco /usr/local/netdisco/mason
+            Include /usr/local/netdisco/netdisco_apache_dir.conf
 
-        The name of the user is listed in "httpd.conf" under the "User"
-        directive.
+    3. In each VirtualHost
+        If you have Virtual Hosts or are setting up a secure server, put the
+        following line in each of them that you want Netdisco turned on for:
+
+        If you are not using Virtual Hosts, then add this line under the
+        *netdisco_apache.conf* line.
+
+            Include /usr/local/netdisco/netdisco_apache_dir.conf
+
+        Make sure you have this include line for the secure server virtual
+        host *:443 at the bottom of http.conf.
+
+   7.5. Mason Data Directory
+
+    Set the mason data directory writable to the apache user that does the
+    requests.
+
+    Assuming "nobody" is the user that apache requests run this as "root" :
+
+        mkdir /usr/local/netdisco/mason
+        chown nobody.netdisco /usr/local/netdisco/mason
+
+    The name of the user is listed in "httpd.conf" under the "User"
+    directive.
 
     Note: Some Linux distributions such as Redhat 6.x install mod_perl as a
     Dynamic Shared Object (DSO). This is known to be unstable, especially
@@ -699,6 +728,8 @@ INSTALL
     Below is a list of required modules for Netdisco, freely available from
     CPAN (http://www.cpan.org). Many of these modules have prerequisite
     modules.
+
+   8.1. Install required Perl modules from CPAN
 
     Use the CPAN module that comes with Perl to install the modules and
     their prerequisites automatically:
@@ -722,7 +753,7 @@ INSTALL
     Some of these you will probably already have installed. Others you may
     need to force with "force install ModuleName"
 
-   Perl Location
+   8.2. Perl Location header in executables.
 
     If you have Perl installed in "/usr/bin", make sure that netdisco and
     bin/doc_munge have the correct location for Perl listed at the very top
@@ -730,23 +761,23 @@ INSTALL
 
   9. Netdisco Configuration
 
-    netdisco.conf
+    1. netdisco.conf
         Modify netdisco.conf to match your site.
 
         See README for detailed configuration descriptions.
 
-    netdisco_apache.conf
+    2. netdisco_apache.conf
         Change settings on lines:
 
             session_user_name
             session_password
             session_cookie_domain
 
-    netdisco.crontab
+    3. netdisco.crontab
         Change "!!center_network_device_here!!" to a network device that is
         well connected to the main segment by CDP.
 
-    Add a user in Netdisco
+    4. Add a user in Netdisco
         This is a user inside the Netdisco database that will be your Web
         Admin User
 
@@ -755,7 +786,7 @@ INSTALL
         Add more users from the web "Admin Panel" once Netdisco is up and
         running.
 
-    Make Documentation
+    5. Make Documentation
         This step is only necessary if you have installed from CVS.
 
         i. Perl Location
@@ -783,8 +814,8 @@ INSTALL
 
     Or do this by hand:
 
-    i. Download oui.txt from http://standards.ieee.org/regauth/oui/
-    ii. Run "netdisco -O"
+    1. Download oui.txt from http://standards.ieee.org/regauth/oui/
+    2. Run "netdisco -O"
 
     A note about Make versions. The Makefile is a GNU Make version file. In
     BSD you may have to type "gmake".
@@ -795,11 +826,11 @@ INSTALL
 
     Check Apache's error_log for possible errors.
 
-    Linux
-            /etc/rc.d/init.d/httpd restart
-
     HomeGrown Copies of Apache
             /usr/local/apache/bin/apachectl start
+
+    Used the Apache installed by Mandrake
+            /etc/rc.d/init.d/httpd restart
 
     Also, make sure that Apache starts on its own at reboot.
 
@@ -847,8 +878,12 @@ INSTALL
 
   15. Add Cron Jobs
 
-    Once you're sure Netdisco is setup correctly add the Cron jobs listed in
-    netdisco.crontab.
+    Once you're sure Netdisco is setup correctly, modify netdisco.crontab.
+    Change the _center_device_ to one of your core routers or switches.
+
+        vi netdisco.crontab
+
+    Now set the crontab to the "netdisco" user.
 
         su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
 

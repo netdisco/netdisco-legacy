@@ -11,6 +11,10 @@
     + Added devices : Catalyst 4000,4500, C3750, C3500XL, C2970, HP 2650, HP 2626
     + Added ability to escape pound sign and commas for use in config file as \# or \,
 
+    * More error checking for bad topology files  (warnings of 
+      insert_or_update(INSERT into device_port (remote_port,remote_ip)... 
+      Fail to add null value in not null attribute ip
+
     * Update wireless access point list
     + Organized output into the data directory a little better.
     * batch_mode() now makes all directories automatically.

@@ -126,6 +126,64 @@ GLOSSARY
         identified by their MAC addresses. A node may or may not have IP
         addresses associated with it.
 
+    Macsuck
+        Technical Answer : The process in Netdisco that goes out to all
+        Layer-2 devices and gets the Forwarding Tables / CAM Tables. Each
+        row in the table maps a MAC address to a switch port. This process
+        is what makes devices show up on switch ports.
+
+        Fun Answer - From Douglas M. McKeown :
+
+        "This is where you go to a switch (Layer 2) and find all the MAC (or
+        Ethernet Hardware) addresses which this device is connected to. So
+        you plug your Dell into your HP Switch and that HP Switch is
+        uplinked to your Core switch (not using the word router here. we're
+        talking simple, physical network connections, sort of like
+        electrical wires.) Well your Dell has a MAC address of let's say "A"
+        and amazingly, your HP switch has a MAC address of "B" and your Core
+        switch has an address of "1". Well if you Macsuck your Core switch,
+        it doesn't have your Dell connected to it, but it does have "B"
+        which is another switch. So you Macsuck "B" and it has MAC addresses
+        for 1, B and A! You don't really Macsuck an end device (your Dell).
+
+        So what do we know?
+
+            - Core (1) knows about HP Switch "B".
+            - HP Switch "B" knows about Core (1) and Dell "A".
+            - Dell "A" knows about HP Switch "B".
+
+        Does "1" know about "A" ? If it's a router it does. Otherwise it
+        asks who has "A" and switch "B" says, I know! So 1 goes to B which
+        goes to A.
+
+        Got it?"
+
+    Arpnip
+        The process in Netdisco that goes out to every Layer-3 device and
+        gets its ARP cache. Each entry in the ARP Cache maps a MAC address
+        to an IP address.
+
+        This process is what lets Netdisco map an Ethernet address to an IP
+        address. Combined with the Macsuck process, Netdisco can ultimately
+        resolve an IP address to a switch port.
+
+    CDP
+        Having topology information is crucial for Netdisco to function. So
+        if you network is not Cisco centric or does not have CDP turned on,
+        you must put the information in the netdisco-topology.txt file.
+
+        See "Toplogy Information" in this file.
+
+        From Douglas McKeown :
+
+        "CDP is the Cisco Discovery Protocol. Sort of an add-on for when
+        switches talk to switches about who's connected to whom. CDP quickly
+        tells other switches that it has switches connected. Netdisco really
+        likes CDP a lot for mapping out the network and automatically
+        discovering the topology. If your devices don't use CDP, then you
+        need to work with the netdisco-topology.txt file to create a layout
+        of your network."
+
 INSTALL
 
     See the INSTALL document for instructions and requirements to install
@@ -1086,12 +1144,13 @@ THANKS
     Netdisco :
 
     Mark Boolootian (Through who's ideas Netdisco was born and shaped)
-    (UCSC), Jim Warner (UCSC), Mike Hunter (UCB), Brian Wilson (NCSU), David
-    Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
-    Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), A.L.M
-    Buxey (Loughborough University, UK), Kevin Cheek (UMICH), Bradley Baetz
-    (bbaetz), John Bigrow (bnl.gov), George Pavel (llnl.gov), Charles
-    Goldsmith (CompUSA)
+    (UCSC), Jim Warner (UCSC), Mike Hunter (UCB), Brian Wilson (NCSU),
+    Bradley Baetz (bbaetz), David Temkin (sig.com), Edson Manners (FSU),
+    Dmitry Sergienko (Trifle Co, .ua) Remo Rickli (PSI, Switzerland),
+    Jean-Philippe Luiggi (sagem.com), A.L.M Buxey (Loughborough University,
+    UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov), George Pavel
+    (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
+    (saintmarys.edu).
 
     And probably lots of other people I forgot to put in here. Not to
     mention the authors and communities of all the other software that
