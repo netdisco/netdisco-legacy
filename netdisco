@@ -1711,6 +1711,12 @@ sub walk_fwtable {
                     if $DEBUG;
             } 
         }
+
+        # Check if Port Channel (patch from Derek Andree)
+        if ($port =~ /port.channel/i) {
+            print "  Port ($port) is a Port Channel Interface.  Skipped.\n" if $DEBUG;
+            next;
+        }
         
         # Check if MAC is a switch port
         if (defined $PortMAC->{$mac}) {
