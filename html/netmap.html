@@ -10,7 +10,7 @@ foreach my $line (@map){
     my $coord = join(',',@entry);
     $coord =~ s/[()]//g; 
 </%perl>
-    <AREA SHAPE="<% $shape %>" COORDS="<% $coord %>" HREF="<% $href %>" ALT="<% $name %>">
+    <AREA SHAPE="<% $shape %>" COORDS="<% $coord %>" HREF="<% $href %>" ALT="<% $name |h%>" TITLE="<%$name|h%>">
 % }
 </MAP>
 <IMG SRC="netmap.gif" ISMAP USEMAP="#netmap" BORDER=0>
