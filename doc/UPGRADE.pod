@@ -102,7 +102,10 @@ to the old one.  This helps get rid of old bugs too.
 
 =item v0.91 -> 0.92
 
-No version specific notes for this upgrade.
+Make sure you run C<Database Cleanup>  or C<-K> when you 
+are done upgrading.  The bug where the MAC address of switch
+ports showing up on their own port has been fixed.
+
 
 =item v0.90 -> 0.91
 

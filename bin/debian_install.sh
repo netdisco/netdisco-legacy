@@ -93,7 +93,7 @@ perl -MCPAN -e 'install Graph'
 
 #install GraphViz
 cd $curdir
-#wget http://www.graphviz.org/pub/graphviz/graphviz-1.10.tar.gz
+wget http://www.graphviz.org/pub/graphviz/graphviz-1.10.tar.gz
 tar zxvf graphviz-1.10.tar.gz
 cd graphviz-1.10
 ./configure
@@ -103,7 +103,7 @@ cd $curdir
 perl -MCPAN -e 'install GraphViz'
 
 #net-snmp
-#wget http://twtelecom.dl.sourceforge.net/sourceforge/net-snmp/net-snmp-5.0.8.tar.gz
+wget http://twtelecom.dl.sourceforge.net/sourceforge/net-snmp/net-snmp-5.0.8.tar.gz
 tar zxvf net-snmp-5.0.8.tar.gz
 cd net-snmp-5.0.8
 ./configure --with-perl-modules
@@ -116,9 +116,9 @@ tar zxvf $curdir/mibs.tgz
 cd $curdir
 
 #snmp::info
-#wget http://aleron.dl.sourceforge.net/sourceforge/snmp-info/SNMP-Info-0.6.tar.gz
-tar zxvf SNMP-Info-0.?.tar.gz
-cd SNMP-Info-0.?
+wget http://aleron.dl.sourceforge.net/sourceforge/snmp-info/SNMP-Info-0.7.tar.gz
+tar zxvf SNMP-Info-0.7.tar.gz
+cd SNMP-Info-0.7
 perl Makefile.PL
 make install
 cd $curdir
