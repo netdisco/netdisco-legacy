@@ -1,6 +1,8 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <HEAD>
-<TITLE>n e t  d i s c o <& SELF:title &> </TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<TITLE>[demo] n e t  d i s c o <& SELF:title &> </TITLE>
 <STYLE TYPE="text/css" MEDIA="screen">
 <!--
     A { text-decoration:none; }
@@ -22,14 +24,14 @@
     .match-1 { text-align:center; background-color:#eed8ae;}
     .match-0 { text-align:center; background-color:#ffe7ba;}
     .box     { background-color:#eed8ae; border:thin solid; border-color:#191970; }
-    .port_up { color:black;}
-    .port_off { color:red;}
-    .port_down { color:#a0a0a0; }
-    .port_block { color:#33ccff; }
-    .dead_link { color:white; background-color:red;}
-    .tr_head   { text-align:left; font:normal normal 12pt monospace;}
-    .tr_data-1 { text-align:left; font-family:monospace; background-color:#eed8ae; }
-    .tr_data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
+    .port-up { color:black;}
+    .port-off { color:red;}
+    .port-down { color:#a0a0a0; }
+    .port-block { color:#33ccff; }
+    .dead-link { color:white; background-color:red;}
+    .tr-head   { text-align:left; font:normal normal 12pt monospace;}
+    .tr-data-1 { text-align:left; font-family:monospace; background-color:#eed8ae; }
+    .tr-data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
 
 //-->
 </STYLE>
@@ -37,15 +39,15 @@
 <BODY bgcolor="#f5deb3" text="black" LINK="#191970" ALINK="#191970" VLINK="#191970">
 <TABLE width="95%" height="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0>
 <TR VALIGN=TOP>
-    <TD COLSPAN=2 class="topbar" height=5%>
-    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
+    <TD COLSPAN=2 class="topbar" height="5%">
+    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">[demo]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
     </TD>
 </TR>
 <TR VALIGN=TOP>
-    <TD ALIGN=LEFT WIDTH=15%>
+    <TD ALIGN=LEFT WIDTH="15%">
         <& sidebar.html &>
     </TD>
-    <TD VALIGN=TOP ALIGN=LEFT WIDTH=85%>
+    <TD VALIGN=TOP ALIGN=LEFT WIDTH="85%">
 %       $m->call_next;
     </TD>
 </TR>
@@ -84,14 +86,6 @@ unless ($ok or $target eq 'login.html') {
 # For Logging, tell apache what user is in:
 $r->connection->user($m->session->{user}) if defined($m->session->{user});
 </%init>
-%#
-%#
-<%once>
-#use lib qq#/usr/local/netdisco#;
-#use netdisco qw/:all/; 
-#config('/usr/local/netdisco/netdisco.conf');
-my $path = $netdisco::CONFIG{webpath};
-</%once>
 <%method title>
 \
 </%method>
