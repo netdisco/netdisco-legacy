@@ -180,8 +180,9 @@ sub run {
     
 }
 
-=item load_old_devices()  - Populates the Old_Devices hash so we know
-    which devices are in the database already.
+=item load_old_devices()
+
+Populates %Old_Devices with which devices are in the database.
 
 =cut
 sub load_old_devices {
@@ -190,7 +191,9 @@ sub load_old_devices {
     $Aliases = sql_column('device_ip',['alias','ip']);
 }
 
-=item timeout() -  Signal handler for SIGALARM
+=item timeout()
+
+Signal handler for SIGALARM
 
 =cut
 sub timeout {
@@ -198,8 +201,11 @@ sub timeout {
 }
 
 
-=item end() -  Cleanup routine that is called upon interrupt (ctrl-c) or end of routines. 
-prints various statistics to stdout (or batch_redirect()) and calls Netdisco::log().
+=item end()
+
+Cleanup routine that is called upon interrupt (ctrl-c) or end of routines. 
+
+Prints various statistics to stdout or batch_redirect() and calls Netdisco::log().
 
 =cut
 sub end {
@@ -271,9 +277,13 @@ sub end {
     exit;
 }
 
-# batch_mode(name,time_too?) - Redirects STDOUT to a log file with timestamp.
-#       Can be called recursively.  call batch_mode_end() to return to previous
-#       Output.
+=item batch_mode(name,time_too?)
+
+Redirects STDOUT to a log file with timestamp.
+
+Can be called recursively.  call batch_mode_end() to return to previous Output.
+
+=cut
 sub batch_mode{
     return unless $BatchMode;
 
@@ -310,6 +320,12 @@ sub batch_mode{
     &header;
 }
 
+=item batch_mode_end()
+
+Returns output of stdout to previous value, optionally compresses 
+the finished output file.
+
+=cut
 sub batch_mode_end {
     return unless $BatchMode;
 
@@ -328,8 +344,9 @@ sub batch_mode_end {
     }
 }
 
-=item  discover(host) - Discovers one device, stores its info,
-interfaces, and neighbors, and returns.
+=item discover(host) 
+
+Discovers one device, stores its info, interfaces, and neighbors, and returns.
 
 =cut
 sub discover{
@@ -807,8 +824,10 @@ sub find_neighbors {
     print "\n";
 }
 
-=item macwalk() - Grabs all the devices out of the database, then 
-runs macsuck() on it the device has layer2 capabilites.
+=item macwalk() 
+
+Grabs all the devices out of the database. 
+Runs macsuck() on each device that has layer2 capabilites.
 
 =cut
 
@@ -1184,6 +1203,10 @@ sub expire_nodes {
 
 =item change_device_ip(from_ip, to_ip)
 
+Used to move move over all the information from one device 
+to a new IP address.  First tries to discover new device, then
+proceeds to move over old information.  
+
 =cut
 sub change_device_ip {
     my ($from_ip,$to_ip) = @_;
@@ -1220,6 +1243,9 @@ sub change_device_ip {
     print "  Removing Old Device its Aliases, and Ports\n";
     expire_device($from_ip);
     
+    # TODO - Check to see if the port numbers have stayed the same, otherwise 
+    #        axe the old nodes.
+
     print "  Moving old Nodes to New Device.\n";
     sql_do(qq/UPDATE node set switch='$to_ip' where switch='$from_ip'/);
     
@@ -1929,7 +1955,9 @@ sub schlop {
     &end;
 }
 
-=item refresh_all() - Calls discover() for each file already in device table
+=item refresh_all()
+
+Calls discover() for each file already in device table.
 
 =cut
 sub refresh_all {
@@ -1961,8 +1989,10 @@ sub refresh_all {
 
 }
 
-=item parse_oui - Parses file oui.txt in current directory.  Uses contents to stuff
-oui table.
+=item parse_oui 
+
+Parses file oui.txt in current directory.  Uses contents to stuff
+table "oui".
 
 =cut
 sub parse_oui {
