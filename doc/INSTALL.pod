@@ -63,9 +63,13 @@ See I<INSTALL> below for details on how to retrieve and install each one.
 =head2 OS
 
 Netdisco was developed on a BSD system but should work on any
-system that Postgres, Perl, Apache, and Net-SNMP run on.  Linux
-is a sure bet. Windows will take a little bit of massaging but
-should be possible.
+system that Postgres, Perl, Apache, and Net-SNMP run on. 
+
+Linux is a sure bet.  Netdisco has been tested with Mandake 9.1 
+and includes specific notes to install with it.
+
+Windows will take a lot of massaging but should be possible under
+cygwin.
 
 =head1 INSTALL
 
@@ -91,6 +95,18 @@ Move files to that dir
 
 Create a user and group named C<netdisco>
 
+=over
+
+=item Linux
+
+    useradd -d /usr/local/netdisco netdisco
+
+=item BSD
+
+    useradd netdisco
+
+=back
+
 Give this user permission to the files:
 
     chown -R netdisco.netdisco /usr/local/netdisco
@@ -106,112 +122,166 @@ Add the unix account names of administrators that will modify the
 source code or use the command line interface interface to the C<netdisco>
 group in F</etc/groups>.
 
+Don't forget to logout and login after adding yourself to a group.
+
 =head2 4. PostgreSQL
+
+=head3 Install Postgres
+
+=over
+
+=item i. BSD 
+
+    cd /usr/ports/database/postgres
+    make install
+
+=item ii. Mandrake Linux
+
+Installing PostgreSQL the easy way:
+
+    urpmi postgresql postgresql-devel postgresql-server postgresql-docs
+
+The files you will need to edit below are in F</var/lib/pgsql/data>.
+
+If you lost / don't have install CDs :
+
+The following line uses an FTP site that has the 9.0 RPMs because I lost
+the CDs.  Check the current mirror list at L<http://www.mandrakelinux.com/en/ftp.php3>
+and choose a mirror close to you.
+
+    urpmi.addmedia ftpsite ftp://mirror.mcs.anl.gov/pub/Mandrake-old/9.0/i586/Mandrake/RPMS \
+        with ../base/hdlist.cz
+
+Now you have to add C<--media ftpsite>  in each C<urpmi> command like so :
+
+    urpmi --media ftpsite postgresql postgresql-devel
+
+Remember this for the Apache setup too.
+
+=item iv.  All Others
+
+There is probably a binary package all ready for you.  See your distribution's instructions
+for more help.  Otherwise download and compile the source code from L<http://www.postgresql.org>.
+
+=back
+
+=head3 Configure Postgres
 
 Netdisco's settings in PostgreSQL are
 
- Database User    : netdisco
- Database Name    : netdisco
- Database Password: you choose it
-
+ Database User     : netdisco
+ Database Name     : netdisco
+ Database Password : you choose it
 
 Follow these steps to setup Netdisco in PostgreSQL.
 
 =over 
 
-=item i. Create Database.
+=item i. Permissions
 
-As root or the database user F<pgsql> run C<sql/pg_init> to create 
-the database and user for Netdisco.  The password you will be asked
-for twice is the new password for the database user you are creating. 
+If you have just setup Postgres for the first time you may have to change the
+default permissions in F<$PG_DATA/pg_hba.conf>.  
+
+For installation you must give the database user access to the C<template1> database.
+The following line will give all users who have logon permissions in Unix access
+to the C<template1> database.
+
+    local template1 all ident
+
+Next you must give the C<netdisco> database user access to the C<netdisco> database.
+The following line will give all database users access to a database that is the same
+name as them.  This line must be put above all the rest of the uncommented lines in the
+F<pg_hba.conf> file to take precedence.  Note that if you are using Postgres 7.2 you
+may have to change C<md5> to C<crypt>, Actual mileage may vary.
+
+    local sameuser all md5
+
+B<Restart Postgres>
+
+Linux :
+
+    /etc/rc.d/init.d/postgresql restart
+
+FreeBSD :
+    
+    /usr/local/etc/rc.d/*postgres* restart
+
+If there are problems with this step you will receieve an error that mentions something
+about F<pg_hba.conf>.
+
+=item ii. Create Database.
+
+First find out the name of your database user.  The default name for
+some Linux RPM versions is C<postgres> and for some BSD installations C<pgsql>.
+
+Edit the file C<pg_init> to match your database user name in F</usr/local/netdisco/sql/pg_init>
+
+    vi /usr/local/netdisco/sql/pg_init
+
+As root run C<sql/pg_init> to create the database and user for Netdisco.
+
+The password you will be asked for twice is the new password for the database user you are creating. 
 This is the same password you will be putting in F<netdisco_apache.conf>
 and in F<netdisco.conf>.
 
-    cd /usr/local/netdisco
-    sql/pg_init
+    cd /usr/local/netdisco/sql
+    ./pg_init
 
-=item ii. Check Settings
+=item iii. Check Settings
 
 Now as a non-privileged user make sure you can get into the database by running 
 C<sql/pg_run>.  Enter the database user password given above. 
 
-    cd /usr/local/netdisco
-    sql/pg_run
+    cd /usr/local/netdiscosql
+    ./pg_run
 
-=item iii. Create Tables
+=item iv. Create Tables
 
 Once you are sure the database is setup correctly, create the database 
 tables with C<sql/pg_all>.  Type in the database user password once 
 when prompted.
 
-    cd /usr/local/netdisco
-    sql/pg_all
-
-=item iv. Permissions
-
-[Optional] If you have just setup Postgres for the first time you may want to change the
-default permissions in F<$PG_DATA/pg_hba.conf> . 
-
-TODO: More here Later
+    cd /usr/local/netdiscosql
+    ./pg_all
 
 =item v. Optimizations
 
-[Optional] If you have freshly installed Postgresql then the default memory usage should
-probably be increased for efficiency.  See the PostgreSQL documentation for 
-F<postgresql.conf>.
+If you have freshly installed Postgresql then the default memory usage needs to
+be increased for efficiency.  See the PostgreSQL documentation for 
+F<postgresql.conf>.  Specifically you really need to up the maximum connections
+and shared memory settings.  After you have Netdisco running on a large installation
+it would be of great benefit to get a Postgres guru in there to tune things for you.
+See F<README> for more info about how to speed things up now and again.
+
+=item vi. Postgres Startup
+
+Make sure that Postgres is set to start automatically.
+
+=over
+
+=item Linux
+
+
+    chkconfig postgresql on
+
+=item BSD
+
+Make sure that the file in C</usr/local/etc/rc.d> is alright.
 
 =back
 
-
-=head2 5. Perl Modules and Mason
-
-Below is a list of required modules for Netdisco, freely available from
-CPAN (http://www.cpan.org).   Many of these modules have prerequisite 
-modules.   
-
-Use the CPAN module that comes with Perl to install the modules
-and their prerequisites automatically:
-
-    perl -MCPAN -e shell
-
-=over 4
-
-=item install DBI
-
-=item install Apache::DBI
-
-=item install DBD::Pg
-
-=item install Apache::Session
-
-=item install Apache::Request
-
-=item install HTML::Mason
-
-=item install MasonX::Request::WithApacheSession
-
-=item install Graph
-
-=item install GraphViz (optional)
-
-=item install Digest::MD5 (should be built in to perl)
-
 =back
 
-Some of these you will probably already have installed.
-
-=head3 Perl Location
-
-If you have Perl installed in C</usr/bin>, make sure that F<netdisco> and F<bin/doc_munge>
-have the correct location for Perl listed at the very top of the file.
-
-=head2 6. Net-SNMP
+=head2 5. Net-SNMP
 
 For BSD install Net SNMP with ports :
 
     cd /usr/ports/net/net-snmp && make install
 
 For Linux and the rest of the world :
+
+If you have installed the Net-SNMP RPM from Redhat or Mandrake it B<does not> include 
+the Perl modules.  Uninstall it and install a newer version by hand as below.
 
 =over
 
@@ -244,8 +314,6 @@ B<DO NOT> INSTALL the SNMP:: modules off of CPAN or the NET::SNMP module off of 
 
 Reread the above line.
 
-If you have installed the Net-SNMP RPM from Redhat 8, it doesn't include the Perl modules.
-Uninstall it and install a newer version by hand.
 
 =item iii. Run C<snmpconf> and set up your MIB directory. 
 
@@ -303,10 +371,54 @@ To update to the most current CVS version.
 
 MIBs are required for F<SNMP::Info>. 
 
-Follow the instructions at L<http://snmp-info.sourceforge.net> for 
-what MIBs to install and how to get them.
 
-=head2 7. OUI Database
+=over
+
+=item Download MIBs
+
+Download the Version 1 and Version 2 MIBs from 
+
+    ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
+    ftp://ftp.cisco.com/pub/mibs/v2/v2.tar.gz
+
+=item Install MIBs
+
+Install all of the V2 and some of the V1 MIBs into F</usr/local/share/snmp/mibs>.
+
+    cd /usr/local/share/snmp/mibs
+    tar xvfz /path/to/v2.tar.gz
+    tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my
+
+=item Fix CISCO-TC-MIB
+
+There is a problem with the Cisco file F<CISCO-TC.my> which 
+is included from lots of other MIBs.   Make the following changes
+if you run into errors about C<Unsigned32> in this file.
+
+Edit F</usr/local/share/snmp/mibs/CISCO-TC.my>
+
+Comment out line 192 that says C<SMI Unsigned32> with two dashes.
+
+    -- SMI Unsigned32
+
+Add C<Unsigned32> to the imports after line 19:
+
+    IMPORTS
+        MODULE-IDENTITY,
+        Gauge32,
+        Integer32,
+        Counter64,
+        Unsigned32,
+            FROM SNMPv2-SMI
+
+=back
+
+Follow the instructions in C<SNMP::Info>
+what MIBs to install for non Cisco devices or in case of trouble.
+
+    perldoc SNMP::Info
+
+=head2 6. OUI Database
 
 The Organizationally Unique Identifier (OUI) database allows Netdisco to 
 identify the manufacture of a network card using the first 24 bits of a
@@ -332,7 +444,7 @@ Or do this by hand:
 A note about Make versions.  The Makefile is a GNU Make version file.  In BSD you may
 have to type C<gmake>.
 
-=head2 8. GraphViz 
+=head2 7. GraphViz 
 
 GraphViz is used in the creation of the Network Map.
 
@@ -378,15 +490,79 @@ Make sure the Graphviz Perl module got installed
 
 =back
 
-[Optional] If for some reason you choose not to install GraphViz, you still need to install the F<Graph> module
-(Perl Modules above).  It is used in topology calculations.
-
-=head2 9. Setup Apache
+=head2 8. Setup Apache
 
 I<Apache2> -- 
 
 Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
 Netdisco will not run under Apache2 until that point.
+
+=head3 Mandrake 9.1
+
+Mandrake 9.1 comes with Apache2.  It also has the option
+of installing a version of Apache1/mod_perl on a different port
+and then reverse proxying it.   
+
+mod_ssl with Mandrake to come...
+
+=over
+
+=item Install Apache1
+
+Mount CD1 and run as root:
+
+    rpm -Uvh /mnt/cdrom/Mandrake/RPMS/libmm1-1.2.2-2mdk.i586.rpm 
+    rpm -Uvh apache-devel-1.3.27-8mdk.i586.rpm libmm1-devel-1.2.2-2mdk.i586.rpm libgdbm2-devel-1.8.0-19mdk.i586.rpm 
+    rpm -Uvh mod_perl-devel-1.3.27_1.27-7mdk.i586.rpm 
+    rpm -Uvh db1-devel-*
+
+Mount CD2 and run as root :
+
+    cd /mnt/cdrom/Mandrake/RPMS2
+    rpm -Uvh mod_perl-common-1.3.27_1.27-7mdk.i586.rpm apache-mod_perl-1.3.27_1.27-7mdk.i586.rpm apache-modules-1.3.27-8mdk.i586.rpm 
+
+Need this for DB_File perl module
+
+    ln -s /usr/include/db1/* /usr/include
+    ln -s /usr/lib/libdb1.so.2 /usr/lib/libdb.so
+
+=item Configure Both Apaches
+
+Configuration files for Mandrake live in F</etc/httpd/conf>
+
+In the file F<commonhttpd.conf> add the two C<Include> lines:
+
+    <IfModule mod_perl.c>
+
+    #Provide two aliases to the same cgi-bin directory,
+    #to see the effects of the 2 different mod_perl modes
+    #for Apache::Registry Mode
+    Alias /perl/ /var/www/perl/
+    #for Apache::Perlrun Mode
+    Alias /cgi-perl/ /var/www/perl/
+
+    Include /usr/local/netdisco/netdisco_apache.conf
+    Include /usr/local/netdisco/netdisco_apache_dir.conf
+
+    </IfModule>
+
+In the file F<httpd2.conf> add the final C<RewriteRule> line:
+
+    <IfModule mod_rewrite.c>
+    RewriteEngine on
+    RewriteRule ^proxy:.*  -  [F]
+    RewriteRule ^(.*\/perl\/.*)$  http://%{HTTP_HOST}:8200$1 [P]
+    RewriteRule ^(.*\/cgi-perl\/.*)$  http://%{HTTP_HOST}:8200$1 [P]
+    RewriteRule ^(.*\/netdisco\/.*)$  http://%{HTTP_HOST}:8200$1 [P]
+    </IfModule>
+                    
+=item Restart Apache
+
+    /etc/rc.d/init.d/httpd restart
+
+=back
+
+=head3 Apache From Scratch
 
 =over
 
@@ -420,24 +596,37 @@ Sets up the directory scheme.
 
 =item iii. In mod_ssl
 
-For BSD :
+=over 
 
-=over
+=item BSD
 
-=item a. cd /usr/ports/devel/mm && make install
 
-=item b. cd /usr/ports/security/openssl && make install
+Installing OpenSSL :
 
-=item c. Setup mod_ssl
+    cd /usr/ports/devel/mm && make install
+    cd /usr/ports/security/openssl && make install
 
- SSL_BASE=SYSTEM \
- ./configure \
-    --with-apache=../apache_1.3.x \
-    --disable_rule=SSL_COMPAT
+Setup mod_ssl :
 
-=back
+    cd /path/to/mod_ssl_1.x.x
+    SSL_BASE=SYSTEM \
+        ./configure \
+            --with-apache=../apache_1.3.x \
+            --disable_rule=SSL_COMPAT
 
-For other OS's 
+=item RedHat / Mandrake
+
+OpenSSL is installed by default.
+
+You will have to tell the OS to look for the Kerberos libraries
+used in this version of OpenSSL:
+
+    export blahblahblah (TODO)
+    ./configure \
+        --with-apache=../apache_1.3.x \        
+        --disable_rule=SSL_COMPAT
+
+=item By Hand (other OSs)
 
 Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
 
@@ -445,6 +634,8 @@ Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
  ./configure \
     --with-apache=../apache_1.3.x \        
     --disable_rule=SSL_COMPAT
+
+=back
 
 =item iv. In mod_perl-1.2x/
 
@@ -520,9 +711,6 @@ Assuming C<nobody> is the user that apache requests run this as C<root> :
 
 The name of the user is listed in C<httpd.conf> under the C<User> directive. 
 
-=item Start Apache
-
-    /usr/local/apache/apachebin start
 
 =back
 
@@ -530,6 +718,48 @@ Note: Some Linux distributions such as Redhat 6.x install mod_perl as
 a Dynamic Shared Object (DSO).  This is known to be unstable, especially
 with Mason.   Compile mod_perl statically using the method listed
 above.
+
+=head2 9. Perl Modules and Mason
+
+Below is a list of required modules for Netdisco, freely available from
+CPAN (http://www.cpan.org).   Many of these modules have prerequisite 
+modules.   
+
+Use the CPAN module that comes with Perl to install the modules
+and their prerequisites automatically:
+
+    perl -MCPAN -e shell
+
+=over 4
+
+=item install DBI
+
+=item install Apache::DBI
+
+=item install DBD::Pg
+
+=item install Apache::Session
+
+=item install Apache::Request
+
+=item install HTML::Mason
+
+=item install MasonX::Request::WithApacheSession
+
+=item install Graph
+
+=item install GraphViz
+
+=item install Digest::MD5 (should be built in to perl)
+
+=back
+
+Some of these you will probably already have installed.
+
+=head3 Perl Location
+
+If you have Perl installed in C</usr/bin>, make sure that F<netdisco> and F<bin/doc_munge>
+have the correct location for Perl listed at the very top of the file.
 
 =head2 10. Netdisco Configuration
 
@@ -582,7 +812,13 @@ are installed.
 
 =back
 
-=head2 11. Discover a Device in Netdisco
+=head2 11. Start Apache
+
+    /usr/local/apache/apachebin start
+
+Check Apache's F<error_log> for possible errors.
+
+=head2 12. Discover a Device in Netdisco
 
 Pick a device that you can access with the command C<snmpwalk>.  
 Tell Netdisco to discover that device:
@@ -593,7 +829,7 @@ Tell Netdisco to discover that device:
 Make sure that this step actually works.  This is a good metric that you have 
 now installed Netdisco correctly.  Add the I<-D> flag to get copious debugging info.
 
-=head2 12. Create Network Topology
+=head2 13. Create Network Topology
 
 See F<README> for a description of I<Topology Information>.  
 
@@ -603,7 +839,7 @@ network and start an autodiscovery from there:
     cd /usr/local/netdisco
     ./netdisco -r device_name_or_ip_number_here
 
-=head2 13. Test Web Side
+=head2 14. Test Web Side
 
 First restart Apache so that netdisco will see the changes that you have made
 in F<netdisco.conf>.  Note that a I<graceful> restart will not re-read the configuration
@@ -619,7 +855,7 @@ If you have problems, check the F<error_log> of apache for messages.
 
     tail /usr/local/apache/logs/error_log
 
-=head2 14. Add Cron Jobs
+=head2 15. Add Cron Jobs
 
 Once you're sure Netdisco is setup correctly add the Cron jobs listed in
 F<netdisco.crontab>.
@@ -628,11 +864,21 @@ F<netdisco.crontab>.
 
 You may want to fine-tune these jobs to your network.
 
-=head2 15. Start Admin Daemon
+=head2 16. Start Admin Daemon
 
 The admin deaemon performs administration jobs that are requested from the
 web front-end.  See F<README> for a description of the admin daemon.  
 
     su - netdisco -c "/usr/local/netdisco/netdisco -p start"
+
+The daemon will be respawned daily in the Cron job listed above. 
+
+
+=head1 SUCCESS
+
+Once you have succeded come join the Netdisco User's mailing list at 
+L<http://netdisco.org> and pass on any hints you may have in the INSTALL process.
+It's a good place to keep up on new features and releases, and it's the best
+place to ask any questions. 
 
 =cut
