@@ -40,7 +40,7 @@ if ($from and &is_mac($from)){
     my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$from,'active'=>1});
     if (defined $dev){
         $from{mac}      = $from;
-        $from{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,active=>1});
+        $from{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,'active'=>1});
         $from{type}     = 'node';
         $from{next}     = $dev->{switch};
         $from{to_port}  = $dev->{port};
@@ -53,7 +53,7 @@ if ($from and &is_mac($from)){
         $from{type} = 'device';
     } else {
     # Check if node
-        my $devmac = sql_scalar('node_ip',['mac'],{'ip'=>$from{ip}});
+        my $devmac = sql_scalar('node_ip',['mac'],{'ip'=>$from{ip}, 'active' => 1});
         my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$devmac,'active'=>1});
         if (defined $dev){
             $from{mac} = $devmac;
@@ -69,7 +69,7 @@ if ($to and &is_mac($to)){
     my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$to,'active'=>1});
     if (defined $dev){
         $to{mac}      = $to; 
-        $to{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,active=>1});
+        $to{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,'active'=>1});
         $to{type}     = 'node';
         $to{next}     = $dev->{switch};
         $to{from_port}  = $dev->{port};
