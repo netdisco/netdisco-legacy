@@ -315,6 +315,9 @@ TODO : How do I give it the switch to add C<--with-perl-modules> again?
 If you have installed the Net-SNMP RPM from Redhat or Mandrake it B<does not> include 
 the Perl modules.  Uninstall it and install a newer version by hand as below.
 
+Same goes for Debian.  DO NOT use the apt-get version of Net-SNMP install
+by hand (it's easy!).
+
 =back
 
 =over
