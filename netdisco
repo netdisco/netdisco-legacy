@@ -1685,20 +1685,21 @@ sub store_interfaces {
     # Delete old interface information (for dynamic,vlan...)
     sql_do(qq/DELETE from device_port where ip = '$ip'/);
 
-    my $interfaces = $device->interfaces();
-    my $i_type     = $device->i_type();
-    my $i_ignore   = $device->i_ignore();
-    my $i_descr    = $device->i_description();
-    my $i_mtu      = $device->i_mtu();
-    my $i_speed    = $device->i_speed();
-    my $i_mac      = $device->i_mac();
-    my $i_up       = $device->i_up();
-    my $i_up_admin = $device->i_up_admin();
-    my $i_name     = $device->i_name();
-    my $i_duplex   = $device->i_duplex();
+    my $interfaces     = $device->interfaces();
+    my $i_type         = $device->i_type();
+    my $i_ignore       = $device->i_ignore();
+    my $i_descr        = $device->i_description();
+    my $i_mtu          = $device->i_mtu();
+    my $i_speed        = $device->i_speed();
+    my $i_mac          = $device->i_mac();
+    my $i_up           = $device->i_up();
+    my $i_up_admin     = $device->i_up_admin();
+    my $i_name         = $device->i_name();
+    my $i_duplex       = $device->i_duplex();
     my $i_duplex_admin = $device->i_duplex_admin();
-    my $i_stp_state = $device->i_stp_state();
-    my $i_vlan     = $device->i_vlan();
+    my $i_stp_state    = $device->i_stp_state();
+    my $i_vlan         = $device->i_vlan();
+    my $i_lastchange   = $device->i_lastchange();
 
     foreach my $if (keys %$interfaces) {
         print '.';
@@ -1726,6 +1727,7 @@ sub store_interfaces {
         $store{duplex_admin} = $i_duplex_admin->{$if};
         $store{stp}          = $i_stp_state->{$if};
         $store{vlan}         = $i_vlan->{$if};
+        $store{lastchange}   = $i_lastchange->{$if};
 
         insert_or_update('device_port', { 'ip' => $ip, 'port' => $store{port} }, 
                          \%store );        
