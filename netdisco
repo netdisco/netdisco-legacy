@@ -2134,22 +2134,18 @@ sub expire_data {
     }
 
     if ($type eq 'node'){
-        my $sql = qq/DELETE from node where age(time_last) > interval '$days days'/;
-        $sql .= " and not active" if $archive_only;
-        
-        my $rows;
-        print "$sql\n";
+        my $sql = qq/DELETE FROM node WHERE AGE(time_last) > INTERVAL '$days days'/;
+        $sql .= " AND NOT active" if $archive_only;
+
+        my $rows = '';
         #$rows = sql_do($sql);
         # note:expire_ips() should be run after this, and is in nightly() through db_clean()
-        $rows = 0 if $rows < 1;
         print "Deleted $rows rows from node.\n";
 
         $sql = qq/DELETE from node_ip where age(time_last) > interval '$days days'/;
-        $sql .= " and not active" if $archive_only;
+        $sql .= " AND NOT active" if $archive_only;
         
-        print "$sql\n";
         #$rows = sql_do($sql);
-        $rows = 0 if $rows < 1;
         print "Deleted $rows rows from node_ip.\n";
 
     }
@@ -2409,7 +2405,7 @@ sub nightly {
     if (defined $CONFIG{expire_devices} and $CONFIG{expire_devices} =~ /^\d+$/
         and $CONFIG{expire_devices} > 0) 
     {
-        print "  Deleting Devices that are older than $CONFIG{expire_devices} days old.\n\n";
+        print "  expire_devices: Deleting Devices that are older than $CONFIG{expire_devices} days old.\n\n";
         expire_data('device',$CONFIG{expire_devices});
     }
     
@@ -2417,7 +2413,7 @@ sub nightly {
     if (defined $CONFIG{expire_nodes_archive} and $CONFIG{expire_nodes_archive} =~ /^\d+$/
         and $CONFIG{expire_nodes_archive} > 0) 
     {
-        print "  Deleting Archived Node data older than $CONFIG{expire_nodes_archive} days old.\n\n";
+        print "  expire_nodes_archive: Deleting Archived Node data older than $CONFIG{expire_nodes_archive} days old.\n\n";
         expire_data('node',$CONFIG{expire_nodes_archive},1);
     }
 
@@ -2425,7 +2421,7 @@ sub nightly {
     if (defined $CONFIG{expire_nodes} and $CONFIG{expire_nodes} =~ /^\d+$/
         and $CONFIG{expire_nodes} > 0) 
     {
-        print "  Deleting Nodes older than $CONFIG{expire_nodes} days old.\n\n";
+        print "  expire_nodes: Deleting Nodes older than $CONFIG{expire_nodes} days old.\n\n";
         expire_data('node',$CONFIG{expire_nodes});
     }
     
@@ -3133,7 +3129,7 @@ _end_usage_
 =head1 COPYRIGHT AND LICENCE
 
 Changes in code from 0.92 on:
-Copyright (c) 2003 Max Baker - All Rights Reserved
+Copyright (c) 2003,2004 Max Baker - All Rights Reserved
 
 Original Code:
 Copyright (c) 2002,2003 Regents of the University of California
