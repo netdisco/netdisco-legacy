@@ -1,0 +1,15 @@
+#!/usr/bin/perl -w
+# doc_munge
+#   Grab everything between the BODY tags and add Mason <%text> tags.
+# $Id$
+
+local $/ = undef;
+
+my $contents = <STDIN>;
+
+$contents =~ s/^.*<BODY[^>]*>//is;
+$contents =~ s!</BODY.*!!is;
+
+$contents = '<%text>' . $contents . '</%text>';
+
+print $contents;
