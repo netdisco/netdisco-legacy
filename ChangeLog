@@ -3,6 +3,8 @@
 # $Id$
 
 0.94beta ()
+    + Added Feature [ 836962 ] Admin Log.  Logs logins,logouts and things
+        done inside the admin panel.  Reporting from the admin panel.
     + Added TimeFrame feature in Port_Report from Revital Shvarzman @yorku.ca
     + Added support for ifLastChange in SNMP::Info, device_port and device.html
     * Device Inventory drill down now shows model/vendor/os/version for every subsearch
