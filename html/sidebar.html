@@ -54,11 +54,6 @@
 </TR>
 <TR>
     <TD CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/stats.html">Netdisco Statistics</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/doc">Documentation</A>]
     </TD>
 </TR>
@@ -69,6 +64,11 @@
     </TD>
 </TR>
 % }
+<TR>
+    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    [<A HREF="<%$path%>/stats.html">About</A>]
+    </TD>
+</TR>
 <TR>
     <TD CLASS="sidebar-<% ++$odd%2 %>">
 % if ($secure and $netdisco::CONFIG{secure_server} ) {
