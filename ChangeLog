@@ -46,6 +46,13 @@ Features:
     + Added Variable Expansion in Config Files 
             (eg. $home will translate to your setting)
 
+New/Changed Config File Directives:
+    + macsuck_bleed
+    + macsuck_all_vlans
+    + portctl_email, portctl_nophones, portctl_timeout, portctl_uplinks, portctl_vlans
+    + mibdirs
+    * db_*_env
+
 Bugfixes:
     * Fixed Device Search to be more wildcard friendly
     * Fixed MacSuck to only Macsuck vlans that are currently in use
@@ -60,6 +67,8 @@ Bugfixes:
             Problem turned out to be Postgres barfing on null terminated strings.
     * Topology File now resolves aliases to their root devices (Eric Miller)
     * Multiple enviornment variables in db_*_env allowed now.
+    * create_device() checks error() method on new device after creation.
+    * macsuck() - does not do l2/l3 check on ports with neighbor info anymore
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
