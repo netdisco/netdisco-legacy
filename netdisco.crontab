@@ -9,7 +9,7 @@ PATH=/bin:/usr/bin:/usr/local/bin
 # -- Weekly --
 
 # Walk network for new devices once a week (Wed @ 14:00)
-0 14 * * 3      /usr/local/netdisco/netdisco -b -r commcat 
+0 14 * * 3      /usr/local/netdisco/netdisco -b -r !!center_network_device_here!!
 
 # -- Daily --
 
