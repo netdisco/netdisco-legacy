@@ -182,11 +182,11 @@ if ($specific =~ /alias/i){
     $where->{stp}++;
     $matches = sql_rows('device_port p, device d',
                         ['d.ip','d.dns','p.port','p.up_admin','stp'],
-                        {'d.ip' => \'p.ip', 'stp' => 'broken'}
+                        {'d.ip' => \'p.ip', 'stp' => 'broken','up' => 'up'}
                        );
     my $matches_blocking = sql_rows('device_port p, device d',
                         ['d.ip','d.dns','p.port','p.up_admin','stp'],
-                        {'d.ip' => \'p.ip', 'stp' => 'blocking'}
+                        {'d.ip' => \'p.ip', 'stp' => 'blocking', 'up' => 'up'}
                        );
 
     push (@$matches,@$matches_blocking);
