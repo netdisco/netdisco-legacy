@@ -65,6 +65,12 @@ if (defined $node){
     $m->flush_buffer;
     $node =~ s/^\s+//;
     $node =~ s/\s+$//;
+
+    # Translate space separated octets into colon separated.
+    my $hex = "[0-9a-fA-F]";
+    if ($node =~ /^${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2}$/){
+        $node =~ s/\s+/:/g;
+    }
 }
 my $is_mac = defined $node ? &is_mac($node) : 0;
 if (defined $node and $is_mac) {
