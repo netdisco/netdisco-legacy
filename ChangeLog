@@ -9,6 +9,7 @@
     + Added devices : Catalyst 4000, C3750, C3500XL, C2970, HP 2650, HP 2626
     + Added ability to escape pound sign and commas for use in config file as \# or \,
 
+    * Fixed Bug [892024] Alias Clean (-k) wasn't working.
     * Fixed Bug [865492] Cisco port-channels not detected as uplink ports
     * Fixed Bug [824531] Graphviz was dependency.
     * Fixed bug        - Aliases listed on a device weren't sorted by IP.

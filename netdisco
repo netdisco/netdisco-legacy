@@ -1775,11 +1775,10 @@ sub alias_clean {
         my $alias = $row->{alias};
         my $dns = $row->{dns};
         $dns = defined $dns ? $dns : '[No DNS]';
-# TODO - Does this make sense?
-#        print "Deleting alias of $ip = $alias ($dns)\n";
-#        sql_do(qq/DELETE from device WHERE ip = '$alias'/);
-#        print "Deleting ports\n";
-#        sql_do(qq/DELETE from device_port WHERE ip = '$alias'/);
+        my $exists = sql_scalar('device',['true'],{'ip'=>$alias});
+        next unless (defined $exists and $exists);
+        print "Deleting alias of $ip = $alias ($dns)\n";
+        expire_device($alias,1)
     }
 
     print "Cleaning out Aliases of non-existant devices.\n";
