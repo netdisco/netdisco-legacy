@@ -1,6 +1,6 @@
 NAME
 
-    Netdisco - README
+    Netdisco 0.92 - README
 
 AUTHOR
 
@@ -8,60 +8,81 @@ AUTHOR
 
 DESCRIPTION
 
-    Netdisco is a network administration and security tool.
+    Netdisco is an Open Source web-based network management tool. Designed
+    for moderate to large networks, configuration information and connection
+    data for network devices are retrieved by SNMP. With Netdisco you can
+    locate the switch port of an end-user system by IP or MAC address. Data
+    is stored using a SQL database for scalability and speed.
 
-    Netdisco will auto-discover the physical (layer 2) topology of a network
-    using the Cisco Discovery Protocol (CDP), or work on a supplied
-    topology.
+    Cisco Discovery Protocol (CDP) optionally provides automatic discovery
+    of the network topology. The network is inventoried by both device model
+    and operating system (like IOS). Netdisco uses router ARP tables and L2
+    switch MAC forwarding tables to locate nodes on physical ports and track
+    them by their IP addresses. For each node, a time stamped history of the
+    ports it has visited and the IP addresses it has used is maintained.
+    Netdisco gets all its data, including CDP topology information, with
+    SNMP polls and DNS queries. It does not use CLI access and has no need
+    for privilege passwords. Security features include a wire-side Wireless
+    Access Point (AP) locator.
 
-    Netdisco uses only SNMP to poll devices and does not require enable
-    passwords.
+    Netdisco was designed and built at UCSC and is now hosted by Source
+    Forge.
 
-    Netdisco was designed and built at UCSC.
+    See http://www.netdisco.org
 
-    Netdisco is hosted by Source Forge and lives at http://www.netdisco.org.
+FEATURES
 
-FEATURES - OVERVIEW
+  Switch Ports
 
-    -> Controllable through Web Interface or Command Line Interface (CLI)
-    -> Database store for scalability and speed (Postgresql)
-    -> Easily extendible to new network devices
-    -> User system to restrict access and features
-   Network Security
+    From the web interface devices connected to switch and router ports are
+    listed by MAC address. A history of which switch ports a MAC address has
+    been seen at is kept. With a click the you can browse a network device
+    connected to an uplink port. With another click you can disable or
+    enable the switch port, logging the reason, user and date.
+
+    * Central location to disable/enable switch ports.
+        Network administrators can disable and enable ports without having
+        to know enable or privilege passwords. Reasons for switching on/off
+        ports are logged for end-of-the-year auditing and reporting. Non-IOS
+        savvy managers can control port access from a familiar browser
+        interface. This feature was designed with a University Residential
+        Networks (ResNet) in mind.
+
+        Only users you specify in Netdisco will have access to switch off a
+        port. Netdisco will also not allow people to switch off uplink ports
+        by accident.
 
     * MAC Address to switch port resolution
     * IP Address to switch port resolution
-    * Logging
-    * Find Wireless Access Points (APs) from wired-side of network
     * Find Switch Ports with multiple nodes attached
-    * Find nodes using multiple IP addresses.
-   Network Administration
+    * Find nodes using multiple IP addresses
+    * Find nodes by vendor (using MAC address OUI)
+  Easy Administration
+
+    * Controllable through Web Interface or Command Line Interface (CLI)
+    * Database store for scalability and speed (Postgresql)
+    * Easily extendible to new network devices
+    * User system to restrict access and features
+  Network Administration and Security
 
     * Automatic inventory and search of network hardware
     * Administratively enable/disable switch ports from web interface with
-    logging.
+    logging
     * Duplex Mismatch Finder
+    * Find Wireless Access Points (APs) from wired-side of network
     * Layer Two Traceroute
-   Reporting
+  Reporting
 
     * Graphing of network topology. Clickable image-map of devices. Link
-    speed shown.
+    speed shown
     * Statistics for number of actual nodes connected to network
-    * Auto-archiving of data. History of where a MAC address has shown up,
-    and the IP addresses that have been associated with it.
-    * Integration with Pinnacle Database.
-   Searches
+    * Integration with Pinnacle Database
+  Inventory of Network Devices
 
-    * Device Model
-    * Device Vendor
-    * Device OSI Layers Served
-    * sysLocation field
-    * sysDescr field
-    * DNS Name
-    * IP Subnet
-    * OUI (MAC Address Vendor)
-    * Device Ports that are blocking (via Spanning Tree Protocol)
-    * Devices using IP's w/out DNS entries
+    * by Operating System (IOS,CatOS,HP...)
+    * by Model, Vendor, OSI Layer, DNS Name
+    * Find device ports that are blocking (via Spanning Tree Protocol)
+    * Find devices using IP's w/out DNS entries
 SUPPORT
 
     Please use the "netdisco-users" mailing list for all problems and
@@ -127,88 +148,131 @@ USING NETDISCO
 
   Command-Line Options
 
-    -b  Batch Mode. Redirect output to log file. Log file directory set in
+    -b || --batchmode
+        Batch Mode. Redirect output to log file. Log file directory set in
         configuration file under the datadir manpage.
 
-    -C  Set Config file. Default is netdisco.conf.
+    -C || --configfile file
+        Set Config file. Default is netdisco.conf.
 
-    -D  DEBUG. Sends copious information to STDOUT
+    -D || --debug
+        DEBUG. Sends copious information to STDOUT
 
-    -L  No Log. This will not add entries to the log table.
+    -L || --nologging
+        No Log. This will not add entries to the log table.
 
-    -n  Delete Nodes. Used with -E only.
+    -n || --nodestoo
+        Delete Nodes. Used with --expiredevice only.
 
-    -N  New Only. On a network discovery the section on "-r", only discover
+    -N || --newonly
+        New Only. On a network discovery the section on "-r", only discover
         found devices that aren't in the database.
 
-    -P  Port. Specify Port for removal of nodes the -e manpage.
+    -P || --port port
+        Port. Specify Port for removal of nodes the -e manpage.
 
-    -S  Debug. carp() SQL commands. Sets $netdisco::SQLCARP to 1.
+    -S || --dumpsql
+        Debug. carp() SQL commands. Sets $netdisco::SQLCARP to 1.
 
-    -V  archiVe nodes. Used with the -e manpage only.
+    -V || --archive
+        archiVe nodes. Used with the -e manpage only.
 
   Command-Line Commands
 
-    -a  Arp Walk. ArpNip each device that has Layer 3 capabilities.
+    -a || --arpwalk
+        Arp Walk. ArpNip each device that has Layer 3 capabilities.
 
-    -A  ArpNip. ArpNip's a single device. See the ArpNipper manpage in
+    -A || --arpnip device
+        ArpNip. ArpNip's a single device. See the ArpNipper manpage in
         Design.
 
-    -B  Backup. Create backup data files for node,node_ip,device, and
+    -B || --backup
+        Backup. Create backup data files for node,node_ip,device, and
         device_ip tables. Calls database cleanup routines (the -K manpage)
-        as well.
+        as well. Will export an NMIS config file if the nmis_dump manpage is
+        set.
 
-    -d  Discover Device.
+        For a full backup run "sql/pg_dump".
 
-    -e  Expire Nodes for given device. Use the -V manpage to archiVe instead
+    -d || --discover device
+        Discover Device.
+
+    -e || --expirenodes device
+        Expire Nodes for given device. Use the -V manpage to archiVe instead
         of delete. Specify a port with the -P manpage to delete or archive
         nodes on a per port basis.
 
-    -E  Expire given device. Use the -n manpage to delete nodes as well.
+    --expire-nodes-subnet subnet
+        Finds all devices in given subnet and runs expire nodes on each.
+        Will display devices effected and then ask for confirmation.
 
-    -F  Discover Device from given File. Used to restore backed up info from
+        Subnet is specified in CIDR format :
+
+            192.168.0.0/24
+
+    -E || --expiredevice device
+        Delete a device. Use the -n manpage to delete nodes as well.
+
+    -F || --discoverfile file
+        Discover Device from given File. Used to restore backed up info from
         the -B manpage, and to discover devices that are not available
         through topology information. Use the -T manpage to only import
         Topology Information.
 
-    -g  Graph. Creates graph -- both GIF and ImageMap.
+    -g || --graph
+        Graph. Creates graph -- both GIF and ImageMap.
 
-    -i  Change IP address of device. Creates new entry, removes old one and
+    -h || --help
+        Prints out command line usage.
+
+    -i || --changeip old_ip new_ip
+        Change IP address of device. Creates new entry, removes old one and
         moves nodes over to the new one.
 
-    -I  Expire IP Addresses from node_ip table. This will delete entries
+    -I || --expireips
+        Expire IP Addresses from node_ip table. This will delete entries
         from the node_ip table that are not matching entries (MAC Addresses)
         found in the node or device_port tables.
 
-    -k  alias klean-up. DANGEROUS. Deletes from the device table any IP
+    -k || --cleanalias
+        alias klean-up. DANGEROUS. Deletes from the device table any IP
         address that is found as an alias in the alias table.
 
-    -K  node Klean-up. DANGEROUS. Deletes nodes matching:
+    -K || --cleannodes
+        Datbase Node Klean-up. Permanently deletes nodes matching:
 
         1. MAC Addresses that are Switch Port Addresses
         2. MAC Addresses that are listed on non-existant ports
         3. MAC Addresses that exist on ports with topology information
         (uplink ports)
-    -m  Mac Suck each device in the database that has Layer 2 capabilities.
+    -m || --macwalk
+        Mac Suck each device in the database that has Layer 2 capabilities.
 
-    -M  Mac Suck given device only.
+    -M || --macsuck device
+        Mac Suck given device only.
 
-    -O  Import OUI information from oui.txt
+    -O || --oui
+        Import OUI information from oui.txt
 
-    -p  Control the Admin Daemon. Takes arguments
+    -p || --daemon [start,stop,status,restart]
+        Control the Admin Daemon. Takes arguments
         (start,stop,status,restart).
 
-    -r  Walk the network with the given root. Use the -N manpage to discover
+    -r || --discoverall root_device
+        Walk the network with the given root. Use the -N manpage to discover
         new devices only. Given root device will always be discovered.
 
-    -R  Refresh devices. Will run a discover (the -d manpage) for each
+    -R || --refresh
+        Refresh devices. Will run a discover (the -d manpage) for each
         device in the database.
 
-    -T  Import Topology Data. Will import manual topology data stored in
+    -T || --topofile
+        Import Topology Data. Will import manual topology data stored in
         file specified by configuration option the topofile manpage . Use
         the -F manpage to specify a different file from the command line.
 
-    -u  Add or Change a User. Supply all four arguments (user pw
+    -u || --user [user] [password] [port_control?] [admin?]
+        Add or Change a User. Supply all four arguments (user pw
         port_control admin) for command-line control, or supply less for
         interactive prompts.
 
@@ -216,6 +280,7 @@ USING NETDISCO
         get stored in your shell history file and exported to the process
         table.
 
+    -v || --version
   Features
 
     Admin Daemon
@@ -343,6 +408,11 @@ USING NETDISCO
         CDP Packets" in
         ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
 
+    Device Model comes up as 'Products.'
+        The device is probably newer than your Cisco MIBs. Redownload the
+        v2.tar.gz and install these newest mibs into
+        /usr/local/share/snmp/mibs.
+
     Things are getting Really slow
         For some reason over here at UCSC, things get real slow in Postgres
         after a while. Even though we are doing frequent VACUUM's on all the
@@ -422,13 +492,15 @@ USING NETDISCO
 
             link:outgoing port,destination device,Destination port
 
-        The outgoing port belongs to the device listed above the "list:"
+        The outgoing port belongs to the device listed above the "link:"
         line.
 
         The Destination Device and Port tell Netdisco who is on the other
         end of this link. The device can be a DNS name or an IP Address.
 
     alias:
+        NOT IMPLEMENTED!
+
         Many network devices like routers have multiple IP addresses
         assigned to them. If the device cannot or does not supply this
         information to Netdisco in a standard way, you can add IP addresses
@@ -551,8 +623,42 @@ Config File
         LIST:IPs. Comma Separated list of devices not to use when
         macsucking.
 
+    macsuck_no_vlan
+        LIST:Strings. Comma separated list of VLAN names not to visit when
+        MACsucking.
+
+        This option was used to speed up MACsucking on certain Cisco
+        Catalyst family devices where you have to connect to each VLAN with
+        SNMP to get the forwarding tables. Certain default VLANs will not
+        answer to SNMP, and Netdisco has to wait for them to timeout.
+
     macsuck_timeout
         SECONDS. Timeout for devices when mac sucking.
+
+    nmis_dump
+        FILENAME. Set this option to have nightly() (-B) dump an NMIS
+        http://www.sins.com.au/nmis style Config file. Warning, this file
+        will contain SNMP Community strings.
+
+        Optional Override options are :
+
+        nmis_group
+            STRING. Group to use with nmis_dump. Default "Network"
+
+        nmis_role
+            STRING. Role to use with nmis_dump. Default "core"
+
+        nmis_collect
+            STRING. Collect option to use with nmis_dump. Default "true"
+
+        nmis_active
+            STRING. Active option for nmis_dump file. Default "true"
+
+        nmis_net
+            STRING. Net identifier to use. Default "lan"
+
+        nmis_port
+            INT. SNMP Port to list in nmis_dump file. Default "161"
 
     topofile
         FILE. Full path of the file that contains manual topology
@@ -704,6 +810,10 @@ Config File
     graph_splines
         BOOLEAN. Turn on GraphViz's spline engine? (Is very processor
         intensive).
+
+    graph_svg
+        FILE. Set to create an SVG version of the graph. Requires GraphViz
+        0.8 or greater.
 
     graph_timeout
         MINUTES. Time to allow "neato" to try and solve the graph. Default

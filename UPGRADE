@@ -15,14 +15,17 @@ UPGRADING
     Here are some hints for upgrading between versions of Netdisco.
 
     The best way is to back everything up, move the configuration files out
-    of the way and then follow INSTALL over again.
+    of the way, and then follow INSTALL for all but the database steps.
 
     Then change the configuration files back to match.
+
+    You shouldn't have to upgrade apache, but now would be a good time to
+    see if there are any security upgrades to apache or mod_perl.
 
   SNMP::Info
 
     When upgrading to any version, please make sure you have the newest
-    version of SNMP::Info installed :
+    version of SNMP::Info installed (at least 0.7) :
 
     CVS Version
         To update a CVS version of SNMP::Info :
@@ -57,6 +60,7 @@ UPGRADING
         Make backups of all your configuration files.
 
             cp /usr/local/netdisco/*.conf /path/to/some_where_safe
+            cp /usr/local/netdisco/*.txt  /path/to/some_where_safe
 
     Install on top of existing Netdisco
         Put the new files in your netdisco/ directory
@@ -80,7 +84,9 @@ UPGRADING
   Version Notes
 
     v0.91 -> 0.92
-        No version specific notes for this upgrade.
+        Make sure you run "Database Cleanup" or "-K" when you are done
+        upgrading. The bug where the MAC address of switch ports showing up
+        on their own port has been fixed. SNMP::Info Version 0.7 required.
 
     v0.90 -> 0.91
         netdisco_apache.conf
