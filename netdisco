@@ -39,7 +39,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode/;
 
-$VERSION = '0.93-cvs';
+$VERSION = '0.93';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -61,7 +61,6 @@ $MacTotal = 0;
 # --------------------------------------------------------------
 #              Command Line Flags                               
 # --------------------------------------------------------------
-#getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuvV',\%args);
 Getopt::Long::Configure('no_ignore_case');
 GetOptions(\%args,'a|arpwalk',
                   'A|arpnip=s',
@@ -99,21 +98,36 @@ GetOptions(\%args,'a|arpwalk',
           );
 $DEBUG             = $args{D} || 0;
 $netdisco::SQLCARP = $args{S} || 0;
-$configfile        = $args{C} || '/usr/local/netdisco/netdisco.conf';
 $BatchMode         = $args{b} || 0;
 $New_Only          = $args{N} || 0;
 $Log               = (!$BatchMode and ($DEBUG or defined $args{L})) ? 0 : 1;
 
-# Parse Config File
-config($configfile);
+# Allow the -h or -v commands to run no matter what
+defined $args{h} and &usage;
+defined $args{v} and &version;
+
 # Print Header
 &header if (grep(/^([aABdeEFgIikKmMOprRTu]|expire-nodes-subnet)$/,keys %args) and !$BatchMode);
+
+# Parse Config File - Check for -C, then in current dir, then in default dir.
+foreach my $c ($args{C},"$FindBin::Bin/netdisco.conf",'/usr/local/netdisco/netdisco.conf') {
+    if (defined $c and -r $c){
+        $configfile = $c;
+        print "Using Config File : $configfile\n" if $DEBUG;
+        last;
+    }
+}
+
+unless (defined $configfile){
+    print "No Config file found!\n";
+    exit;
+}
+
+config($configfile);
 
 # --------------------------------------------------------------
 #             Run Commands                                      
 # --------------------------------------------------------------
-defined $args{h} and &usage;
-defined $args{v} and &version;
 
 #   Discovery
 defined $args{R} and &refresh_all;
@@ -2129,7 +2143,8 @@ sub expire_data {
 
             # TODO - Ping device first.  Some devices stop responding to SNMP but still exist.
             #        then issue warning and don't delete?
-            # expire_device($dev->{ip},1);
+
+            expire_device($dev->{ip},1);
         }   
     }
 
@@ -2138,14 +2153,15 @@ sub expire_data {
         $sql .= " AND NOT active" if $archive_only;
 
         my $rows = '';
-        #$rows = sql_do($sql);
+        $rows = sql_do($sql);
+
         # note:expire_ips() should be run after this, and is in nightly() through db_clean()
         print "Deleted $rows rows from node.\n";
 
         $sql = qq/DELETE from node_ip where age(time_last) > interval '$days days'/;
         $sql .= " AND NOT active" if $archive_only;
         
-        #$rows = sql_do($sql);
+        $rows = sql_do($sql);
         print "Deleted $rows rows from node_ip.\n";
 
     }
@@ -3108,12 +3124,13 @@ Device Commands:
     -A --arpnip       device    Arpnip  single device
     -E --expiredevice device    Delete device
     -e --expirenodes  device    Delete/Archive nodes on a device
+    --expire-nodes-subnet
+                      subnet    Runs --expirenodes for all devices in a subnet
     -I --expireips              Expire IPs not seen on switch ports 
     -i --changeip     old new   Change IP address of device and its nodes
 
 Administration:
     -B --backup                 Backups data and runs database cleanup 
-   --expire-nodes-subnet subnet Runs --expirenodes for all devices in a subnet
     -g --graph                  Create network map files 
     -k --cleanalias             Deletes devices listed as aliases of another
     -K --cleannodes             Clean out nodes listed on uplink ports
