@@ -72,8 +72,10 @@ my %device_info = (
                    'Backplane Slots' => 'slots',
                     );
 
-my $user = $r->connection->user;
-my $port_control = (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('https') eq 'on');
+my $user         = $m->session->{user};
+my $secure       = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $port_ctl     = $m->session->{user_port_ctl};
+my $port_control = ($port_ctl and $secure);
 </%shared>
 %#  Parsing of Arguments
 <%init>

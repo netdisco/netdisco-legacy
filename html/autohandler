@@ -51,12 +51,41 @@
 </TR>
 <TR>
     <TD VALIGN=BOTTOM colspan=2 class="botbar">
-        Netdisco created for UCSC -> Cats -> NTS by Max Baker.  
+        Netdisco created for UCSC -&gt; Cats -&gt; NTS by Max Baker.  
     </TD>
 </TR>
 </TABLE>
 </BODY>
 </HTML>
+<%init>
+my $session_timeout = $netdisco::CONFIG{web_session} || 60; # min
+
+my $ok = 0;
+# Authentication - Logged in and not expired?
+if (defined $m->session->{_logged_in} and $m->session->{_logged_in} ){
+    if (defined $m->session->{start}) {
+        my $age = time - $m->session->{start};
+        $ok = $age < 60*$session_timeout;
+    } 
+}
+
+# Redirect to Login page unless we're ok
+my $path   = $netdisco::CONFIG{webpath};
+my $target = $m->fetch_next->name;
+unless ($ok or $target eq 'login.html') {
+    my $target_uri = $r->uri;
+    my $target_args = $r->args;
+    my $url = $target_uri;
+    $url .= "?$target_args" if (defined $target_args and length($target_args));
+    HTML::Mason::Escapes::url_escape(\$url);
+    $m->redirect("$path/login.html?done=$url");
+} 
+
+# For Logging, tell apache what user is in:
+$r->connection->user($m->session->{user}) if defined($m->session->{user});
+</%init>
+%#
+%#
 <%once>
 use lib qq#/usr/local/netdisco#;
 use netdisco qw/:all/; 

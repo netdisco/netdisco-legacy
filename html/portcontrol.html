@@ -14,8 +14,10 @@ $reason => ''
 <%shared>
 # scope
 my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num);
-my $user   = $r->connection->user;
-my $userip = $r->connection->remote_ip; 
+my $user      = $m->session->{user};
+my $port_ctl  = $m->session->{user_port_ctl};
+my $secure    = $r->subprocess_env('https');
+my $userip    = $r->connection->remote_ip; 
 my $odd = 1 ;
 my %Reasons = ( 
                 ''          => 'Select a Reason',
@@ -26,11 +28,9 @@ my %Reasons = (
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
-unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('https') eq 'on'
-        and $cmd =~ /^(up|down|log|err|switch)$/) {
-    # is there a better way to check if we're in using SSL?
-    $m->clear_buffer;
-    $m->abort(401);
+unless ($secure eq 'on' and $port_ctl and $cmd =~ /^(up|down|log|err|switch)$/) {
+    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
+    $m->redirect("login.html?done=$url");
 }
 
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
