@@ -5,6 +5,8 @@
 0.94beta ()
     + Device Inventory drill down now shows model/vendor/os/version for every subsearch
 
+    * Added last_arpnip timestamp for arpnips that was never there??
+
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
     + Added Feature - Search for and show IP phones that speak CDP
