@@ -10,7 +10,7 @@
     <TD>Reason:</TD>
     <TD>
         <SELECT NAME="reason" MULTIPLE>
-            <OPTION VALUE=""<%scalar @reason ? '' : ' SELECTED'%>>All Reasons
+            <OPTION VALUE=""<% (scalar @reason and grep(/\S+/,@reason)) ? '' : ' SELECTED'%>>All Reasons
 % foreach my $reason (keys %$db_reasons) {
             <OPTION VALUE="<%$reason|h%>" TITLE="<%$Reasons{$reason}->[1]||'' |h%>"<%grep(/^$reason$/,@reason) ? ' SELECTED' : ''%>><% $Reasons{$reason}->[0] || $reason %> (<%$db_reasons->{$reason}%>)
 % }
