@@ -64,9 +64,29 @@ running a CVS or RC version).
 
 =item Perl Modules
 
+=over
+
+=item GraphViz 2.01
+
+The newest Perl interface to GraphViz (non-dependent on the GraphViz 
+release) has some better client map interfaces for the Network Graph.
+
+Please make sure this newest version is installed.
+
+ perl -MCPAN -e shell
+    install GraphViz
+
+Double check the version.
+
+ perl -MGraphViz -e 'print $GraphViz::VERSION'
+
+=item Others
+
 A lot of the Perl modules that Netdisco depends on have released newer (better) versions.
 Go to the INSTALL and follow Part 8.1 C<Perl Modules and Mason>.   If you use CPAN, it will
 upgrade all the dependency modules for you too.
+
+=back
 
 =item Bay Switches
 
