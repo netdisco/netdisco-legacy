@@ -6,7 +6,7 @@ POD2TEXT = /usr/local/bin/pod2text
 POD2MAN  = /usr/local/bin/pod2man
 POD2HTML = /usr/local/bin/pod2html
 
-LIBS := $(wildcard *.pm) $(shell find SNMP -name "*.pm")
+SNMPLIBS := $(shell find SNMP -name "*.pm")
 
 all:
 	echo "Available options are back,doc,count,snmp,oui"
@@ -14,36 +14,44 @@ all:
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
-doc: $(LIBS) readme install_doc api_doc
+doc: $(SNMPLIBS) readme install_doc api_doc
+	ln -fs README doc/
+	ln -fs README-API-BACKEND doc/
+	ln -fs README-API-SHARED doc/
+	ln -fs INSTALL doc/
+	rm -f pod2htm*
 
 # Makes documentation for all .pm's 
-$(LIBS):
+$(SNMPLIBS):
 	echo "Making Docs for $@..."
 	$(POD2MAN)  $@ > doc/$(subst /,-,$(@:.pm=.man))
 	$(POD2TEXT) $@ > doc/$(subst /,-,$(@:.pm=.txt))
     # Adds the <%text> </%text> tags to the HTML for mason
-	$(POD2HTML) $@ | sed  -e '1s/^/<%text>!/;1y/!/\n/' -e '$$ G;$$ s/$$/<\/%text>/' > html/doc/$(subst /,-,$(@:.pm=.html))
+	$(POD2HTML) $@ | bin/doc_munge > html/doc/$(subst /,-,$(@:.pm=.html))
 
 install_doc:
 	echo "Creating INSTALL"
 	$(POD2TEXT) -l INSTALL.pod > INSTALL
-	$(POD2HTML) INSTALL.pod > html/doc/INSTALL.html
+	$(POD2HTML) INSTALL.pod | bin/doc_munge > html/doc/INSTALL.html
 
 api_doc:
-	echo "Creating API-docs"
-	$(POD2HTML) netdisco > html/doc/netdisco-api.html
-	$(POD2TEXT) netdisco > README-API
+	echo "Creating Backend API docs"
+	$(POD2HTML) netdisco | bin/doc_munge > html/doc/netdisco-api-backend.html
+	$(POD2TEXT) netdisco > README-API-BACKEND
+	echo "Creating Shared API docs"
+	$(POD2HTML) netdisco.pm | bin/doc_munge > html/doc/netdisco-api-shared.html
+	$(POD2TEXT) netdisco.pm > README-API-SHARED
 
 readme:
 	echo "Creating README"
 	$(POD2TEXT) -l README.pod > README
-	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc README.pod > html/doc/README.html
+	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc README.pod | bin/doc_munge > html/doc/README.html
 
 test:
 	perl -cw netdisco.test
 
 count:
-	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/* netdisco
+	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco
 
 snmp:
 	echo "Hit Return at Password Prompt"
@@ -56,6 +64,6 @@ oui:
 	lynx -source http://standards.ieee.org/regauth/oui/oui.txt > oui.txt
 	./netdisco -O
 
-.PHONY: back doc $(LIBS) install_doc readme test count snmp oui
+.PHONY: back doc $(SNMPLIBS) install_doc readme test count snmp oui
 
 .SILENT:
