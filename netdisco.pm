@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure 
-                       url_secure mask_to_bits bits_to_mask/;
+                       url_secure mask_to_bits bits_to_mask dbh_quote $sql_vacuum/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -741,6 +741,20 @@ sub dbh {
     return $DBH{$DB}; 
 }
 
+
+=item dbh_quote($text)
+
+Runs DBI::dbh->quote() on the text and returns it.
+
+=cut
+sub dbh_quote {
+    my $text = shift;
+
+    my $dbh = &dbh;
+
+    return $dbh->quote($text);
+}
+
 =item hash_diff($hashref_orig, $hashref_new)
 
 Sees if items to change in second hash are different or new compared to first.
@@ -1206,6 +1220,30 @@ sub sql_scalar {
     
     # Blank row
     return undef;
+}
+
+=item sql_vacuum(table,%opts)
+
+Runs a VACUUM ANALYZE if we are Postgres
+
+Pass the table name as '' if you want to vacuum all tables.
+
+Options:
+
+    verbose => 1  (set if DEBUG)
+    full    => 1
+
+=cut
+sub sql_vacuum{
+    my $table = shift;
+    my %opts  = @_;
+
+    # no rated r allowed
+    if ($DB eq 'Pg'){
+        my $sql = (defined $opts{full}) ? 'VACUUM FULL ANALYZE' : 'VACUUM ANALYZE';
+        $sql .= ' VERBOSE' if (defined $opts{verbose} or (defined $::DEBUG and $::DEBUG));
+        return sql_do(qq/$sql $table/);    
+    }
 }
 
 #  Debug routines
