@@ -3,18 +3,28 @@
 # $Id$
 
 0.94beta ()
-    + Added Feature from Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
-        Device Inventory by SNMP location field.
-    + Added Feature [ 836962 ] Admin Log.  Logs logins,logouts and things
-        done inside the admin panel.  Reporting from the admin panel.
-    + Added TimeFrame feature in Port_Report from Revital Shvarzman @yorku.ca
-    + Added support for ifLastChange in SNMP::Info, device_port and device.html
-    + Device Inventory drill down now shows model/vendor/os/version for every subsearch
+    + Added Feature - Device Inventory by SNMP location field.
+         from Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
+    + Added Feature [ 836962 ]  - Admin Log
+        Logs logins,logouts and things done inside the admin panel.  Reporting from the admin panel.
+    + Added Feature - TimeFrame in Port_Report
+        from Revital Shvarzman @yorku.ca
+    + Added Feature - ifLastChange in SNMP::Info, device_port and device.html
+    + Added Feature - Device Inventory drill down now shows model/vendor/os/version for every subsearch
     + Added last_arpnip timestamp for arpnips that was never there??
-    + Added Real Name and Notes field for users in User Admin.
+    + Added Feature - Real Name and Notes field for users in User Admin
+    + Folded Advanced Node Search back into Node Search (it started off there 
+      a few years ago).  Also fixed node_search to actually work.
+    + Fixed Device Search to be more wildcard friendly
+    + Added Feature -  Match scope and sysName fields in device_search
+    * Fixed MacSuck to only Macsuck vlans that are currently in use
+        macsuck_all_vlans config option overrides.
+          by Dusty Hall and Walter Gould
     * Bug Fixed - Trying to Making Graph when there is no topology info would fail
             Found by Vaibhav Gupta
-    * Bug Fixed [1037790] - Some uplink ports were allowed to be switched
+    * !Bug Fixed [1037790] - Some uplink ports were allowed to be switched
+    * Bug Fixed [ 1046252 ] SQL 'like' queries broken in PG 7.3/7.4
+            As found by Walter Gould
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
