@@ -38,7 +38,7 @@ $SIG{ALRM} = \&timeout;
 use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
             %TimedOut $Aliases $OldDevices $PortMAC $start_time $end_time $ArpTotal %MacSeen
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
-            $New_Only $VERSION/;
+            $New_Only $VERSION $DaemonMode/;
 
 $VERSION = '0.92-cvs';
 %Discovered = ();
@@ -50,7 +50,7 @@ $VERSION = '0.92-cvs';
 $Aliases = undef;
 $OldDevices = undef;
 $PortMAC = undef;
-$start_time=$end_time=0;
+$DaemonMode=$start_time=$end_time=0;
 $ArpTotal = 0;
 %MacSeen = ();
 $MacTotal = 0; 
@@ -128,8 +128,8 @@ if (defined $args{F} or defined $args{T}) {
 }
 
 #   Mac Sucking
-defined $args{M} and &load_old_devices;
-defined $args{M} and &mac_getportmacs;
+#defined $args{M} and &load_old_devices;
+#defined $args{M} and &mac_getportmacs;
 defined $args{M} and &macsuck($args{M});
 defined $args{m} and &macwalk;
 
@@ -701,7 +701,10 @@ sub end {
         }
     }
     &batch_mode_end;
-    return;
+    if ($DaemonMode){
+        return;
+    }
+    exit;
 }
 
 =item load_old_devices()
@@ -1160,7 +1163,21 @@ This is to make sure we don't mac-suck existing ports, such as VLANs.
 =cut
 sub mac_getportmacs {
     print "mac_getportmacs()\n" if $DEBUG;
-    $PortMAC = sql_column('device_port',['mac','ip']); 
+    
+    # I probably could have done this in a join but ...
+
+    my $portmacs = sql_rows('device_port',['mac','ip'],{'mac' => \\'is not null'}) || []; 
+    foreach my $row (@$portmacs){
+        my $mac = $row->{mac};
+        my $ip  = $row->{ip};
+        $PortMAC->{mac}=$ip;
+    }
+    my $devmacs = sql_rows('device',['mac','ip'],{'mac' => \\'is not null'}) || [];
+    foreach my $row (@$devmacs){
+        my $mac = $row->{mac};
+        my $ip  = $row->{ip};
+        $PortMAC->{mac}=$ip;
+    }
 }
 
 =item macsuck() 
@@ -1175,13 +1192,17 @@ sub macsuck{
     my $hostname = shift;
 
     my $ip = getip($hostname);
-    
+
     print "macsuck($hostname) : ";
 
     if (defined $CONFIG{macsuck_no} and defined $CONFIG{macsuck_no}->{$ip}) {
         print "\n  Excluded from macsucking in config file.\n";
         return;
     }
+
+    &load_old_devices unless (defined $OldDevices);
+    &mac_getportmacs  unless (defined $PortMAC);
+
     # Get the device info and its interfaces
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
     my $ports = sql_rows('device_port',['*'],
@@ -1638,8 +1659,15 @@ sub walk_fwtable {
         
         # Check if MAC is a switch port
         if (defined $PortMAC->{$mac}) {
-            print "  MAC on $port Matches MAC on device $PortMAC->{$mac}. Included.\n"
+            my $switch_ip = $PortMAC->{$mac};
+            if ($ip eq $switch_ip){
+                print "  ($mac) Port on this switch.  Skipped.\n" if $DEBUG;
+                next;
+            } 
+
+            print "   ($mac) Port:$port - Port on device $switch_ip. Included.\n"
                 if $DEBUG;
+
             # Removed to help debugging of topology info.  Uplink check should be enough.
             #next;  
         }
@@ -1818,6 +1846,9 @@ Removes nodes that are on uplink ports.
 =cut
 sub db_clean {
     print "Database Cleanup : \n";
+
+    # See what devices exist
+    &load_old_devices ;
     # Grab existing mac addresses for switch ports
     &mac_getportmacs;
 
@@ -1827,25 +1858,45 @@ sub db_clean {
         sql_do(qq/DELETE from node where mac = '$mac'/);
         sql_do(qq/DELETE from node_ip where mac = '$mac'/);
     }
-
     
     print "  Checking for Nodes that exist on non-existant ports:\n";
     my $NodeList = sql_rows('node',['mac','switch','port']);
     foreach my $row (@$NodeList){
-        my $mac = $row->{mac};  
-        my $ip  = $row->{switch};
+        my $mac  = $row->{mac};  
+        my $ip   = $row->{switch};
         my $port = $row->{port};
         
-        my $match = sql_scalar('device_port',['COUNT(*)'],{'ip'=>$ip,'port'=>$port}) ;
-        unless ($match) {
-            print "    $mac \@ $ip/$port has no mapping.  Run -e $ip if appropriate.\n";
-            #sql_do(qq/DELETE from node where mac = '$mac' and switch = '$ip' and port = '$port'/);
+        my $have_device = defined $OldDevices->{$ip} ? 1 : 0;
+
+        # If the device doesn't exist Delete it.
+        # If the device exists and has ports, but not this port, delete the node
+        # If the deviec exists and doesn't have ports, do not delete it.  Probably a refresh() error.
+        my $nuke = 0;
+        if ($have_device){
+            my $have_port = sql_scalar('device_port',['1'],{'ip'=>$ip,'port'=>$port}) || 0;
+            unless ($have_port){
+                my $ports = sql_scalar('device_port',['count(*)'],{ip=>$ip});
+                if (defined $ports and $ports){
+                    print "    $mac \@ $ip/$port. Port no longer exists. Removed.\n";
+                    $nuke++;
+                } else {
+                    print "    $mac \@ $ip/$port. Device has no ports.  Run -e $ip if appropriate.\n";
+                }
+            }
+        } else  {
+            print "    $mac \@ $ip/$port. Device no longer exists. Removed.\n";
+            $nuke++;
+        }
+
+        if ($nuke) {
+            #print "nuking $mac $ip $port\n" if $DEBUG;
+            sql_do(qq/DELETE from node where mac = '$mac' and switch = '$ip' and port = '$port'/);
         }
     }
 
+    &load_old_devices;
     print("  Removing nodes that are listed on uplink ports...\n");
     my $dev_ports = sql_rows('device_port',['ip','port'],{'remote_ip' => 'IS NOT NULL'});
-    &load_old_devices;
 
     foreach my $dev_port (@$dev_ports){
         my $ip   = $dev_port->{ip};
@@ -1856,12 +1907,13 @@ sub db_clean {
         next unless defined $layers;
         # If Neighbor is not part of topology, leave it.
         if (has_layer($layers,2) or has_layer($layers,3)){
-            # To archive or to delete, I just can't decide.
-            #sql_do(qq/UPDATE node SET active=false WHERE switch='$ip' and port='$port'/);
             sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
         }
     }
     print "Done.\n"; 
+
+    &expire_ips;
+    sql_vacuum('node');
 }
 
 =item dev_dump() 
@@ -2564,6 +2616,7 @@ sub admin_daemon {
         return;
     }
 
+    $DaemonMode = 1;
     $BatchMode = 1;
     &batch_mode('daemon',1);
 
@@ -2778,6 +2831,8 @@ sub admin_daemon_job {
 =cut
 
 sub test {
+    &mac_getportmacs;
+    
 }
 
 
