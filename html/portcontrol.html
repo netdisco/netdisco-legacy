@@ -58,6 +58,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
     my $now = time; my $job;
     my $timeout_time = $now + $timeout;
     my $done = 0;
+    my $status;
     while (!$done){
         # Poll every two seconds
         sleep(2);
@@ -73,7 +74,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
             last;
         }   
 
-        my $status = $job->{status};
+        $status = $job->{status};
         $done++ if $status =~ /^(done|error)$/;
         $done++ if $status !~ /^(running|queued)$/;
 
