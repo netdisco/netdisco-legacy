@@ -14,10 +14,12 @@ $ip         => ''   # Can be IP or hostname
 $submit     => ''   # Can have all/hide to control ports
 $device_age => 'off'
 $archive    => 'off'
-$node_ip    => 'off'
+$node_ip    => 'off'    # Show the IPs used by each MAC
+$node_dns   => 'off'    # Resolve IPs of connected devices
 </%args>
 <%shared>
-my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip);
+my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip,
+    $arg_node_dns);
 my $ports = []; my $node_ips = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
@@ -60,6 +62,7 @@ my $admin        = defined $m->session->{user_admin} and $m->session->{user_admi
 #  Parsing of Arguments
 $arg_age  = $device_age; $arg_arch = $archive; 
 @arg_port = @port; $arg_node_ip = $node_ip;
+$arg_node_dns = $node_dns;
 
 if ($ip) {
     # Save Search Term
@@ -173,6 +176,11 @@ if ($ip) {
             push ( @{$node_ips->{$mac}},$ip);
         }
     }
+
+    # Resolve IPs of connected nodes to host names
+    if ($node_ip eq 'on' and $node_dns eq 'on'){
+
+    }
 }
 
 # Change the columns of ports shown
@@ -228,6 +236,10 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
 <B>Show Connected Device IP</B>:
 <INPUT TYPE="radio" NAME="node_ip" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
+&nbsp; &nbsp; &nbsp; &nbsp;
+<B>Resolve IPs</B>
+<INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
 <P>
 <INPUT TYPE="submit" VALUE="Change View" NAME="submit">
 </FORM>
@@ -430,7 +442,7 @@ foreach my $port (sort sort_port @$ports){
         <TD CLASS="<%$class%>"><% $val || '&nbsp;' %></TD>
 %    }
 % # Connected Devices Column
-    <TD> \
+        <TD ALIGN=LEFT>
 <%perl>
     if (defined $remote_ip) {
         my $name = '';
@@ -439,60 +451,76 @@ foreach my $port (sort sort_port @$ports){
                     {'ip'=>$remote_ip});
         my $alias = sql_hash('device_ip',['ip','dns'],
                     {'alias'=>$remote_ip});
-        if (defined $alias){
+        if (defined $alias) {
             $remote_ip = $alias->{ip};
             $name = $alias->{dns};
             $name = defined $name ? $name  : $remote_ip; 
             $name =~ s/\Q$domain\E//;
             $name .= " ($remote_port)";
+            $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
             $link = "device.html?ip=$remote_ip&port=$remote_port";
-        } elsif (defined $remote_dev){
+        } elsif (defined $remote_dev) {
             $name = $remote_dev->{'dns'};
             $name = defined $name ? $name  : $remote_ip; 
             $name =~ s/\Q$domain\E//;
             $name .= " ($remote_port)";
+            $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
             $link = "device.html?ip=$remote_ip&port=$remote_port";
         } else {
             $name = "<SPAN CLASS=\"dead-link\">$remote_ip</SPAN>";
             $link = "node.html?node=$remote_ip";
         }
 </%perl>
-        <A HREF="<%$link%>"><%$name%></A> \
+            <A HREF="<%$link%>"><%$name%></A> \
 <%perl>
     } 
     $m->out("<BR>\n") if (defined $remote_ip and defined $port->{macs});
 
     # Show connected nodes
     my $seen_macs=0;
-    if (defined $port->{macs}) { 
-        foreach my $node (sort {$a->{mac} cmp $b->{mac}} @{$port->{macs}}) {
-            my $mac       = $node->{mac};
-            my $active    = $node->{active};
-            my $time_last = $node->{time_last};
+    my $portnodes = $port->{macs} || [];
+    foreach my $node (sort {$a->{mac} cmp $b->{mac}} @$portnodes) {
+        my $mac       = $node->{mac};
+        my $active    = $node->{active};
+        my $time_last = $node->{time_last};
 
-            # Connected Device Age Stamp?
-            my $age       = $now - $time_last;
-            $age = sprintf("%d", ($age / (60*60*24)));
-            my $show_age  = ($arg_age eq 'on' and $age > 0) ? " ($age days)" : '';
+        # Connected Device Age Stamp?
+        my $age = $now - $time_last;
+        $age = sprintf("%d", ($age / (60*60*24)));
+        my $show_age  = ($arg_age eq 'on' and $age > 0) ? " ($age days)" : '';
 
-            # Show Archived Data?
-            next unless ($active or $arg_arch eq 'on');
-            $seen_macs++;
+        # Show Archived Data?
+        next unless ($active or $arg_arch eq 'on');
+        $seen_macs++;
 </%perl>
-        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR> 
-%       # Show node_ips?
-%           if ($arg_node_ip eq 'on' and defined $node_ips->{$mac}) {
-%               foreach my $ip (@{$node_ips->{$mac}}) {
-        <A HREF="node.html?node=<% $ip |u %>" TITLE="Node <%$mac|h%>  IP <%$ip|h%>"><%$ip%></A><BR>               
-%               }
-%           }
-%        }
-%    }
-%    unless ($seen_macs or defined $remote_ip) {
-&nbsp;  \
-%    }
-</TD>
-%# Port Control Column
+        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR>
+<%perl>
+        # Show node_ips?
+        if ($arg_node_ip eq 'on' and defined $node_ips->{$mac}) {
+            foreach my $ip (sort sort_ip @{$node_ips->{$mac}}) {
+                # Show Node DNS ?
+                my $host = $ip;
+                if ($arg_node_dns eq 'on'){ 
+                    $host = hostname($ip) || $ip;
+                    $host =~ s/\Q$domain\E//; 
+                    # Add IP if we found a hostname. 
+                    $host .= " ($ip)" if ($host ne $ip);
+                }
+</%perl>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="node.html?node=<% $ip |u %>" TITLE="Node Info"><%$host%></A><BR>
+<%perl>
+           }   # /each node_ip
+        } # /if node_ip
+    } # /each node
+
+    # Place holder for no connected devices
+    unless ($seen_macs or defined $remote_ip) {
+       $m->out('&nbsp;');
+    }
+# end connected dev col.
+</%perl>
+            </TD>    
+% # Port Control Column
     <TD> \
 % if ($device->{dns} =~ /^hub/i and $port_info) {
       <A HREF="port_info.html?hub=<%$device->{dns}%>&port=<%$port->{port}%>"><IMG SRC="icon_info.gif" WIDTH=12 HEIGHT=11 BORDER=0 ALT="Pinnacles DB Info" TITLE="Pinnacles DB Info"></A> \

@@ -29,6 +29,7 @@
     .port-down { color:#a0a0a0; }
     .port-block { color:#33ccff; }
     .dead-link { color:white; background-color:red;}
+    .device-link { color:blue; }
     .tr-head   { text-align:left; font:normal normal 12pt monospace;}
     .tr-data-1 { text-align:left; font-family:monospace; background-color:#eed8ae; }
     .tr-data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
