@@ -1,29 +1,19 @@
-<TABLE BORDER=0>
-<TR>
-    <TH>File</TH>
-    <TH>Title</TH>
-<TR>
+<h4>Files</h4>
 %foreach my $file (sort @files){
-%   my $title = `grep "<TITLE>" $file`;
-%   $title =~ s/<TITLE>(.*)<\/TITLE>/$1/i;
 %   $file =~ s/$dir\///;
 %   next if $file eq 'index.html';
 %   my $name = $file;
 %   $name =~ s/\.html//;
-<TR>
-   <TD><A HREF="<%$file%>"><%$name%></A></TD>
-   <TD><%$title%></TD>
-</TR>
+<A HREF="<%$file%>"><%$name%><BR>
 %}
-</TABLE>
 <h3>About Netdisco</h3>
 <UL>
     <LI>[<A href="http://www.netdisco.org">Netdisco.org</a>]
     <LI><A HREF="http://snmp-info.sourceforge.net">SNMP::Info</a>
     <LI>
-        <A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
-        <img style="border:0;width:88px;height:31px" src="<%$path%>/vcss.gif" alt="Valid CSS" BORDER=0>
-        <img style="border:0;width:88px;height:31px" src="<%$path%>/valid-html401.png" alt="Valid HTML 4.01" BORDER=0>
+       <A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
+       <img WIDTH="88" HEIGHT="31" src="<%$path%>/vcss.gif" alt="Valid CSS" BORDER=0>
+       <img WIDTH="88" HEIGHT="31" src="<%$path%>/valid-html401.png" alt="Valid HTML 4.01" BORDER=0>
 </UL>
 <%init>
 my $dir = $m->current_comp->source_dir();
