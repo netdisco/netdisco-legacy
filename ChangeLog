@@ -3,9 +3,19 @@
 # $Id$
 
 0.93beta ()
-    - Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
-    - Fixed Bug - Could not have pound signs (#) in config options.  Use \#
-    - Fixed Bug - Could not have commas in certain config options. Use \,
+    * Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
+    + Added ability to escape pound sign and commas for use in config file as \# or \,
+    + Added Feature [ 822720 ] Port Reporting
+    + Added Feature [ 824521 ] Arpnip and Macsuck Exclusion lists
+    + Added devices : Catalyst 4000, C3750, C3500XL
+    * Fixed bug in device.html where the 'resolve ips' setting wasn't being kept
+    * Fixed random warning in SNMP::Info -- see its ChangeLog
+    = next five items fixed by Bradley Baetz
+    * Fixed bug where colons in CDP info where not being kept
+    + added dns resolution for dead cdp neighbors
+    * Fixed bug where oui.txt was looked for in the current dir not in the netdisco/ dir.
+    * Fixed bug [872167] device.html - Links descriptions were not HTML escaped.
+    * Fixed bug [872171] Port listings were not sorted correctly. 
 
 0.92beta (08/14/03)
     + Added feature [753750] Export to NMIS style config file
