@@ -22,8 +22,10 @@ CREATE TABLE device (
     ps2_status   text,
     fan          text,
     slots        integer,
-    vendor       text,
-    log          text,
+    vendor       text,      
+    log          text,      -- HP Devices can store their log in here.
+    snmp_ver     integer,   -- Holds the SNMP Version of device 
+    snmp_comm    text,      -- Holds the SNMP Community String
     last_discover TIMESTAMP,
     last_macsuck  TIMESTAMP,
     last_arpnip   TIMESTAMP
