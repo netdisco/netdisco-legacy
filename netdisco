@@ -1215,13 +1215,14 @@ sub expire_nodes {
     # grab mac count
     my $macs = sql_rows('node',['count(mac)'],\%where_hash,undef,"GROUP BY mac");
      
+    my $count = $macs->[0]->{count} || 0;
     if (defined $archive and $archive){
         # De-activate nodes
-        print "  Archiving " . $macs->[0]->{count} . " entries for $where\n";
+        print "  Archiving $count entries for $where\n";
         sql_do(qq/UPDATE node SET active=false WHERE $where/);
     } else {
         # Delete nodes
-        print "  Deleting " . $macs->[0]->{count} . " entries for $where\n";
+        print "  Deleting $count entries for $where\n";
         sql_do(qq/DELETE FROM node WHERE $where/);
     }
 }
@@ -2162,7 +2163,7 @@ sub admin_daemon {
         # TODO - Die if the database isn't there. 
 
         my $jobs = sql_rows('admin',['job','extract(epoch from entered) as entered',
-                                     'device','action','status', 'username','debug'],
+                                     'device','action','status', 'username','debug','subaction'],
                             {'status' => 'queued'} );
 
         # Run each Job
@@ -2216,6 +2217,7 @@ sub admin_daemon_job {
     my $cmd    = $job->{action};
     my $dev    = $job->{device};
     my $debug  = $job->{debug};
+    my $subaction = $job->{subaction};
 
     print "Daemon: Working on job : $id\n" if $DEBUG;
 
@@ -2228,25 +2230,37 @@ sub admin_daemon_job {
     $DEBUG = $debug;
 
     # Device tasks
+    my $job_error = 0;
     if ($cmd eq 'macsuck') {
         &load_old_devices;
         &mac_getportmacs;
         &macsuck($dev);
     }
 
-    if ($cmd eq 'arpnip') {
+    elsif ($cmd eq 'arpnip') {
         &mac_getportmacs;
         &arpnip($dev);
     }
 
-    if ($cmd eq 'refresh') {
+    elsif ($cmd eq 'refresh') {
         &topo_load_file;
         &discover($dev);
     }
 
-    if ($cmd =~ /^delete(\+nodes)?$/) {
+    elsif ($cmd =~ /^delete(\+nodes)?$/) {
         my $nodes = $1;
         print "Delete currently turned off.\n"
+    }
+
+    elsif ($cmd =~ /^nodes-(del|arc)$/){
+        my $subcmd = $1;
+        my $port = $subaction;
+        &expire_nodes($dev, $subcmd eq 'arc' ? 1 : 0, $port);
+    }
+
+    else {
+        print "Command $cmd not supported.\n";
+        $job_error++;
     }
 
     # Clean Up
@@ -2263,7 +2277,8 @@ sub admin_daemon_job {
     close (OUTFILE);
 
     # Mark job done
-    insert_or_update('admin',{'job'=>$id },{'status'=>'done', 
+    my $status = $job_error ? 'error' : 'done';
+    insert_or_update('admin',{'job'=>$id },{'status'=>$status, 
                               'finished' => scalar(localtime), 'log'=>$log}
                     );
     return undef;
