@@ -1,12 +1,13 @@
 <h3>Netdisco Statistics</h3>
 <UL>
-    <LI><% $device_count %> Devices using <% $device_count + $device_ip_count %> IPs   <BR>
-    <LI><% $device_port_count %> discovered interfaces. <BR>
-    <LI>Found <% $node_count %> Nodes in <% $node_table_count %> entries. <BR>
-    <LI>Seen <% $ip_count %> IPs in <% $ip_table_count %> entries.<BR>
+    <LI><% $device_count %> devices with <% $device_port_count %> interfaces
+        using <% $device_count + $device_ip_count %> IPs
+    <LI><% $device_links %> layer 2 links between devices.
+    <LI><% $node_count %> nodes in <% $node_table_count %> entries. 
+    <LI><% $ip_count %> IPs in <% $ip_table_count %> entries.
 </UL>
 <P>
-Statistics took <%$time8 - $time1 %> seconds to process.
+Statistics took <%$time9 - $time1 %> seconds to process.
 <!-- 
 <% $time2-$time1 %>
 <% $time3-$time2 %>
@@ -15,7 +16,18 @@ Statistics took <%$time8 - $time1 %> seconds to process.
 <% $time6-$time5 %>
 <% $time7-$time6 %>
 <% $time8-$time7 %>
+<% $time9-$time8 %>
 -->
+<h3>Glossary</h3>
+<UL TYPE=disc>
+    <LI><B>Devices</B> - Switch, Router, ...
+    <LI><B>Device Interface</B> - Port
+    <LI><B>Node</B> - MAC Address.  Something connected to the network.  Server, Printer, ...
+    <LI><B>Node Entry</B> - Mapping between a MAC Address and a Switch Port.
+        <BR>From MAC Forwarding table in Layer 2 devices.
+    <LI><B>IP Entry</B> - Mapping between an IP and a MAC Address.
+        <BR>From ARP Cache Entries in Layer 3 devices.
+</UL>
 <%init>
     $m->flush_buffer();
     my $time1 = time;
@@ -33,6 +45,8 @@ Statistics took <%$time8 - $time1 %> seconds to process.
     my $time7 = time;
     my $ip_table_count = sql_scalar('node_ip',['COUNT(ip)']);
     my $time8 = time;
+    my $device_links  = sql_scalar('device_port',['COUNT(*)'],{'remote_ip' => 'is not null'});
+    my $time9 = time;
 </%init>
 <%method title>
 - Netdisco Statistics \
