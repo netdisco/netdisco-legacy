@@ -46,6 +46,12 @@ View 2 - netdisco_vw2
 <%init>
 $arg_port = $port; $arg_building = $building; 
 
+# Check to see this feature is turned on
+my $port_info = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /^(1|t|y)/i) ? 1 : 0;
+unless ($port_info){
+    $m->redirect('./');
+}
+
 # Lookup Pinnacle data for given Port
 if ($hub and $port){
     $hub_dns = $hub;
