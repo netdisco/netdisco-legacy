@@ -214,17 +214,8 @@ if ($arg_age_type eq 'uptime') {
 foreach my $dev (@results) {
     my $dns = $dev->{dns} || 'No DNS';
     $dns =~ s/\Q$domain\E//;
-    my $creation_age = $dev->{creation_age};
-    $creation_age =~ s/mon/month/;
-    $creation_age =~ s/ \d{2}:\d{2}.*$//;
-    my $last_discover_age = $dev->{last_discover_age};
-    $last_discover_age =~ s/mon/month/;
-    # If we get result in weeks/hours/days or in -hr:mm:ss format
-    if ($last_discover_age =~ /day/){
-        $last_discover_age =~ s/(-)?\d{2}:\d{2}.*$//;
-    } else {
-        $last_discover_age =~ s/(\d{2}:\d{2}):\d{2}(\.\d*)$/$1/;
-    }
+    my $creation_age = $m->comp("SELF:.trim_age", age => $dev->{creation_age});
+    my $last_discover_age = $m->comp("SELF:.trim_age", age => $dev->{last_discover_age});
     my $uptime = $m->comp('device.html:uptime',uptime => $dev->{uptime});
 </%perl>
 <TR CLASS="match-<%++$odd %2%>">
@@ -238,6 +229,20 @@ foreach my $dev (@results) {
 </TABLE>
 
 Found <%scalar @$age%> devices.
+</%method>
+<%method .trim_age>
+    <%args>
+        $age => ''
+    </%args>
+    <%perl>
+        $age =~ s/mon/month/;
+        if ($age =~ /(day|month|year)/){
+            $age =~ s/(-)?\d{2}:\d{2}.*$//;
+        } else {
+            $age =~ s/(\d{2}:\d{2}):\d{2}(\.\d*)$/$1/;
+        }
+        return $age;
+    </%perl>
 </%method>
 <%method title>
 - Device Inventory \
