@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows add_node add_arp add_nbt dbh sql_match
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
-                       dump_subnet
+                       dump_subnet in_device
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
@@ -232,7 +232,7 @@ sub config {
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
-                      bulkwalk_no
+                      bulkwalk_off
                      /;
 
     # these will make array refs of their comma separated lists
@@ -420,6 +420,57 @@ sub getip {
         $ip = inet_ntoa($testhost);
     }
     return $ip;
+}
+
+=item in_device(device,to_match)
+
+First argument can either be:
+
+    1. plain text IP or hostname
+    2. A row from the device table as returned from sql_hash
+
+Second argument is an array ref as returned from config, eg. C<bulkwalk_no>.
+
+=cut
+sub in_device {
+    my $device = shift;
+    my $to_match = shift || [];
+
+    my ($ip,$model,$vendor);
+
+    # Passed a sql_hash from the device table
+    if (ref($device) eq 'HASH'){
+        $ip     = $device->{ip};
+        $model  = $device->{model};
+        $vendor = $device->{vendor};
+    # Passed as simple hostname/IP
+    } else {
+        $ip     = getip($device);
+        $model  = '';
+        $vendor = '';
+    }
+
+    foreach my $term (@$to_match){
+        $term =~ s/^\s*//;
+        $term =~ s/\s*$//;
+        # Check for device types
+        if ($term =~ /(.*)\s*:\s*(.*)/){
+            my $attrib = $1; my $match = $2;
+
+            if (lc($attrib) eq 'model'){
+                return 1 if $model =~ /^$match$/;
+            }
+            elsif (lc($attrib) eq 'vendor'){
+                return 1 if $vendor =~ /^$match$/;
+            }
+            
+        # Consider this a subnet / host
+        } else {
+            return 1 if in_subnet($term,$ip);
+        }
+    }
+
+    return 0;
 }
 
 =item in_subnet(subnet,ip)
