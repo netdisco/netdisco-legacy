@@ -44,4 +44,11 @@ test:
 count:
 	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/* netdisco
 
+.PHONY: snmp
+snmp:
+	echo "Hit Return at Password Prompt"
+	cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info login
+	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info co snmp-info
+	mv -f snmp-info SNMP
+
 .SILENT:
