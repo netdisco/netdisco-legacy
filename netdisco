@@ -38,7 +38,9 @@ $SIG{ALRM} = \&timeout;
 use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
             %TimedOut $Aliases $OldDevices $PortMAC $start_time $end_time $ArpTotal %MacSeen
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
-            $New_Only/;
+            $New_Only $VERSION/;
+
+$VERSION = 0.90;
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
