@@ -7,11 +7,12 @@
         done inside the admin panel.  Reporting from the admin panel.
     + Added TimeFrame feature in Port_Report from Revital Shvarzman @yorku.ca
     + Added support for ifLastChange in SNMP::Info, device_port and device.html
-    * Device Inventory drill down now shows model/vendor/os/version for every subsearch
-    * Added Real Name and Notes field for users in User Admin.
+    + Device Inventory drill down now shows model/vendor/os/version for every subsearch
+    + Added last_arpnip timestamp for arpnips that was never there??
+    + Added Real Name and Notes field for users in User Admin.
     * Bug Fixed - Trying to Making Graph when there is no topology info would fail
             Found by Vaibhav Gupta
-    * Added last_arpnip timestamp for arpnips that was never there??
+    * Bug Fixed [1037790] - Some uplink ports were allowed to be switched
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
