@@ -3419,10 +3419,11 @@ sub header{
 
 sub version {
     &header;
-    print "Perl Version       : $]\n";
-    print "Net-SNMP Version   : $SNMP::VERSION\n";
-    print "SNMP::Info Version : $SNMP::Info::VERSION\n";
+    my $perl = defined $^V ? join('.',map {ord} split(//,$^V)) : $];
     print "Netdisco Version   : $VERSION\n";
+    print "SNMP::Info Version : $SNMP::Info::VERSION\n";
+    print "Net-SNMP Version   : $SNMP::VERSION\n";
+    print "Perl Version       : $perl\n";
     exit;
 }
 
