@@ -2,7 +2,7 @@
 % if ($err) {
 <H4><%$err%></H4>
 %}
-<FORM ACTION="<%$r->uri%>" METHOD="POST">
+<FORM ACTION="<%$r->uri%>" METHOD="POST" NAME="loginForm">
 <INPUT TYPE="hidden" NAME="cmd" VALUE="login">
 <INPUT TYPE="hidden" NAME="done" VALUE="<%$done|h%>">
 <TABLE BORDER=0>
@@ -21,10 +21,13 @@
 </FORM>
 <h4>Note</h4>
 <UL>
-    <LI>Something in login is broken, seems to be something in sending the cookies.
+    <LI>Sessions Last for <%$netdisco::CONFIG{websession}%> minutes.
+    <LI>If you are having login problems (Appears to accept password but still sends you back to the 
+        login page)  
+        <BR>Please <a href="mailto:max@warped.org">mail me</a>.  
+        <P>Something in login is broken, seems to be something in sending the cookies.
         If you are having problems logging in, try turning on the warning to show you 
-        when cookies are being sent, and see if a cookie IS being sent.   Any help
-        <a href="mailto:max@warped.org">is welcome</a>.  
+        when cookies are being sent, and see if a cookie IS being sent. 
         <P>
         If you're having problems, try deleting any cookie labeled <b>ucsc.edu</B> and then
         restarting your browser.
@@ -33,13 +36,17 @@
             <LI>Mozilla / NS6 : <u>T</u>ools :: <u>C</u>ookie Manager :: <u>M</u>anage stored cookies
             <LI>NS4: Exit the browser.  Go into <tt>$HOME/.netscape</tt> and edit the file <tt>cookies</tt>
         </ul>
-    <LI>Sessions Last for <%$netdisco::CONFIG{websession}%> minutes.
 </UL>
 <!-- 
 <% join("\n",join('=',each(%{$m->session}))) %>
 <% $m->session->{logged_in} %>
 <% $m->session->{user} %>
 -->
+<SCRIPT LANGUAGE="JavaScript"> 
+<!--
+    document.loginForm.user.focus();
+//-->
+</SCRIPT>
 <%args>
 $user => undef
 $cmd  => undef
