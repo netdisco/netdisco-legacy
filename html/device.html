@@ -85,7 +85,7 @@ if ($ip) {
                         ['ip','extract(epoch from creation) as creation','dns',
                          'description','uptime','contact','name','location','layers',
                          'ports','mac','serial','model','ps1_type','ps2_type','ps1_status',
-                         'ps2_status','fan','slots','vendor','log',
+                         'ps2_status','fan','slots','vendor','log','os_ver','os',
                          'extract(epoch from last_discover) as last_discover',
                          'extract(epoch from last_macsuck) as last_macsuck',
                          'extract(epoch from last_arpnip) as last_arpnip' ],
@@ -235,7 +235,7 @@ $web_dns =~ s/\Q$domain\E//;
 [<A HREF="switch/<%$web_dns|u%>/">Web Console</A>]
 % } 
 % if ($admin) {
-[<A HREF="admin_dev.html?dev_text=<%$device->{dns} || $devip |u%>">Device Control</A>]
+[<A HREF="admin_dev.html?dev_text=<%$devip |u%>">Device Control</A>]
 % }
 <HR NOSHADE>
 <TABLE CELLSPACING=0 CELLPADDING=3 BORDER=0>
@@ -245,14 +245,20 @@ $web_dns =~ s/\Q$domain\E//;
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
     <TD><U>Location / Contact</U></TD>
-    <TD ALIGN=LEFT><%$device->{location}|h%>
-        / <%$device->{contact} |h%>
+    <TD ALIGN=LEFT><%$device->{location} || '[Not Set]' |h%>
+        / <%$device->{contact} || '[Not Set]' |h%>
     </TD>
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
     <TD><U>Model / Serial</U></TD>
     <TD ALIGN=LEFT><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&models=<%$device->{model}|u%>&boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
-    / <%$device->{serial}%>
+    / <%$device->{serial} || 'Unknown'%>
+    </TD>
+</TR>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><U>OS / Version</U></TD>
+    <TD ALIGN=LEFT><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
+                   <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver}%></A>
     </TD>
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
@@ -260,9 +266,9 @@ $web_dns =~ s/\Q$domain\E//;
     <TD ALIGN=LEFT><%$device->{description}|h%></TD>
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Uptime</U></TD>
+    <TD><U>Uptime</U>/<BR><U>Last Discovered</U></TD>
     <TD ALIGN=LEFT><% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
-    on <% scalar localtime($device->{last_discover}) %>
+    / <% scalar localtime($device->{last_discover}) %>
     </TD>
 </TR>
 % if (defined $device->{fan} or $device->{ps1_status}) {
@@ -381,15 +387,15 @@ my $link = $r->uri() . "?ip=$devip";
 foreach my $port (sort sort_port @$ports){
     my $remote_ip = $port->{remote_ip};
     my $remote_port = $port->{remote_port};
-    my $up_admin = $port->{up_admin};
-    my $stp      = $port->{stp};
-    my $up       = $port->{up};
+    my $up_admin = $port->{up_admin} || '';
+    my $stp      = $port->{stp}      || '';
+    my $up       = $port->{up}       || '';
     # Check for current up
     my $class = $up eq 'down' ? 'port-down' : 'port-up';
     # Check for admin down
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
-    # Check for STP blocking
-    $class    = (defined $stp and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
+    # Check for STP blocking, but not down
+    $class    = ($up ne 'down' and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
     my $rowclass = (++$odd % 2 ) ? 'match-0': 'match-1';
 </%perl>
 <TR CLASS="<%$rowclass%>">
@@ -496,7 +502,7 @@ foreach my $port (sort sort_port @$ports){
     [<SPAN CLASS="port-off">Admin Disabled</SPAN>]
     [<SPAN CLASS="port-down">Link Down</SPAN>]
     [<SPAN CLASS="port-block">Blocking</SPAN>]
-    (<SPAN CLASS="dead-link">Discovered Neighbor not accessable</SPAN>)
+    (<SPAN CLASS="dead-link">Discovered Neighbor not accessible</SPAN>)
     </TD>
 </TR>
 % if ($port_control) { 
