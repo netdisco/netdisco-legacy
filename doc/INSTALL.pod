@@ -658,10 +658,12 @@ OpenSSL is installed by default.
 You will have to tell the OS to look for the Kerberos libraries
 used in this version of OpenSSL:
 
-    export blahblahblah (TODO)
     ./configure \
         --with-apache=../apache_1.3.x \        
         --disable_rule=SSL_COMPAT
+    make C_INCLUDE_PATH=/usr/kerberos/include
+
+Thanks to David Martin for this info.
 
 =item By Hand (other OSs)
 
