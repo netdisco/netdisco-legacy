@@ -206,14 +206,14 @@ my $odd = 0;
 
 <%$sentfrom%> --&gt; <%$sentto%>
 <P>
-<TABLE CELLSPACING=2 CELLPADDING=2 BORDER=0>
+<TABLE CELLSPACING=2 CELLPADDING=2 BORDER=0 CLASS="box">
 <TR>
     <TH>&nbsp;</TH>
     <TH class="tr-head">Port<BR>In</TH>
     <TH class="tr-head"> Device </TH>
     <TH class="tr-head">Port<BR>Out</TH>
 </TR>
-<TR><TD COLSPAN=4><% '-' x 60 %></TD></TR>
+<TR><TD COLSPAN=4><HR NOSHADE></TD></TR>
 <%perl>
 while (my $this = shift(@$path)){
     my $that = $path_info{$this}->{next};
@@ -236,7 +236,7 @@ while (my $this = shift(@$path)){
 </TR>
 %}
 </TABLE>
-<HR>
+<P>
 </%method>
 %# $Id$
 %# vim:syntax=mason
