@@ -652,6 +652,10 @@ For some reason over here at UCSC, things get real slow in Postgres after a whil
 Even though we are doing frequent VACUUM's on all the data, it seems to be dragging
 down after a while.
 
+This turns out to be an INDEX bloat problem on Postgres versions less than 7.4. 
+Recently doing this on a Postgres 7.3 install changed the amount of space that i
+Netdisco's database was using from 16G to 400M !!!
+
 In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE>  from C<pg_run>.
 This command locks each table before it does the VACUUM, and therefor can be more through.
 It's a good idea to take netdisco down temporarily while you do this.  I do this about
@@ -681,10 +685,27 @@ Procedure for doing a vacuum full :
     ps
     killall netdisco
     
-=item 6. Run VACUUM FULL ANALYZE VERBOSE in psql
+=item 6. Run REINDEX and  VACUUM FULL 
 
+    #before 
+    df -h
     /usr/local/netdisco/sql/pg_run
-    VACUUM FULL ANALYZE VERBOSE;
+        # before comparison :
+        select relname, relpages from pg_class order by relpages desc;
+
+        REINDEX TABLE node;
+        REINDEX TABLE node_ip;
+        REINDEX TABLE device;
+        REINDEX TABLE device_port;
+        REINDEX TABLE device_port_log;
+        VACUUM FULL ANALYZE VERBOSE;
+
+        # after comparison :
+        select relname, relpages from pg_class order by relpages desc;
+        \q
+
+    # after
+    df -h
 
 =item 7. Restart Postgres (just for fun)
 
