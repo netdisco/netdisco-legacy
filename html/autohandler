@@ -2,7 +2,7 @@
 <HTML>
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<TITLE>[demo] n e t  d i s c o <& SELF:title &> </TITLE>
+<TITLE>n e t  d i s c o <& SELF:title &> </TITLE>
 <STYLE TYPE="text/css" MEDIA="screen">
 <!--
     A { text-decoration:none; }
@@ -40,7 +40,7 @@
 <TABLE width="95%" height="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0>
 <TR VALIGN=TOP>
     <TD COLSPAN=2 class="topbar" height="5%">
-    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">[demo]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
+    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
     </TD>
 </TR>
 <TR VALIGN=TOP>
