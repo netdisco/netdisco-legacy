@@ -30,7 +30,7 @@ use Digest::MD5;
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
-                       sql_hash sql_column sql_rows add_node add_arp dbh sql_match
+                       sql_hash sql_column sql_rows add_node add_arp add_nbt dbh sql_match
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
@@ -181,6 +181,33 @@ sub add_node {
         { 'time_last' => scalar(localtime), 'active' => 1, 'oui' => $oui, %hash });
 }
 
+=item add_nbt(ip,mac,nbname,domain,server,nbuser)
+
+Manipulates entries in 'node_nbt' table.
+
+Expires old entries for given MAC address.
+
+Adds new entry or time stamps matching one. 
+
+=cut
+
+sub add_nbt {
+    my ($ip,$mac,$nbname,$domain,$server,$nbuser) = @_;
+    my $dbh = &dbh;
+
+    # Set the active flag to false to archive all other instances
+    #   of this MAC address
+    sql_do(sprintf("UPDATE node_nbt SET active = 'f' WHERE ip=%s",
+            $dbh->quote($ip)));
+
+    # Add this entry to node_nbt table. 
+    insert_or_update('node_nbt', { 'mac' => $mac, 'ip' => $ip },
+        { 'mac' => $mac, 'ip' => $ip, 'time_last' => scalar(localtime), 
+          'active' => 1, 'domain' => $domain, 'server' => $server,
+          'nbname'=>$nbname, 'nbuser'=>$nbuser,
+        });
+}
+
 =item bits_to_mask(bits)
 
 Takes a CIDR style network mask in number of bits (/24) and returns the older style 
@@ -207,13 +234,12 @@ sub config {
                      /;
 
     # these will make array refs of their comma separated lists
-    my @array_refs = qw/community community_rw/;
+    my @array_refs = qw/community community_rw mibdirs/;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
     my @hash_refs  = qw/portcontrol macsuck_no admin web_console_vendors
                        web_console_models macsuck_no_vlan arpnip_no discover_no
-                       mibdirs
                       /;
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
@@ -1426,12 +1452,21 @@ Options:
 sub sql_vacuum{
     my $table = shift;
     my %opts  = @_;
+    my $print = (defined $opts{print} and $opts{print}) ? 1 : 0;
 
     # no rated r allowed
     if ($DB eq 'Pg'){
         my $sql = (defined $opts{full}) ? 'VACUUM FULL ANALYZE' : 'VACUUM ANALYZE';
         $sql .= ' VERBOSE' if (defined $opts{verbose} or (defined $::DEBUG and $::DEBUG));
-        return sql_do(qq/$sql $table/);    
+        $sql .= " $table";
+        
+        print "sql_vacuum($table) " if $print;
+        
+        my $time1 = time;
+        my $rv= sql_do($sql);    
+        my $time = $time1-time;
+        
+        print " $time seconds.\n" if $print;
     }
 }
 
