@@ -3,7 +3,7 @@
 DROP TABLE oui;
 
 CREATE TABLE oui (
-    oui         text PRIMARY KEY,
+    oui         varchar(8) PRIMARY KEY,
     company     text
 );
 
