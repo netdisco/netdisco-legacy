@@ -323,7 +323,7 @@ if (scalar @search){
     foreach my $length (keys %search_length){
         next unless defined $length and scalar @{$search_length{$length}};
         next unless $length > 0;
-        my $where = {"substr(n.mac,1,$length)" => [$search_length{$length}]};
+        my $where = {"substr(text(n.mac),1,$length)" => [$search_length{$length}]};
         $where->{'n.active'} = 1 if $archive eq 'off';
         my $submatch = sql_rows('node n left join device d on d.ip = n.switch',
                                ['n.mac','d.dns','n.switch','n.port','n.active'], $where);
