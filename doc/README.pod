@@ -503,6 +503,16 @@ notification of the switching.  Locally at UCSC that e-mail is sent to an admini
 
 To turn this feature off uncheck the C<Port Control> checkbox from all users in the C<Admin Panel>.
 
+By default Netdisco will be allowed to shut off 
+
+    - Switch Ports
+    - IP Phones
+    - Router Ports that are NOT uplinks
+
+By setting certain config file directives you can allow Netdisco to shutoff uplink ports and
+VLAN interfaces.  But this is B<REALLY NOT RECOMMENDED>.  See below for the required
+commands.
+
 =item Web Console
 
 The Web Console allows netdisco to front-end the web interface of a switch or router.  
@@ -614,6 +624,17 @@ This is rather permanent.  Make sure you run L<-B>ackup before you do this.
 
 The easiest way to add a user is to use the C<Add User> form in the Admin Panel.  After first installing
 Netdisco you need to add an admin user by running L<-u>.  
+
+=item Migrating the Users table to a new host
+
+If you are moving your Netdisco install over to another machine and
+you want to keep your users table, here is the process :
+
+    source$ pg_dump -a -d -U netdisco -t users netdisco > user_dump.sql
+    source$ scp user_dump.sql dest:
+
+    dest$ cd /usr/local/netdisco/sql
+    dest$ ./pg_run /path/to/user_dump.sql
 
 =item Localhost (127.0.0.1) is showing up on CDP Links
 
@@ -1070,6 +1091,42 @@ INT. Settings for 'Retries' field passed to SNMP::Session
 
 =back
 
+=head2 Port Control
+
+=over
+
+=item portctl_email
+
+EMAIL.  Address that reports of use of C<Port Control> are sent to.
+
+=item portctl_nophones
+
+BOOLEAN.  Set to True to make sure an IP Phone port never can be turned off/on.  Default false.
+
+=item portctl_timeout
+
+SECONDS.  Amount of time to wait for a response from the admin daemon.
+
+=item portctl_uplinks
+
+BOOLEAN. Set to True to allow Netdisco to be able to disable Uplinks. (Router Interfaces too)
+
+Default False.
+
+B<EXTREMELY VERY DANGEROUS> - Turning off uplinks will take out chunks of your 
+network.
+
+=item portctl_vlans
+
+BOOLEAN. Set to True to allow Netdisco to be able to disable VLAN interfaces.  
+
+Default False.
+
+B<EXTREMELY VERY DANGEROUS> - Turning off a VLAN could take out most of your 
+network.
+
+=back
+
 =head2 Web Settings
 
 =over
@@ -1077,14 +1134,6 @@ INT. Settings for 'Retries' field passed to SNMP::Session
 =item port_info
 
 BOOLEAN.  Turns on the C<Port Info> and C<Jack Search> features.
-
-=item portctl_email
-
-EMAIL.  Address that reports of use of C<Port Control> are sent to.
-
-=item portctl_timeout
-
-SECONDS.  Amount of time to wait for a response from the admin daemon.
 
 =item secure_server
 
@@ -1393,7 +1442,9 @@ Walter Gould (Auburn University).
 
 As well as these people for their donations :
 
-Richard Silver (East Alabama Medical Center)
+ Richard Silver (East Alabama Medical Center)
+ Linda Rosewood (UCSC)
+ "6pax4max!"    (???)
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.
