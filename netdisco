@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION/;
 
-$VERSION = '0.90';
+$VERSION = '0.91-cvs';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -2179,13 +2179,15 @@ sub graph_each  {
         if ($suffix eq 'M'){
             if ($val < 10.0){
                 $edge{color} = 'green';
-                $edge{style} = 'dotted';
+                #$edge{style} = 'dotted';
+                $edge{style} = 'dashed';
             } elsif ($val < 100.0){
                 $edge{color} = '#8b7e66'; 
-                $edge{style} = 'normal';
+                #$edge{style} = 'normal';
+                $edge{style} = 'solid';
             } else {
                 $edge{color} = '#ffe7ba';
-                $edge{style} = 'bold';
+                $edge{style} = 'solid';
             }
         }
         if ($suffix eq 'G'){
@@ -2210,6 +2212,12 @@ sub graph_each  {
         my $graph_map = "$CONFIG{home}/$CONFIG{graph_map}";
         print "  Creating ISMAP : $graph_map\n";
         $gv->as_ismap($graph_map);
+    }
+
+    if (defined $CONFIG{graph_svg} and $CONFIG{graph_svg}){
+        my $graph_svg = "$CONFIG{home}/$CONFIG{graph_svg}";
+        print "  Creating SVG : $graph_svg\n";
+        $gv->as_svg($graph_svg);
     }
 }
 
