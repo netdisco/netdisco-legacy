@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl -w
 # n e t  d i s c o
 # Created for UCSC
-# (C) 2002-2003 UC Regents
+# (C) 2002,2003 UC Regents.  See bottom of this file.
 # Author: Max Baker <max@warped.org>
 # $Id$
 
@@ -1180,7 +1180,7 @@ sub port_control {
 
     unless (defined $switch and defined $port and defined $direction){
         print "Usage : port_control(switch,port,up/down)\n";
-        return;
+        return undef;
     }
     unless (defined $CONFIG{community_rw} and scalar @{$CONFIG{community_rw}}){
         print "No read-write community string has been set. Please add a community_rw setting to the Config file.\n";
@@ -1256,28 +1256,31 @@ sub port_switch {
     }
     my $user   = $job->{username};
     my $userip = $job->{userip};
-    my $ip     = $job->{device};
+    my $ip     = getip($job->{device});
     my $port   = $job->{port};
     my ($dir,$reason) = split('-',$job->{subaction});
     my $long_reason = $netdisco::PORT_CONTROL_REASONS{$reason}->[0];
     my $log    = $job->{log};
     my $dns    = &hostname($ip);
    
+    print "port_switch() - $user @ $userip.  d:$dir r:$reason i:$ip d:$dns p:$port l:$log\n" if $DEBUG;
     # Switch the Port
     my $rv = port_control($ip,$port,$dir); 
 
     if (!defined $rv){
+        print "\n[FAILED].\n";
         $log = "[FAILED] - See admin queue job log. \n $log";
-        return undef;
+        return 1;
     }
+
+    my $action = $dir;
+    $action = 'enable'  if $dir eq 'up';
+    $action = 'disable' if $dir eq 'down';
 
     # Send E-Mail to Abuse
     my $portctl_email = $CONFIG{portctl_email};
     if (defined $portctl_email){
         print "Sending notification to $portctl_email\n";
-        my $action = $dir;
-        $action = 'enable'  if $dir eq 'up';
-        $action = 'disable' if $dir eq 'down';
         my $body = <<"end_body";
 ........ n e t d i s c o .........
   Device : $dns ($ip) 
@@ -1289,13 +1292,15 @@ sub port_switch {
 
 end_body
 
-        &mail($portctl_email,"port $dir $dns($ip)/$port",$body);
+        &mail($portctl_email,"port $action $dns($ip)/$port",$body);
     }
     # Log
     insert_or_update('device_port_log', {},
                      {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
-                      'username'=>$user,'action'=>$dir, 'reason' => $reason }
+                      'username'=>$user,'action'=>$action, 'reason' => $reason }
                     ); 
+
+    return 0;
 }
 
 =item store_device() 
@@ -2376,7 +2381,8 @@ sub admin_daemon {
         # TODO - Die if the database isn't there. 
 
         my $jobs = sql_rows('admin',['job','extract(epoch from entered) as entered',
-                                     'device','action','status', 'username','debug','subaction'],
+                                     'device','action','status', 'username','debug','subaction',
+                                     'port','userip','log'],
                             {'status' => 'queued'} );
 
         # Run each Job
@@ -2471,6 +2477,10 @@ sub admin_daemon_job {
         &expire_nodes($dev, $subcmd eq 'arc' ? 1 : 0, $port);
     }
 
+    elsif ($cmd eq 'portcontrol'){
+        $job_error = port_switch($job); 
+    }
+
     else {
         print "Command $cmd not supported.\n";
         $job_error++;
@@ -2502,12 +2512,6 @@ sub admin_daemon_job {
 =cut
 
 sub test {
-# port_control(@ARGV);
-
-    my $rv = insert_or_update('admin',{},{'status'=>'error','username'=>'max','action'=>'test'});
-
-    print "$rv\n";
-    
 }
 
 
@@ -2556,3 +2560,31 @@ Administration:
 
 _end_usage_
 }
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (c) 2002,2003 Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of the University of California, Santa Cruz nor the 
+      names of its contributors may be used to endorse or promote products 
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
