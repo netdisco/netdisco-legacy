@@ -13,6 +13,8 @@ $port  => 0
 $admin => 0
 $confirm => 0
 $pw    => undef
+$fullname => undef
+$note  => undef
 </%args>
 <%shared>
 my ($this_user,$users,$is_admin,%user_hash,$arg_user);
@@ -59,7 +61,9 @@ if ($cmd eq 'add'){
         my $rv = netdisco::user_add($user,(
                                     'pw' => $pw,
                                     'admin' => $admin eq '1' ? 1 : 0,
-                                    'port'  => $port eq  '1' ? 1 : 0
+                                    'port'  => $port eq  '1' ? 1 : 0,
+                                    'fullname' => $fullname,
+                                    'note' => $note,
                                 ));
         $err .= $rv ? "Could not Add user! $rv<BR>\n" : "User $user added.<BR>\n";
         
@@ -79,8 +83,6 @@ if ($cmd eq 'Change'){
             $user_change{pw}=$pw;
         }
 
-        #$admin = (defined $admin and $admin eq '1') ? 1 : 0;
-        #$port  = (defined $port  and $port  eq '1') ? 1 : 0;
         # Check for Admin Change
         if ($admin != $user_hash{$user}->{admin}) { 
             $user_change{admin} = $admin;
@@ -89,6 +91,16 @@ if ($cmd eq 'Change'){
         # Check for Port Change
         if ($port != $user_hash{$user}->{port_control}) {
             $user_change{port} = $port;
+        }
+
+        # Check for Note Change
+        if ($note ne $user_hash{$user}->{note}) {
+            $user_change{note} = $note;
+        }
+
+        # Check for Full Name Change
+        if ($fullname ne $user_hash{$user}->{fullname}) {
+            $user_change{fullname} = $fullname;
         }
 
         if (scalar keys %user_change){
@@ -135,25 +147,35 @@ if ($cmd eq 'Delete'){
     <TH>User</TH>
     <TH>Port<BR>Control</TH>
     <TH>Admin<BR>Control</TH>
-    <TH>New Password</TH>
+    <TH>Full Name</TH>
+    <TH>Note</TH>
     <TH>Created /<BR>Last Login</TH>
+    <TH>New Password</TH>
     <TH>&nbsp;</TH>
 </TR>
-% foreach my $this_user (sort { $a->{username} cmp $b->{username} } @$users){
-%   my $last_on =  $this_user->{last_on} ?
-%                   scalar(localtime($this_user->{last_on})) 
+% foreach my $user_entry (sort { $a->{username} cmp $b->{username} } @$users){
+%   my $last_on =  $user_entry->{last_on} ?
+%                   scalar(localtime($user_entry->{last_on})) 
 %                   : 'Never logged in';
 <TR CLASS="match-<% ++$odd % 2 %>">
     <TD>
-    <FORM ACTION="<%$r->uri%>" METHOD=POST> 
-    <INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$this_user->{username}|h%>">
-    <B><%$this_user->{username}%></B></TD>
+        <FORM ACTION="<%$r->uri%>" METHOD=POST> 
+        <INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$user_entry->{username}|h%>">
+        <B><%$user_entry->{username}%></B>
+    </TD>
     <TD>
-    <INPUT TYPE="checkbox" NAME="port" VALUE="1" <%$this_user->{port_control} ? 'CHECKED' : ''%>></TD>
-    <TD><INPUT TYPE="checkbox" NAME="admin" VALUE="1" <%$this_user->{admin} ? 'CHECKED' : ''%>></TD>
-    <TD><INPUT TYPE="password" NAME="pw" SIZE=20 MAXLENGTH=50></TD>
-    <TD><NOBR><%scalar localtime($this_user->{creation})%></NOBR><BR>
+        <INPUT TYPE="checkbox" NAME="port" VALUE="1" <%$user_entry->{port_control} ? 'CHECKED' : ''%>>
+    </TD>
+    <TD><INPUT TYPE="checkbox" NAME="admin" VALUE="1" <%$user_entry->{admin} ? 'CHECKED' : ''%>></TD>
+    <TD>
+        <INPUT TYPE="text" NAME="fullname" SIZE=20 MAXLENGTH=200 VALUE="<%$user_entry->{fullname} |h%>">
+    </TD>
+    <TD>
+        <INPUT TYPE="text" NAME="note" SIZE=40 MAXLENGTH=255 VALUE="<%$user_entry->{note} |h%>">
+    </TD>
+    <TD><NOBR><%scalar localtime($user_entry->{creation})%></NOBR><BR>
         <NOBR><%$last_on%></NOBR></TD>
+    <TD><INPUT TYPE="password" NAME="pw" SIZE=20 MAXLENGTH=50></TD>
     <TD><INPUT TYPE="submit" NAME="cmd" VALUE="Delete">
         <INPUT TYPE="submit" NAME="cmd" VALUE="Change">
         </FORM>
@@ -211,7 +233,8 @@ Confirm Deletion of <%$arg_user |h%> :
 <%method load_users>
 <%perl>
 $users = sql_rows('users',['username','password','extract(epoch from creation) as creation',
-                           'extract(epoch from last_on) as last_on','port_control','admin']
+                           'extract(epoch from last_on) as last_on','port_control','admin',
+                           'note','fullname']
                  );
 
 %user_hash = map {$_->{username} => $_} @$users;
