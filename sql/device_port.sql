@@ -27,3 +27,4 @@ CREATE INDEX idx_device_port_remote_ip ON device_port(remote_ip);
 -- For the duplex mismatch finder :
 CREATE INDEX idx_device_port_ip_port_duplex ON device_port(ip,port,duplex);
 CREATE INDEX idx_device_port_ip_up_admin ON device_port(ip,up_admin);
+CREATE INDEX idx_device_port_mac ON device_port(mac);
