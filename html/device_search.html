@@ -4,14 +4,15 @@
 
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
 <TR>
-    <TD ROWSPAN=8 WIDTH="8">&nbsp;</TD>
+    <TD ROWSPAN=9 WIDTH="8">&nbsp;</TD>
     <TD COLSPAN=4><h4>Search All</h4></TD>
-    <TD ROWSPAN=8 WIDTH="8">&nbsp;</TD>
+    <TD ROWSPAN=9 WIDTH="8">&nbsp;</TD>
 </TR>
 <TR>
     <TD colspan=4>
         <INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>">
         <INPUT TYPE="submit" VALUE="Search All">
+        <FONT size=-1>(non-exact)</font>
     </TD>
 </TR> 
 <TR>
@@ -24,14 +25,14 @@
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="loc" VALUE="<%$loc%>"></TD>
 </TR>
 <TR>
-    <TD> DNS Name: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="name" VALUE="<%$name%>"> </TD>
+    <TD> DNS: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="dns" VALUE="<%$dns%>"> </TD>
     <TD>Description: </TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="desc" VALUE="<%$desc%>"> </TD>
 </TR>
 <TR>
     <TD> Vendor:</TD>
-    <TD><SELECT MULTIPLE NAME="vendors" size=5>
+    <TD><SELECT MULTIPLE NAME="vendors" size=<%scalar(keys %$vendors) > $winsize ? $winsize : scalar(keys %$vendors)%>>
 %       foreach my $vendor (sort keys %$vendors){
             <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@vendors) ? 'SELECTED' : ''%>><%$vendor%>
 %       } 
@@ -45,20 +46,20 @@
 </TR>
 <TR>
     <TD> Layer:</TD>
-    <TD><SELECT MULTIPLE NAME="layers" size=2>
+    <TD><SELECT MULTIPLE NAME="layers" size=<%$winsize%>>
 %   foreach (1..7){ my $num=$_;
             <OPTION VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'SELECTED' : ''%>><%$num%>
 %   }
         </SELECT>
     </TD>
     <TD>OS:</TD>
-    <TD>
-        <u>type</u> <SELECT MULTIPLE NAME="os" SIZE=2>
+    <TD VALIGN=TOP>
+        <u>type</u> <SELECT MULTIPLE NAME="os" SIZE=<%scalar(keys %$oses) > $winsize ? $winsize : scalar(keys %$oses)%>>
 % foreach my $this_os (sort keys %$oses) {
                    <OPTION VALUE="<%$this_os%>" <% grep(/^$this_os$/,@os) ? 'SELECTED' : ''%>><%$this_os%>
 % }
                </SELECT>
-        <u>version</u> <SELECT MULTIPLE NAME="os_ver" SIZE=2>
+        <u>version</u> <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
 % foreach my $this_os_ver (sort keys %$os_vers) {
                       <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
 % }
@@ -66,15 +67,21 @@
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2>
-        <P>
-        <INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]
-        <P>
+    <TD> sysName: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="name" VALUE="<%$name%>"></TD>
+    <TD VALIGN=TOP> Exact Match: </TD>
+    <TD><INPUT TYPE="radio" NAME="exact" VALUE="1"<% $exact ? 'CHECKED' : ''%>>On
+        <INPUT TYPE="radio" NAME="exact" VALUE="0"<% !$exact ? 'CHECKED' : ''%>>Off
     </TD>
-    <TD COLSPAN=2>
-        Search Term Match: Any<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
-        All<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
-        criteria
+</TR>
+<TR>
+    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
+    <TD VALIGN=TOP>Match Scope: </TD>
+    <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Any
+        <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>All
+        &nbsp;&nbsp;criteria.
+        <BR>
+        <font size=-1><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</font>
     </TD>
 </TR>
 </TABLE>
@@ -100,7 +107,6 @@
         Check inside the device for the matching entries.
     <LI>These are all wildcard entries, so if you search on DNS=cat, you will get all
 entries that have "cat" in them.
-    <LI>You can add your own wildcards with *
     <LI>If you want to find blank entries, search on "is null" or conversely,
         "is not null"
     <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
@@ -114,20 +120,20 @@ entries that have "cat" in them.
 @os_ver   => ()
 $ip       => ''
 $text     => ''
+$dns      => ''
 $name     => ''
 $desc     => ''
-$boolean  => 'or'
+$boolean  => 'and'
+$exact    => 0
 $loc      => ''
 $specific => undef
 </%args>
-%#
-<%method title>
-- Device Search\
-</%method>
 <%shared>
 my $matches = undef;
 my $where = {};
 my $awhere = {};
+my $arg_exact;
+my $winsize = 5;    # max size for select boxes.
 </%shared>
 %#
 <%init>
@@ -137,6 +143,8 @@ my $models  = sql_column('device',['distinct(model)', 'true']);
 my $vendors = sql_column('device',['distinct(vendor)','true']); 
 my $oses    = sql_column('device',['distinct(os)',    'true']);
 my $os_vers = sql_column('device',['distinct(os_ver)','true']);
+
+$arg_exact = $exact;
 
 # Specific Searches
 
@@ -264,8 +272,22 @@ if ($specific =~ /alias/i){
     $where->{remote_type}++;
 }
 
-# Generalized Search Terms
 my @show_cols = ();
+
+# Search on all text fields
+if (length($text)) {
+    $arg_exact = 0;
+    my $match = $m->comp('.match', 'match' => $text);
+    push(@{$where->{'d.dns/i.dns'}},  $match);
+    push(@{$where->{'d.name'}}, $match);
+    push(@{$where->{'d.description'}}, $match);
+    push(@{$where->{'d.location'}}, $match);
+    push(@{$where->{'d.serial'}}, $match);
+    $boolean = 'or';
+    $arg_exact = $exact;
+}
+
+# Generalized Search Terms
 
 # Search on Model
 foreach my $model (@models){
@@ -321,17 +343,6 @@ foreach my $vendor (@vendors){
     push (@{$where->{'d.vendor'}},$vendor);
 }
 
-# Search on all text fields
-if (length($text)) {
-    my $match = $m->comp('.match', 'match' => $text);
-    push(@{$where->{'d.dns/i.dns'}},  $match);
-    #push(@{$a_where->{'dns'}},  $match);
-    push(@{$where->{'d.name'}}, $match);
-    push(@{$where->{'d.description'}}, $match);
-    push(@{$where->{'d.location'}}, $match);
-    push(@{$where->{'d.serial'}}, $match);
-    $boolean = 'or';
-}
 
 # Search on Location
 if (length($loc)){
@@ -346,15 +357,22 @@ if (length($desc)){
 }
 
 # Search on DNS entry
+if (length($dns)){
+    my $match = $m->comp('.match', 'match' => $dns);
+    push(@{$where->{'d.dns/i.dns'}}, $match);
+}
+
+# Search on sysName
 if (length($name)){
     my $match = $m->comp('.match', 'match' => $name);
-    push(@{$where->{'d.dns/i.dns'}}, $match);
+    push(@{$where->{'d.name'}}, $match);
 }
 
 # Search on IP
 if (length($ip)){
     my $match = $m->comp('.match', 'match' => $ip);
     push(@{$where->{'d.ip/i.alias'}}, $match);
+    push(@show_cols,'d.name');
 }
 
 # Run Query
@@ -362,11 +380,14 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
     #$matches = sql_rows('device',['*'],$where,$boolean eq 'or');
 
     my @cols = ();
-    foreach my $col (keys %$where){
-        next if ($col =~ /^i\./);
-        next if ($col =~ /^d\.ip$/);
-        next if ($col =~ /d\.dns/);
-        push(@cols,split('/',$col)); 
+    foreach my $wcol (keys %$where){
+        foreach my $col (split('/',$wcol)) {
+            # Skip the ones we're already selecting below
+            next if ($col =~ /^i\./);
+            next if ($col =~ /^d\.ip$/);
+            next if ($col =~ /^d\.dns/);
+            push(@cols,$col);
+        }
     }
 
     # Add Columns to Grab info but not part of Search Terms
@@ -380,6 +401,13 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
                         $where,
                         $boolean eq 'or');
 
+    # Change col1/col2 to just col1 for display (implicit priority to col1)
+    foreach my $wcol (keys %$where){
+        if ($wcol =~ /^(.*)\/(.*)/){
+            delete $where->{$wcol};
+            push(@{$where->{$1}},undef); 
+        }
+    }
     # Add Info Columns to columns to display
     foreach my $w (@show_cols){
         next if (grep /^$w$/,keys(%$where));
@@ -391,27 +419,31 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
 my $time2 = time;
 </%init>
 %#
+%# .match(match) - Formats the match term for SQL a bit.
 %#
 <%def .match>
 <%args>
 $match
 </%args>
 <%perl>
-
 # Trim white space
 $match =~ s/^\s+//;
 $match =~ s/\s+$//;
 
 # Leave IS (not) NULL queries alone
 unless ($match =~ /^is\s+(not)?\s*null$/i){
-    # Otherwise, make these wild cards with %
-    $match =~ s/[*]+/\%/g;
-    $match = '%'. $match . '%';
+    # Otherwise, make  * and ? into % and _
+    $match =~ s/[*]+/%/g;
+    $match =~ s/[?]/_/g;
+    # Non-exact match means we add a * to both sides.
+    $match = '%'. $match . '%' unless $arg_exact;
+    $match =~ s/\%+/%/g;
 }
 return $match;
 </%perl>
 </%def>
 %#
+%# matches()  - Display search results stored in @$matches.
 %#
 <%method matches >
 %return unless defined $matches;
@@ -423,11 +455,10 @@ return $match;
  <TABLE cellspacing=0 cellpadding=3 WIDTH=100%>
     <TR>
         <TH>Device</TH>
-%#        <TH>IP</TH>
 %    foreach my $col (sort keys %$where){
 %       my $colview = $col;
 %       $colview =~ s/^[^.]+\.//;
-%       next if $colview =~ /^(ip|dns|port)$/i;
+%#       next if $colview =~ /^(ip|dns|port)$/i;
 %       $colview = $colview eq 'count' ? 'Number of Active<BR>Nodes Connected' : $colview;
     <TH><%$colview%></TH>
 %    }
@@ -454,7 +485,7 @@ foreach my $result (@sort_matches){
         # Trim off table name for column
         $col =~ s/^[^.]+\.//;
         my $val = $result->{$col};
-        next if $col =~ /^(ip|dns|port)$/i; 
+#        next if $col =~ /^(ip|dns|port)$/i; 
         # Column Specfic stuff
         if ($col eq 'remote_ip') {
             $val = "<A HREF=\"node.html?node=$val\">$val</A>";
@@ -467,6 +498,12 @@ foreach my $result (@sort_matches){
 %}
   </TABLE>
 <% $count %> matches.
+</%method>
+%#
+%# title()
+%#
+<%method title>
+- Device Search\
 </%method>
 %# $Id$
 %# vim:syntax=mason
