@@ -32,3 +32,6 @@ PATH=/bin:/usr/bin:/usr/local/bin
 
 # Mac Suck every 4 hours (takes up to two hours)
 0 2,6,10,14,18,22 * * * /usr/local/netdisco/netdisco -b -m 
+
+# Grab NetBios Info from Nodes three times a day
+0 8,13,21 * * * /usr/local/netdisco/netdisco -b -w
