@@ -1236,7 +1236,9 @@ sub macsuck{
     }
 
     # Make the SNMP connection
+    my $time1 = time;
     my $device = get_device($hostname) or return;
+    my $entries1 = $MacTotal;
 
     my $interfaces = $device->interfaces();
 
@@ -1258,11 +1260,16 @@ sub macsuck{
                      keys %$v_name) 
     {
 
+        my $vlan_name = $v_name->{$vid} || '(Unnamed)';
         # VLAN id comes as 1.142 instead of 142
         my $vlan = $vid;
         $vlan =~ s/^\d+\.//;
 
-        my $vlan_name = $v_name->{$vid} || '(Unnamed)';
+        if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
+            print " VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
+            next;
+        }
+
         print " VLAN:$vlan_name ($vlan) : ";
 
         # feeding all the connect info as a speedup, instead of 
@@ -1274,8 +1281,11 @@ sub macsuck{
     }
 
     # Log This
-    my $now = localtime;
+    my $entries2 = $MacTotal;
+    my $now = localtime;  my $time2 = time;
     insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$now});
+    print " Saw : ",$entries2-$entries1, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
+
 }
 
 =item macwalk() 
