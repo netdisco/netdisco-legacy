@@ -28,6 +28,7 @@ Statistics took <%$time9 - $time1 %> seconds to process.
     <LI><B>IP Entry</B> - Mapping between an IP and a MAC Address.
         <BR>From ARP Cache Entries in Layer 3 devices.
 </UL>
+<& SELF:about_box &>
 <%init>
     $m->flush_buffer();
     my $time1 = time;
@@ -48,8 +49,40 @@ Statistics took <%$time9 - $time1 %> seconds to process.
     my $device_links  = sql_scalar('device_port',['COUNT(*)'],{'remote_ip' => 'is not null'});
     my $time9 = time;
 </%init>
+<%method about_box>
+% my $pg_ver = sql_scalar('device',['version()']);
+<h3>About Netdisco</h3>
+<TABLE BORDER=0 CLASS="box">
+<TR>
+    <TD ROWSPAN=6>&nbsp;</TD>
+    <TD><B><A HREF="http://netdisco.org">Netdisco</A> Version</B>:</TD>
+    <TD><B><%$netdisco::VERSION%></B></TD>
+    <TD ROWSPAN=6>&nbsp;</TD>
+</TR>
+<TR>
+    <TD><A HREF="http://www.perl.org">Perl</A> Version:</TD>
+    <TD><% join('.',map(ord,split(//,($^V)))) %> (<%$]%>)</TD>
+</TR>
+<TR>
+    <TD><A HREF="http://www.postgresql.org">Postgres</A> Version:</TD>
+    <TD><%$pg_ver%></TD>
+</TR>
+<TR>
+    <TD><A HREF="http://httpd.apache.org">Apache</A> Info:</TD>
+    <TD><%$ENV{SERVER_SOFTWARE}%></TD>
+</TR>
+<TR>
+    <TD><A HREF="http://perl.apache.org">mod_perl</A> Version:</TD>
+    <TD><%$Apache::VERSION%></TD>
+</TR>
+<TR>
+    <TD><A HREF="http://www.masonhq.com">Mason</A> Version:</TD>
+    <TD><%$HTML::Mason::VERSION%></TD>
+</TR>
+</TABLE>
+</%method>
 <%method title>
-- Netdisco Statistics \
+- About Netdisco \
 </%method>
 %# $Id$
 %# vim:syntax=mason

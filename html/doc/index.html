@@ -6,15 +6,16 @@
 %   $name =~ s/\.html//;
 <A HREF="<%$file%>"><%$name%></A><BR>
 %}
-<h3>About Netdisco</h3>
-<UL>
-    <LI>[<A href="http://www.netdisco.org">Netdisco.org</a>]
-    <LI><A HREF="http://snmp-info.sourceforge.net">SNMP::Info</a>
-    <LI>
-       <A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
-       <img WIDTH="88" HEIGHT="31" src="<%$path%>/vcss.gif" alt="Valid CSS" BORDER=0>
-       <img WIDTH="88" HEIGHT="31" src="<%$path%>/valid-html401.png" alt="Valid HTML 4.01" BORDER=0>
-</UL>
+
+<& /stats.html:about_box &>
+<h4>Links</h4>
+<A href="http://netdisco.org">Netdisco.org</a> - The home of Netdisco.
+<BR>
+<A HREF="http://snmp-info.sourceforge.net">SNMP::Info</a> - A Key component of Netdisco.
+<BR>
+<A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
+<img WIDTH="88" HEIGHT="31" src="<%$path%>/vcss.gif" alt="Valid CSS" BORDER=0>
+<img WIDTH="88" HEIGHT="31" src="<%$path%>/valid-html401.png" alt="Valid HTML 4.01" BORDER=0>
 <%init>
 my $dir = $m->current_comp->source_dir();
 my @files = glob("$dir/*.html");
