@@ -24,6 +24,7 @@ use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
 use SNMP::Info 0.8;
 use netdisco qw/:all/;  
+use Socket qw/:all/;
 
 $| = 1;
 
@@ -35,7 +36,7 @@ $SIG{ALRM} = \&timeout;
 #                         Globals                               
 # --------------------------------------------------------------
 use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
-            %TimedOut $Aliases $OldDevices $PortMAC $start_time $end_time $ArpTotal %MacSeen
+            %TimedOut $Aliases $OldDevices $OldNodes $PortMAC $start_time $end_time $ArpTotal $NbtTotal %MacSeen
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode/;
 
@@ -51,6 +52,7 @@ $OldDevices = undef;
 $PortMAC = undef;
 $DaemonMode=$start_time=$end_time=0;
 $ArpTotal = 0;
+$NbtTotal = undef;
 %MacSeen = ();
 $MacTotal = 0; 
 @OldSTDOUT = ();
@@ -95,6 +97,8 @@ GetOptions(\%args,'a|arpwalk',
                   'u|user',
                   'v|version|ver',
                   'V|archive',
+                  'w|nbtwalk',
+                  'W|nbtstat=s',
           );
 $DEBUG             = $args{D} || 0;
 $netdisco::SQLCARP = $args{S} || 0;
@@ -148,6 +152,10 @@ defined $args{m} and &macwalk;
 defined $args{a} and &arpwalk;
 defined $args{A} and &arpnip($args{A});
 
+#   NetBIOS
+defined $args{w} and &nbtwalk;
+defined $args{W} and &nbtstat($args{W});
+
 #   Other
 defined $args{K} and &db_clean;
 defined $args{k} and &alias_clean;
@@ -164,7 +172,7 @@ defined $args{u} and &add_user;
 defined $args{'expire-nodes-subnet'} and &expire_nodes_subnet($args{'expire-nodes-subnet'});
 
 # Make sure we ran a command, else spit out the usage
-&usage unless ( grep(/^([aABdeEFgiIkKmMnNOprRtTu]|expire-nodes-subnet)$/,keys %args) );
+&usage unless ( grep(/^([aABdeEFgiIkKmMnNOprRtTuwW]|expire-nodes-subnet)$/,keys %args) );
 exit;
 
 =head1 FUNCTIONS
@@ -246,13 +254,9 @@ sub refresh_all {
         }
     }
 
-    my $time1 = time;
-    print "Vacuuming device, device_port and device_ip ... ";
-    sql_vacuum('device');
-    sql_vacuum('device_port');
-    sql_vacuum('device_ip');
-    my $time2 = time;
-    print $time2-$time1," seconds.\n";
+    sql_vacuum('device','print'=>1);
+    sql_vacuum('device_port','print'=>1);
+    sql_vacuum('device_ip','print'=>1);
     &end;
 
 }
@@ -316,13 +320,9 @@ sub run {
     
     print "Network Discovery complete.\n";
     
-    my $time1 = time;
-    print "Vacuuming device, device_port and device_ip ... ";
-    sql_vacuum('device');
-    sql_vacuum('device_port');
-    sql_vacuum('device_ip');
-    my $time2 = time;
-    print $time2-$time1," seconds.\n";
+    sql_vacuum('device','print'=>1);
+    sql_vacuum('device_port','print'=>1);
+    sql_vacuum('device_ip','print'=>1);
 
     &end;
     
@@ -492,6 +492,7 @@ sub topo_load_file {
             #print "    $dev $from_port $to $to_port \n" if $DEBUG;
 
             my $to_ip = &getip($to);
+            $to_ip = &root_device($to_ip);
             unless (defined $to_ip and length $to_ip){
                 print "    Can't resolve $to in $line!\n";
                 next;
@@ -511,10 +512,13 @@ sub topo_load_file {
 
         } else {
             $dev = &getip($line);
+            $dev = &root_device($dev);
             unless (defined $dev and length $dev){
                 print "Bad line or device IP not found in $file : $line\n";
                 next;
-            } else {
+        }
+
+            else {
                 #print "    $line ($dev)\n" if $DEBUG;
             }
             $DeviceTopo{$dev} = [] unless defined $DeviceTopo{$dev};
@@ -697,6 +701,13 @@ sub end {
         log('arp',"$ArpTotal entries. $run_time minutes.") if $Log;
     }
 
+    if (defined $NbtTotal){
+        my $nodes = scalar(keys(%$OldNodes));
+        my $pct   = sprintf("%.2f",$NbtTotal/$nodes);
+        print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
+        log('netbios',"$NbtTotal entries. $run_time minutes.") if $Log;
+    }
+    
     my $mac_seen = scalar keys(%MacSeen);
     if ($mac_seen){
         
@@ -767,6 +778,28 @@ sub load_old_devices {
     $Aliases = sql_column('device_ip',['alias','ip']);
 }
 
+=item load_old_nodes(days)
+
+Populates %Old_Nodes with which nodes are in the database.
+
+Nodes will have to have been seen in the last DAYS days.
+
+=cut
+sub load_old_nodes {
+    my $days = shift;
+    print "load_old_nodes()\n" if $DEBUG;
+    my $where = {active=>1, 
+        'mac'=>\\"in (select mac from node where active)" };
+    if (defined $days){
+        $where->{'age(time_last)'}=\\"<= interval '$days day'"; 
+    }
+    my $old_nodes = sql_rows('node_ip',['ip'],$where);
+    foreach my $n (@$old_nodes){
+        my $ip = $n->{ip};
+        $OldNodes->{$ip}++;
+    }
+}
+
 =item parse_oui()
 
 Parses file oui.txt in current directory.  Uses contents to stuff
@@ -804,7 +837,7 @@ sub parse_oui {
     }
     print "Added $oui_count entries from oui.txt\n";
     print "Cleaning up Database table OUI.\n";
-    sql_vacuum('oui',full=>1,verbose=>1);
+    sql_vacuum('oui',full=>1,verbose=>1,'print'=>1);
 }
 
 =item timeout()
@@ -869,6 +902,29 @@ sub arpnip {
         my $ip = $at_netaddr->{$arp};
 
         next unless defined $ip;
+
+        # BayRS routers report incomplete MAC addresses for frame relay DLCI
+        # interfaces.  Include this check for this case plus any others.
+        unless (&is_mac($mac)) {
+            print " $mac malformed ... skipping\n" if $DEBUG;
+            next;
+        }
+        # Skip network broadcast addresses.  Some devices use this and then the
+        # broadcast IP will show up in the node table.
+        next if uc($mac) eq 'FF:FF:FF:FF:FF:FF';
+        
+        # Skip Passport 8600 CLIP MAC addresses, they will be used as root IP if
+        # present so the IP will be identified.  Do not let the bogus MAC make
+        # them show up in the node table.
+        next if uc($mac) eq '00:00:00:00:00:01';
+    
+        # Skip VRRP addresses - don't want them showing up as nodes.  Don't know
+        # what else to do with these right now.  What about HSRP IP's?
+        if ($mac =~ /^00:00:5e:00:/i) {
+            print " $mac is a VRRP address ... skipping\n" if $DEBUG;
+            next;
+        }
+
         if (defined $PortMAC->{$mac}) {
             print "  $mac is a port on device $PortMAC->{$mac} ... skipping\n"
                 if $DEBUG;
@@ -914,9 +970,8 @@ sub arpwalk {
         arpnip($device) if ($has_3);
     }
 
-    print "Vacuuming node_ip table...";
-    sql_vacuum('node_ip');
-    print "\n";
+    sql_vacuum('node_ip','print'=>1);
+
     &end;
 }
 
@@ -956,7 +1011,8 @@ sub create_device {
                             'DestHost'    => $hostname,
                             'Community'   => $community,
                             'Version'     => $ver,
-                            'Retries'     => $retries
+                            'Retries'     => $retries,
+                            'MibDirs'     => $CONFIG{mibdirs} || [],
                            );
     
 
@@ -975,7 +1031,8 @@ sub create_device {
                              'DestHost'    => $hostname,
                              'Community'   => $community,
                              'Version'     => 1,
-                             'Retries'     => $retries
+                             'Retries'     => $retries,
+                             'MibDirs'     => $CONFIG{mibdirs} || [],
                             );
     }
     
@@ -1076,13 +1133,14 @@ sub find_neighbors {
         my $remote_port = undef;
         my $remote_type = $c_platform->{$key};
         my $remote_id   = $c_id->{$key};
-   
+
         # Hack for BAY devices where if a BAY device is connected to a
         # non-bay device, we 'hear' other devices on the other end of this
         # port, but we don't know who we're talking to.
         # Therefore, set a loop back to ourselfs as a place marker, but add
         # our found nodes to the discovery queue.
         if (ref $remote_ip eq 'ARRAY'){
+            $DEBUG and print "  Port:$port sees multiple neighbors. Setting loopback.\n";
             # Discover neighbors
             foreach my $neighbor (@$remote_ip){
                 unless (defined $Discovered{$neighbor}) {
@@ -1423,11 +1481,7 @@ sub macwalk {
             print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
         }
     }
-    print "Vacuuming node table... ";
-    my $vac_time_1 = time;
-    sql_vacuum('node');
-    my $vac_time_2 = time;
-    print int($vac_time_2 - $vac_time_1) , " seconds\n";
+    sql_vacuum('node','print'=>1);
 
     &end;
 }
@@ -1767,7 +1821,7 @@ sub walk_fwtable {
     my ($device,$dbports,$interfaces) = @_;
 
     my $ip = $device->{ip};
-    #my $fw_mac     = $device->fw_mac();
+    my $fw_mac     = $device->fw_mac();
     my $fw_port    = $device->fw_port();
     my $bp_index   = $device->bp_index();
 
@@ -1775,15 +1829,18 @@ sub walk_fwtable {
     # physical device port we have this triple indirection:
     #      fw_port -> bp_index -> interfaces
     
-    foreach my $fw_index (keys %$fw_port){
+    foreach my $fw_index (keys %$fw_mac){    
+    #foreach my $fw_index (keys %$fw_port){
         # Convert the 0.254.123.456 index entry to a MAC address.
-        my $mac    = join(':',map {sprintf("%02x",$_)} split(/\./,$fw_index));
+        my $mac = $fw_mac->{$fw_index};
+        #my $mac    = join(':',map {sprintf("%02x",$_)} split(/\./,$fw_index));
         my $bp_id  = $fw_port->{$fw_index};
 
         $MacTotal++;
 
         unless (defined $bp_id) {
-            print "  MAC $mac has no fw_port mapping. Skipping\n"
+            print " Port $fw_mac->($fw_index)has no fw_port mapping.  Skipping\n"
+            #print "  MAC $mac has no fw_port mapping. Skipping\n"
                 if $DEBUG;
             next;
         }
@@ -1850,6 +1907,10 @@ sub walk_fwtable {
             print "   ($mac) Port:$port - Port on device $switch_ip. Included.\n"
                 if $DEBUG;
 
+            # TODO : This is an uplink port, mark here and have another process
+            #        add a loopback if no topo info is there. 
+            #        Also need some sort of process to show all the loopbacks
+
             # Removed to help debugging of topology info.  Uplink check should be enough.
             #next;  
         }
@@ -1873,6 +1934,146 @@ sub walk_fwtable {
         $MacSeen{$mac}++;
     }
     print "\n" unless $DEBUG;
+}
+
+=back
+
+=head2 NetBIOS Functions
+
+=over
+
+=item nbtstat(host) 
+
+Connects to node and gets NetBIOS information. Then adds entries to node_nbt table.
+
+Returns whether a node is answering netbios calls or not.
+
+Based on Remo Rickli's nbtstat.pl
+
+=cut
+
+sub nbtstat {
+    my $host = shift;
+    my $port = 137;
+    my $tout = 0.5;
+    my $nbts = pack("C50",129,98,00,00,00,01,00,00,00,00,00,00,32,67,75,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,00,00,33,00,01);
+    my ($wsnam, $data, $rin);
+    my $sockaddr = 'S n a4 x8';                # magic
+    my $family   = &Socket::AF_INET;    
+    my $socktype = &Socket::SOCK_DGRAM;
+    $wsnam = $data = $rin = '';
+
+    print "nbtstat($host) : ";
+
+    my ($name, $aliases, $type, $len, $peer_addr) = gethostbyname($host);
+    my $ip=inet_ntoa($peer_addr);
+
+    my $me   = pack($sockaddr, $family, 0, '');
+    my $peer = pack($sockaddr, $family, $port, $peer_addr);
+
+    socket(S, PF_INET, SOCK_DGRAM, getprotobyname('udp'))
+         or die "Unable to create socket: $!";
+    bind(S, $me) or die "Unable to bind socket: $!";
+    send(S, $nbts, 0, $peer) or warn "Couldn't send: $!";
+
+    # receive udp until timeout
+    vec($rin, fileno(S), 1) = 1;
+    while (select($rin, undef, undef, $tout)) {
+        recv(S, $data, 1024, 0)        || die "recv: $!";
+    }
+    close(S);
+
+    # Check for NetBIOS Info
+    unless (length($data) > 70 and $data =~ /AAAAAAAAAA/) {  
+        print "no Netbios.\n";
+        return 0;
+    }
+
+    my $num = unpack("C",substr($data,56,1));    # Get number of names
+    my $out = substr($data,57);            # get rid of WINS header
+    my $server = 0;
+    my $nbname = '';
+    my $domain = '';
+    my $nbuser = '';
+
+    for (my $i = 0; $i < $num;$i++){
+        my $nam = substr($out,18*$i,15);
+        $nam =~ s/ +//g;
+        # Skip IIS User 
+        next if $nam =~ /IS~/;
+        $nam =~ s/[^\d\w-]//g;
+
+        my $id = unpack("C",substr($out,18*$i+15,1));
+        my $fl = unpack("C",substr($out,18*$i+16,1));
+
+        # Machine Name
+        if ($id == 0 and $fl < 128){
+            $nbname = $nbname || $nam;
+        }
+        # Domain or Workgroup
+        elsif ($id ==0 and $fl >= 128){
+            $domain = $nam;
+        }
+        # Server service
+        elsif ($id eq "32") {
+            $server = 1;
+        }
+        # User Logon
+        elsif ($id eq "3"){
+            $nbuser = $nam;
+        }
+    }
+
+    my @mac = unpack("C6",substr($out,18*$num,6));
+    my $mac = sprintf "%02X:%02X:%02X:%02X:%02X:%02X",@mac;
+
+    unless ($nbname){
+        print "No computer name found.\n";
+        return 1;
+    }
+
+    unless ($mac){
+        print "No MAC Address found.\n";
+        return 1;
+    }
+
+    print "\\\\$domain\\$nbname $nbuser $mac ",$server ? 'server' : 'client', "\n";
+    add_nbt($ip,$mac,$nbname,$domain,$server,$nbuser);
+    $NbtTotal++;
+
+    return 1;
+}
+
+=item nbtwalk() 
+
+Visits every node and trys to get its NetBIOS information.  
+
+Calls nbtstat() for each device.  
+
+=cut
+
+sub nbtwalk {
+    $start_time = time;
+    $NbtTotal=0;
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/netbios",1);
+    
+    # Get nodes
+    my $days = $CONFIG{nbt_days} || 7;
+    print "Grabbing NetBIOS from all nodes seen in last $days days. (". localtime() . ")...\n";
+
+    &load_old_nodes($days);
+    print "  Searching ",scalar(keys(%$OldNodes))," nodes.\n" if $DEBUG;
+    
+    foreach my $node (sort sort_ip keys %$OldNodes){
+        nbtstat($node) if defined $OldNodes->{$node};
+    }
+    
+    sql_vacuum('node_nbt','print'=>1); 
+
+    &end;
 }
 
 =back
@@ -1914,7 +2115,7 @@ Dumps node_ip table to files arp_current and arp_archive.
 sub arp_dump {
     my $dir = shift;
 
-    print "Dumping node_ip table to archive files...\n";
+    print "Dumping node_ip table to $dir...\n";
 
 
     # Force to batch mode to not output to screen.
@@ -2094,7 +2295,7 @@ sub db_clean {
     print "Done.\n"; 
 
     &expire_ips;
-    sql_vacuum('node');
+    sql_vacuum('node','print'=>1);
 }
 
 =item dev_dump() 
@@ -2212,6 +2413,11 @@ sub expire_data {
         $rows = sql_do($sql);
         print "Deleted $rows rows from node_ip.\n";
 
+        $sql = qq/DELETE from node_nbt where age(time_last) > interval '$days days'/;
+        $sql .= " AND NOT active" if $archive_only;
+        
+        $rows = sql_do($sql);
+        print "Deleted $rows rows from node_nbt.\n";
     }
 }
 
@@ -2379,8 +2585,7 @@ sub expire_ips {
     $rows = sql_do($sql);
     $rows = $rows || 0;
     print "Deleted $rows rows.\n";
-    print "Vacuuming node_ip\n";
-    sql_vacuum('node_ip');
+    sql_vacuum('node_ip','print'=>1);
 }
 
 =item mac_dump() 
@@ -2441,6 +2646,75 @@ sub mac_dump {
         my $time_last = $row->{time_last};
         printf("%-17s  %-15s  %-25s %-10d %-10d\n",
             $mac, $ip, $port, $time_first, $time_last);
+    }
+
+    &batch_mode_end;
+
+    $BatchMode=$old_batch;
+}
+
+=item netbios_dump() 
+
+Dumps the node_nbt table out to netbios_current.txt and netbios_archive.txt.
+Adds a day stamp, no time-stamp.
+
+May need to be changed if $nodes takes up too much memory.
+
+=cut
+sub netbios_dump {
+    my $dir=shift;
+
+    print "Dumping node_nbt table to $dir...\n";
+
+    # Force to batch mode to not output to screen.
+    my $old_batch = $BatchMode;
+    $BatchMode=1;
+
+    # Dump Current
+    my $nodes = sql_rows('node_nbt',['mac','nbname','domain','server','nbuser','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                           {'active' => 1}
+                        );
+
+    &batch_mode("$dir/netbios_current");
+
+    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+        my $active = $row->{active};
+        next unless $active;
+        my $mac    = $row->{mac};  
+        my $name   = $row->{nbname};
+        my $domain = $row->{domain};
+        my $server = $row->{server};
+        my $user   = $row->{nbuser};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-17s  %-16s  %-16s %-1d %-16s %-10d %-10d\n",
+            $mac, $name, $domain, $server, $user, $time_first, $time_last);
+    }
+    &batch_mode_end;
+
+    # Dump Archive
+    $nodes = sql_rows('node_nbt',['mac','nbname','domain','server','nbuser','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                           {'active' => 0}
+                           );
+
+    &batch_mode("$dir/netbios_archive");
+
+    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+        my $active = $row->{active};
+        next if $active;
+        my $mac    = $row->{mac};  
+        my $name   = $row->{nbname};
+        my $domain = $row->{domain};
+        my $server = $row->{server};
+        my $user   = $row->{nbuser};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-17s  %-16s  %-16s %-1d %-16s %-10d %-10d\n",
+            $mac, $name, $domain, $server, $user, $time_first, $time_last);
     }
 
     &batch_mode_end;
@@ -2511,9 +2785,10 @@ sub nightly {
 
     &dev_dump("dev/$month");
 
+    &netbios_dump("netbios/$month");
 
     print "  Running Database Vacuum...\n";
-    sql_vacuum('');
+    sql_vacuum('','print'=>1);
 
     &batch_mode_end unless $no_batch;
 }
@@ -3170,11 +3445,13 @@ Network Commands:
     -R --refresh                Refresh all Devices
     -m --macwalk                Macsuck whole network
     -a --arpwalk                Arpnip whole network
+    -w --nbtwalk                Nbtwalk whole network
 
 Device Commands:
     -d --discover     device    Refresh single device
     -M --macsuck      device    Macsuck single device
     -A --arpnip       device    Arpnip  single device
+    -W --nbtstat      node      Nbtstat single node
     -E --expiredevice device    Delete device
     -e --expirenodes  device    Delete/Archive nodes on a device
     --expire-nodes-subnet
