@@ -1,4 +1,4 @@
-<h3>Administration Panel - Device Control</h3>
+<h3>Administration Panel</h3>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
@@ -47,13 +47,18 @@ my $is_admin  = $m->session->{user_admin};
 my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $domain    = $netdisco::CONFIG{domain};
 my %actions = ( 
-            # action       => [longname, confirm action?]
-             'arpnip'      => ['ArpNip Device',0],
-             'delete'      => ['Delete Device',1],
-             'macsuck'     => ['MacSuck Device',0],
-             'nodes-del'   => ['Delete Nodes',1],
-             'nodes-arc'   => ['Archive Nodes',1],
-             'refresh'     => ['Refresh Device',0]
+            # action       => [longname, confirm action,show]
+             'arpnip'      => ['ArpNip Device',0,1],
+             'delete'      => ['Delete Device',1,1],
+             'macsuck'     => ['MacSuck Device',0,1],
+             'nodes-del'   => ['Delete Nodes',1,1],
+             'nodes-arc'   => ['Archive Nodes',1,1],
+             'refresh'     => ['Refresh Device',0,1],
+             'expire_ips'  => ['Database Cleanup - Expire IPs [-I]',1,0],
+             'graph'       => ['Regenerate Graph',1,0],
+             'backup'      => ['Run Nightly Backup',1,0],
+             'clean_nodes' => ['Database Cleanup - Nodes [-K]',1,0],
+             'clean_alias' => ['Database Cleanup - Aliases [-k]',1,0]
            );
 # Globals
 my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,$arg_dev_text);
@@ -92,6 +97,7 @@ if ($dev){
     $dev=getip($dev_text);
     $arg_dev = $dev;
     $arg_dev_text = $dev_text if defined $dev;
+    $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
 } 
 
 # Confirm Given Action if required
@@ -99,8 +105,14 @@ if ($cmd eq 'add' and $actions{$action}->[1] and $confirm ne 'ok') {
     $need_confirm++;    
 }
 
+# Maintenance Commands from admin.html
+if ($cmd eq 'add' and $action =~ /^(expire_ips|graph|backup|clean_nodes|clean_alias)$/ and !$need_confirm){
+    $dev = undef;
+    $commit++;
+}
+
 # Refresh / MacSuck / Arpnip
-if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/){
+if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/ and !$need_confirm){
     # Verify device exists.
     unless (defined $db_dev->{ip}){
         $err .= "Device ($dev) not found in Database.<BR>\n";
@@ -168,7 +180,10 @@ if ($cmd eq 'add' and $action =~ /^nodes/ and $confirm eq 'ok'){
 
 # Add to Queue
 if ($commit) {
-    $err .= "Device $dev has been queued for $action. <BR>\n";
+    #$err .= "Device $dev has been queued for $action. <BR>\n";
+    $err .= "Action Queued - $action";
+    $err .= " For Device $dev." if $dev;
+    $err .= "<BR>\n";
     insert_or_update('admin',{},
                      {'device'=>$dev,'action'=>$action, 'status' => 'queued',
                       'username' => $user, 'debug' => ($debug eq 'yes' ? 1 : 0),
@@ -233,11 +248,15 @@ foreach my $item (@$queue){
 %#
 <%method confirm>
 % my $act = $actions{$arg_act}->[0];
-<h3>Confirm <%$act%> of <%$arg_dev%></h3>
+<h3>Confirm <%$act%> <% $arg_dev ? "of $arg_dev" : ''%></h3>
 <INPUT TYPE="hidden" NAME="dev" VALUE="<%$arg_dev|h%>">
 <INPUT TYPE="hidden" NAME="action" VALUE="<%$arg_act%>">
 <INPUT TYPE="checkbox" NAME="confirm" VALUE="ok">
-Check to Confirm <%$act%> - <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>
+Check to Confirm - <%$act%>
+% if ($arg_dev) {
+ - <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%>
+% }
+</A>
 <BR>
 %# Action specific check options:
 %#
@@ -261,7 +280,7 @@ Restrict <%$act%> to
 <INPUT TYPE="checkbox" NAME="debug" VALUE="yes"<%$arg_debug? ' CHECKED' : ''%>>
 Debug Output
 <P>
-<INPUT TYPE="submit" VALUE="<%$act%> - <%$arg_dev|h%>">
+<INPUT TYPE="submit" VALUE="<%$act%><% $arg_dev ? "- $arg_dev" : '' %>">
 </%method>
 %#
 %# dev_control() - Prints out the device control menu form.
@@ -276,6 +295,7 @@ Debug Output
         <SELECT NAME="action" SIZE=3>
 % foreach my $c (sort keys %actions){
 %   next unless $c;
+%   next unless $actions{$c}->[2];
             <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
 % }
         </SELECT>
@@ -368,7 +388,7 @@ foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
 </TABLE>
 </%method>
 <%method title>
-- Admin Panel - Devices \
+- Admin Panel \
 </%method>
 %# $Id$
 %# vim:syntax=mason

@@ -1,19 +1,69 @@
 <h3>Administration Panel</h3>
-
-<TABLE CELLSPACING=0 CELLPADDING=5 BORDER=0 CLASS="box">
+<h4>Device Control</h4>
+<A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0 ALIGN="middle"></A>
+[<A HREF="admin_dev.html">Device Control</A>]
+<h4>User Control</h4>
+&nbsp;&nbsp;&nbsp;<A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
+[<A HREF="admin_user.html">User Control</A>]
+<h4>Maintenance</h4>
+<FORM ACTION="admin_dev.html" METHOD=POST> 
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
+<TABLE CELLSPACING=2 CELLPADDING=3 CLASS="box" border=0>
 <TR>
-    <TD ALIGN=RIGHT><A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0></A></TD>
-    <TD ALIGN=LEFT>[<A HREF="admin_dev.html">Device Control</A>]</TD>
+    <TD>Action :
+        <SELECT NAME="action" SIZE=3>
+% foreach my $c (sort keys %actions){
+%     next unless $c;
+            <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
+% }
+        </SELECT>
+    </TD>
+</TR>
+<TR> 
+    <TD>
+        &nbsp;<BR>
+        <INPUT TYPE="submit" VALUE="Queue New Job">
+        [<A HREF="<%$r->uri%>">Reset</A>]
+        Debug :
+        <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
+        </FORM>
+    </TD>
 </TR>
 <TR>
-    <TD ALIGN=CENTER><A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1></A></TD>
-    <TD ALIGN=LEFT>[<A HREF="admin_user.html">User Control</A>]</TD>
-</TR>
-<TR>
-    <TD>&nbsp;</TD>
-    <TD>[<A HREF="admin_reconfig.html">Reload Config File</a>]</TD>
+    <TD>
+        <FORM ACTION="admin_dev.html" METHOD=GET>
+        <INPUT TYPE=SUBMIT VALUE="View Job Queue">
+        </FORM>
+    </TD>
 </TR>
 </TABLE>
+<h4>Notes :</H4>
+<UL>
+    <LI>Some maintenance jobs can take up to half an hour to complete. 
+    <LI>Database cleanup jobs PERMANENTLY remove data.  Make sure you understand what they do before executing them.
+</UL>
+<%args>
+</%args>
+<%shared>
+my $user      = $m->session->{user};
+my $is_admin  = $m->session->{user_admin};
+my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $domain    = $netdisco::CONFIG{domain};
+my %actions = ( 
+            # action       => [longname, confirm action?]
+             'expire_ips'  => ['Database Cleanup - Expire IPs [-I]',1],
+             'graph'       => ['Regenerate Graph',1],
+             'backup'      => ['Run Nightly Backup',1],
+             'clean_nodes' => ['Database Cleanup - Nodes [-K]',1],
+             'clean_alias' => ['Database Cleanup - Aliases [-k]',1]
+           );
+</%shared>
+<%init>
+unless ($secure and $is_admin){
+    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
+    $m->redirect("login.html?done=$url");
+}
+</%init>
 <%method title>
 - Administration Panel \
 </%method>
