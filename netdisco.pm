@@ -315,8 +315,10 @@ If passed two hashes, will sort on the key C<ip> or C<remote_ip>.
 
 =cut
 sub sort_ip {
-    my $aval = $::a->{ip} || $::a->{remote_ip} || $::a || $a->{ip} || $a->{remote_ip} || $a;
-    my $bval = $::b->{ip} || $::b->{remote_ip} || $::b || $b->{ip} || $b->{remote_ip} || $b;
+    my $aval = $::a || $a;
+    $aval = $aval->{ip} || $aval->{remote_ip} if ref($aval) eq 'HASH';
+    my $bval = $::b || $b;
+    $bval = $bval->{ip} || $bval->{remote_ip} if ref($bval) eq 'HASH';
     my ($a1,$a2,$a3,$a4) = split(/\./,$aval);
     my ($b1,$b2,$b3,$b4) = split(/\./,$bval);
     
@@ -618,7 +620,11 @@ sub insert_or_update {
             carp($sql) if $SQLCARP;
 
             $dbh->do($sql); 
-            if ($dbh->err) { return $dbh->errstr; }
+            if ($dbh->err) { 
+                warn "insert_or_update($sql) ". $dbh->errstr . "\n";
+                return $dbh->errstr; 
+
+            }
             return;
         } elsif (defined $row and !$diff) { 
             return;
@@ -633,7 +639,10 @@ sub insert_or_update {
     carp($sql) if $SQLCARP;
 
     $dbh->do($sql); 
-    if ($dbh->err) { return $dbh->errstr; }
+    if ($dbh->err) { 
+        warn "insert_or_update($sql) ". $dbh->errstr . "\n";
+        return $dbh->errstr; 
+    }
 }
 
 =item sql_column(table,[key_col,val_col],{where}) 
