@@ -9,13 +9,21 @@ DB=netdisco
 
 if [ -r "$1" ]
 then
-	echo -n "This will nuke all the data in the table.  You Sure (y/n)?"
-	read REPLY
-	if [ "$REPLY" = "y" ]; then
-		psql -e -f $1 -U $DB $DB
-	else
-		echo "Never Mind"
-	fi
+    UPGRADE=`echo $1 | grep ^upgrade`
+    if [ "$UPGRADE" = "" ]; then
+        echo -n "This will nuke all the data in the table.  You Sure (y/n)?"
+        read REPLY
+        if [ "$REPLY" = "y" ]; then
+            echo "Enter database user password:"
+            psql -e -f $1 -U $DB $DB
+        else
+            echo "Never Mind"
+        fi
+    else 
+        echo "Running Upgrade Script : $1"
+        echo "Enter database user password:"
+        psql -e -f $1 -U $DB $DB
+    fi
 else 
 	psql -U $DB $DB
 fi
