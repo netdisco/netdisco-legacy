@@ -245,7 +245,7 @@ ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 =item -B
 
 Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
-Calls database cleanup routines (L<-K>) as well.
+Calls database cleanup routines (L<-K>) as well.  Will export an NMIS config file if L<nmis_dump> is set.
 
 For a full backup run C<sql/pg_dump>.
 
@@ -715,6 +715,41 @@ LIST:IPs. Comma Separated list of devices not to use when macsucking.
 =item macsuck_timeout
 
 SECONDS. Timeout for devices when mac sucking.
+
+=item nmis_dump
+
+FILENAME.  Set this option to have nightly() (-B) dump an NMIS L<http://www.sins.com.au/nmis> 
+style Config file.  Warning, this file will contain SNMP Community strings. 
+
+Optional Override options are :
+
+=over 
+
+=item nmis_group
+
+STRING.  Group to use with nmis_dump.  Default C<Network>
+
+=item nmis_role
+
+STRING.  Role to use with nmis_dump.  Default C<core>
+
+=item nmis_collect
+
+STRING.  Collect option to use with nmis_dump.  Default C<true>
+
+=item nmis_active 
+
+STRING.  Active option for nmis_dump file. Default C<true>
+
+=item nmis_net
+
+STRING.  Net identifier to use.  Default C<lan>
+
+=item nmis_port
+
+INT. SNMP Port to list in nmis_dump file.  Default C<161>
+
+=back
 
 =item topofile
 
