@@ -66,13 +66,13 @@ if ($cmd eq 'login'){
     my $db_user = sql_hash('users',['*'],{'username' => $user});
 
     unless (defined $db_user->{username}){
-        $err .= "User Not Found.<BR>\n";
+        $err .= "User Not Found.\n";
     }
 
     my $md5_pw = Digest::MD5::md5_hex($pw);    
     
     unless ($err or $md5_pw eq $db_user->{password}){
-        $err .= "Bad Login.<BR>\n";
+        $err .= "Bad Login.\n";
     }
 
     if ($err) {
