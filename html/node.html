@@ -601,9 +601,9 @@ foreach my $match (@sorted_matches) {
 %     } elsif ($col eq 'type') {
         <& SELF:type_map, type=>$type, match =>$match &>\
 %     } elsif ($col eq 'time_first') {
-        <% scalar localtime($match->{time_first}) || '&nbsp;' %>\
+        <& SELF:format_date, date=>$match->{time_first} &>\
 %     } elsif ($col eq 'time_last') {
-        <% scalar localtime($match->{time_last}) || '&nbsp;' %>\
+        <& SELF:format_date, date=>$match->{time_last} &>\
 %     } elsif ($col eq 'location') {
 %           my $loc = $match->{dns} || $match->{switch};
 %           $loc =~ s/\Q$domain\E//;
@@ -620,6 +620,24 @@ foreach my $match (@sorted_matches) {
 % $m->out("* - Denotes archived data.<BR>") if $arg_archive;
 Matched <% scalar $odd %> nodes.
 </%method>
+%#
+%# format_date(epoch) - Truncates day of the week
+%#
+<%method format_date>
+<%args>
+$date
+</%args>
+<%perl>
+return '&nbsp;' unless defined $date;
+my $d = scalar localtime($date);
+# chop off first word
+$d =~ s/^\w+\s+//;
+# no seconds
+$d =~ s/(\d{2}:\d{2}):\d{2}/$1/;
+</%perl>
+<%$d|h%>\
+</%method>
+%#
 %#
 %# type_map(type) - For displaying data in 'type' column.
 %#
