@@ -739,15 +739,16 @@ table "oui".
 =cut
 sub parse_oui {
     print "parse_oui()\n";
-    unless (-r 'oui.txt'){
-        print "  oui.txt not found!\n";
+    my $oui_file = "$CONFIG{home}/oui.txt";
+    unless (-r $oui_file){
+        print "  $oui_file not found!\n";
         die "Please run ''make oui'' to download oui.txt.  Or read INSTALL\n";
     }
     print "Removing old contents of oui table in database.\n";
     sql_do(qq/DELETE FROM oui WHERE true/);
     print "Schlopping contents of oui.txt to database.\n";
     my %OUI;
-    open (OUI, "<oui.txt") or die "Can't open OUI. $!\n";
+    open (OUI, "<$oui_file") or die "Can't open OUI. $!\n";
     while (my $line = <OUI>){
         chomp $line;
         if ($line =~ /^(.{2}-.{2}-.{2})\s+\(hex\)\s+(.*)\s*$/i){
