@@ -1,9 +1,8 @@
--- Netdisco
--- Database Schema Modifications
--- UPGRADE from 0.93 to 0.94
 -- $Id$
+-- This table logs login and logout / change requests for users
 
-ALTER TABLE device_port ADD COLUMN lastchange bigint;
+DROP TABLE user_log;
+DROP SEQUENCE user_log_entry_seq;
 
 CREATE TABLE user_log (
     entry           serial,
