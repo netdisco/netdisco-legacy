@@ -39,10 +39,12 @@ INSTALL
 
   PostgreSQL
 
-    [Add permissions blurb here]
+    The default settings for Postgres are
 
-    1. Change database settings in sql/pg_init
-    2. Change database settings in sql/pg_run
+    Username: "netdisco" Database Name: "netdisco"
+
+    1. [Optional] Change database name in sql/pg_init
+    2. [Optional] Change database name in sql/pg_run
     3. Create Database.
         As root (or the database user pgsql) run "sql/pg_init" to create the
         database and user for Netdisco. The password you will be asked for
@@ -58,19 +60,65 @@ INSTALL
     5. Create Tables
         Once you are sure the database is setup correctly, create the
         database tables with "sql/pg_all". Type in the database user
-        password once for each table.
+        password once when prompted.
+
+    6. [Optional] Permissions
+        If you have just setup postgresql, you may want to change the
+        default permissions in data/pg_hba.conf :
 
   Apache
 
     1. Install Apache 1.3.x and mod_perl 1.x
-        Download from http://httpd.apache.org and http://perl.apache.org
+        If you haven't installed apache and mod_perl before, below is the
+        method I usually use to statically include mod_perl, but leave the
+        rest of the modules as dynamically loadable objects (DSO).
+
+        Download and unarchive
+            http://httpd.apache.org and http://perl.apache.org
+
+        in apache_1.3.x/
+             ./configure 
+
+            to setup directory scheme
+
+        in mod_perl-1.2x/
+             /usr/local/bin/perl Makefile.pl \
+                    APACHE_SRC=../apache_1.3.27/src \
+                    EVERYTHING=1 \
+                    DO_HTTPD=1 \
+                    USE_APACI=1 \
+                    PREP_HTTPD=1
+
+             make
+
+        in apache_1.3.x/
+             ./configure \
+                    --prefix=/usr/local/apache \
+                    --enable-module=most \
+                    --enable-shared=max \
+                    --activate-module=src/modules/perl/libperl.a \
+                    --with-perl=/usr/local/bin/perl
+             make
+             make install
+
+        in mod_perl-1.2x/
+             make install
 
     2. Add in /your/apache/conf/httpd.conf
-        "Include /usr/local/netdisco/netdisco_apache.conf"
+        In Each VirtualHost (SSL,Main...)
+            "Include /usr/local/netdisco/netdisco_apache_dir.conf"
 
-    3. In netdisco_apache.conf
-        * Change the paths appropriately
-        * Change the database information
+        In the Global Section
+            "Include /usr/local/netdisco/netdisco_apache.conf"
+
+    3. Permissions
+        Assuming "nobody" is the user that your HTTP process run under, run
+        this as "root" :
+
+        "chown nobody.netdisco /usr/local/netdisco/mason"
+
+    4. [Optional] In netdisco_apache.conf and netdisco_apache_dir.conf
+        * Change the web and physical paths appropriately.
     Note: Some Linux distributions such as Redhat 6.x install mod_perl as a
     Dynamic Shared Object (DSO). This is known to be unstable, especially
     with Mason. Compile mod_perl statically into Apache.
@@ -90,13 +138,15 @@ INSTALL
     "perl -MCPAN -e shell"
 
     install SNMP::Info
+    install Time::HiRes
     install DBI
     install DBD::Pg
     install Apache::DBI
+    install Storable
     install Apache::Session
     install Apache::Request
     install HTML::Mason
-    install HTML::Mason::Request::WithApacheSession
+    install MasonX::Request::WithApacheSession
     install Graph
     install GraphViz (optional)
     Some of these you will probably already have installed.

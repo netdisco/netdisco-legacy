@@ -8,7 +8,7 @@ Max Baker
 
 =head1 REQUIREMENTS
 
-=over 
+=over
 
 =item * Perl       (5.6.1 and newer advised)
 
@@ -30,7 +30,7 @@ Max Baker
 
 =head1 INSTALL
 
-=over 
+=over
 
 =item 1. Uncompress the netdisco archive 
 
@@ -153,7 +153,7 @@ to setup directory scheme
 =item 2. Add in F</your/apache/conf/httpd.conf>
 
 =over
- 
+
 =item In Each VirtualHost (SSL,Main...)
 
 C<Include /usr/local/netdisco/netdisco_apache_dir.conf>
@@ -161,15 +161,21 @@ C<Include /usr/local/netdisco/netdisco_apache_dir.conf>
 =item In the Global Section
 
 C<Include /usr/local/netdisco/netdisco_apache.conf>
- 
+
 =back
 
-=item 3. [Optional] In F<netdisco_apache.conf> and F<netdisco_apache_dir.conf>
+=item 3. Permissions
+
+Assuming C<nobody> is the user that your HTTP process run under,
+run this as C<root> :
+
+C<chown nobody.netdisco /usr/local/netdisco/mason>
+
+=item 4. [Optional] In F<netdisco_apache.conf> and F<netdisco_apache_dir.conf>
 
 =over
 
 =item *  Change the web and physical paths appropriately.
-
 
 =back
 
@@ -243,7 +249,7 @@ Make sure this new F<snmp.conf> lives in F</usr/local/share/snmp>
 
 MIBs are required for F<SNMP::Info>. 
 
-=over 
+=over
 
 =item 1.  Get MIBS from:
 
@@ -267,7 +273,7 @@ The Organizationally Unique Identifier (OUI) database allows Netdisco to
 identify the manufacture of a network card using the first 24 bits of a
 MAC address.  The database is available from the IEEE.
 
-=over 
+=over
 
 =item 1. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
 
@@ -281,7 +287,7 @@ GraphViz is used in the creation of the Network Map and is an optional
 feature. Note that if you choose not to install GraphViz, you still
 need to install the F<Graph> module (see Perl above).
 
-=over 
+=over
 
 =item 1. Download and install the newest version from http://www.graphviz.org/pub/graphviz
 
