@@ -172,6 +172,11 @@ gets the Forwarding Tables / CAM Tables.  Each row in the table maps a MAC
 address to a switch port.   This process is what makes devices show up on
 switch ports.
 
+Netdisco will attempt to detect uplink ports in case you are missing topology data
+during macsuck.  Check the logs of the macsuck / macwalk for notifications of
+detected uplink ports, and add that data to your F<netdisco-topology.txt>.
+
+
 B<Fun Answer> - From Douglas M. McKeown :
 
 "This is where you go to a switch (Layer 2) and find all
@@ -214,7 +219,7 @@ you will not be able to resolve a MAC address to an IP address.
 
 =item CDP / FDP / SONMP
 
-Having topology information is crucial for Netdisco to function.  So
+Having topology information is crucial for Netdisco to function.  So.
 if you network does not support one of the above Layer2 discover protocols,
 you B<must> put the information in the F<netdisco-topology.txt> file. 
 
@@ -465,6 +470,8 @@ Refresh devices.  Will run a discover (L<-d>) for each device in the database.
 Import Topology Data.  Will import manual topology data stored in file specified by 
 configuration option L<topofile> . Use L<-F> to specify a different file from the
 command line. 
+
+It is not necessary to do this after every change.  This is only a convenience switch.
 
 =item -u || --user [user] [password] [port_control?] [admin?]
 
@@ -769,6 +776,14 @@ application to know which ports are uplink ports and which have connected
 nodes.  Ports that are uplink ports that are not marked so in Netdisco will
 appear to B<steal> MAC address entries from their rightful ports.  So it is
 critical to use the topology file and CDP/FDP/SONMP to maintain a topology.
+
+=head3 Autodetection of uplink ports 
+
+During macsuck if Netdisco finds the MAC address of a known device or switch
+port, then that port is marked as an uplink.  Nodes will not collect at these
+switch ports, and a warning message will be printed.  Check the logs of 
+your macsuck and macwalk jobs in order to find and correct autodetected 
+uplink ports.  Add these ports to your netdisco-topology.txt file.
 
 =head3 Manual Topology Information
 
