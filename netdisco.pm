@@ -585,6 +585,11 @@ sub dbh {
         my $user    = $CONFIG{"db_${DB}_user"} or die "dbh() - db_${DB}_user not found in config info.\n";
         my $pw      = $CONFIG{"db_${DB}_pw"}   or die "dbh() - db_${DB}_pw not found in config info.\n";
         my $options = $CONFIG{"db_${DB}_opts"} || {};
+        if (defined $CONFIG{"db_${DB}_env"}) {
+            my ($key,$val) = split(/\s*=>\s*/,$CONFIG{"db_${DB}_env"});
+            #warn "Setting ENV{$key} to $val\n";
+            $ENV{$key}=$val;
+        }
         $DBH{$DB} = DBI->connect($connect,$user,$pw,$options)
             or die "Can't connect to DB. $DBI::errstr\n";
     }
