@@ -39,7 +39,7 @@ Netdisco is built using lots of fine Open-Source tools:
 
 5.8.1 on Mandrake 9.x may be a problem (if you get
 an C<out of memory> error, you may need to change to 
-5.6.1 or 5.8.2).
+5.6.1 or 5.8.3+).
 
 =item * Perl Modules
 
@@ -47,7 +47,7 @@ Listed below
 
 =item * Net-SNMP
 
-5.0.2 and newer advised.  Untested on 5.1.x
+5.1.x and newer advised.  Reported working on 5.0.x.
 
 =item * PostgreSQL
 
@@ -57,7 +57,7 @@ Reported working for versions 7.2, 7.3, 7.4
 
 =item * Mason
 
-1.16 or newer required
+1.16 or newer required.  1.26 or newer advised.
 
 =item * Apache
 
@@ -65,7 +65,7 @@ Reported working for versions 7.2, 7.3, 7.4
 
 =item * mod_perl   
 
-Version to match Apache - 1.28 or higher recommended. 
+Version to match Apache - 1.29 or higher recommended. 
 
 Do not install version 1.99.
 
