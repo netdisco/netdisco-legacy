@@ -10,20 +10,17 @@ SNMPLIBS := $(shell find SNMP -name "*.pm")
 
 all:
 	echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."
-	echo "Available targets: docs,snmp,oui"
+	echo "Available targets: doc,snmp,oui"
 
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
-docs: doc $(SNMPLIBS) readme install_doc api_doc
+doc: $(SNMPLIBS) INSTALL README api_doc
 	ln -fs README doc/
 	ln -fs README-API-BACKEND doc/
 	ln -fs README-API-SHARED doc/
 	ln -fs INSTALL doc/
 	rm -f pod2htm*
-
-doc:
-	mkdir doc
 
 # Makes documentation for all .pm's 
 $(SNMPLIBS):
@@ -33,10 +30,10 @@ $(SNMPLIBS):
     # Adds the <%text> </%text> tags to the HTML for mason
 	$(POD2HTML) $@ | bin/doc_munge > html/doc/$(subst /,-,$(@:.pm=.html))
 
-install_doc:
+INSTALL: doc/INSTALL.pod
 	echo "Creating INSTALL"
-	$(POD2TEXT) -l INSTALL.pod > INSTALL
-	$(POD2HTML) INSTALL.pod | bin/doc_munge > html/doc/INSTALL.html
+	$(POD2TEXT) -l doc/INSTALL.pod > INSTALL
+	$(POD2HTML) doc/INSTALL.pod | bin/doc_munge > html/doc/INSTALL.html
 
 api_doc:
 	echo "Creating Backend API docs"
@@ -46,10 +43,10 @@ api_doc:
 	$(POD2HTML) netdisco.pm | bin/doc_munge > html/doc/netdisco-api-shared.html
 	$(POD2TEXT) netdisco.pm > README-API-SHARED
 
-readme:
+README: doc/README.pod
 	echo "Creating README"
-	$(POD2TEXT) -l README.pod > README
-	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc README.pod | bin/doc_munge > html/doc/README.html
+	$(POD2TEXT) -l doc/README.pod > README
+	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc doc/README.pod | bin/doc_munge > html/doc/README.html
 
 count:
 	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco
@@ -73,6 +70,6 @@ oui:
 	lynx -source http://standards.ieee.org/regauth/oui/oui.txt > oui.txt
 	./netdisco -O
 
-.PHONY: back docs $(SNMPLIBS) install_doc api_doc readme count snmp oui
+.PHONY: back docs $(SNMPLIBS) api_doc count snmp oui
 
 .SILENT:
