@@ -787,7 +787,7 @@ sub timeout {
 
 =item arpnip() 
 
-Connects to device and reads its ARP cache. Then adds entries to node_ip table. 
+Connects to device and reads its ARP cache. Then adds entries to C<node_ip> table. 
 
 Cheers to Jim Warner for the original arpnip.
 
@@ -805,7 +805,7 @@ sub arpnip {
     }
 
     if (in_subnets($ip,'arpnip_no')) {
-        print "\n  Excluded from arpnipping in config file.\n";
+        print " Excluded from arpnipping in config file.\n";
         return;
     }
 
@@ -817,6 +817,8 @@ sub arpnip {
         print "  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
         return;
     }
+
+    print "\n";
 
     my $device = get_device($hostname) or return;
 
@@ -842,8 +844,6 @@ sub arpnip {
     }
     print "  Processed $arp_count ARP Cache entries.\n";
     $ArpTotal += $arp_count;
-
-    print "\n";
     
     # Fetch Subnets - Feature not implemented yet.
     #get_subnets($device);
@@ -1640,8 +1640,8 @@ sub store_interfaces {
 
 =item walk_fwtable()  
 
-Walks the Forwarding table from the BRIDGE-MIB
-for the given device, and then adds MAC addresses to the node table.
+Walks the Forwarding table from the C<BRIDGE-MIB>
+for the given device, and then adds MAC addresses to the C<node> table.
 
 =cut
 sub walk_fwtable {
@@ -1656,7 +1656,6 @@ sub walk_fwtable {
     # physical device port we have this triple indirection:
     #      fw_port -> bp_index -> interfaces
     
-    #foreach my $fw_index (keys %$fw_mac){
     foreach my $fw_index (keys %$fw_port){
         # Convert the 0.254.123.456 index entry to a MAC address.
         my $mac    = join(':',map {sprintf("%02x",$_)} split(/\./,$fw_index));
