@@ -90,11 +90,13 @@ my %actions = (
              'clean_alias' => ['Database Cleanup - Aliases [-k]',1]
            );
 my %log_events = (
-             'user_add'    => 'User Added',
-             'user_change' => 'User Changed',
-             'user_del'    => 'User Deleted',
-             'login'       => 'Login',
-             'logout'      => 'Logout',
+             'user_add'      => 'User Added',
+             'user_change'   => 'User Changed',
+             'user_del'      => 'User Deleted',
+             'login'         => 'Login',
+             'logout'        => 'Logout',
+             'login_failure' => 'Login Failed',
+             'pw_change'     => 'Passwd Changed',
                   );
 </%shared>
 <%init>
