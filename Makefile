@@ -2,9 +2,9 @@
 # Must run w/ gmake
 # $Id$
 
-POD2TEXT = /usr/local/bin/pod2text 
-POD2MAN  = /usr/local/bin/pod2man
-POD2HTML = /usr/local/bin/pod2html
+POD2TEXT = /usr/bin/pod2text 
+POD2MAN  = /usr/bin/pod2man
+POD2HTML = /usr/bin/pod2html
 
 SNMPLIBS := $(shell find SNMP -name "*.pm")
 
