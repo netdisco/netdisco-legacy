@@ -19,6 +19,10 @@ CREATE TABLE device_port (
     stp         text,   -- Spanning Tree Protocol Status
     remote_ip   inet,   -- Neighboring device connected to
     remote_port text,   -- Neighboring port connected to
+    remote_type text,   -- Type of device connected to
+    remote_id   text,   -- remote ID string of neighbor
+    vlan        text,   -- VLAN port connected to
+    vtpdomain   text,   -- VTP Domain
     PRIMARY KEY(port,ip) 
 );
 
