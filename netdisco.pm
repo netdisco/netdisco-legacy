@@ -559,44 +559,78 @@ sub sort_ip {
 
 =item sort_port()
 
-Used by C<sort()> - Sort by 1.2 vs 1.3, C3 vs D3. 
+Used by C<sort()> - Sort port names with the following formatting types :
+
+    A5
+    5
+    FastEthernet0/1
+    FastEthernet0/1-atm
+    5.5
+    Port:3
 
 Works on hashes if a key named port exists. 
 
+Cheers to Bradley Baetz (bbaetz) for improvements in this sub.
+
 =cut
 sub sort_port {
-    my $aval = $::a || $HTML::Mason::Commands::a || $a;
-    my $bval = $::b || $HTML::Mason::Commands::b || $b;
+    my $aval = shift || $::a || $HTML::Mason::Commands::a || $a || '';
+    my $bval = shift || $::b || $HTML::Mason::Commands::b || $b || '';
     $aval = $aval->{port} if ref($aval) eq 'HASH';
     $bval = $bval->{port} if ref($bval) eq 'HASH';
 
     my $numeric        = '^(\d+)$';
     my $dotted_numeric = '^(\d+)\.(\d+)$';
     my $letter_number  = '^([a-zA-Z]{1})(\d+)$';
-	my ($aleft,$aright,$bleft,$bright);
+    my $wordcharword   = '^([^:\/.]+)[:\/\.]+([^:\/.]+)$';
+    my $ciscofast      = '^(\D)+(\d+)[:\/\.]+(\d+)(-.*)?$';
+
+    my @a = (); my @b = ();
     
-    if ($aval =~ /$numeric/ and $bval =~ /$numeric/) {
-        return $aval <=> $bval;
+    if ($aval =~ /$dotted_numeric/) {
+        @a = ($1,$2);
+    } elsif ($aval =~ /$letter_number/) {
+        @a = ($1,$2);
+    } elsif ($aval =~ /$numeric/) {
+        @a = ($1);
+    } elsif ($aval =~ /$wordcharword/) {
+        @a = ($1,$2);
+    } elsif ($aval =~ /$ciscofast/){
+        @a = ($1,$2,$3,$4);
+    } else { 
+        @a = ($aval);
     }
 
-    if ($aval =~ /$dotted_numeric/) {
-        $aleft = $1;  $aright = $2;
-    } elsif ($aval =~ /$letter_number/) {
-        $aleft = ord($1);  $aright = $2;
-    } else { return $aval cmp $bval; }
-
     if ($bval =~ /$dotted_numeric/) {
-        $bleft = $1;  $bright = $2;
+        @b = ($1,$2);
     } elsif ($bval =~ /$letter_number/) {
-        $bleft = ord($1);  $bright = $2;
-    } else { return $bval cmp $aval; }
+        @b = ($1,$2);
+    } elsif ($bval =~ /$numeric/) {
+        @b = ($1);
+    } elsif ($bval =~ /$wordcharword/) {
+        @b = ($1,$2);
+    } elsif ($bval =~ /$ciscofast/){
+        @b = ($1,$2,$3,$4);
+    } else { 
+        @b = ($bval);
+    }
 
-	if ($aleft > $bleft ) { return 1; }
-	if ($aleft < $bleft ) { return -1; }
-	if ($aright > $bright) { return 1; }
-	if ($aright < $bright) { return -1; } 
+    # Equal until proven otherwise
+    my $val = 0;
+    while (@a){
+        my $a1 = shift @a;
+        my $b1 = shift @b or last; # If a has more components, stop here
 
-	return 0;
+        if ($a1 =~ /$numeric/ and $b1 =~ /$numeric/){
+            $val = $a1 <=> $b1;
+            last if $val != 0;
+        } elsif ($a1 ne $b1) {
+            $val = $a1 cmp $b1;
+            last if $val != 0;
+        }
+    }
+
+    return $val;
 }
 
 =item make_graph()
