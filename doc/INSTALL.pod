@@ -92,7 +92,9 @@ Linux is a sure bet.  Netdisco has been tested with Mandake 9.1
 and includes specific notes to install with it.  Successful installs
 have been reported under Redhat, Mandrake, Gentoo and Debian.
 
-One user has reported getting Netdisco running on OS X.
+One user has reported getting Netdisco running on OS X.  Solaris has been
+sucessful for 8 and 10.  See
+L<http://www.saintmarys.edu/~dmckeown/netdisco_solaris10.htm>.
 
 Windows will take a lot of massaging but should be possible under
 Cygwin.
@@ -897,6 +899,7 @@ and their prerequisites automatically:
         install Graph
         install GraphViz     (you may need to do a 'force install')
         install Compress::Zlib (probably already have this one)
+        install Net::NBName
 
 Some of these you will probably already have installed. Others you may need to force 
 with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!
