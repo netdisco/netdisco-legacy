@@ -70,12 +70,12 @@ $SENDMAIL = '/usr/sbin/sendmail';
 
 =item $netdisco::SQLCARP - Carps SQL!
 
-    This will carp() the SQL sent off to the server for Debugging.
+This will C<carp()> the SQL sent off to the server for Debugging.
 
-    If running under mason, the output of carp() goes to the Apache
-    Error Log.  From the shell it goes to STDERR.
+If running under mason, the output of C<carp()> goes to the Apache
+Error Log.  From the shell it goes to STDERR.
 
-    Note that if you set this on a MASON page, the value will remain
+Note that if you set this on a MASON page, the value will remain
 cached across most of the current httpd proccesses.  Make sure you set it 
 back to 0 via mason when you're done, unless you like watching Apache's
 error_log grow.
@@ -149,9 +149,11 @@ sub add_arp {
 
 =item add_node(mac,ip,port) 
 
-    Manipulates entries in 'node' table.
-    Expires old entries matching given arguments.
-    Adds a new entry or time stamps matching old entry.
+Manipulates entries in C<node> table.
+
+Expires old entries matching given arguments.
+
+Adds a new entry or time stamps matching old entry.
 
 =cut
 sub add_node {
@@ -171,7 +173,7 @@ sub add_node {
 
 =item  config() 
 
-    Reads the config file and fills the %CONFIG hash.
+Reads the config file and fills the C<%CONFIG> hash.
 
 =cut
 sub config {
@@ -247,9 +249,10 @@ sub config {
 
 =item has_layer(bit string,layer) 
 
-     Takes ascii encoded string of eight bits, and checks for the specific
-     layer being true.  Most significant bit first.
-         has_layer(00000100,3) = true
+Takes ascii encoded string of eight bits, and checks for the specific
+layer being true.  Most significant bit first.
+
+    has_layer(00000100,3) = true
 
 =cut
 sub has_layer {
@@ -259,8 +262,8 @@ sub has_layer {
 
 
 =item hostname(ip) 
-    
-     Returns the DNS server entry for the given ip or hostname
+
+Returns the DNS server entry for the given ip or hostname.
 
 =cut
 sub hostname {
@@ -273,10 +276,10 @@ sub hostname {
 
 
 =item getip(host) 
-    
-     Returns the IP Address of a given IP or hostname. If the 
-     given argument appears to be in dotted octet notation, it
-     does no DNS hits and just returns it.
+
+Returns the IP Address of a given IP or hostname. If the 
+given argument appears to be in dotted octet notation, it
+does no DNS hits and just returns it.
 
 =cut
 sub getip {
@@ -296,13 +299,15 @@ sub getip {
 
 =item is_mac(mac) 
 
-    Returns Boolean.  Checks if argument appears to be a mac address.
-    Checks for types :
-        08002b:010203
-        08002b-010203
-        0800.2b01.0203
-        08-00-2b-01-02-03
-        08:00:2b:01:02:03
+Returns Boolean.  Checks if argument appears to be a mac address.
+
+Checks for types :
+
+    08002b:010203
+    08002b-010203
+    0800.2b01.0203
+    08-00-2b-01-02-03
+    08:00:2b:01:02:03
 
 
 =cut
@@ -322,8 +327,9 @@ sub is_mac{
 
 =item log(class,text)
 
-    Inserts an entry in the log table .  
-    log('error',"this is an error"); 
+Inserts an entry in the C<log> table.
+
+    log('error',"this is an error");
 
 =cut
 sub log {
@@ -352,7 +358,7 @@ sub mail {
 
 =item sort_ip() 
 
-Used by sort {} calls to sort by IP octet.  
+Used by C<sort {}> calls to sort by IP octet.
 
 If passed two hashes, will sort on the key C<ip> or C<remote_ip>.
 
@@ -378,7 +384,7 @@ sub sort_ip {
 
 =item sort_port()
 
-Used by sort() - Sort by 1.2 vs 1.3, C3 vs D3. 
+Used by C<sort()> - Sort by 1.2 vs 1.3, C3 vs D3. 
 
 Works on hashes if a key named port exists. 
 
@@ -420,12 +426,14 @@ sub sort_port {
 
 =item make_graph()
 
-    Returns Graph::Undirected object that represents the discovered
-    network.  Graph is made by loading all the 'device_port' entries
-    that have a neighbor, using them as edges. Then each device seen in those
-    entries is added as a vertex.  
+Returns C<Graph::Undirected> object that represents the discovered
+network.
 
-    Nodes without topology information are not included.
+Graph is made by loading all the C<device_port> entries
+that have a neighbor, using them as edges. Then each device seen in those
+entries is added as a vertex.  
+
+Nodes without topology information are not included.
 
 =cut
 sub make_graph {
@@ -515,10 +523,10 @@ sub make_graph {
 
 =item root_device(ip)
 
-    If the given IP Address matches a device IP, returns it.
+If the given IP Address matches a device IP, returns it.
 
-    If the given IP Address matches an alias of a device, returns
-    the IP of the device the alias belongs to.
+If the given IP Address matches an alias of a device, returns
+the IP of the device the alias belongs to.
 
 =cut
 sub root_device {
@@ -545,7 +553,7 @@ sub root_device {
 
 Adds or changes a user account.
 
-%args can have key values of { pw, admin, port }
+C<%args> can have key values of { pw, admin, port }
 
 Returns error message if problem.
 
@@ -581,8 +589,11 @@ sub user_add {
 
 =item user_del(user)
 
-Returns result from DBI->do() - Integer for number of rows deleted, or 
-undef if error.
+Deletes a user from netdisco.
+
+Returns result from C<DBI-E<gt>do()> 
+
+Integer for number of rows deleted, or undef if error.
 
 =cut
 sub user_del{
@@ -598,11 +609,12 @@ sub user_del{
 
 =over
 
-=item dbh() 
+=item dbh()
 
-    Creates and returns a database handle. Creates once, then 
-    returns the cached copy.  Select database handle in use by 
-    localizing $netdisco::DB;
+Creates and returns a database handle. Creates once, then 
+returns the cached copy.  
+
+Select database handle in use by localizing C<$netdisco::DB>
 
 =cut
 sub dbh {
@@ -622,8 +634,11 @@ sub dbh {
     return $DBH{$DB}; 
 }
 
-#=item1 hash_diff($hashref_orig, $hashref_new)
-#Sees if items to change in second hash are different or new compared to first.
+=item hash_diff($hashref_orig, $hashref_new)
+
+Sees if items to change in second hash are different or new compared to first.
+
+=cut
 sub hash_diff {
     my ($orig,$change) = @_;
 
@@ -639,24 +654,26 @@ sub hash_diff {
 
 =item insert_or_update(table, {matching}, {values} )
 
-    Checks for Existing entry in table using \%matching and either
-    updates or inserts into table with \%values accodringly.
+Checks for Existing entry in table using C<\%matching> and either
+updates or inserts into table with C<\%values> accodringly.
 
+    insert_or_update('device', { 'ip'=>'127.0.0.1' },
+                     { 'ip' => '127.0.0.1', dns => 'dog' }
+                    ); 
 
-    eg.
-        insert_or_update ('device', { 'ip'=>'127.0.0.1' },
-                  { 'ip' => '127.0.0.1', dns => 'dog' }); 
-    First time called it will insert the new entry
-    Second time claled it will modify the entry with the values.
+First time called it will insert the new entry
 
-    Supports
-        * Auto Quoting of Values
+Second time called it will modify the entry with the values.
 
-    Returns undef if problem.
+Supports
 
-    On inserts in PostgreSQL, returns the OID of the row inserted.
+    * Auto Quoting of Values
 
-    Or returns value from DBD::St::execute()
+Returns undef if problem.
+
+On inserts in PostgreSQL, returns the OID of the row inserted.
+
+Or returns value from C<DBD::St::execute()>
 
 =cut
 sub insert_or_update {
@@ -731,19 +748,19 @@ sub insert_or_update {
 }
 
 =item sql_column(table,[key_col,val_col],{where}) 
-    
-    Returns reference to hash.  Hash has form $hash{key_val}={val_val}
 
-    If multiple matches are found for key_col, only the last one is kept.
+Returns reference to hash.  Hash has form C<$hash{key_val}={val_val}>
 
-    Supports
-        * (NOT) NULL
-        * Auto-Quoting Values
-    
-    Eg.
-    
+If multiple matches are found for key_col, only the last one is kept.
+
+Supports
+
+    * (NOT) NULL
+    * Auto-Quoting Values
+
     $OldDevices = sql_column('device',['ip','layers']);
-    Creates the hash %$OldDevices where the key is the IP address and the Value is the Layers
+
+Creates the hash %$OldDevices where the key is the IP address and the Value is the Layers
 
 =cut
 sub sql_column {
@@ -789,8 +806,10 @@ sub sql_column {
 }
 
 =item sql_do(sql)
-    
-    Simple wrapper to $dbh->do().  No quoting.
+
+Simple wrapper to C<$dbh-E<gt>do()>
+
+No quoting.
 
 =cut
 sub sql_do {
@@ -804,14 +823,15 @@ sub sql_do {
 
 =item sql_hash(table, [columns], {where}) 
 
-    Returns reference to hash representing single row.
-    
-    Supports:
-        * Auto-Quotes Values
-        * NULL/NOT NULL
-        * Pattern Matching
-    eg.
-        my $hashref = sql_hash('device',['ip','ports'], {'ip'=>'127.0.0.1'});
+Returns reference to hash representing single row.
+
+Supports:
+
+    * Auto-Quotes Values
+    * NULL/NOT NULL
+    * Pattern Matching
+
+    my $hashref = sql_hash('device',['ip','ports'], {'ip'=>'127.0.0.1'});
 
 =cut
 sub sql_hash {
@@ -849,15 +869,17 @@ sub sql_hash {
 
 =item sql_rows(table, [columns] , {where} ,OR, orderbystring)
 
-    Returns a reference to an array of sql_row() hash references.
+Returns a reference to an array of hash references. Each hash reference is the
+return of C<$dbh-E<gt>fetchrow_hashref>
 
-    Supports
-        * Joins
-        * Pattern Matching
-        * NULL/NOT NULL 
-        * Boolean OR or AND criteria
-        * Auto-Quotes all values and Override
-        * IN (list) and NOT IN (list) clauses
+Supports
+
+    * Joins
+    * Pattern Matching
+    * NULL/NOT NULL 
+    * Boolean OR or AND criteria
+    * Auto-Quotes all values and Override
+    * IN (list) and NOT IN (list) clauses
 
 Pass a true value for the OR argument to join constraints in the WHERE clause by 
 OR instead of AND.
@@ -1058,11 +1080,13 @@ sub sql_rows {
 
 =item sql_scalar(table,[column],{where}) 
 
-    Returns a scalar of value of first column given.
-    Internally calls sql_hash(); All arguments are passed directly to sql_hash().
+Returns a scalar of value of first column given.
 
-    eg.
-        my $count_ip = sql_scalar('device',['COUNT(ip)'],{'name' => 'dog'});
+Internally calls C<sql_hash()>
+
+All arguments are passed directly to C<sql_hash()>
+
+    my $count_ip = sql_scalar('device',['COUNT(ip)'],{'name' => 'dog'});
 
 =cut
 sub sql_scalar {
