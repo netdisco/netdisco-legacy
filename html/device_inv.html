@@ -42,7 +42,7 @@ foreach my $row (sort
     {
         # Sort by vendor then model
         return $a->{vendor} cmp $b->{vendor} if $a->{vendor} ne $b->{vendor};
-        return $a->{model} cmp $b->{model};
+        return lc($a->{model}) cmp lc($b->{model});
     } @$model_count
                 ) {
 
