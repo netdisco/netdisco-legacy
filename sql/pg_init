@@ -4,7 +4,7 @@
 
 # Change these to match your setup
 SYSDBUSER=pgsql
-DB=disc
+DB=netdisco
 
 CREATEUSER="createuser --createdb --no-adduser --pwprompt $DB"
 
