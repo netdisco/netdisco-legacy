@@ -32,7 +32,8 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_ip sort_port sql_scalar root_device log
-                       make_graph is_mac user_add user_del mail/;
+                       make_graph is_mac user_add user_del mail is_secure 
+                       url_secure/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -223,15 +224,15 @@ sub config {
             $value = $oldvalue;
         }
 
-        # Hash based config options
-        if ($var =~ /^(portcontrol|no_mapsuck|admin)$/) {
-            my %users;
-            foreach my $user (split(/,/,$value)){
-                $user =~ s/^\s+//;
-                $user =~ s/\s+$//;
-                $users{$user}++;
+        # Comma separated lists that map to defined hash keys.
+        if ($var =~ /^(portcontrol|no_mapsuck|admin|web_console_vendors|web_console_models)$/) {
+            my %seen;
+            foreach my $key (split(/\s*,\s*/,$value)){
+                $key =~ s/^\s+//;
+                $key =~ s/\s+$//;
+                $seen{$key}++;
             }            
-            $value = \%users;
+            $value = \%seen;
         }
     
         # Database Hash values 
@@ -358,6 +359,72 @@ sub mail {
     print SENDMAIL "Subject: $subject\n\n";
     print SENDMAIL $body;
     close (SENDMAIL) or die "Can't send letter. $!\n";
+}
+
+=item is_secure
+
+To be run under mason only.
+
+Returns true if the server want's to be secure and is, or true if the server doesn't want to be secure.
+
+Returns false if the server is not secure but wants to be.
+
+=cut
+sub is_secure {
+
+    my $secure = $CONFIG{secure_server};
+    return 1 unless defined $secure;
+    return 1 if $secure !~ /^(1|y|t)/i;
+
+    # secure_server is set.
+    my $ar = $::r || $HTML::Mason::Commands::r;
+    unless (defined $ar and $ar->can('subprocess_env')){
+        carp "netdisco::is_secure() - Can't find Apache \$r\n";
+        return;
+    }
+
+    if (defined $ar->subprocess_env('https') and $ar->subprocess_env('https') eq 'on') {
+        return 1;
+    }
+
+    return 0;
+}
+
+=item url_secure(url)
+
+=cut
+sub url_secure {
+    my $path = shift;
+    
+    return unless defined $path;
+
+    my $ar = $::r || $HTML::Mason::Commands::r;
+    unless (defined $ar and $ar->can('hostname')){
+        carp "netdisco::url_secure() - Can't find Apache \$r\n";
+        return;
+    }
+
+    my $webpath = $CONFIG{webpath};
+    my $server  = $ar->hostname;
+
+    # Check for the easy case
+    if ($path =~ m!^http(s)?://!){
+        $path =~ s!^http://!https://!;
+        return $path;
+    }
+
+    # Check for single file
+    elsif ($path !~ m!^$webpath!){
+        $path =~ s!^/+!!;
+        $path = "https://${server}${webpath}/$path";
+    } 
+
+    # Check for full path 
+    elsif ($path =~ m!^$webpath!){
+        $path = "https://${server}${path}"; 
+    }
+    
+    return $path;
 }
 
 =item sort_ip() 
