@@ -1,4 +1,5 @@
 <h3>IP Inventory</h3>
+<% $err %>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
 <INPUT TYPE="hidden" NAME="cmd" VALUE="age">
@@ -24,9 +25,16 @@
     </TD>
 </TR>
 <TR>
-    <TD>Limit to Subnet :</TD>
+    <TD>Subnet :</TD>
     <TD><INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
         <BR><font size=-2>(CIDR Format : <tt>192.168.0.0/24</tt>)</font>
+    </TD>
+    <TD>List IPs<BR>Never Discovered :</TD>
+    <TD><INPUT TYPE="checkbox" NAME="never" VALUE=1<%$never ? ' CHECKED' : ''%>></TD>
+</TR>
+<TR>
+    <TD COLSPAN=2>
+        <INPUT TYPE="submit" VALUE="Find IPs">
     </TD>
     <TD>Limit :</TD>
     <TD><SELECT NAME="max" SIZE=1>
@@ -34,14 +42,10 @@
         <OPTION VALUE="<%$_%>"<%$max eq $_ ? ' SELECTED' : ''%>><%$_%>
 %}
     </TD>
-</TR>
-<TR>
-    <TD COLSPAN=4>
-        <INPUT TYPE="submit" VALUE="Find IPs">
-    </TD>
 </TABLE>
 </FORM>
 Finds IP Addresses used by nodes.
+<BR>To find IP addresses that have never been used in a subnet, select "12 Years" and Check the Checkbox.
 <h3>Netbios Inventory</h3>
 % $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
@@ -77,10 +81,11 @@ $cmd     => ''
 $max     => 200
 @domain  => ()
 $archive => 0
+$never   => 0
 </%args>
 <%shared>
 my @sorts = qw/IP Age/;
-my ($ips,$arg_sort,$odd,$arg_max,$arg_domain);
+my ($ips,$arg_sort,$odd,$arg_max,$arg_domain,$addrs,$err);
 my $nodes = [];  my $domain_count = {}; my $nbt_domains={};
 </%shared>
 <%init>
@@ -90,20 +95,90 @@ $arg_sort = $sort; $arg_max = $max; $arg_domain = \@domain;
 $nbt_domains = sql_column('node_nbt',['distinct(domain)','true']);
 delete $nbt_domains->{''};
 
+if ($cmd eq 'age' and !$subnet){
+    $err = "Subnet Required.";
+    $cmd = '';
+}
+
 if ($cmd eq 'age'){
     $age_val = 2 unless $age_val =~ m/^\d+$/;
     $age_mul =~ s/[^a-z ]+//g;
-    my $bool    = '>=';
-    my $archive =0;
-    my $where =  {'age(now(),time_last)' => \\"$bool interval '$age_val $age_mul'"};
-    $where->{active} = \'true' unless ($archive);
-    if ($subnet){
-        my $safenet = dbh_quote($subnet);
-        $where->{ip} = \\"<< inet $safenet"  if $subnet;
-    } 
+    my $where =  {'age(now(),time_last)' => \\">= interval '$age_val $age_mul'"};
+
+    $subnet .= '/24' unless $subnet =~ /\//;
+    my $safenet = dbh_quote($subnet);
+    $where->{ip} = \\"<< inet $safenet";
+    $where->{active} = \'true'; 
+    # Grab all active node_ip rows in this subnet that are x old
     $ips = sql_rows('node_ip',['age(now(),time_last) as age','extract(epoch from time_first) as time_first',
                                'extract(epoch from time_last) as time_last','ip','active'],
-                    $where);
+                    $where
+                   ); 
+
+
+    # Find all active IPs
+    my $active_ips = sql_rows('node_ip',['distinct(ip)'],{'ip' => \\"<< inet $safenet",
+                              'active' => \'true'});
+    my @active_ips = map { $_->{ip} } @$active_ips;
+
+    # Find IPs that are not active but still in subnet
+    if (scalar @active_ips){
+        $active_ips[0] = "!$active_ips[0]";
+        $where = {'ip' => [\\"<< inet $safenet",[@active_ips]], active => \'false' };
+    } else {
+        $where = {'ip' => \\"<< inet $safenet", active => \'false' };
+    }
+    my $archive_ips = sql_rows('node_ip',['age(now(),time_last) as age','extract(epoch from time_first) as time_first',
+                               'extract(epoch from time_last) as time_last','ip','active'],
+                    $where
+                   ); 
+    my %seen; my %results;
+    foreach my $r (@$archive_ips){
+        my $ip = $r->{ip};
+        # First entry
+        unless (defined $results{$ip} ){
+            $results{$ip}=$r;
+            $seen{$ip}=$r->{time_last};
+            next;
+        }
+        next unless $r->{time_last} > $seen{$ip};
+        $results{$ip}=$r;
+        $seen{$ip}=$r->{time_last};
+    }
+
+    push (@$ips,values %results);
+
+    # Look for holes in our IP Space and report on that.
+    if ($never){
+        # Get all the possible IPs in a subnet
+        $addrs = dump_subnet($subnet) || {};
+
+        # Remove all the nodes seen in the subnet
+        my $nodes_seen = sql_rows('node_ip',['distinct(ip)'], { 'ip' => \\"<< inet $safenet"});
+
+        foreach my $row (@$nodes_seen){
+            my $ip = $row->{ip};
+            delete $addrs->{$ip};
+        }
+
+        # Remove all the device / aliases seen
+        my $devs_seen = sql_rows('device', ['distinct(ip)'], { 'ip' => \\"<< inet $safenet"});
+        my $aliases = sql_rows('device_ip', ['distinct(alias)'], { 'alias' => \\"<< inet $safenet"});
+        push(@$devs_seen,@$aliases);
+
+        foreach my $row (@$devs_seen){
+            my $ip = $row->{alias} || $row->{ip};
+            delete $addrs->{$ip};
+        }
+        
+        # Add our missing IPs to the results from above.
+        foreach my $ip (keys %$addrs){
+            push @$ips, { 'age' => 'Never', 'time_first' => 'Never',
+                          'ip' => $ip, 'active' => 1, 'time_last' => 'Never',
+                        };
+        }
+    }
+
 }
 
 if ($cmd eq 'nbt'){
@@ -217,13 +292,17 @@ foreach my $row (@rows){
     my $ip = $row->{ip};
     my $age = $m->comp('device_inv.html:.trim_age', age => $row->{age});
     my $time_first = scalar(localtime($row->{time_first}));
+    my $active = $row->{active};
 </%perl>
 <TR CLASS="match-<%++$odd%2%>">
-    <TD><A HREF="node.html?node=<%$ip|u%>"><%$ip%></a></TD><TD><%$age%></TD><TD><%$time_first%></TD>
+    <TD><A HREF="node.html?node=<%$ip|u%><%!$active ? '&archive=1' : ''%>"><%$ip%></A><%!$active ? '*' : ''%></TD>
+    <TD><%$age%><%!$active ? '*' : ''%></TD>
+    <TD><%$time_first%></TD>
 </TR>
 %}
 </TABLE>
 <% scalar @rows %> IPs Shown.
+<BR><B>*</B> denotes archived data (not currently in use, but seen).
 </%method>
 <%method title>
 - Node Inventory \
