@@ -34,7 +34,8 @@ my %port_cols = (
                  'speed' =>  ['Speed',1],
                  'name'  =>  ['Name',1],
                  'mac'   =>  ['Port MAC',0],
-                 'mtu'   =>  ['MTU',0]
+                 'mtu'   =>  ['MTU',0],
+                 'vlan'  =>  ['VLAN',1],
                 );
 
 my %device_info = (
@@ -44,7 +45,7 @@ my %device_info = (
                    'Last ArpNip' => 'last_arpnip',
                    'Mac Address' => 'mac',
                    'OSI Layers' => 'layers',
-                   'VTP Management Domain' => 'vtp_domain',
+                   'VTP Domain' => 'vtp_domain',
                    #'Ports' => 'ports',
                    #'Backplane Slots' => 'slots',
                     );
@@ -151,12 +152,6 @@ if ($ip) {
         # Get IP addresses on ports
         my $aliases = sql_column('device_ip',['alias','dns'],
             {'ip'=> $switch, 'port'=>$port});
-
-        # Add VLAN info 
-        my $vlan = $portreq->{vlan};
-        if (defined $vlan and $vlan > 0){
-            $portreq->{portdisp} .= " <font size=-1>[v$vlan]</font>"; 
-        }
 
         # Add aliases to display of port name
         if (defined $aliases and scalar keys %$aliases) {
