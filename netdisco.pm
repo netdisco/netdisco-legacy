@@ -123,7 +123,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 =item $VERSION - Sync'ed with Netdisco releases
 
 =cut
-$VERSION = '0.93';
+$VERSION = '0.94-cvs';
 
 =back
 
@@ -823,6 +823,14 @@ sub user_add {
 
         if ($arg eq 'port') {
             $db_args{port_control} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
+        }
+        
+        if ($arg eq 'note') {
+           $db_args{note} = $val;
+        }
+
+        if ($arg eq 'fullname') {
+           $db_args{fullname} = $val;
         }
 
     }
