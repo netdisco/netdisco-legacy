@@ -408,7 +408,7 @@ sub get_device {
         my $version = $row->{snmp_ver};
            $comm    = $row->{snmp_comm};
 
-        print "  get_device($hostname) - Connecting using cached info: $dev_ip/$comm/$version\n"
+        printf("  get_device(%s) - Connecting using cached info: %s/%s/%s\n",$hostname,$dev_ip,substr($comm,-1,1),$version)
             if $DEBUG;
         $device = create_device($dev_ip,$comm,$version);
 
@@ -477,7 +477,7 @@ sub create_device {
     my $retries = $CONFIG{snmpretries} || 2;  
    
     printf("  create_device(%s,%s,%d,%s)\n",
-           $hostname,$community,$ver, defined $objtype ? $objtype : 'undef')
+           $hostname,substr($community,-1,1),$ver, defined $objtype ? $objtype : 'undef')
          if $DEBUG;
 
     # Get Device Info
@@ -502,7 +502,7 @@ sub create_device {
         # v1 screws up some hp switches that support 2, so we stick w/ 2 first
         $ver = 1; 
         print " [Trying SNMP Version 1] ";
-        print "create_device($hostname,$community,1)\n" if $DEBUG;
+        printf("create_device(%s,%s,1)\n",$hostname,substr($community,-1,1)) if $DEBUG;
         $device = new SNMP::Info( 'DestHost'  => $hostname,
                                   'Community' => $community,
                                   'Version'   => 1,
@@ -1546,7 +1546,7 @@ sub graph_addnode {
 
 Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
 
-Calls mac_dump(), arp_dump(), and dev_dump().
+Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
 
 =cut
 sub nightly {
