@@ -11,9 +11,9 @@
 </FORM>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
-<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$cmd%>">
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$cmd eq 'del' ? 'del' : 'add'%>">
 <& SELF:err &>
-% if ($cmd eq 'add'){
+% if ($cmd =~ /^(add|list)$/){
 <& SELF:dev_control &>
 % } elsif ($cmd eq 'del') {
 <& SELF:del_dev &>
@@ -44,6 +44,7 @@ my %logs = ();
 my $err =  '';
 my ($arg_dev,$arg_debug,$db_dev);
 my $odd = 0;
+my $debug_flag;
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
@@ -58,10 +59,50 @@ $arg_debug = $debug;
 %logs = map {$_ => 1} @logs;
 
 # Load device list, unless device provided.
-$devices = sql_rows('device',['ip','dns']) unless $dev;
+$devices = sql_rows('device',['ip','dns']);
 
 # Load dev from db if given
 $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
+
+# Refresh / MacSuck / Arpnip
+if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/){
+    # Verify device exists.
+    unless (defined $db_dev->{ip}){
+        $err .= "Device not found in Database.<BR>\n";
+        $action = undef;
+        $arg_dev = $dev = undef;
+    }
+
+    # Verify macsuck/arpnip is possible on device.
+    my $layers = $db_dev->{layers};
+
+    if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
+        $err .= "Device does not support mac_sucking.<BR>\n"; 
+        $action = undef;
+        $arg_dev = $dev = undef;
+    }
+
+    if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
+        $err .= "Device does not support arp_niping .<BR>\n"; 
+        $action = undef;
+        $arg_dev = $dev = undef;
+    }
+
+    # Add Entry to Queue
+    unless ($err) {
+        $err .= "Device $dev has been queued for $action. <BR>\n";
+        $debug_flag = (defined $debug and $debug eq 'yes') ? 1 : 0;
+        $netdisco::SQLCARP=1;
+        insert_or_update('admin',{},
+            {'device'=>$dev,'action'=>$action, 'status' => 'queued',
+             'username' => $user, 'debug' => $debug_flag }
+                        );
+        
+        $netdisco::SQLCARP=0;
+        $action = undef;
+        $arg_dev = $dev = undef;
+    }
+}
 
 # Delete
 if ($cmd eq 'del'){
@@ -93,19 +134,28 @@ if ($cmd eq 'add' and defined $action and $action eq 'delete') {
     $cmd = 'del'; # order matters between delete and verify
 }
 
-#$netdisco::SQLCARP=1;
 # Queue
 $queue = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
-                           'device','action','status','log','username'],
+                           'device','action','status','username'],
                   {'status' => [['queued','running','error']]}
                  );
 my $done = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
-                             'device','action','status','log','username'],
+                             'device','action','status','username'],
                     {'status' => [['done','del']], 'age(entered)' => \\"< interval '1 day'",
                      'username' => $user}
                    );
-#$netdisco::SQLCARP=0;
 push (@$queue,@$done);
+
+# Log entries are fetched separately, as these can be rather large, and should
+#  only be loaded if needed.
+foreach my $item (@$queue){
+    my $id = $item->{job};
+    if (defined $logs{$id}){
+        my $log = sql_scalar('admin',['log'],{'job'=>$id});
+        $item->{log} = $log;
+    }
+}
+
 </%init>
 %#
 %# err() - Prints out the error string if it exists.
@@ -188,7 +238,7 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
 %}
   </TR>
 <%perl>
-foreach my $job (@$queue){
+foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
     my $start = scalar localtime($job->{entered});
     my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : '(None)';
     my $act   = $job->{action};
@@ -204,10 +254,12 @@ foreach my $job (@$queue){
     <TD><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
 % if (scalar keys %logs) {
     <TD>
-%   if (defined $logs{$id}){
+%   if (defined $logs{$id} and !defined $job->{log}) {
+    [ No Log Available ]
+%   } elsif (defined $logs{$id} and defined $job->{log}) {
     <TEXTAREA COLS=50 ROWS=6 WRAP=SOFT><%$job->{log}|h%></TEXTAREA>
 %   } else {
-    &nobsp;
+    &nbsp;
 %   }
     </TD>
 % }
