@@ -981,13 +981,7 @@ of days will be removed.
 
 =item arpnip_no
 
-LIST:IPs and Subnets. Comma Separated list of devices and subnets not to include in arpnipping.
-
-You can put in a CIDR style subnet or a single IP address :
-
-    arpnip_no = 192.168.0.0/24,192.168.0.1,192.168.1.0/24
-
-You can NOT use an abbreviated CIDR subnet like C<192/8>.
+LIST:string.  See C<bulkwalk_no> for syntax.
 
 =item compress
 
@@ -1003,10 +997,7 @@ PATH. Full or relative path to the directory that backups and logs will be store
 
 =item discover_no
 
-LIST:IPs and Subnets. Comma Separated list of devices and subnets that will not get hit with 
-an SNMP discovery event.
-
-See L<arpnip_no> for more details.
+LIST:string.  See L<bulkwalk_no> for syntax.
 
 =item ignore_private_nets
 
@@ -1027,9 +1018,7 @@ This is a debug option to help you figure out your topology and generally should
 
 =item macsuck_no
 
-LIST:IPs and Subnets. Comma Separated list of devices and subnets not to macsuck.
-
-See L<arpnip_no> for more details.
+LIST:string.  See C<bulkwalk_no> for syntax.
 
 =item macsuck_no_vlan
 

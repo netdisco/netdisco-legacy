@@ -4,6 +4,14 @@
 
 0.95 ()
 
+New Device Support in SNMP::Info 1.0:
+    + Foundry EdgeIron
+
+Features:
+    + [1107564] Disable BULKWALK on a per device or per device type basis : bulkwalk_no
+                arpnip_no, macsuck_no, discover_no use same syntax, see README
+    + [1111654] Allow wrap in config file with \ char
+
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
     * [1100029] Nbtwalk whole network bug - would die if couldn't connect to a node.
