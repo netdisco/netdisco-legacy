@@ -46,7 +46,7 @@ my %device_info = (
                    'Last MacSuck' => 'last_macsuck',
                    'Last ArpNip' => 'last_arpnip',
                    'Mac Address' => 'mac',
-                   'OSI Layers' => 'layers',
+                   #'OSI Layers' => 'layers',
                    'VTP Domain' => 'vtp_domain',
                    #'Ports' => 'ports',
                    #'Backplane Slots' => 'slots',
@@ -100,6 +100,11 @@ if ($ip) {
     # Grab aliases  
     my $aliases = sql_rows('device_ip',['alias','dns','port'],
                            {'ip'=>$devip});
+    # Sort Aliases by Port
+    my $port_aliases = {};
+    foreach my $a (@$aliases) {
+        push @{$port_aliases->{$a->{port}}},$a; 
+    }
 
     $device->{aliases} = $aliases;
     
@@ -151,19 +156,13 @@ if ($ip) {
             $node_ips->{$mac}++;
         }
 
-        # Get IP addresses on ports
-        my $aliases = sql_column('device_ip',['alias','dns'],
-            {'ip'=> $switch, 'port'=>$port});
-
         # Add aliases to display of port name
-        if (defined $aliases and scalar keys %$aliases) {
-            foreach my $alias (sort sort_ip keys %$aliases){
-                my $dns = $aliases->{$alias};
-                $dns = defined $dns ? $dns : '[No DNS]';
+        my $aliases = $port_aliases->{$port} || [];
+        foreach my $alias ( sort {sort_ip($a->{alias},$b->{alias})} @$aliases ) {
+                my $alias_ip = $alias->{alias};
+                my $dns = $alias->{dns} || '[No DNS]';
                 $dns =~ s/\Q$domain\E//;
-                
-                $portreq->{portdisp} .= "<BR> $alias ($dns)";
-            }
+                $portreq->{portdisp} .= "<BR> $alias_ip ($dns)";
         }
 
     }
