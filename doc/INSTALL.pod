@@ -191,10 +191,23 @@ to the C<template1> database.
 Next you must give the C<netdisco> database user access to the C<netdisco> database.
 The following line will give all database users access to a database that is the same
 name as them.  This line must be put above all the rest of the uncommented lines in the
-F<pg_hba.conf> file to take precedence.  Note that if you are using Postgres 7.2 you
-may have to change C<md5> to C<crypt>, Actual mileage may vary.
+F<pg_hba.conf> file to take precedence.  
+
+=over
+
+=item Postgres 7.2
+
+
+    local sameuser md5
+
+You may have to change C<md5> to C<crypt>, Actual mileage may vary.
+
+=item Postgres 7.3
+
 
     local sameuser all md5
+
+=back
 
 B<Restart Postgres>
 
@@ -272,16 +285,30 @@ Make sure that the file in C</usr/local/etc/rc.d> is alright.
 
 =back
 
-=head2 5. Net-SNMP
+=head2 5. SNMP
+
+There are three components to setup for SNMP
+
+=head3 A) Net-SNMP
+
+Net-SNMP 5 lives at L<http://net-snmp.sourceforge.net>.
+
+=over
+
+=item BSD
 
 For BSD install Net SNMP with ports :
 
     cd /usr/ports/net/net-snmp && make install
 
-For Linux and the rest of the world :
+TODO : How do I give it the switch to add C<--with-perl-modules> again?
+
+=item Linux
 
 If you have installed the Net-SNMP RPM from Redhat or Mandrake it B<does not> include 
 the Perl modules.  Uninstall it and install a newer version by hand as below.
+
+=back
 
 =over
 
@@ -323,7 +350,7 @@ Make sure this new F<snmp.conf> lives in F</usr/local/share/snmp>
 
 =back
 
-=head3 SNMP::Info
+=head3 B) SNMP::Info
 
 This Perl module is an integral part of Netdisco.  It is available
 from L<http://snmp-info.sourceforge.net>.   It requires that you have net-snmp installed
@@ -367,7 +394,7 @@ To update to the most current CVS version.
 
 =back
 
-=head3 MIBs
+=head3 C) MIBs
 
 MIBs are required for F<SNMP::Info>. 
 
@@ -454,14 +481,33 @@ To Download:
 
 =item i. Download 
 
+=over
+
+=item BSD
+
 For BSD use ports: 
 
     cd /usr/ports/graphics/graphviz && make install
 
-Others: 
+=item Linux
+
+For Redhat and Mandrake systems you will make sure that a lol of
+C<-devel> packages are installed.   If you see errors about not having a PNG
+or JPEG library then install the C<-devel> packages as needed. 
+
+    urpmi libjpeg62-devel libpng3-devel
+
+If you get some weird error in build about not having C<intl.la> then
+make sure you have the F<gettext> packages installed :
+
+    urpmi gettext-devel
+
+=item Unix
 
 Get the newest version from L<http://www.graphviz.org/pub/graphviz>.
 Unarchive and install.
+
+=back
 
 =item ii. True Type Font
 
@@ -482,13 +528,12 @@ that creates the graphs.
     which twopi
     which neato
 
-=item v. Perl Module GraphViz
+=back
 
-Make sure the Graphviz Perl module got installed
+After the Perl Modules step below, 
+make sure the Graphviz Perl module got installed
 
     perldoc GraphViz
-
-=back
 
 =head2 8. Setup Apache
 
@@ -509,44 +554,32 @@ mod_ssl with Mandrake to come...
 
 =item Install Apache1
 
-Mount CD1 and run as root:
+Install Apache1 and Mod_Perl 1 and their development packages :
 
-    rpm -Uvh /mnt/cdrom/Mandrake/RPMS/libmm1-1.2.2-2mdk.i586.rpm 
-    rpm -Uvh apache-devel-1.3.27-8mdk.i586.rpm libmm1-devel-1.2.2-2mdk.i586.rpm libgdbm2-devel-1.8.0-19mdk.i586.rpm 
-    rpm -Uvh mod_perl-devel-1.3.27_1.27-7mdk.i586.rpm 
-    rpm -Uvh db1-devel-*
+    urpmi apache-devel-1 mod_perl-devel-1 apache-mod_perl-1 mod_perl-common-1
 
-Mount CD2 and run as root :
-
-    cd /mnt/cdrom/Mandrake/RPMS2
-    rpm -Uvh mod_perl-common-1.3.27_1.27-7mdk.i586.rpm apache-mod_perl-1.3.27_1.27-7mdk.i586.rpm apache-modules-1.3.27-8mdk.i586.rpm 
-
-Need this for DB_File perl module
+Mandrake 9.1 - Do this for the DB_File Perl module
 
     ln -s /usr/include/db1/* /usr/include
     ln -s /usr/lib/libdb1.so.2 /usr/lib/libdb.so
 
 =item Configure Both Apaches
 
+Mandrake and some Redhats come with two copies of Apache installed.
+The mod_perl server sits on a weird port and is reversed proxied by
+a normal Apache server.  
+
+Mandrake 9.0 uses two Apache1 servers, while Mandrake 9.1 uses an
+Apache2 server that sits in front of the apache1/mod_perl server.
+
 Configuration files for Mandrake live in F</etc/httpd/conf>
 
-In the file F<commonhttpd.conf> add the two C<Include> lines:
-
-    <IfModule mod_perl.c>
-
-    #Provide two aliases to the same cgi-bin directory,
-    #to see the effects of the 2 different mod_perl modes
-    #for Apache::Registry Mode
-    Alias /perl/ /var/www/perl/
-    #for Apache::Perlrun Mode
-    Alias /cgi-perl/ /var/www/perl/
+In the file F<httpd-perl.conf> add the two C<Include> lines:
 
     Include /usr/local/netdisco/netdisco_apache.conf
     Include /usr/local/netdisco/netdisco_apache_dir.conf
 
-    </IfModule>
-
-In the file F<httpd2.conf> add the final C<RewriteRule> line:
+In the file F<httpd.conf> (F<httpd2.conf> for 9.1) add the final C<RewriteRule> line:
 
     <IfModule mod_rewrite.c>
     RewriteEngine on
@@ -555,6 +588,10 @@ In the file F<httpd2.conf> add the final C<RewriteRule> line:
     RewriteRule ^(.*\/cgi-perl\/.*)$  http://%{HTTP_HOST}:8200$1 [P]
     RewriteRule ^(.*\/netdisco\/.*)$  http://%{HTTP_HOST}:8200$1 [P]
     </IfModule>
+
+In the file F<commonhttpd.conf> add the Alias line :
+
+    Alias /netdisco /netdisco/
                     
 =item Restart Apache
 
@@ -730,29 +767,18 @@ and their prerequisites automatically:
 
     perl -MCPAN -e shell
 
-=over 4
-
-=item install DBI
-
-=item install Apache::DBI
-
-=item install DBD::Pg
-
-=item install Apache::Session
-
-=item install Apache::Request
-
-=item install HTML::Mason
-
-=item install MasonX::Request::WithApacheSession
-
-=item install Graph
-
-=item install GraphViz
-
-=item install Digest::MD5 (should be built in to perl)
-
-=back
+        install Digest::MD5
+        install Bundle::DBI
+        install Apache::DBI
+        install DBD::Pg
+        install DB_File      (for Apache::Session)
+        install Apache::Session
+        install Apache::Test (for Apache::Request, you may need to do a 'force install')
+        install Apache::Request
+        install HTML::Mason
+        install MasonX::Request::WithApacheSession
+        install Graph
+        install GraphViz     (you may need to do a 'force install')
 
 Some of these you will probably already have installed.
 
@@ -814,9 +840,27 @@ are installed.
 
 =head2 11. Start Apache
 
-    /usr/local/apache/apachebin start
+Now that you have everything setup, (re)start the 
+web-server.
 
 Check Apache's F<error_log> for possible errors.
+
+=over
+
+=item Linux
+
+
+    /etc/rc.d/init.d/httpd restart
+
+=item HomeGrown Copies of Apache
+
+
+    /usr/local/apache/apachebin start
+
+=back
+
+Also, make sure that Apache starts on its own
+at reboot.
 
 =head2 12. Discover a Device in Netdisco
 
@@ -838,6 +882,9 @@ network and start an autodiscovery from there:
 
     cd /usr/local/netdisco
     ./netdisco -r device_name_or_ip_number_here
+
+If your network is I<not> CDP friendly, then see F<README> for how to
+use the manual topology file F<netdisco-topology.txt>.
 
 =head2 14. Test Web Side
 
@@ -873,12 +920,16 @@ web front-end.  See F<README> for a description of the admin daemon.
 
 The daemon will be respawned daily in the Cron job listed above. 
 
+If you would like the Daemon to be started upon bootup, then add
+the following line to your F</etc/rc.d/rc.local> file :
+
+    su netdisco -c "/usr/local/netdisco/netdisco -p start"
 
 =head1 SUCCESS
 
 Once you have succeded come join the Netdisco User's mailing list at 
 L<http://netdisco.org> and pass on any hints you may have in the INSTALL process.
-It's a good place to keep up on new features and releases, and it's the best
+It's a good place to keep up on new features and releases, and it's B<the>
 place to ask any questions. 
 
 =cut
