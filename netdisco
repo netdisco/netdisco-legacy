@@ -41,7 +41,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode/;
 
-$VERSION = '0.92';
+$VERSION = '0.93-cvs';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -169,10 +169,16 @@ Discovers one device, stores its info, interfaces, and neighbors, and returns.
 sub discover{
     my $hostname = shift;
 
-    print "Discover($hostname)\n";
+    print "Discover($hostname) : ";
+
+    my $ip = getip($hostname);
+    if (in_subnets($ip,'discover_no')) {
+        print " Excluded from discovery in config file.\n";
+        return;
+    }
 
     my $device = get_device($hostname) or return;
-    my $ip     = $device->{ip};
+    $ip        = $device->{ip};
 
     # Store Device Info
     store_device($device);
@@ -791,7 +797,17 @@ sub arpnip {
 
     my $ip = getip($hostname);
 
-    print "arpnip($hostname)\n";
+    print "arpnip($hostname) : ";
+
+    unless (defined $ip){
+        print " Name does not resolve with DNS.\n";
+        return;
+    }
+
+    if (in_subnets($ip,'arpnip_no')) {
+        print "\n  Excluded from arpnipping in config file.\n";
+        return;
+    }
 
     &mac_getportmacs unless defined $PortMAC;
 
@@ -826,6 +842,8 @@ sub arpnip {
     }
     print "  Processed $arp_count ARP Cache entries.\n";
     $ArpTotal += $arp_count;
+
+    print "\n";
     
     # Fetch Subnets - Feature not implemented yet.
     #get_subnets($device);
@@ -1213,8 +1231,8 @@ sub macsuck{
         return;
     }
 
-    if (defined $CONFIG{macsuck_no} and defined $CONFIG{macsuck_no}->{$ip}) {
-        print "\n  Excluded from macsucking in config file.\n";
+    if (in_subnets($ip,'macsuck_no')) {
+        print " Excluded from macsucking in config file.\n";
         return;
     }
 
