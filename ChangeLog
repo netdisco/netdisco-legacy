@@ -3,11 +3,13 @@
 # $Id$
 
 0.93beta ()
-    * Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
-    + Added ability to escape pound sign and commas for use in config file as \# or \,
     + Added Feature [ 822720 ] Port Reporting
     + Added Feature [ 824521 ] Arpnip and Macsuck Exclusion lists
     + Added devices : Catalyst 4000, C3750, C3500XL
+    + Added ability to escape pound sign and commas for use in config file as \# or \,
+
+    * Fixed bug - Aliases listed on a device weren't sorted by IP.
+    * Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
     * Fixed bug in device.html where the 'resolve ips' setting wasn't being kept
     * Fixed random warning in SNMP::Info -- see its ChangeLog
     = next five items fixed by Bradley Baetz
