@@ -15,7 +15,7 @@ all:
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
-doc: $(SNMPLIBS) INSTALL README api_doc
+doc: $(SNMPLIBS) INSTALL README api_doc UPGRADE
 	cd doc && ln -fs ../README* ../INSTALL .
 	rm -f pod2htm*
 
@@ -26,6 +26,12 @@ $(SNMPLIBS):
 	$(POD2TEXT) $@ > doc/$(subst /,-,$(@:.pm=.txt))
     # Adds the <%text> </%text> tags to the HTML for mason
 	$(POD2HTML) $@ | bin/doc_munge > html/doc/$(subst /,-,$(@:.pm=.html))
+
+UPGRADE: doc/UPGRADE.pod
+	echo "Creating UPGRADE"
+	$(POD2TEXT) -l doc/UPGRADE.pod > UPGRADE
+	$(POD2HTML) doc/UPGRADE.pod | bin/doc_munge > html/doc/UPGRADE.html
+	$(POD2HTML) doc/UPGRADE.pod > doc/UPGRADE.html
 
 INSTALL: doc/INSTALL.pod
 	echo "Creating INSTALL"
