@@ -8,5 +8,7 @@ CREATE TABLE users (
     creation        TIMESTAMP DEFAULT now(),
     last_on         TIMESTAMP,
     port_control    boolean DEFAULT false,
-    admin           boolean DEFAULT false
+    admin           boolean DEFAULT false,
+    fullname        text,
+    note            text
                     );
