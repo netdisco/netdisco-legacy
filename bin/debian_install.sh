@@ -117,8 +117,8 @@ cd $curdir
 
 #snmp::info
 #wget http://aleron.dl.sourceforge.net/sourceforge/snmp-info/SNMP-Info-0.6.tar.gz
-tar zxvf SNMP-Info-0.6.tar.gz
-cd SNMP-Info-0.6
+tar zxvf SNMP-Info-0.?.tar.gz
+cd SNMP-Info-0.?
 perl Makefile.PL
 make install
 cd $curdir

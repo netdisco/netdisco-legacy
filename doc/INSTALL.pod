@@ -66,10 +66,14 @@ Netdisco was developed on a BSD system but should work on any
 system that Postgres, Perl, Apache, and Net-SNMP run on. 
 
 Linux is a sure bet.  Netdisco has been tested with Mandake 9.1 
-and includes specific notes to install with it.
+and includes specific notes to install with it.  Successful installs
+have been reported under Redhat, Mandrake and Debian.
 
 Windows will take a lot of massaging but should be possible under
-cygwin.
+Cygwin.
+
+For Debian Linux, read this whole document then see the install script
+in F<bin/debian_install.sh>.
 
 =head1 INSTALL
 
@@ -125,6 +129,9 @@ group in F</etc/groups>.
 Don't forget to logout and login after adding yourself to a group.
 
 =head2 4. PostgreSQL
+
+Netdisco runs Postgres as its database back-end.  A mySQL port 
+is reported to be in development.
 
 =head3 Install Postgres
 
