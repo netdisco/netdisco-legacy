@@ -478,7 +478,7 @@ sub topo_load_file {
             #print "    $dev $from_port $to $to_port \n" if $DEBUG;
 
             my $to_ip = &getip($to);
-            unless (length $to_ip){
+            unless (defined $to_ip and length $to_ip){
                 print "    Can't resolve $to in $line!\n";
                 next;
             }
@@ -2524,7 +2524,10 @@ Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
 =cut
 sub graph {
     my $no_batch = shift || 0;
-    &batch_mode('logs/graph') unless $no_batch;
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/graph") unless $no_batch;
     print "graph() - Creating Graphs.\n";
 
     eval "use GraphViz;";
