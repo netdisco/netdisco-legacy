@@ -173,7 +173,7 @@ No Results Found.
     <TR CLASS="match-<%++$odd%2%>">
         <TD><%$last_domain ne $n->{domain} ? $n->{domain} : '&nbsp;'%></TD>
         <TD><A HREF="node.html?node=<%$n->{mac}|u%>"><%$n->{mac}%></A></TD>
-        <TD><%$n->{domain} ? "\\$n->{domain}\\" : '' %><A HREF="node.html?node=<%$n->{nbname} |u%>"><%$n->{nbname} || '[None]'%></A></TD>
+        <TD><%$n->{domain} ? "\\\\$n->{domain}\\" : '' %><A HREF="node.html?node=<%$n->{nbname} |u%>"><%$n->{nbname} || '[None]'%></A></TD>
         <TD><%$n->{nbuser} || '[No User]' %> @
             <A HREF="node.html?node=<%$n->{ip} |u%>"><%$n->{ip}%></A>
         </TD>
