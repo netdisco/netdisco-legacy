@@ -5,6 +5,13 @@
 # Author: Max Baker <max@warped.org>
 # $Id$
 
+
+=head1 NAME
+
+netdisco - Internal API
+
+=cut
+
 use strict;
 # Add . to the library path
 use FindBin;
@@ -114,8 +121,13 @@ defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOrRtT]+/);
 exit;
 
-# run() - Event loop that calls discover as long as the 
-#        Discover_Queue has something in it.
+=over
+
+=item run() 
+
+Event loop that calls discover() as long as the @Discover_Queue has something in it.
+
+=cut
 sub run {
     my $root_device = shift;
     
@@ -172,7 +184,6 @@ sub run {
     which devices are in the database already.
 
 =cut
-
 sub load_old_devices {
     print "load_old_devices()\n" if $DEBUG;
     $OldDevices = sql_column('device',['ip','layers']);
@@ -363,7 +374,6 @@ If no cached values are available, or if they fail, then the values from the con
 tried.
 
 =cut
-
 sub get_device {
     my $hostname = shift;
     my $device   = undef;
@@ -420,7 +430,6 @@ sub get_device {
 Calls create_device() for a given VLAN using the modified community string.
 
 =cut
-
 sub get_vlan {
     my ($hostname,$vlan,$community,$version,$objtype) = @_;
 
@@ -444,7 +453,6 @@ If an optional version and subclass are given, no device type discovery is done.
 If a more specific device type is not found  (is probably not a network device) then -1 is returned.
 
 =cut
-
 sub create_device {
     my ($hostname,$community,$version,$objtype) = @_;
 
@@ -525,11 +533,12 @@ sub create_device {
     return $device;
 }
 
-=item device_root() - Looks to see if the device has a master IP instead of the
-one given.  Checks for root_ip() method, then tries to lookup the reverse entry for sysName.0
+=item device_root() 
+
+Looks to see if the device has a master IP instead of the one given.  
+Checks for root_ip() method, then tries to lookup the reverse entry for sysName.0
 
 =cut
-
 sub device_root {
     my $device = shift;
     
@@ -550,10 +559,11 @@ sub device_root {
     return $ip;
 }
 
-=item store_device() - Calls all the global methods and sends the results off to the database
+=item store_device() 
+
+Calls all the global methods and sends the results off to the database
 
 =cut
-
 sub store_device {
     my $device = shift;
 
@@ -645,11 +655,12 @@ sub store_device {
                     \%store);
 }
 
-=item store_interfaces() - Gets all the interface information.  Deletes the old 
+=item store_interfaces() 
+
+ets all the interface information.  Deletes the old 
 interface entries in device_port and puts in new ones.
 
 =cut
-
 sub store_interfaces { 
     my $device = shift;
     
@@ -706,11 +717,13 @@ sub store_interfaces {
     print "\n";
 }
 
-=item find_neighbors() - Finds all the CDP information on the device and stores the results in
-device_node.  Adds to the @Discover_Queue
+=item find_neighbors() 
+
+Finds all the CDP information on the device and stores the results in device_node.  
+
+Adds to the @Discover_Queue
 
 =cut
-
 sub find_neighbors {
     my $device = shift;
    
@@ -829,24 +842,25 @@ sub macwalk {
     &end;
 }
 
-=item mac_getportmacs() - Fills the global %PortMAC with MAC addresses of 
-ports already discovered.  This is to make sure we don't mac-suck existing
-ports, such as VLANs.
+=item mac_getportmacs() 
+
+Fills the global %PortMAC with MAC addresses of ports already discovered.  
+This is to make sure we don't mac-suck existing ports, such as VLANs.
 
 =cut
-
 sub mac_getportmacs {
     print "mac_getportmacs()\n" if $DEBUG;
     $PortMAC = sql_column('device_port',['mac','ip']); 
 }
 
-=item macsuck() - Walks forwarding table for a specific device. 
-    Gets mac addresses that are listed in physical ports that do not 
-    have a neighbor listed.   If the device has VLANs, it will walk each
-    VLAN and get the MAC addresses from there.
+=item macsuck() 
+
+Walks forwarding table for a specific device. 
+Gets mac addresses that are listed in physical ports that do not 
+have a neighbor listed.   If the device has VLANs, it will walk each
+VLAN and get the MAC addresses from there.
 
 =cut
-
 sub macsuck{
     my $hostname = shift;
 
@@ -908,11 +922,12 @@ sub macsuck{
     insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$now});
 }
 
-=item walk_fwtable()  - Walks the Forwarding table from the BRIDGE-MIB
+=item walk_fwtable()  
+
+Walks the Forwarding table from the BRIDGE-MIB
 for the given device, and then adds MAC addresses to the node table.
 
 =cut
-
 sub walk_fwtable {
     my ($device,$dbports,$interfaces) = @_;
 
@@ -1011,8 +1026,11 @@ sub walk_fwtable {
     print "\n" unless $DEBUG;
 }
 
-=item arpwalk() - Visits every Layer 3 device and trys to get its ARP Cache.  Calls arpnip() for
-each device.  
+=item arpwalk() 
+
+Visits every Layer 3 device and trys to get its ARP Cache.  
+
+Calls arpnip() for each device.  
 
 =cut
 sub arpwalk {
@@ -1035,7 +1053,9 @@ sub arpwalk {
     &end;
 }
 
-=item arpnip() - Connects to device and reads its ARP cache. Then adds entries to node_ip table. 
+=item arpnip() 
+
+Connects to device and reads its ARP cache. Then adds entries to node_ip table. 
 
 =cut
 sub arpnip {
@@ -1080,9 +1100,10 @@ sub arpnip {
 
 =item expire_device(device,expire_nodes?)
 
-    Removes device from the database
-    Set second argument to true to remove all the connected nodes and their 
-        IP mappings as well.
+Removes device from the database
+
+Set second argument to true to remove all the connected nodes and their 
+IP mappings as well.
 
 =cut
 sub expire_device {
@@ -1120,8 +1141,9 @@ sub expire_device {
 
 =item expire_nodes(device,archive_only)
 
-    Removes entries from node and node_ip for a given device.
-    Set archive_only to 1 to archive the nodes on the device.
+Removes entries from node and node_ip for a given device.
+
+Set archive_only to 1 to archive the nodes on the device.
 
 =cut
 sub expire_nodes {
@@ -1203,11 +1225,15 @@ sub change_device_ip {
     
 }
 
-=item db_clean() - Removes all the entries in node_ip that are 
-switch ports. 
+=item db_clean() 
+
+Removes all the entries in node_ip that are switch ports. 
+
+Checks for nodes on non existant ports and prints a warning
+
+Removes nodes that are on uplink ports.
 
 =cut
-
 sub db_clean {
     print "Database Cleanup : \n";
     # Grab existing mac addresses for switch ports
@@ -1256,7 +1282,9 @@ sub db_clean {
     print "Done.\n"; 
 }
 
-=item alias_clean() - Routine to clean out devices that are now listed as aliases of another device. This is
+=item alias_clean() 
+
+Routine to clean out devices that are now listed as aliases of another device. This is
 usually necessary after a device has been merged into another one.
 
 =cut
@@ -1279,7 +1307,9 @@ sub alias_clean {
     sql_do(qq/DELETE FROM device_ip WHERE ip NOT IN (SELECT ip FROM device)/);
 }
 
-=item graph() - Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
+=item graph() 
+
+Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
 
 =cut
 sub graph {
@@ -1326,8 +1356,11 @@ sub graph {
     }
 }
 
-=item graph_each(Graph_obj, name) - Generates subgraph. Called from graph().  Calls graph_node().  Does
-actuall GraphViz calls.
+=item graph_each(Graph_obj, name) 
+
+Generates subgraph. Called from graph().  Calls graph_node().  
+
+Does actual GraphViz calls.
 
 =cut
 sub graph_each  {
@@ -1429,8 +1462,9 @@ sub graph_each  {
 
 }
 
-=item graph_addnode(graphviz_obj,node_ip)  - Checks for mapping settings in config file and 
-adds node to the GraphViz object.
+=item graph_addnode(graphviz_obj,node_ip) 
+
+Checks for mapping settings in config file and adds node to the GraphViz object.
 
 =cut
 sub graph_addnode {
@@ -1482,7 +1516,10 @@ sub graph_addnode {
     $gv->add_node($ip, %node);
 }
 
-=item backup() - Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
+=item backup() 
+
+Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
+
 Calls mac_dump(), arp_dump(), and dev_dump().
 
 =cut
@@ -1512,10 +1549,13 @@ sub backup {
 
 }
 
-=item mac_dump() - Dumps the node table out to mac_current.txt and 
-                   mac_archive.txt.   Adds a day stamp, no time-stamp.
-                   May need to be changed if $nodes takes
-                   up too much memory.
+=item mac_dump() 
+
+Dumps the node table out to mac_current.txt and mac_archive.txt.
+Adds a day stamp, no time-stamp.
+
+May need to be changed if $nodes takes up too much memory.
+
 =cut
 sub mac_dump {
     my $dir=shift;
@@ -1574,7 +1614,9 @@ sub mac_dump {
     $BatchMode=$old_batch;
 }
 
-=item arp_dump(dir) - Dumps node_ip table to files arp_current and arp_archive.
+=item arp_dump(dir) 
+
+Dumps node_ip table to files arp_current and arp_archive.
 
 =cut
 sub arp_dump {
@@ -1630,8 +1672,9 @@ sub arp_dump {
 
 }
 
-=item dev_dump() - Dumps out the device,device_ip, and topology info from device_port to
-file 'devices'
+=item dev_dump() 
+
+Dumps out the device,device_ip, and topology info from device_port to file 'devices'.
 
 =cut
 sub dev_dump {
@@ -1681,8 +1724,11 @@ sub dev_dump {
     $BatchMode=$old_batch;
 }
 
-=item sort_ip() - Used by sort {} calls to sort by IP octet.  If passed two hashes, 
-will sort on hash_key remote_ip.
+=item sort_ip() 
+
+Used by sort {} calls to sort by IP octet.  
+
+If passed two hashes, will sort on the key "remote_ip".
 
 =cut
 sub sort_ip {
@@ -1706,7 +1752,9 @@ sub sort_ip {
     return 0;
 }
 
-=item topo_load_file(file) - Loads and parses manual topography file. 
+=item topo_load_file(file) 
+
+Loads and parses manual topography file. 
 
 =cut
 sub topo_load_file {
@@ -1818,8 +1866,9 @@ sub topo_add_link {
     }
 }
 
-=item schlop(file,topo_only_flag) - Used to start a discovery based on topography file.  
-Will then proceed to do an initial mac_suck() and arp_nip() unless the topo_only_flag is set.
+=item schlop(file,topo_only_flag) 
+
+Used to start a discovery based on topography file.  Will then proceed to do an initial mac_suck() and arp_nip() unless the topo_only_flag is set.
 
 =cut
 sub schlop {
@@ -1908,9 +1957,6 @@ sub refresh_all {
         }
     }
 
-    #print "Reloading manual topology info...\n";
-    #schlop($CONFIG{topofile},1);
-
     &end;
 
 }
@@ -1990,3 +2036,5 @@ Commands:
     
 _end_usage_
 }
+
+=back
