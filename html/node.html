@@ -64,11 +64,12 @@ $expandoui => 0
 @vendors   => ()
 @oui       => ()
 $specific  => ''
+$sort      => 'mac'
 </%args>
 <%shared>
 my $matches = [];
 my $domain = $netdisco::CONFIG{domain};
-my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node);
+my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node,$arg_sort);
 my $odd=1; my $ran_query = 0;
 my @search = (); my $ouis = undef; my @cols = ();
 my $vendors = {
@@ -93,6 +94,11 @@ my $vendors = {
             '[No OUI]' => qr/\[NA\]/,
             'Avaya'  => qr/avaya/i,
               }; 
+
+my %sort_type = ('mac' => 'MAC Address',
+                 'dev' => 'Device Name',
+                 'oui' => 'Vendor',
+                );
 
 # Cheers to the makers of Kismet for their extensive AP list
 # which is added to here.
@@ -256,6 +262,7 @@ if ($specific) {
 # Pass the form argument to the global for <%methods>
 $arg_dates = $dates; @arg_vendors = @vendors; @arg_oui = @oui;
 $arg_archive = $archive; $arg_showoui = $showoui; $arg_node = $node;
+$arg_sort = $sort;
 
 
 # ----------------- Node Search -------------------------
@@ -493,10 +500,25 @@ No results found.
     <TH><%$c->[1]%></TH>
 % }
 </TR>
-% $odd=0;
-% foreach my $match (@$matches) {
-%     my $active = $match->{active};
-%     my $type   = $match->{type};
+<%perl>
+my @sorted_matches; $odd=0;
+if      ($arg_sort eq 'mac'){
+    @sorted_matches = sort {$a->{mac} cmp $b->{mac}} @$matches;
+} elsif ($arg_sort eq 'dev'){
+    # sort by dns/ip then by port
+    @sorted_matches = sort { ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch}) 
+                             or &sort_port } @$matches;
+} elsif ($arg_sort eq 'oui'){
+    # sort by vendor then device then port
+    @sorted_matches = sort { $a->{oui} cmp $b->{oui} or
+                             ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch})  or
+                             &sort_port
+                           } @$matches;
+}
+foreach my $match (@sorted_matches) {
+    my $active = $match->{active};
+    my $type   = $match->{type};
+</%perl>
 <TR CLASS="match-<% ++$odd % 2 %>">
 %     foreach my $c (@cols) {
 %           my $col = $c->[0];
@@ -606,6 +628,7 @@ $match
 <INPUT TYPE="hidden" NAME="expandoui" VALUE=1>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
 <TR>
+    <TD ROWSPAN=3 WIDTH=8>&nbsp;</TD>
     <TD>Vendor:</TD>
     <TD><SELECT MULTIPLE NAME="vendors" SIZE=5>
 %       foreach my $vendor (sort keys %$vendors){
@@ -620,10 +643,18 @@ $match
 %       } 
         
         </SELECT></TD>
+    <TD ROWSPAN=3 WIDTH=8>&nbsp;</TD>
 </TR>
 <TR>
     <TD>Archived Data:</TD>
-    <TD COLSPAN=3><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$arg_archive ? 'CHECKED' : '' %></TD>
+    <TD><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$arg_archive ? 'CHECKED' : '' %></TD>
+    <TD>Sort By:</TD>
+    <TD><SELECT NAME="sort">
+%           foreach my $s (sort keys %sort_type){
+            <OPTION VALUE="<%$s%>"<%$arg_sort eq $s ? ' SELECTED' : ''%>><%$sort_type{$s} |h%>
+%           }
+        </SELECT>
+    </TD>
 </TR>
 <TR>
     <TD COLSPAN=4><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
@@ -643,14 +674,21 @@ $match
     <TH>Count</TH>
     <TH>Company</TH>
 </TR>
-%foreach my $search (@search){
-%   my $count   = sql_scalar('node',['count(distinct(mac))'],
-%                                   {'mac' => "$search\%" });
-%   my $oui = lc(substr($search,0,8));
+<%perl>
+# Grab Counts
+my %ouicount;
+foreach my $search (@search){
+    $ouicount{$search} = sql_scalar('node',['count(distinct(mac))'],
+                                           {'mac' => "$search\%" });
+}
+foreach my $search (sort {$ouicount{$b} <=> $ouicount{$a} } @search) {
+    my $oui = lc(substr($search,0,8));
+    my $count = $ouicount{$search};
+</%perl>
 <TR CLASS="match-<%++$odd%2%>">
-    <TD><%$search%></TD>
+    <TD><A HREF="<%$r->uri%>?oui=<%$search|u%>"><%$search%></A></TD>
     <TD>(<%$count%>)</TD>
-    <TD><% $ouis->{$oui} %></TD>
+    <TD><% $ouis->{$oui} || '' %></TD>
 </TR>
 %}
 </TABLE>
