@@ -61,7 +61,7 @@
 </BODY>
 </HTML>
 <%init>
-my $session_timeout = $netdisco::CONFIG{web_session} || 60; # min
+my $session_timeout = $netdisco::CONFIG{websession} || 60; # min
 
 my $ok = 0;
 # Authentication - Logged in and not expired?
