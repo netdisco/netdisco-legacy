@@ -953,9 +953,22 @@ This option was used to speed up MACsucking on certain Cisco Catalyst family dev
 where you have to connect to each VLAN with SNMP to get the forwarding tables.   Certain
 default VLANs will not answer to SNMP, and Netdisco has to wait for them to timeout. 
 
+VLANs listed here are overrided regardless of L<macsuck_all_vlans> value.
+
 =item macsuck_timeout
 
 SECONDS. Timeout for devices when mac sucking.
+
+=item macsuck_all_vlans
+
+BOOLEAN.  Set to macsuck all VLANs, not just the ones that are being used on ports.
+
+This is a debug option. Set this if you think that the option of not macsucking VLANs that
+aren't in use on device ports is some how interfering.  
+
+Setting this would revert macsuck to the same behavior as 0.93 and before.
+
+Does not override L<macsuck_no_vlan>.
 
 =item nmis_dump
 
@@ -1350,7 +1363,28 @@ as nodes in the B<nodes> table.
 
 If the device supports the v_name() call, and has VLANs, then the MacSucker tries to 
 connect to each VLAN and macksuck() each VLAN.  This is required for some devices like
-the Cisco Catalyst 5000 series.
+the Cisco Catalyst 5000, 3500, 1900, 6500 series.
+
+A few speedups are implemented for the devices that require each VLAN to visited:
+
+=over
+
+=item L<macsuck_no_vlan>
+
+This config file directive lists VLANs that exist in every device by default 
+but do not ever have MAC addresses attached to them.
+
+=item L<macsuck_no>
+
+Use this config file directive to exclude problem devices.
+
+=item Macsuck only happens on VLANS listed under ports
+
+(New 0.94) Many VLANs may be on the device or in the vtpdomain, but only a few of them 
+may be in use on device_ports.  Macsuck will not try to visit the VLANs that are
+not in use on device ports.  See L<macsuck_all_vlans> to override this.
+
+=back
 
 The original MacSucker was written by Mark Boolootian at UCSC.
 

@@ -1,6 +1,6 @@
 NAME
 
-    Netdisco 0.93 - README
+    Netdisco 0.94 - README
 
 AUTHOR
 
@@ -424,6 +424,16 @@ USING NETDISCO
         To turn this feature off uncheck the "Port Control" checkbox from
         all users in the "Admin Panel".
 
+        By default Netdisco will be allowed to shut off
+
+            - Switch Ports
+            - IP Phones
+            - Router Ports that are NOT uplinks
+
+        By setting certain config file directives you can allow Netdisco to
+        shutoff uplink ports and VLAN interfaces. But this is REALLY NOT
+        RECOMMENDED. See below for the required commands.
+
     Web Console
         The Web Console allows netdisco to front-end the web interface of a
         switch or router. Traffic can then be routed over https, through
@@ -526,6 +536,16 @@ USING NETDISCO
         Admin Panel. After first installing Netdisco you need to add an
         admin user by running -u.
 
+    Migrating the Users table to a new host
+        If you are moving your Netdisco install over to another machine and
+        you want to keep your users table, here is the process :
+
+            source$ pg_dump -a -d -U netdisco -t users netdisco > user_dump.sql
+            source$ scp user_dump.sql dest:
+
+            dest$ cd /usr/local/netdisco/sql
+            dest$ ./pg_run /path/to/user_dump.sql
+
     Localhost (127.0.0.1) is showing up on CDP Links
         See "How the Switch Selects the IP Address To Include in Outbound
         CDP Packets" in
@@ -561,21 +581,26 @@ USING NETDISCO
         4. Restart Apache
                 su - -c "/usr/local/apache/bin/apachectl graceful"
 
-        5. Run VACUUM FULL ANALYZE VERBOSE in psql
+        5. Check to see if any netdisco jobs are running and wait for them
+        or kill them
+                ps
+                killall netdisco
+    
+        6. Run VACUUM FULL ANALYZE VERBOSE in psql
                 /usr/local/netdisco/sql/pg_run
                 VACUUM FULL ANALYZE VERBOSE;
 
-        6. Restart Postgres (just for fun)
+        7. Restart Postgres (just for fun)
                 su - -c "/usr/local/etc/rc.d/010.pgsql restart" 
 
-        7. Uncomment lines in httpd.conf
-        8. Restart Apache
+        8. Uncomment lines in httpd.conf
+        9. Restart Apache
                 su - -c "/usr/local/apache/bin/apachectl graceful"
 
-        Reload crontab for user netdisco
+        10. Reload crontab for user netdisco
                 su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
 
-        Restart Admin Daemon
+        11. Restart Admin Daemon
                 su - netdisco -c "/usr/local/netdisco/netdisco -p start"
 
   Topology Information
@@ -800,8 +825,24 @@ Config File
         SNMP to get the forwarding tables. Certain default VLANs will not
         answer to SNMP, and Netdisco has to wait for them to timeout.
 
+        VLANs listed here are overrided regardless of macsuck_all_vlans
+        value.
+
     macsuck_timeout
         SECONDS. Timeout for devices when mac sucking.
+
+    macsuck_all_vlans
+        BOOLEAN. Set to macsuck all VLANs, not just the ones that are being
+        used on ports.
+
+        This is a debug option. Set this if you think that the option of not
+        macsucking VLANs that aren't in use on device ports is some how
+        interfering.
+
+        Setting this would revert macsuck to the same behavior as 0.93 and
+        before.
+
+        Does not override macsuck_no_vlan.
 
     nmis_dump
         FILENAME. Set this option to have nightly() (-B) dump an NMIS
@@ -908,17 +949,41 @@ Config File
     snmpretries
         INT. Settings for 'Retries' field passed to SNMP::Session
 
-  Web Settings
-
-    port_info
-        BOOLEAN. Turns on the "Port Info" and "Jack Search" features.
+  Port Control
 
     portctl_email
         EMAIL. Address that reports of use of "Port Control" are sent to.
 
+    portctl_nophones
+        BOOLEAN. Set to True to make sure an IP Phone port never can be
+        turned off/on. Default false.
+
     portctl_timeout
         SECONDS. Amount of time to wait for a response from the admin
         daemon.
+
+    portctl_uplinks
+        BOOLEAN. Set to True to allow Netdisco to be able to disable
+        Uplinks. (Router Interfaces too)
+
+        Default False.
+
+        EXTREMELY VERY DANGEROUS - Turning off uplinks will take out chunks
+        of your network.
+
+    portctl_vlans
+        BOOLEAN. Set to True to allow Netdisco to be able to disable VLAN
+        interfaces.
+
+        Default False.
+
+        EXTREMELY VERY DANGEROUS - Turning off a VLAN could take out most of
+        your network.
+
+  Web Settings
+
+    port_info
+        BOOLEAN. Turns on the "Port Info" and "Jack Search" features.
 
     secure_server
         BOOLEAN. If a secure server is present.
@@ -1091,8 +1156,25 @@ DESIGN
 
         If the device supports the v_name() call, and has VLANs, then the
         MacSucker tries to connect to each VLAN and macksuck() each VLAN.
-        This is required for some devices like the Cisco Catalyst 5000
-        series.
+        This is required for some devices like the Cisco Catalyst 5000,
+        3500, 1900, 6500 series.
+
+        A few speedups are implemented for the devices that require each
+        VLAN to visited:
+
+        macsuck_no_vlan
+            This config file directive lists VLANs that exist in every
+            device by default but do not ever have MAC addresses attached to
+            them.
+
+        macsuck_no
+            Use this config file directive to exclude problem devices.
+
+        Macsuck only happens on VLANS listed under ports
+            (New 0.94) Many VLANs may be on the device or in the vtpdomain,
+            but only a few of them may be in use on device_ports. Macsuck
+            will not try to visit the VLANs that are not in use on device
+            ports. See macsuck_all_vlans to override this.
 
         The original MacSucker was written by Mark Boolootian at UCSC.
 
@@ -1171,11 +1253,17 @@ THANKS
     Jean-Philippe Luiggi (sagem.com), A.L.M Buxey (Loughborough University,
     UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov), George Pavel
     (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
-    (saintmarys.edu), Revital Shvarzman (York U, Ontario).
+    (saintmarys.edu), Revital Shvarzman (York U, Ontario), Walter Gould
+    (Auburn University), Lindsay Druet and Colin Palmer (U of Waikato,
+    Hamilton NZ)
 
     As well as these people for their donations :
 
-    Richard Silver (East Alabama Medical Center)
+     Richard Silver (East Alabama Medical Center)
+     Linda Rosewood (UCSC)
+     "6pax4max!"    (???)
+     Dusty Hall     (Auburn University)
+     Walter Gould   (Auburn University)
 
     And probably lots of other people I forgot to put in here. Not to
     mention the authors and communities of all the other software that
