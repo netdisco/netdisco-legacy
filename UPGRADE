@@ -79,10 +79,10 @@ UPGRADING
 
   Version Notes
 
-    0.91 -> 0.92
+    v0.91 -> 0.92
         No version specific notes for this upgrade.
 
-    0.90 -> 0.91
+    v0.90 -> 0.91
         netdisco_apache.conf
             Double check that your copy of netdisco_apache.conf has the
             settings right for all the "session_*" directives.

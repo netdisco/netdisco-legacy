@@ -100,11 +100,11 @@ to the old one.  This helps get rid of old bugs too.
 
 =over
 
-=item 0.91 -> 0.92
+=item v0.91 -> 0.92
 
 No version specific notes for this upgrade.
 
-=item 0.90 -> 0.91
+=item v0.90 -> 0.91
 
 =over
 
