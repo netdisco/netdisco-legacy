@@ -361,7 +361,7 @@ sub topo_add_link {
         # See if from -> to direction conflicts
         if ((defined $link_from->{remote_ip} and $link_from->{remote_ip} ne $link->{to})
           or(defined $link_from->{remote_port} and $link_from->{remote_port} ne $link->{to_port})) {
-            print "! topo_add_link() - $link->{from} / $link->{from_port} has discovered neighbor ",
+            print "    !topo_add_link() - $link->{from} / $link->{from_port} has discovered neighbor ",
                   "$link_from->{remote_ip} / $link_from->{remote_port} which conflicts with ",
                   "forced info of $link->{to} / $link->{to_port} \n";
         }
@@ -369,7 +369,7 @@ sub topo_add_link {
         # See if to -> from direction conflicts
         if ((defined $link_to->{remote_ip} and $link_to->{remote_ip} ne $link->{from})
           or(defined $link_to->{remote_port} and $link_to->{remote_port} ne $link->{from_port})) {
-            print "! topo_add_link() - $link->{to} / $link->{to_port} has discovered neighbor ",
+            print "    !topo_add_link() - $link->{to} / $link->{to_port} has discovered neighbor ",
                   "$link_to->{remote_ip} / $link_to->{remote_port} which conflicts with ",
                   "forced info of $link->{from} / $link->{from_port} \n";
         }
@@ -378,7 +378,7 @@ sub topo_add_link {
                         {'ip' => $link->{from}, 'port' => $link->{from_port} },
                         {'remote_ip' => $link->{to}, 'remote_port' => $link->{to_port} }
                         );
-        print "  topo_add_link() - Failed to add $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n" if $rv;
+        print "    topo_add_link() - Failed to add $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n" if $rv;
     }
 }
 
@@ -432,7 +432,7 @@ sub topo_load_file {
             } else {
                 #print "    $line ($dev)\n" if $DEBUG;
             }
-            $DeviceTopo{$dev} = [];
+            $DeviceTopo{$dev} = [] unless defined $DeviceTopo{$dev};
         }
     }
     close (DEVS);
@@ -669,6 +669,13 @@ table "oui".
 
 =cut
 sub parse_oui {
+    print "parse_oui()\n";
+    unless (-r 'oui.txt'){
+        print "  oui.txt not found!\n";
+        die "Please run ''make oui'' to download oui.txt.  Or read INSTALL\n";
+    }
+    print "Removing old contents of oui table in database.\n";
+    sql_do(qq/DELETE FROM oui WHERE true/);
     print "Schlopping contents of oui.txt to database.\n";
     my %OUI;
     open (OUI, "<oui.txt") or die "Can't open OUI. $!\n";
@@ -686,11 +693,12 @@ sub parse_oui {
         # make 00-00-00 into 00:00:00
         $oui =~ s/-/:/g;
         print "$oui : $company\n" if $DEBUG;
-        insert_or_update('oui',{'oui' => $oui, 'company' => $company },
-                         {'oui' => $oui, 'company' => $company } );
+        insert_or_update('oui',{},{'oui' => $oui, 'company' => $company } );
         $oui_count++;
     }
-    print "Found $oui_count entries in oui.txt\n";
+    print "Added $oui_count entries from oui.txt\n";
+    print "Cleaning up Database table OUI.\n";
+    sql_do(qq/VACUUM FULL ANALYZE VERBOSE oui/);
 }
 
 =item timeout()
