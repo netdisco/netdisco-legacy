@@ -1,9 +1,19 @@
 <h3>Administration Panel - Device Control</h3>
+<h4>Device Control</h4>
+<FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
+<& SELF:err &>
+% if ($need_confirm) {
+<& SELF:confirm &> 
+% } else { 
+<& SELF:dev_control &>
+% }
+</FORM>
 <h4>Job Queue</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=GET> 
-<& SELF:list_queue &>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
+<& SELF:list_queue &>
 <INPUT TYPE="submit" VALUE="Refresh Queue Listing">
 Finished Jobs: <SELECT NAME="old_jobs">
 % foreach my $num (qw/1 3 5 10 20 30 50 100/) {
@@ -17,16 +27,6 @@ Ignore Actions of type:
 % }
 </SELECT>
 [<A HREF="<%$r->uri%>">Reset</a>]
-</FORM>
-<h4>Device Control</h4>
-<FORM ACTION="<% $r->uri %>" METHOD=POST> 
-<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
-<& SELF:err &>
-% if ($need_confirm) {
-<& SELF:confirm &> 
-% } else { 
-<& SELF:dev_control &>
-% }
 </FORM>
 <%args>
 $dev      => undef
@@ -45,6 +45,7 @@ $port     => ''
 my $user      = $m->session->{user};
 my $is_admin  = $m->session->{user_admin};
 my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
+my $domain    = $netdisco::CONFIG{domain};
 my %actions = ( 
             # action       => [longname, confirm action?]
              'arpnip'      => ['ArpNip Device',0],
@@ -55,7 +56,7 @@ my %actions = (
              'refresh'     => ['Refresh Device',0]
            );
 # Globals
-my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types);
+my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,$arg_dev_text);
 my $need_confirm = 0; my $commit = 0; my $odd = 0;
 my %logs = ();
 my $err =  '';
@@ -79,14 +80,19 @@ $arg_debug = $debug;
 
 #..................... Device Control .............................
 
-# Resolve user entered device name to device_ip
-if ($cmd eq 'add' and $dev_text){
+# Load dev from db if given
+if ($dev){
+    $dev = getip($dev);
+    my $dns = hostname($dev);
+    $dns =~ s/\Q$domain\E//;
+    $arg_dev_text = $dns if (defined $dev and defined $dns);
+    $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
+} elsif ($dev_text){
+    # Resolve user entered device name to device_ip
     $dev=getip($dev_text);
     $arg_dev = $dev;
+    $arg_dev_text = $dev_text if defined $dev;
 } 
-
-# Load dev from db if given
-$db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
 
 # Confirm Given Action if required
 if ($cmd eq 'add' and $actions{$action}->[1] and $confirm ne 'ok') {
@@ -263,10 +269,8 @@ Debug Output
 <%method dev_control>
 <TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
 <TR>
-    <TD>Choose Device : </TD>
-    <TD>
-        <& SELF:list_dev &>
-    </TD>
+    <TD><% $arg_dev ? '&nbsp;' : 'Choose Device :'%></TD>
+    <TD><% $arg_dev ? '&nbsp;' : $m->comp('SELF:list_dev')%></TD>
     <TD ROWSPAN=2>Action : </TD>
     <TD ROWSPAN=2>
         <SELECT NAME="action" SIZE=3>
@@ -278,8 +282,11 @@ Debug Output
     </TD>
 </TR>
 <TR>
-    <TD>or Enter Device : </TD>
-    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text"></TD>
+    <TD>Enter Device : </TD>
+    <TD>
+        <INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text">
+        <% defined $arg_dev_text ? "<BR><FONT SIZE=-1><TT>($arg_dev_text)</TT></FONT>" : '' %>
+    </TD>
 </TR>
 <TR> 
     <TD COLSPAN=2>
@@ -300,7 +307,7 @@ Debug Output
 <SELECT NAME="dev" SIZE=4>
 % foreach my $dev (sort {$a->{dns} cmp $b->{dns}} @$devices){
 %   my $view = defined $dev->{dns} ? $dev->{dns} : $dev->{ip};
-%   $view =~ s/\Q$netdisco::CONFIG{domain}\E//; 
+%   $view =~ s/\Q$domain\E//; 
             <OPTION VALUE="<%$dev->{ip}|h%>"><%$view%>
 %}
         </SELECT>
