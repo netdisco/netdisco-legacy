@@ -36,6 +36,7 @@ my %port_cols = (
                  'mac'   =>  ['Port MAC',0],
                  'mtu'   =>  ['MTU',0],
                  'vlan'  =>  ['VLAN',1],
+                 'lastchange' => ['Last Change',0],
                 );
 
 my %device_info = (
@@ -442,12 +443,21 @@ foreach my $port (sort sort_port @$ports){
         my $colcheck = $port_cols{$col}->[1];
         next unless $colcheck;
         my $val = $port->{$col};
+        # Munge Port Columns
         if ($col eq 'duplex') {
             $val = defined $val ? $val : '[NA]';
             my $duplex_admin = $port->{duplex_admin};
             $duplex_admin = defined $duplex_admin ? $duplex_admin :
                 '[NA]';
             $val .=  "/$duplex_admin";
+        }
+        if ($col eq 'lastchange'){
+            # lastchange is a timestamp of the sysUpTime
+            # we subtract it from the current uptime to find out how many
+            # seconds*100 it was, then we subtract that from the current time to
+            # see when that was.
+            my $diff_sec = ($device->{uptime} - $val) / 100;  
+            $val = scalar localtime(time - $diff_sec);
         }
 </%perl>
         <TD CLASS="<%$class%>"><% $val || '' |h %></TD>
