@@ -84,6 +84,7 @@
 <DL>
     <DT>
     <DD><INPUT TYPE="submit" name="specific" VALUE="Broken Topology Links">
+    <DD><INPUT TYPE="submit" name="specific" VALUE="IP Phones not discovered through SNMP">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries">
     <DD><INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info">
@@ -232,15 +233,35 @@ if ($specific =~ /alias/i){
 #        and p.remote_ip is not null and p.remote_port is not null 
 #        order by p.ip;
     $matches = sql_rows('device_port p, device d',
-                           ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port'],
+                           ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port','p.remote_type','p.remote_id'],
                            {'d.ip' => \'p.ip',
                             'not exists' => \\'(select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port)',
                             'not exists ' => \\'(select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port)',
-                            'p.remote_ip' => \\'is not null', 'p.remote_port' => \\'is not null'}
+                            'p.remote_ip' => \\'is not null', 'p.remote_port' => \\'is not null',
+                            'p.remote_type' => \\ ' NOT ILIKE \'%ip_phone%\' OR p.remote_type IS NULL',
+                           }
                           ); 
     $where->{port}++;
     $where->{remote_port}++;
     $where->{remote_ip}++;
+    $where->{remote_id}++;
+    $where->{remote_type}++;
+
+} elsif ($specific =~ /ip.phone/i){
+    $matches = sql_rows('device_port p, device d',
+                           ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port','p.remote_type','p.remote_id'],
+                           {'d.ip' => \'p.ip',
+                            'not exists' => \\'(select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port)',
+                            'not exists ' => \\'(select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port)',
+                            'p.remote_ip' => \\'is not null', 'p.remote_port' => \\'is not null',
+                            'p.remote_type' => \\ ' ILIKE \'%ip_phone%\'', 
+                           }
+                          ); 
+    $where->{port}++;
+    $where->{remote_port}++;
+    $where->{remote_ip}++;
+    $where->{remote_id}++;
+    $where->{remote_type}++;
 }
 
 # Generalized Search Terms

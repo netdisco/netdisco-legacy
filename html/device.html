@@ -411,11 +411,13 @@ my $link = $r->uri() . "?ip=$devip";
 <%perl>
 # Display the Ports
 foreach my $port (sort sort_port @$ports){
-    my $remote_ip = $port->{remote_ip};
+    my $remote_ip   = $port->{remote_ip};
     my $remote_port = $port->{remote_port};
-    my $up_admin = $port->{up_admin} || '';
-    my $stp      = $port->{stp}      || '';
-    my $up       = $port->{up}       || '';
+    my $remote_id   = $port->{remote_id};
+    my $remote_type = $port->{remote_type};
+    my $up_admin    = $port->{up_admin} || '';
+    my $stp         = $port->{stp}      || '';
+    my $up          = $port->{up}       || '';
     # Check for current up
     my $class = $up eq 'down' ? 'port-down' : 'port-up';
     # Check for admin down
@@ -474,8 +476,12 @@ foreach my $port (sort sort_port @$ports){
             } else {
                 $name = $remote_ip;
             }
-            $name = "<SPAN CLASS=\"dead-link\">$name</SPAN>";
+            my $spanclass = (defined $remote_type and $remote_type =~ /ip.phone/i) ?
+                'ip-phone' : 'dead-link';
+            $name = "<SPAN CLASS=\"$spanclass\">$name</SPAN>";
             $name .= " ($remote_port)";
+            $name .= "<BR>&nbsp;&nbsp;&nbsp;($remote_type)" if defined $remote_type;
+            $name .= "/($remote_id)" if defined $remote_id;
             $link = "node.html?node=$remote_ip";
         }
 </%perl>
@@ -562,6 +568,7 @@ foreach my $port (sort sort_port @$ports){
     [<SPAN CLASS="port-off">Admin Disabled</SPAN>]
     [<SPAN CLASS="port-down">Link Down</SPAN>]
     [<SPAN CLASS="port-block">Blocking</SPAN>]
+    [<SPAN CLASS="ip-phone">IP Phone</SPAN>]
     (<SPAN CLASS="dead-link">Discovered Neighbor not accessible</SPAN>)
     </TD>
 </TR>
