@@ -671,38 +671,39 @@ This turns out to be an INDEX bloat problem on Postgres versions less than 7.4.
 Recently doing this on a Postgres 7.3 install changed the amount of space that i
 Netdisco's database was using from 16G to 400M !!!
 
-In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE>  from C<pg_run>.
+In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE> and C<REINDEX> from C<pg_run>.
 This command locks each table before it does the VACUUM, and therefor can be more through.
 It's a good idea to take netdisco down temporarily while you do this.  I do this about
 once a month, or when I notice it dragging down.  Use C<Netdisco Statistics> as a good metric
 of things slowing down.  This may get fixed with changes in VACUUM in Postgres 7.4 and above.
 
-Procedure for doing a vacuum full :
+Procedure for doing a vacuum full (as root):
 
 =over
 
 =item 1. Shutdown the admin daemon   
 
-    su - netdisco -c "/usr/local/netdisco/netdisco -p stop"
+    /usr/local/netdisco/bin/netdisco_daemon stop
 
 =item 2. Clear the cron tab for user netdisco
 
-    su - -c "crontab -u netdisco -r"
+    crontab -u netdisco -r
 
 =item 3. Comment out the netdisco config file Includes in httpd.conf
 
 =item 4. Restart Apache
 
-    su - -c "/usr/local/apache/bin/apachectl graceful"
+    /usr/local/apache/bin/apachectl graceful
 
 =item 5. Check to see if any netdisco jobs are running and wait for them or kill them
 
     ps
     killall netdisco
-    
+
 =item 6. Run REINDEX and  VACUUM FULL 
 
-    #before 
+Before:
+
     df -h
     /usr/local/netdisco/sql/pg_run
         # before comparison :
@@ -719,26 +720,35 @@ Procedure for doing a vacuum full :
         select relname, relpages from pg_class order by relpages desc;
         \q
 
-    # after
+After:
+
     df -h
 
 =item 7. Restart Postgres (just for fun)
 
-    su - -c "/usr/local/etc/rc.d/010.pgsql restart" 
+    /usr/local/etc/rc.d/010.pgsql restart 
+
+OR
+
+    /etc/rc.d/init.d/pgsql restart
+
+OR
+
+    /etc/rc.d/pgsql restart
 
 =item 8. Uncomment lines in httpd.conf
 
 =item 9. Restart Apache
 
-    su - -c "/usr/local/apache/bin/apachectl graceful"
+    /usr/local/apache/bin/apachectl graceful
 
 =item 10. Reload crontab for user netdisco
 
-    su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
+    crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
 =item 11. Restart Admin Daemon
 
-    su - netdisco -c "/usr/local/netdisco/netdisco -p start"
+    /usr/local/netdisco/bin/netdisco_daemon start
 
 =back
 
@@ -1539,7 +1549,7 @@ As well as these people for their donations :
 
  Richard Silver (East Alabama Medical Center)
  Linda Rosewood (UCSC)
- "6pax4max!"    (???)
+ "6pax4max!","31337" (???)
  Dusty Hall     (Auburn University)
  Walter Gould   (Auburn University)
  Frank Chatham  (Auburn University)

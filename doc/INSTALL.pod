@@ -15,9 +15,14 @@ Created by Max Baker.
 
 See list at the end of README of all the contributors.
 
+Netdisco was created at the University of California, Santa Cruz (UCSC),
+Networking and Technology Services (NTS) department.   UCSC continues to
+support the development of Netdisco by providing development servers and
+financial support.
+
 =head1 SUPPORT
 
-Netdisco is hosted by Source Forge.
+The Netdisco project is hosted by Source Forge.
 
 Please use the C<netdisco-users> mailing list for all problems and comments.
 
@@ -1080,16 +1085,42 @@ devices and Netdisco server.
 =head2 16. Start Admin Daemon
 
 The admin deaemon performs administration jobs that are requested from the
-web front-end.  See F<README> for a description of the admin daemon.  
+web front-end.  See F<README> for a description of the admin daemon.   
 
-    /usr/local/netdisco/bin/netdisco_deamon start
+    /usr/local/netdisco/bin/netdisco_daemon start
 
-The daemon will be respawned daily in the Cron job listed above. 
+The daemon will be respawned daily in the Cron job listed above.  This isn't 100%
+necessary, I just did in case the net-snmp libraries had any memory leaks.
 
-If you would like the Daemon to be started upon bootup, then add
-the following line to your F</etc/rc.d/rc.local> file :
+=head3 16.1 Make the Admin Daemon start at every boot
 
-    su netdisco -c "/usr/local/netdisco/netdisco -p start"
+If you would like the daemon to be started upon bootup, then do the following:
+
+=over
+
+=item Linux
+
+This is for Redhat/Mandrake/Fedora.  Debian and Gentoo might be a little different.
+
+    ln -s /usr/local/netdisco/bin/netdisco_daemon /etc/rc.d/init.d
+    chkconfig --add netdisco_daemon
+    chkconfig netdisco_daemon on
+
+Now you should be able to use this command: 
+
+    service netdisco_daemon {stop,start,restart,status}
+
+=item FreeBSD
+
+    ln -s /usr/local/netdisco/bin/netdisco_daemon /usr/local/etc/rc.d
+
+=item Other
+
+Add the following line to your F</etc/rc.d/rc.local> file :
+
+    /usr/local/netdisco/bin/netdisco_daemon start
+
+=back
 
 =head1 SUCCESS
 
@@ -1102,9 +1133,8 @@ L<http://netdisco.org> and pass on any hints you may have in the INSTALL process
 It's a good place to keep up on new features and releases, and it's B<the>
 place to ask any questions. 
 
-=head2 Donations
+=head2 Credits and Donations
 
-Netdisco is developed as a hobby and is not a commercial venture. 
 
 If you find Netdisco useful please consider donating to its developer.  Check
 out L<http://netdisco.org> for a Source Forge donation page and Amazon
