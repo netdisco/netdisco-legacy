@@ -664,7 +664,7 @@ sub make_graph {
 
     my $devs_raw = sql_rows('device',['ip','dns']);
     my $aliases = sql_column('device_ip',['alias','ip']);
-    my $links = sql_rows('device_port',['ip','remote_ip','speed'],{'remote_ip' => 'IS NOT NULL'});
+    my $links = sql_rows('device_port',['ip','remote_ip','speed','remote_type'],{'remote_ip' => 'IS NOT NULL'});
 
     my %devs;
     foreach my $dev (@$devs_raw){
@@ -679,6 +679,7 @@ sub make_graph {
         my $source = $link->{ip};
         my $dest   = $link->{remote_ip};
         my $speed  = $link->{speed};
+        my $type   = $link->{remote_type};
 
         # Check for Aliases 
         if (defined $aliases->{$dest} ){
@@ -692,6 +693,11 @@ sub make_graph {
             next;
         }
     
+        # Skip IP Phones
+        if (defined $type and $type =~ /ip.phone/i){
+            print "Skipping IP Phone. $source -> $dest ($type)\n" if $::DEBUG;
+            next;
+        }
         next if exists $link_seen{$source}->{$dest};
 
         push(@{$linkmap{$source}},$dest);
