@@ -703,7 +703,7 @@ sub end {
 
     if (defined $NbtTotal){
         my $nodes = scalar(keys(%$OldNodes));
-        my $pct   = sprintf("%.2f",$NbtTotal/$nodes);
+        my $pct   = sprintf("%2.2f",($NbtTotal/$nodes)*100);
         print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
         log('netbios',"$NbtTotal entries. $run_time minutes.") if $Log;
     }
