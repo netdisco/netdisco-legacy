@@ -35,7 +35,7 @@ while (my $line = <AP>){
     }
 
     #                         hex digits      colons
-    my $ap = substr($oui,0,($lastchunk*2 + ($lastchunk-1) ));
+    my $ap = lc(substr($oui,0,($lastchunk*2 + ($lastchunk-1)) ));
 
     my $vendor       = $entries[1];
     my $model        = $entries[2];
