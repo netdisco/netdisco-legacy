@@ -129,6 +129,7 @@ if ($ip) {
     foreach my $portreq (@$ports) {
         my $switch = $portreq->{ip};
         my $port   = $portreq->{port}; 
+        $portreq->{portdisp} = $portreq->{port}; 
 
         # Get count of log entries for this port
         $portreq->{logs} = sql_scalar('device_port_log',['count(id)'],{'ip'=>$switch,'port'=>$port});
@@ -152,12 +153,12 @@ if ($ip) {
 
         # Add aliases to display of port name
         if (defined $aliases and scalar keys %$aliases) {
-            foreach my $alias (keys %$aliases){
+            foreach my $alias (sort sort_ip keys %$aliases){
                 my $dns = $aliases->{$alias};
                 $dns = defined $dns ? $dns : '[No DNS]';
                 $dns =~ s/\Q$domain\E//;
                 
-                $portreq->{port} .= "<BR> $alias ($dns)";
+                $portreq->{portdisp} .= "<BR> $alias ($dns)";
             }
         }
     }
@@ -331,7 +332,7 @@ foreach my $item (sort keys %device_info) {
     if ($db_col eq 'aliases'){
         next unless scalar @$val;
         my @vals;
-       foreach my $alias (@$val){
+       foreach my $alias (sort { sort_ip($a->{alias}, $b->{alias}) } @$val){
             my $ip = $alias->{alias};
             my $dns = $alias->{dns};
             $dns = defined $dns ? $dns :
@@ -424,7 +425,7 @@ foreach my $port (sort sort_port @$ports){
     my $rowclass = (++$odd % 2 ) ? 'match-0': 'match-1';
 </%perl>
 <TR CLASS="<%$rowclass%>">
-    <TD CLASS="<%$class%>"><% $port->{port} %></TD>
+    <TD CLASS="<%$class%>"><% $port->{portdisp} %></TD>
 <%perl>
     foreach my $col (sort keys %port_cols){
         my $colname  = $port_cols{$col}->[0];
