@@ -1126,11 +1126,16 @@ Default : C<PrintError =E<gt> 1, AutoCommit =E<gt> 1>
 
 =item db_Pg_env
 
-HASH.  Environment variables to be set before running database calls.  
+HASH.  Environment variables to be set before running database calls.
+Separate multiple entries with commas.
 
 Mainly used for Oracle.
 
 Default : not set.
+
+Example :
+
+ db_Oracle_env  = ORACLE_HOME => /usr/local/oracle7, ORACLE_STUFF=>1
 
 =back
 

@@ -367,6 +367,21 @@ Make sure that the file in C</usr/local/etc/rc.d> is alright.
 Read the section in F<README> about Database Maintenance... every once in a
 while you may have to run a C<VACUUM> and C<REINDEX> by hand if things get too slow.
 
+=item [4.2.9] Remote Database (Optional)
+
+If you have postgres installed in a remote location then all you have
+to do is add that host information to the C<db_Pg> line in F<netdisco.conf>.
+
+    db_Pg = dbi:Pg:dbname=netdisco;host=HOSTNAME;port=PORT;
+
+On the Postgresql machine, allow your remote front end to contact the backend
+database. Here is a sample line in F<pg_hba.conf>.
+
+ #TYPE  DATABASE          USER            IP-ADDRESS              IP-MASK           METHOD
+ host   netdisco        netdisco         101.102.103.104         255.255.255.0       md5
+
+Don't forget to restart Postgres after changing the F<pg_hba.conf> file.
+
 =back
 
 =head2 5. SNMP
