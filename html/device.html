@@ -440,7 +440,7 @@ foreach my $port (sort sort_port @$ports){
             $val .=  "/$duplex_admin";
         }
 </%perl>
-        <TD CLASS="<%$class%>"><% $val || '&nbsp;' |h%></TD>
+        <TD CLASS="<%$class%>"><% $val || '' |h %></TD>
 %    }
 % # Connected Devices Column
         <TD ALIGN=LEFT>
