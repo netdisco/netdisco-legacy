@@ -999,7 +999,7 @@ sub create_device {
 
     # Default Values
     $args{Debug}         = $DEBUG;
-    $args{Verison}       = $CONFIG{snmpver} || 2       unless defined $args{Version};
+    $args{Version}       = $args{Version} || $CONFIG{snmpver} || 2;
     $args{Retries}       = $CONFIG{snmpretries} || 2   unless defined $args{Retries};
     $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
     $args{BulkWalk}      = 0                           if     defined $CONFIG{bulkwalk_off} and $CONFIG{bulkwalk_off};
