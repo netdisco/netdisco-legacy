@@ -21,6 +21,7 @@ $cdp = new SNMP::Info(
 		) 
     or die "Couldn't create connection on $host pw:$comm.\n" unless defined $cdp;
 
+
 $hascdp = $cdp->hasCDP() ? 'yes' : 'no';
 print "hascdp : $hascdp\n";
 print "cdpid  : " . $cdp->cdp_id() . "\n";
@@ -28,7 +29,9 @@ print "cdpid  : " . $cdp->cdp_id() . "\n";
 $ip = $cdp->c_ip();
 print "neighbors : ",join(',',values %$ip),"\n";
 
-my $interfaces = $cdp->interfaces();
+$interfaces = $cdp->interfaces();
+print "Found ", scalar(keys(%$interfaces)), " interfaces.\n";
+
 my %funcs = %SNMP::Info::CDP::FUNCS;
 my %if;
 foreach $ent (keys %funcs) {
@@ -50,3 +53,4 @@ foreach my $i (sort {$interfaces->{$c_if->{$a}} cmp $interfaces->{$c_if->{$b}} }
         print "    $col:$val\n";
     }
 }
+

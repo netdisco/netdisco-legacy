@@ -1,0 +1,18 @@
+# Netdisco ChangeLog 
+# netdisco.org
+# $Id$
+ 
+0.91beta (06/10/03)
+    + added feature [ 744605 ] Discover device from the admin panel
+    + Added version info for debugging in [About] (was network stats)
+    * Fixed Makefile bug for symlinking doc/ files
+    * Updated and fixed problems in INSTALL
+    * Fixed problem in netdisco_apache.conf for Apache::Session::Postgres
+    * Fixed session length bug (typo in autohandler)
+    * Fixed Device Inventory bug where "not in the last" was broken
+    * Updated graphing defs for GraphViz 0.9
+    * fixed bug [ 745764 ] Can't discover device that is listed as IP alias of other
+    * fixed bug [ 745746 ] BatchMode called for jobs in admin daemon
+
+0.90beta (5/16/03)
+    * First public release
