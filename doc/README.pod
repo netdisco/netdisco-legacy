@@ -676,26 +676,31 @@ Procedure for doing a vacuum full :
 
     su - -c "/usr/local/apache/bin/apachectl graceful"
 
-=item 5. Run VACUUM FULL ANALYZE VERBOSE in psql
+=item 5. Check to see if any netdisco jobs are running and wait for them or kill them
+
+    ps
+    killall netdisco
+    
+=item 6. Run VACUUM FULL ANALYZE VERBOSE in psql
 
     /usr/local/netdisco/sql/pg_run
     VACUUM FULL ANALYZE VERBOSE;
 
-=item 6. Restart Postgres (just for fun)
+=item 7. Restart Postgres (just for fun)
 
     su - -c "/usr/local/etc/rc.d/010.pgsql restart" 
 
-=item 7. Uncomment lines in httpd.conf
+=item 8. Uncomment lines in httpd.conf
 
-=item 8. Restart Apache
+=item 9. Restart Apache
 
     su - -c "/usr/local/apache/bin/apachectl graceful"
 
-=item Reload crontab for user netdisco
+=item 10. Reload crontab for user netdisco
 
     su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
 
-=item Restart Admin Daemon
+=item 11. Restart Admin Daemon
 
     su - netdisco -c "/usr/local/netdisco/netdisco -p start"
 
