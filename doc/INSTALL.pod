@@ -22,9 +22,10 @@ financial support.
 
 =head1 SUPPORT
 
-The Netdisco project is hosted by Source Forge.
+Netdisco is an Open Source project hosted by Source Forge.
 
-Please use the C<netdisco-users> mailing list for all problems and comments.
+Please use the C<netdisco-users> mailing list for all help, problems and comments.
+Developers, patches, and ideas are always welcome.
 
 L<http://lists.sourceforge.net/lists/listinfo/netdisco-users>
 
@@ -925,7 +926,10 @@ Change settings on lines:
 
 =item [9.3] netdisco.crontab
 
-Change C<!!center_network_device_here!!> to a network device that is well connected to the main
+This is where you control the frequency of data collection done by Netdisco.
+See section 15 of this document for details.
+
+Change C<center_network_device> to a network device that is well connected to the main
 segment by CDP/FDP/SONMP.
 
 
@@ -1069,18 +1073,34 @@ If you have problems, check the F<error_log> of apache for messages.
 =head2 15. Add Cron Jobs
 
 Once you're sure Netdisco is setup correctly, modify
-F<netdisco.crontab>.  Change the _center_device_ to one of your
-core routers or switches.
+F<netdisco.crontab>.  
 
-    vi netdisco.crontab
+ vi netdisco.crontab
+
+=over
+
+=item Network Discovery
+
+Change C<center_network_device> to one of your core routers or switches.
+
+=item Data Collection
+
+You may want to fine-tune these jobs to your network.  If jobs run too frequent
+and overlap, nothing bad will happen, it's just higher load on your network
+devices and Netdisco server.
+
+Once Netdisco has been running for a day, look at the C<BackEnd Log> in the web
+browser and see how long each of the jobs is taking to finish.  If there is overlap,
+for example if your arpnip is taking over 60 minutes or your macsuck is taking
+over 120 minutes, then consider decreasing the frequency of these jobs as to not
+cause extra load on your network devices.
+
+=back
 
 Now set the crontab to the C<netdisco> user (as root).
 
     crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
-You may want to fine-tune these jobs to your network.  If jobs run too frequent
-and overlap, nothing bad will happen, it's just higher load on your network
-devices and Netdisco server.
 
 =head2 16. Start Admin Daemon
 
