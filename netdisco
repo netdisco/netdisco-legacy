@@ -961,15 +961,17 @@ sub device_root {
     my $root_ip = $device->root_ip();
     return $root_ip if (defined $root_ip and length($root_ip));
 
-    # Check the reverse of sysName.0
-    my $name   = $device->name();
-    my $nameip = &getip($name);
 
-    my $ip = (defined $nameip and length($nameip)) ? 
-             $nameip :
-             $foundip ;
+    # Check the reverse of sysName.0 and use it for our real_ip?
+    if (defined $CONFIG{reverse_sysname} and $CONFIG{reverse_sysname} =~ /^(1|t|y|si)/i){
+        my $name   = $device->name();
+        my $nameip = &getip($name);
+
+        print "  device_root(sysName.0 IP: $nameip Found IP:$foundip\n" if $DEBUG;
+        return $nameip if (defined $nameip and length($nameip));
+    }
     
-    return $ip;
+    return $foundip;
 }
 
 =item find_neighbors() 

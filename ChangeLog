@@ -2,6 +2,9 @@
 # netdisco.org
 # $Id$
 
+0.93beta ()
+    - Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
+
 0.92beta (08/14/03)
     + Added feature [753750] Export to NMIS style config file
     + Changed from GetOpt::Std to GetOpt::Long (running out of alphabet)

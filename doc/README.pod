@@ -782,6 +782,12 @@ INT. SNMP Port to list in nmis_dump file.  Default C<161>
 
 =back
 
+=item reverse_sysname
+
+BOOLEAN.  Turn this on to have Netdisco do a reverse lookup of the sysName.0 field to use
+as the managment IP address for a device.  See bug 810939 and device_root() for more info.
+Default C<false> 
+
 =item topofile
 
 FILE. Full path of the file that contains manual topology information.  Defaults to
