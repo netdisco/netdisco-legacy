@@ -34,6 +34,7 @@ INSTALL: doc/INSTALL.pod
 	echo "Creating INSTALL"
 	$(POD2TEXT) -l doc/INSTALL.pod > INSTALL
 	$(POD2HTML) doc/INSTALL.pod | bin/doc_munge > html/doc/INSTALL.html
+	$(POD2HTML) doc/INSTALL.pod > doc/INSTALL.html
 
 api_doc:
 	echo "Creating Backend API docs"
@@ -47,6 +48,7 @@ README: doc/README.pod
 	echo "Creating README"
 	$(POD2TEXT) -l doc/README.pod > README
 	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc doc/README.pod | bin/doc_munge > html/doc/README.html
+	$(POD2HTML) doc/README.pod > doc/README.html
 
 count:
 	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco

@@ -1,6 +1,6 @@
 =head1 NAME
 
-Netdisco - Network Management and Discovery
+Netdisco - README
 
 =head1 AUTHOR
 
