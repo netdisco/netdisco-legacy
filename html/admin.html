@@ -1,0 +1,222 @@
+<h3>Administration Panel</h3>
+<h4>Job Queue</h4>
+<FORM ACTION="<% $r->uri %>" METHOD=GET> 
+<& SELF:list_queue &>
+<INPUT TYPE="hidden" VALUE="list" NAME="cmd">
+<TABLE>
+<TR>
+    <TD><INPUT TYPE="submit" VALUE="List Queue Entries"></TD>
+</TR>
+</TABLE>
+</FORM>
+<h4>Device Control</h4>
+<FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$cmd%>">
+<& SELF:err &>
+% if ($cmd eq 'add'){
+<& SELF:dev_control &>
+% } elsif ($cmd eq 'del') {
+<& SELF:del_dev &>
+% }
+</FORM>
+<P>
+Each action is entered into a queue for processing. 
+<%args>
+$dev     => undef
+$cmd     => 'add'
+$debug   => undef
+$action  => undef
+@logs    => ()
+$nodes   => undef
+$confirm => undef
+</%args>
+<%shared>
+my $user = $r->connection->user;
+my %cmds = ( 'refresh' => 'Refresh Device',
+             'delete'  => 'Delete Device',
+             'macsuck' => 'MacSuck Device',
+             'arpnip'  => 'ArpNip Device'
+           );
+my $devices = undef;
+my $queue   = undef;
+my $log = 0;
+my %logs = ();
+my $err =  '';
+my ($arg_dev,$arg_debug,$db_dev);
+my $odd = 0;
+</%shared>
+<%init>
+# Check Authorization - User in portcontrol list in config file, and connected via https
+unless (defined $netdisco::CONFIG{admin}->{$user} and $r->subprocess_env('https') eq 'on'){
+    $m->clear_buffer;
+    $m->abort(401);
+}
+
+# Move args to shared space for methods
+$arg_dev = $dev;
+$arg_debug = $debug;
+%logs = map {$_ => 1} @logs;
+
+# Load device list, unless device provided.
+$devices = sql_rows('device',['ip','dns']) unless $dev;
+
+# Load dev from db if given
+$db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
+
+# Delete
+if ($cmd eq 'del'){
+    # Verify device exists.
+    unless (defined $db_dev->{ip}){
+        $err .= "Device not found in Database.<BR>\n";
+        $cmd = 'add';
+        $action = undef;
+    }
+    unless (defined $confirm and $confirm eq 'ok'){
+        $err .= "Please Confirm Deletion of device.<BR>\n";
+        $cmd = 'del';
+    }
+    # Add to queue.
+    unless ($err) {
+        $err .= "Device $dev marked for deletion.<BR>\n";
+        my $act = (defined $nodes and $nodes eq 'ok') ? 'delete+nodes' : 'delete';
+        insert_or_update('admin',{},
+            {'device'=>$dev,'action'=>$act, 'status' => 'queued',
+             'username' => $user, 'debug' => (defined $debug and $debug eq 'yes' ? 1 : 0)  }
+                        ); 
+        $cmd = 'add';
+        $dev = undef; $arg_dev = undef;
+    }
+}
+
+# Delete Verify
+if ($cmd eq 'add' and defined $action and $action eq 'delete') {
+    $cmd = 'del'; # order matters between delete and verify
+}
+
+#$netdisco::SQLCARP=1;
+# Queue
+$queue = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
+                           'device','action','status','log','username'],
+                  {'status' => [['queued','running','error']]}
+                 );
+my $done = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
+                             'device','action','status','log','username'],
+                    {'status' => [['done','del']], 'age(entered)' => \\"< interval '1 day'",
+                     'username' => $user}
+                   );
+#$netdisco::SQLCARP=0;
+push (@$queue,@$done);
+</%init>
+%#
+%# err() - Prints out the error string if it exists.
+%#
+<%method err>
+% return unless $err;
+<h3><%$err%></h3>
+</%method>
+%#
+%# del_dev() - Creates a confirmation page for deletion of a device.
+%#
+<%method del_dev>
+<h3>Confirm Deletion of <%$arg_dev%></h3>
+<INPUT TYPE="hidden" NAME="debug" VALUE="<%$arg_debug%>">
+<INPUT TYPE="hidden" NAME="dev" VALUE="<%$arg_dev|h%>">
+<INPUT TYPE="checkbox" NAME="confirm" VALUE="ok">
+Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
+<INPUT TYPE="checkbox" NAME="nodes" VALUE="ok"> Delete Nodes Too. 
+<P>
+<INPUT TYPE="submit" VALUE="Delete <%$arg_dev|h%>">
+</%method>
+%#
+%# dev_control() - Prints out the device control menu form.
+%#
+<%method dev_control>
+<TABLE>
+<TR>
+    <TD>Device : </TD>
+    <TD>
+% if ($arg_dev) {
+        <INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev">
+%} else {
+        <& SELF:list_dev &>
+%}
+    </TD>
+    <TD>Action : </TD>
+    <TD>
+        <SELECT NAME="action" SIZE=3>
+% foreach my $c (sort keys %cmds){
+            <OPTION VALUE="<%$c|h%>"><%$cmds{$c}%>
+% }
+        </SELECT>
+    </TD>
+</TR>
+<TR> 
+    <TD COLSPAN=4>
+        <INPUT TYPE="submit" VALUE="Queue Action">
+        Debug :
+        <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
+    </TD>
+</TR>
+</TABLE>
+</%method>
+%#
+%# list_dev() - Create <SELECT> list for devices 
+%#
+<%method list_dev>
+<SELECT NAME="dev" SIZE=4>
+% foreach my $dev (sort {$a->{dns} cmp $b->{dns}} @$devices){
+%   my $view = defined $dev->{dns} ? $dev->{dns} : $dev->{ip};
+%   $view =~ s/\Q$netdisco::CONFIG{domain}\E//; 
+            <OPTION VALUE="<%$dev->{ip}|h%>"><%$view%>
+%}
+        </SELECT>
+</%method>
+%#
+%# list_queue() - List jobs in admin queue
+%#
+<%method list_queue>
+% return unless scalar @$queue;
+<TABLE WIDTH=100%>
+  <TR>
+    <TH>Job</TH>
+    <TH>Action</TH>
+    <TH>Start / Finished</TH>
+    <TH>Status</TH>
+    <TH>View<BR>Log</TH>
+% if (scalar keys %logs){
+    <TH>Log</TH>
+%}
+  </TR>
+<%perl>
+foreach my $job (@$queue){
+    my $start = scalar localtime($job->{entered});
+    my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : '(None)';
+    my $act   = $job->{action};
+    my $dev   = $job->{device};
+    my $id    = $job->{job};
+    $act .= " (<A HREF=\"device.html?ip=$dev\">$dev</A>)" if $dev;
+</%perl>
+  <TR CLASS="match-<% ++$odd%2 %>">
+    <TD><%$id%> - <%$job->{username}%></TD>
+    <TD><%$act%></TD>
+    <TD><NOBR><%$start%></NOBR> / <NOBR><%$end%></NOBR></TD>
+    <TD><%$job->{status}%></TD>
+    <TD><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
+% if (scalar keys %logs) {
+    <TD>
+%   if (defined $logs{$id}){
+    <TEXTAREA COLS=50 ROWS=6 WRAP=SOFT><%$job->{log}|h%></TEXTAREA>
+%   } else {
+    &nobsp;
+%   }
+    </TD>
+% }
+  </TR>
+% }
+</TABLE>
+</%method>
+<%method title>
+- Administration Panel \
+</%method>
+%# $Id$
+%# vim:syntax=mason
