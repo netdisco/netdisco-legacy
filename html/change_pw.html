@@ -1,0 +1,63 @@
+<h3>Changing Password for user <%$user|h%></h3>
+<& SELF:error &>
+% unless (defined $cmd and $cmd eq 'change'){
+    <& SELF:change &>
+% }
+<%args>
+$pw1 => undef
+$pw2 => undef
+$cmd => undef
+</%args>
+<%shared>
+my $user = $m->session->{user};
+my $secure = $r->subprocess_env('https') eq 'on';
+my $err = '';
+</%shared>
+<%init>
+# Force us to login via HTTPS if configured
+if (defined $netdisco::CONFIG{secure_login} 
+        and $netdisco::CONFIG{secure_login} =~ /(true|1|yes)/
+        and !$secure) {
+    my $server = $r->hostname;
+    my $page   = $r->uri;
+    my $url = "https://$server$page";
+    $m->redirect($url); 
+}
+
+if ($cmd eq 'change'){
+    unless ($pw1 eq $pw2){
+        $err = "Passwords do not match.<BR>";
+    }
+
+    unless ($err){
+        my $rv = netdisco::user_add($user,('pw' => $pw1));
+        $err .= $rv ? "Could not Change Password! $rv<BR>\n" : "Password for $user changed.<BR>\n";
+    }
+    undef $cmd;
+}
+</%init>
+<%method change>
+<FORM ACTION="<%$r->uri%>" METHOD=POST>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="change">
+<TABLE>
+<TR>
+    <TD>Enter New Password :</TD>
+    <TD><INPUT TYPE="PASSWORD" NAME="pw1" SIZE=10 MAXLENGTH=30></TD>
+</TR>
+<TR>
+    <TD>Enter Password Again:</TD>
+    <TD><INPUT TYPE="PASSWORD" NAME="pw2" SIZE=10 MAXLENGTH=30></TD>
+</TR>
+</TABLE>
+<INPUT TYPE="SUBMIT" VALUE="Change Password for <%$user|h%>">
+</FORM>
+</%method>
+<%method error>
+% return unless $err;
+<h3><%$err%></h3>
+</%method>
+<%method title>
+- Change Password \
+</%method>
+%# $Id$
+%# vim:syntax=mason

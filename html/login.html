@@ -1,0 +1,99 @@
+<h3>Enter Login Information</h3>
+% if ($err) {
+<H4><%$err%></H4>
+%}
+<FORM ACTION="<%$r->uri%>" METHOD=POST>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="login">
+<INPUT TYPE="hidden" NAME="done" VALUE="<%$done|h%>">
+<TABLE BORDER=0>
+<TR>
+    <TD>User Name</TD>
+    <TD><INPUT TYPE="TEXT" NAME="user" VALUE="<%$user%>" size=15 MAXLENGTH=50></TD>
+</TR>
+<TR>
+    <TD>Password</TD>
+    <TD><INPUT TYPE="PASSWORD" NAME="pw" size=10 MAXLENGTH=30></TD>
+</TR>
+<TR>
+    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Log On"></TD>
+</TR>
+</TABLE>
+</FORM>
+<h4>Note</h4>
+<UL>
+    <LI>I'm in the process of implementing the new user authentication system.
+        Please <a href="mailto:max@warped.org">tell me</a> if you see anything amiss.
+    <LI>Sessions Last for <%$netdisco::CONFIG{websession}%> minutes.
+</UL>
+<%args>
+$user => undef
+$cmd  => undef
+$pw   => undef
+$done => undef
+</%args>
+<%init>
+
+my $err = '';
+
+# Force us to login via HTTPS if configured
+if (defined $netdisco::CONFIG{secure_login} 
+        and $netdisco::CONFIG{secure_login} =~ /(true|1|yes)/
+        and $r->subprocess_env('https') ne 'on') {
+    my $server = $r->hostname;
+    my $page   = $r->uri;
+    my $args   = $r->args;
+    my $url = "https://$server$page";
+    HTML::Mason::Escapes::url_escape(\$args) if $args;
+    $url .= "?$args" if ($args);
+    $m->redirect($url); 
+}
+
+if ($cmd eq 'login'){
+
+    $user = lc($user);
+    my $db_user = sql_hash('users',['*'],{'username' => $user});
+
+    unless (defined $db_user->{username}){
+        $err .= "User Not Found.<BR>\n";
+    }
+
+    my $md5_pw = Digest::MD5::md5_hex($pw);    
+    
+    unless ($err or $md5_pw eq $db_user->{password}){
+        $err .= "Bad Login.<BR>\n";
+    }
+
+    if ($err) {
+        $m->session->{_logged_in} = 0;
+        delete $m->session->{user};
+        delete $m->session->{user_port_ctl};
+        delete $m->session->{user_admin};
+        delete $m->session->{start};
+    } else {
+        $m->session->{_logged_in} = 1;
+        $m->session->{user} = $db_user->{username};
+        $m->session->{user_port_ctl} = $db_user->{port_control};
+        $m->session->{user_admin}    = $db_user->{admin};
+        $m->session->{start} = time;
+        $r->connection->user($db_user->{username});
+
+        # Update record
+        insert_or_update('users',{'username' => $m->session->{user}},
+                         {'last_on' => scalar(localtime)}
+                        );
+
+        # Redirect
+        if (defined $done and length($done)) {
+            $m->redirect("$done");
+        } else {
+            $m->redirect('.'); 
+        }   
+    }
+    
+}
+</%init>
+<%method title>
+- Login \
+</%method>
+%# $Id$
+%# vim:syntax=mason

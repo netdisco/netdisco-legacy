@@ -1,0 +1,223 @@
+<h3>Admin Panel - User Control</h3>
+<& SELF:error &>
+% if ($cmd eq 'Delete' and !$confirm) {
+<& SELF:confirm_del &>
+% } else {
+<& SELF:list_users &>
+<& SELF:add_user &>
+%}
+<%args>
+$cmd   => undef
+$user  => undef
+$port  => 0
+$admin => 0
+$confirm => 0
+$pw    => undef
+</%args>
+<%shared>
+my ($this_user,$users,$is_admin,$secure,%user_hash,$arg_user);
+my $odd =0;
+my $err = '';
+</%shared>
+<%init>
+$this_user = $m->session->{user};
+$is_admin  = $m->session->{user_admin};
+$secure    = $r->subprocess_env('https');
+$arg_user = $user;
+
+# Check Authorization - User in portcontrol list in config file, and connected via https
+unless ($secure eq 'on' and $is_admin){
+    #$m->clear_buffer;
+    #$m->abort(401);
+    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
+    $m->redirect("login.html?done=$url");
+}
+
+# Fetch users from db.
+$m->comp('SELF:load_users');
+
+# Add 
+if ($cmd eq 'add'){
+    $user = lc($user);
+    $user =~  s/^\s*//;
+    $user =~  s/\s+.*//;
+    unless ($user){
+        $err .= "Select a user name.<BR>\n";
+    }
+    unless ($pw){
+        $err .= "Enter a password for this user.<BR>\n";
+    }
+    if (defined $user_hash{$user}) {
+        $err .= "There is already a user by that name.<BR>\n";
+    }
+    unless ($err){
+        # Add
+        my $rv = netdisco::user_add($user,(
+                                    'pw' => $pw,
+                                    'admin' => $admin eq '1' ? 1 : 0,
+                                    'port'  => $port eq  '1' ? 1 : 0
+                                ));
+        $err .= $rv ? "Could not Add user! $rv<BR>\n" : "User $user added.<BR>\n";
+        
+        # Reload hash
+        $m->comp('SELF:load_users');
+    }
+}
+
+if ($cmd eq 'Change'){
+    unless (defined $user_hash{$user}){
+        $err .= "User $user not found.<BR>\n";
+    } 
+    my %user_change;
+    unless ($err){
+        # Check for PW
+        if (defined $pw and length($pw)){
+            $user_change{pw}=$pw;
+        }
+
+        #$admin = (defined $admin and $admin eq '1') ? 1 : 0;
+        #$port  = (defined $port  and $port  eq '1') ? 1 : 0;
+        # Check for Admin Change
+        if ($admin != $user_hash{$user}->{admin}) { 
+            $user_change{admin} = $admin;
+        }
+
+        # Check for Port Change
+        if ($port != $user_hash{$user}->{port_control}) {
+            $user_change{port} = $port;
+        }
+
+        if (scalar keys %user_change){
+            my $rv = netdisco::user_add($user,%user_change);
+            $err .= $rv ?
+                    "Could not modify user! $rv<BR>\n"
+                        :
+                    "Changed ".join(',',keys %user_change)." for user $user.<BR>\n";
+            $m->comp('SELF:load_users');
+                         
+        } 
+
+    }
+
+}
+
+if ($cmd eq 'Delete'){
+    unless (defined $user_hash{$user}){
+        $err .= "User $user not found.<BR>\n";
+    } 
+
+    if ($user eq $this_user) {
+        $err .= "You cannot delete yourself.<BR>\n";
+    }
+
+    if (!$err and $confirm){
+        my $rv = netdisco::user_del($user);
+
+        if (defined $rv){
+            $err .= "Deleted user $user.<BR>\n";
+        } else {
+            $err .= "Could not delete user $user.<BR>\n";
+        }
+        # Reload hash
+        $m->comp('SELF:load_users');
+    } 
+}
+ 
+</%init>
+<%method list_users>
+<h4>Existing Users</h4>
+<TABLE WIDTH=100% CELLSPACING=0 BORDER=0>
+<TR>
+    <TH>User</TH>
+    <TH>Port<BR>Control</TH>
+    <TH>Admin<BR>Control</TH>
+    <TH>New Password</TH>
+    <TH>Created /<BR>Last Login</TH>
+    <TH>&nbsp;</TH>
+</TR>
+% foreach my $this_user (sort { $a->{username} cmp $b->{username} } @$users){
+%   my $last_on =  $this_user->{last_on} ?
+%                   scalar(localtime($this_user->{last_on})) 
+%                   : 'Never logged in';
+<TR CLASS="match-<% ++$odd % 2 %>">
+    <TD>
+    <FORM ACTION="<%$r->uri%>" METHOD=POST> 
+    <INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$this_user->{username}|h%>">
+    <B><%$this_user->{username}%></B></TD>
+    <TD>
+    <INPUT TYPE="checkbox" NAME="port" VALUE="1" <%$this_user->{port_control} ? 'CHECKED' : ''%>></TD>
+    <TD><INPUT TYPE="checkbox" NAME="admin" VALUE="1" <%$this_user->{admin} ? 'CHECKED' : ''%>></TD>
+    <TD><INPUT TYPE="password" NAME="pw" SIZE=20 MAXLENGTH=50></TD>
+    <TD><NOBR><%scalar localtime($this_user->{creation})%></NOBR><BR>
+        <NOBR><%$last_on%></NOBR></TD>
+    <TD><INPUT TYPE="submit" NAME="cmd" VALUE="Delete">
+        <INPUT TYPE="submit" NAME="cmd" VALUE="Change">
+        </FORM>
+    </TD>
+</TR>
+% }
+</TABLE>
+</%method>
+<%method add_user>
+<h4>Add User</h4>
+<FORM ACTION="<%$r->uri%>" METHOD=POST>
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
+<TABLE CLASS="box" CELLSPACING=0 CELLPADDING=3 BORDER=0>
+<TR>
+    <TD>Username:</TD>
+    <TD><INPUT TYPE="text" NAME="user" SIZE="20" MAXLENGTH="50"></TD>
+    <TD>Lower case, alphanumeric only.</TD>
+</TR>
+<TR>
+    <TD>Password:</TD>
+    <TD><INPUT TYPE="password" NAME="pw" SIZE="20" MAXLENGTH="50"></TD>
+    <TD>Case Sensitive.</TD>
+</TR>
+<TR>
+    <TD>Port Control:</TD>
+    <TD><INPUT NAME="port" TYPE="checkbox" VALUE="1"></TD>
+    <TD>Gives user ability to turn non-uplink ports on and off.</TD>
+<TR>
+    <TD>Admin : </TD>
+    <TD><INPUT NAME="admin" TYPE="checkbox" VALUE="1"></TD>
+    <TD>Gives user ability to control device and users.</TD>
+</TR>
+<TR>
+    <TD COLSPAN=3>
+        <P> 
+        <P> 
+        <INPUT TYPE="submit" VALUE="Add User">
+    </TD>
+</TR>
+</TABLE>
+</FORM>
+</%method>
+<%method confirm_del>
+<FORM ACTION="<%$r->uri%>" METHOD=POST>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="Delete">
+<INPUT TYPE="hidden" NAME="user" VALUE="<%$arg_user|h%>"> 
+Confirm Deletion of <%$arg_user |h%> : 
+<INPUT TYPE="checkbox" NAME="confirm" VALUE="1">
+<BR>
+<INPUT TYPE="submit" VALUE="Delete <%$arg_user|h%>">
+[<A HREF="<%$r->uri%>">Cancel</A>]
+</FORM> 
+</%method>
+<%method load_users>
+<%perl>
+$users = sql_rows('users',['username','password','extract(epoch from creation) as creation',
+                           'extract(epoch from last_on) as last_on','port_control','admin']
+                 );
+
+%user_hash = map {$_->{username} => $_} @$users;
+</%perl>
+</%method>
+<%method error>
+% return unless $err;
+<h3><%$err%></h3>
+</%method>
+<%method title>
+- Admin Panel - Users \
+</%method>
+%# $Id$
+%# vim:syntax=mason
