@@ -1,0 +1,15 @@
+<h3>Admin - Reload Config File</h3>
+Config File reloaded.
+<%init>
+my $is_admin  = $m->session->{user_admin};
+unless ($is_admin){
+    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
+    $m->redirect("login.html?done=$url");
+}
+&netdisco::config('/usr/local/netdisco/netdisco.conf');
+</%init>
+<%method title>
+- Admin Panel - Users \
+</%method>
+%# $Id$
+%# vim:syntax=mason
