@@ -27,8 +27,6 @@ check it against the new one to see what config file directives have been added 
 You B<DO NOT> wipe the database contents for an upgrade.  But just in case, you will have
 of course made a backup by now. 
 
-=back
-
 =head1 VERSION SPECIFIC NOTES
 
 =over
@@ -44,7 +42,8 @@ You will need SNMP::Info v0.9 in order to support the new netdisco-mibs package.
 =item Database Upgrades
 
 Now would be a great time to upgrade to Postgres 7.4 if you haven't already.  
-There are some great speed benefits, and there is no INDEX bloat problem.
+There are some great speed benefits, and there is no INDEX bloat problem.  Upgrading
+from 7.2 or 7.3 does require a data base dump/restore.  See Postgres documentation.
 
 You will have to run the following command to add new tables and modify existing
 ones.
@@ -60,6 +59,12 @@ running a CVS or RC version).
 A lot of the Perl modules that Netdisco depends on have released newer (better) versions.
 Go to the INSTALL and follow Part 8.1 C<Perl Modules and Mason>.   If you use CPAN, it will
 upgrade all the dependency modules for you too.
+
+=item Bay Switches
+
+If you have bay switches, note that the naming scheme for the ports has changed
+from C<1> to C<1.1> as they were folded into the new Nortel classes.  The above
+upgrade script will do the renaming for you, so you won't lose data.  
 
 =back
 
