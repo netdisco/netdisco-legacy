@@ -49,18 +49,30 @@
 %   }
         </SELECT>
     </TD>
-    <TD>&nbsp;</TD>
-    <TD>&nbsp;</TD>
-</TR>
-<TR>
-    <TD> Search Scope:</TD>
-    <TD colspan=3>
-    Any above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
-    All above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
+    <TD>OS:</TD>
+    <TD>
+        <u>type</u> <SELECT MULTIPLE NAME="os" SIZE=2>
+% foreach my $this_os (sort keys %$oses) {
+                   <OPTION VALUE="<%$this_os%>" <% grep(/^$this_os$/,@os) ? 'SELECTED' : ''%>><%$this_os%>
+% }
+               </SELECT>
+        <u>version</u> <SELECT MULTIPLE NAME="os_ver" SIZE=2>
+% foreach my $this_os_ver (sort keys %$os_vers) {
+                      <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
+% }
+                  </SELECT>
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=4><P><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]
+    <TD COLSPAN=2>
+        <P>
+        <INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]
+    </TD>
+    <TD COLSPAN=2>
+        Search Term Match: Any<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
+        All<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
+        criteria
+    </TD>
 </TR>
 </TABLE>
 </FORM>
@@ -90,15 +102,17 @@ entries that have "cat" in them.
 </UL>
 <!-- took <%$time2 - $time1%> seconds to load -->
 <%args>
-@models   => undef
-@layers   => undef
-@vendors  => undef
-$ip       => undef
-$text     => undef
-$name     => undef
-$desc     => undef
+@models   => ()
+@layers   => ()
+@vendors  => ()
+@os       => ()
+@os_ver   => ()
+$ip       => ''
+$text     => ''
+$name     => ''
+$desc     => ''
 $boolean  => 'or'
-$loc      => undef
+$loc      => ''
 $specific => undef
 </%args>
 %#
@@ -113,9 +127,11 @@ my $awhere = {};
 %#
 <%init>
 my $time1= time;
-# Get Form values
-my $models = sql_column('device',['distinct(model)','true']); 
+
+my $models  = sql_column('device',['distinct(model)', 'true']); 
 my $vendors = sql_column('device',['distinct(vendor)','true']); 
+my $oses    = sql_column('device',['distinct(os)',    'true']);
+my $os_vers = sql_column('device',['distinct(os_ver)','true']);
 
 # Specific Searches
 
@@ -209,6 +225,18 @@ if ($specific =~ /alias/i){
 foreach my $model (@models){
     next unless defined $model and length($model);
     push (@{$where->{'d.model'}},$model);
+}
+
+# Search on OS
+foreach my $this_os (@os){
+    next unless defined $this_os and $this_os;
+    push (@{$where->{'d.os'}},$this_os);
+}
+
+# Search on OS Version
+foreach my $this_ver (@os_ver){
+    next unless defined $this_ver and $this_ver;
+    push (@{$where->{'d.os_ver'}},$this_ver);
 }
 
 # Search on Layers
