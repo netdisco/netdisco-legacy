@@ -939,8 +939,8 @@ sub arpnip {
     
     insert_or_update('device',{'ip'=> $dev->{ip} },{'last_arpnip'=> scalar localtime});
 
-    # Fetch Subnets - Feature not implemented yet.
-    #get_subnets($device);
+    # Fetch Subnets
+    get_subnets($device);
 }
 
 =item arpwalk() 
@@ -1325,23 +1325,57 @@ sub get_device_rw {
 
 =item get_subnets(device)
 
-This feature not yet implemented.
+Grab netmask and ip from device interfaces.  Determine device subnets
+mathematically based upon the interface information. 
 
 =cut
 sub get_subnets {
     my $device = shift;
-    my $nets = $CONFIG{networks};
-    return unless defined $nets;
-    foreach my $net (split(/\s*,\s*/,$nets)){
-        # TODO - Parse nets with their bitmask
-        my $subnets = $device->ipr_mask($net);
-        foreach my $route (sort {sort_ip} keys %$subnets){
-            my $mask = mask_to_bits($subnets->{$route});
-            next if $mask == 32;
-            # TODO - Compare with net given above
-            print "$route/$mask\n";
+
+    my $ip_netmask   = $device->ip_netmask();
+
+    foreach my $ip (keys %$ip_netmask){
+        next if $ip eq '0.0.0.0';
+        # Local Host
+        next if $ip =~ /^127\./;
+
+        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets}) {
+            my $ignore =0;
+            # Class A Private
+            $ignore++ if $ip =~ /^10\./;
+            # Class B Private
+            $ignore++ if $ip =~ /^172\.16\./;
+            # Class C private
+            $ignore++ if $ip =~ /^192\.168\.0\./;
+            print "  Ignoring private address $ip\n" if ($ignore and $DEBUG);
+            next if $ignore;
         }
-    }  
+
+        my $netmask  = $ip_netmask->{$ip};
+        my @maskbyte = split /\./, $netmask;
+        my @ipbyte = split /\./, $ip;
+        my $netaddr = undef;
+
+        for (my $i=0; $i < 4; $i++) {
+            my $b1 = $maskbyte[$i]+0;
+            my $b2 = $ipbyte[$i]+0;
+            my $netbyte = $b1 & $b2;
+            if ($i != 0) { 
+                $netaddr = $netaddr . "." . $netbyte;
+            }
+            else {
+                $netaddr = $netbyte; 
+            }
+        }
+        my $cidr_mask = mask_to_bits($netmask);
+        next if $cidr_mask == 32;
+        my $cidr_subnet = "$netaddr/$cidr_mask";
+        
+        insert_or_update('subnets', {'net' => $cidr_subnet},
+                        {'net' => $cidr_subnet , 'last_discover' => scalar(localtime) }
+                        );
+        $DEBUG and print "Found subnet $cidr_subnet\n";
+    }
 }
 
 =item mac_getportmacs() 
