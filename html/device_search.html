@@ -325,7 +325,7 @@ return $match;
     </TR>
 <%perl>
 my $count=0;
-my @sort_matches = exists $where->{port} ? 
+my @sort_matches = exists $where->{count} ? 
                      sort {$b->{count} <=> $a->{count} } @$matches :
                      sort {$a->{dns} cmp $b->{dns}} @$matches;
 foreach my $result (@sort_matches){
