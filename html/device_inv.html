@@ -159,12 +159,12 @@ if ($cmd eq 'age'){
        $bool = '<=' if $age_bool =~ /last/;
 
     # Default - Last Discovered
-    my $col = 'age(last_discover,now())';
+    my $col = 'age(now(),last_discover)';
     my $val = "$bool interval '$age_val $age_mul'";
     
     # First Created
     if ($age_type eq 'first'){
-        $col = 'age(creation,now())';
+        $col = 'age(now(),creation)';
         $val = "$bool interval '$age_val $age_mul'";
     } 
     # Uptime
@@ -180,8 +180,8 @@ if ($cmd eq 'age'){
     }
 
     $age = sql_rows('device',['ip','dns','vendor','model','uptime',
-                              'age(creation,now()) as creation_age',
-                              'age(last_discover,now()) as last_discover_age'
+                              'age(now(),creation) as creation_age',
+                              'age(now(),last_discover) as last_discover_age'
                              ],
                     {$col => \\$val}
                    );
@@ -215,12 +215,10 @@ foreach my $dev (@results) {
     my $dns = $dev->{dns} || 'No DNS';
     $dns =~ s/\Q$domain\E//;
     my $creation_age = $dev->{creation_age};
-    $creation_age =~ s/-//g;
     $creation_age =~ s/mon/month/;
     $creation_age =~ s/ \d{2}:\d{2}.*$//;
     my $last_discover_age = $dev->{last_discover_age};
     $last_discover_age =~ s/mon/month/;
-    $last_discover_age =~ s/-//g;
     # If we get result in weeks/hours/days or in -hr:mm:ss format
     if ($last_discover_age =~ /day/){
         $last_discover_age =~ s/(-)?\d{2}:\d{2}.*$//;
