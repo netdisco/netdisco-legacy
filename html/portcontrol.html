@@ -4,6 +4,7 @@
 % $m->comp('SELF:err') if $cmd eq 'err';
 % $m->comp('SELF:reasons') unless $cmd eq 'err';
 <%args>
+$debug => 0
 $cmd  => undef
 $type => undef
 $ip   => undef
@@ -19,34 +20,10 @@ my $user      = $m->session->{user};
 my $port_ctl  = $m->session->{user_port_ctl};
 my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $userip    = $r->connection->remote_ip; 
+my $timeout   = $netdisco::CONFIG{port_control_timeout} || 60;
 my $odd = 1 ;
-my %Reasons = ( 
-                ''            => ['Select a Reason',''],
-                'address'     => ['Address Allocation Abuse',
-                                  'A system which does not obtain and/or use its address in a legitimate
-                                   fashion.  This includes machines that self-assign IP addresses and those
-                                   that modify their MAC address.'],
-                'dos'         => ['Denial Of Serivce',
-                                  'Any kind of data flow, mailicious or otherwise, which is involved
-                                   in a service-affecting disruption.  This includes activities such
-                                   as ICMP and UDP floods, SYN attacks, and other service disruptive
-                                   flows.  A system involved in a DoS attack is usually compromised.'],
-                'bandwidth'   => ['Excessive BandWidth',
-                                  'A user has sent/received data in excess of campus acceptable use standards.'],
-                'compromised' => ['System Compromised',
-                                  'The system has been compromised and poses a high risk to campus
-                                   resources. If other behavior is observed, such as involvement in a DoS attack, that reason code should be used in place of this one.'],
-                'copyright'   => ['Copyright Violation',
-                                  "Following the takedown provision of the DMCA to limit the University's copyright liability."],
-                'exploit'     => ['Remote Exploit Possible',
-                                  'A remotely exploitable vulnerability posing high risk exists on the system.'],
-                'polling'     => ['Excessive Polling of DNS/DHCP/SNMP',
-                                  'Distinct from DoS attacks, excessive polling is often due to
-                                   misconfigured systems or malfunctioning protocol stacks.  An example of
-                                   this would be sustained, repetitive polling of the DHCP server for an
-                                   address.'],
-                'other'       => ['Other', 'Does not fit in any other catagory.  Make a <i>very</i> detailed <TT>Log</TT> entry.']
-              );
+my %Reasons = ( ''            => ['Select a Reason',''],
+                %netdisco::PORT_CONTROL_REASONS);
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
@@ -58,28 +35,6 @@ if ($cmd =~ /^(up|down|switch)$/ and (!$port_ctl or !$secure)) {
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
 $arg_reason = $reason; $arg_log_num = $log_num;
 
-# Check that port exists in netdisco
-$db_port = sql_hash('device_port',['up','up_admin','descr','name','mac','remote_ip','remote_port'],
-                {'ip'=>$ip, 'port'=>$port});
-
-if (!defined $db_port){
-    $cmd = 'err';
-    $err = "Port [ $ip / $port ] not found in netdisco.";
-} elsif (defined $db_port->{remote_ip}){
-    $cmd = 'err';
-    $err = "Port [ $ip / $port ] is an uplink port.  Control from netdisco not allowed."; 
-} else {
-        # Check for port alias/dns
-        my $dns = sql_scalar('device_ip',['dns'],{'ip'=>$ip,'port'=>$port});
-        $dns = sql_scalar('device',['dns'],{'ip'=>$ip}) unless defined $dns;
-        $db_port->{dns} = $dns;
-}
-
-# Don't require log entry, only reason code.
-#if ($cmd eq 'switch' and (!defined $log or !length($log)) ){
-#    $cmd = 'err';
-#    $err = "You must add a log entry!";    
-#}
 if ($cmd eq 'switch' and (!$reason) ){
     $cmd = 'err';
     $err .= "You must select a reason for bringing the port $type\n";
@@ -90,48 +45,63 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
     $dir = 'enable' if $type eq 'up';
     $dir = 'disable' if $type eq 'down';
     
-    # Switch
-    my $rv = system('/usr/local/netdisco/port_control',$ip,$port,$type);
-    $rv /= 256;
+    # Add to admin queue
+    my $oid = insert_or_update('admin',{},
+                               {'device'=>$ip,'action'=>'portcontrol','status'=>'queued','port'=>$port,
+                                'username' => $user, 'userip', $userip, 'debug' => $debug, 'subaction' => "$type-$reason",
+                                'log' => $log}
+                              ); 
 
-    # Switch Failed
-    if ($rv) {
-        $cmd = 'err';
-        $err = "Switching of port failed. ($rv)\n";
-        # Log anyways.
-        $log .= " [FAILED] Could not bring port $type. ($rv)"; $type = 'fail';
+    my $job_id = sql_scalar('admin',['job'],{'oid' => $oid});
 
-    # Switch Succeeded - Update netdisco
-    } else {  
-        insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$type});
-        $cmd = 'log';
+    # Wait for a response from admin daemon
+    my $now = time; my $job;
+    my $timeout_time = $now + $timeout;
+    my $done = 0;
+    while (!$done){
+        # Poll every two seconds
+        sleep(2);
+    
+        # Check to see if daemon done
+        $job = sql_hash('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
+                        'extract(epoch from started) as started','status','log'],
+                        {'job'=>$job_id}
+                       );
 
-        # Send E-Mail to Abuse
-        my $portctl_email = $netdisco::CONFIG{portctl_email};
-        # Pretty Print
-        if (defined $portctl_email){
-            my $dns = $db_port->{dns};
-            my $body = <<"end_body";
-........ n e t d i s c o .........
-  Device : $dns ($ip) 
-  Port   : $port
-  Action : $dir
-  User   : $user \@ $userip 
-  Reason : [$reason] - $Reasons{$reason}->[0]
-  Log    : $log
+        if (! defined $job){
+            $err = "Problem entering job into admin queue.<BR>\n";
+            last;
+        }   
 
-end_body
-            mail($portctl_email,"port $dir $dns($ip)/$port",$body);
+        my $status = $job->{status};
+        $done++ if $status =~ /^(done|error)$/;
+        $done++ if $status !~ /^(running|queued)$/;
+
+        $now = time;
+        if (!$done and $now >= $timeout_time and $status =~ /^(running|queued)$/){
+            my $url = $r->uri . "?ip=$ip&port=$port&cmd=log";
+            $err = "Timeout! Job is $status in the admin queue. Check the <A HREF=\"$url\">port log entry</A> in a couple minutes to double-check it worked.<BR>\n";
+            $cmd = 'err';
+            last;
+        } elsif (!$done and $now >= $timeout_time){
+            $err = "Error.  There was a problem with entering the job in the admin queue.  Check to see the admin daemon is running, then check it's log file for problems.\n";
+            $cmd = 'err';
+            last;
         }
+    }   
+
+    if (!$err and $status eq 'done'){
+        $cmd = 'log';
+        $err = "Port was successfully $dir.<BR>\n";
+    } elsif (!$err and $status eq 'error'){
+        $cmd = 'err';
+        $err = "[Failed] <P>$job->{log}<BR>\n";
+    } else {
+        $cmd = 'err';
+        $err = "[Failed] I don't know what happened to the job.  Status: $job->{status}. <P>Log: $job->{log}<BR>.\n";
     }
 
-    # Log attempt 
-    insert_or_update('device_port_log', {},
-                     {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
-                      'username'=>$user,'action'=>$dir, 'reason' => $reason }
-                    ); 
 }
-
 </%init>
 <%method log>
 % my $logs = sql_rows('device_port_log', ['id','log','reason','username','userip','action','extract(epoch from creation) as creation'] , 
@@ -211,7 +181,9 @@ Log Entires to Show : <SELECT NAME="log_num">
     </TD>
 </TR>
 <TR CLASS="match-1">
-    <TD COLSPAN=2 CLASS="tr-data-1"><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+    <TD COLSPAN=2 CLASS="tr-data-1">
+        <INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+        Debug: <INPUT TYPE="checkbox" NAME="debug" VALUE="1">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
     </TD>
 </TR>
