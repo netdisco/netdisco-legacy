@@ -2,6 +2,10 @@
 
 Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
+=head1 VERSION
+
+Netdisco 0.93 (Beta/CVS)
+
 =head1 AUTHOR
 
 Max Baker 
