@@ -205,8 +205,9 @@ sub config {
 
     foreach my $config (@configs){
         chomp $config;
-        # Take out Comments
-        $config =~ s/#.*//;
+        # Take out Comments - Handle escaped pound signs
+        $config =~ s/(?<!\\)#.*//;
+        $config =~ s/\\#/#/g;
         # Trim leading and trailing white space
         $config =~ s/^\s*//;
         $config =~ s/\s*$//;
