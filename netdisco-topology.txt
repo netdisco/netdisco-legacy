@@ -1,0 +1,10 @@
+# netdisco-topology.txt
+# Manual Topology information used in netdisco
+#
+# Add a line for each device you want to add manually
+# Add link lines for topology information in the format
+#   link:outport,destination router,inport 
+#
+# eg:
+#    myrouter.company.com
+#      link:14,otherrouter,A5
