@@ -124,7 +124,7 @@ defined $args{p} and &admin_daemon_ctl($args{p});
 defined $args{u} and &add_user;
 
 # Make sure we ran a command, else spit out the usage
-die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOprRtTu]+/);
+die &usage unless (join('',keys %args) =~ /[aABdeEFgiIkKmMnNOprRtTu]+/);
 exit;
 
 =over
@@ -496,8 +496,8 @@ sub create_device {
     my $ver     = $version || $CONFIG{snmpver} || 2;
     my $retries = $CONFIG{snmpretries} || 2;  
    
-    printf("  create_device(%s,%s,%d,%s)\n",
-           $hostname,substr($community,-1,1),$ver, $objtype || 'undef')
+    printf("  create_device(%s,%s,%d,%s,%d)\n",
+           $hostname,substr($community,-1,1),$ver, $objtype || 'undef',$retries)
          if $DEBUG;
 
     # Get Device Info
@@ -510,17 +510,13 @@ sub create_device {
                                 'Retries'     => $retries
                                );
     
-    unless (defined $device) {
-        print "  Can't connect to $hostname\n";
-        return undef;
-    }
 
     # Test for connectivity
-    my $layers = $device->layers();
+    my $layers = $device->layers() if defined $device;
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
-    if (!defined $layers and $ver != 1){
+    if (!defined $device or !defined $layers and $ver != 1){
         
         print " [Trying SNMP Version 1] ";
         printf("create_device(%s,%s,1)\n",$hostname,substr($community,-1,1)) if $DEBUG;
@@ -533,10 +529,15 @@ sub create_device {
                                   'Retries'     => $retries
                                 );
     }
+    
+    unless (defined $device) {
+        $DEBUG and print "  Can't connect to $hostname\n";
+        return undef;
+    }
 
     my $class = $device->class();
     if (!defined $class or !defined $class){
-        print "  Could not connect to $hostname.\n";
+        $DEBUG and print "  Could not connect to $hostname.\n";
         return undef;
     }
         
@@ -546,7 +547,7 @@ sub create_device {
         return -1;
     }
 
-    $DEBUG and print "  Device Type : $class ";
+    $DEBUG and print "  Device Type : $class \n";
 
     # Tag on some netdisco specific info to the SNMP::Info object.
     $device->{ip}        = &getip($hostname);
@@ -589,7 +590,7 @@ Calls all the global methods and sends the results off to the database
 sub store_device {
     my $device = shift;
 
-    print "  Fetching Device Info           : ";
+    print "  Fetching Device Info           : \n";
 
     # Deal w/ devices with multiple IP address like most routers
     my $foundip = $device->{ip};
@@ -597,7 +598,7 @@ sub store_device {
     $device->{ip} = $devip;
 
     if ($devip ne $foundip) {
-        print "  Using $devip instead of $foundip " if $DEBUG;
+        print "  Using $devip instead of $foundip \n" if $DEBUG;
 
         # Set device name to root, not alias
         my $new_dns = &hostname($devip);
@@ -668,11 +669,11 @@ sub store_device {
     $store{fan}         = $device->fan();
     $store{slots}       = $device->slots();
     $store{vendor}      = $device->vendor();
+    $store{os}          = $device->os();
+    $store{os_ver}      = $device->os_ver();
     #$store{log}         = $device->log();
     $store{last_discover} = localtime;
     
-
-    print ".\n";
     insert_or_update('device', {'ip' => $device->{ip} },
                     \%store);
 }
@@ -767,15 +768,8 @@ sub find_neighbors {
 
     foreach my $key (keys %$c_ip){
         print '.';
-        my $iid = $c_if->{$key};
-
-        # Nice of CISCO not to implement cdpCacheIfIndex in most devices ?!!#@$!@#
-        unless (defined $iid) {
-            $iid = $key;
-            ## Truncate off .1 from cdp response
-            $iid =~ s/\.\d+$//;
-        }
         # Get our port to iid mapping
+        my $iid = $c_if->{$key};
         my $port = $interfaces->{$iid};
 
         my $remote_ip   = $c_ip->{$key};
@@ -1229,18 +1223,21 @@ Expires IPs not in use in node or device_port
 
 =cut
 sub expire_ips {
-    print "expire_ips()";
+    print "expire_ips()\n";
     my $sql = 'DELETE FROM node_ip WHERE mac IN ';
     $sql   .= '(SELECT i.mac FROM node_ip i WHERE';
     $sql   .= ' NOT EXISTS (SELECT 1 FROM node n WHERE n.mac = i.mac LIMIT 1)';
-    $sql   .= ' AND NOT EXISTS';
-    $sql   .= ' (SELECT 1 FROM device_port p WHERE p.mac = i.mac LIMIT 1)';
+    $sql   .= ' AND';
+    $sql   .= ' NOT EXISTS (SELECT 1 FROM device_port p WHERE p.mac = i.mac LIMIT 1)';
+    $sql   .= ')';
             
-    print "$sql\n";
+    $DEBUG and print "\n\n  $sql\n";
     my $rows;
-    #$rows = sql_do($sql);
+    $rows = sql_do($sql);
     $rows = $rows || 0;
     print "Deleted $rows rows.\n";
+    print "Vacuuming node_ip\n";
+    sql_do("VACUUM ANALYZE node_ip");
 }
 
 =item change_device_ip(from_ip, to_ip)
@@ -2264,8 +2261,8 @@ sub admin_daemon_job {
     }
 
     elsif ($cmd =~ /^delete(\+nodes)?$/) {
-        my $nodes = $1;
-        print "Delete currently turned off.\n"
+        my $del_nodes = $1 eq '+nodes' ? 1 : 0;
+        &expire_device($dev,$del_nodes); 
     }
 
     elsif ($cmd =~ /^nodes-(del|arc)$/){
