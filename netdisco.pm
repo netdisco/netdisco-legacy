@@ -200,7 +200,7 @@ sub config {
     my $file = shift;
 
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
-                      port_info secure_server graph_overlap graph_splines
+                      port_info secure_server graph_splines
                      /;
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
