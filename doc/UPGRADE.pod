@@ -35,6 +35,14 @@ of course made a backup by now.
 
 =over
 
+=item Autodetection of Uplink Ports
+
+Macsuck will now autodetect some uplink ports.  If it sees the MAC addres of a
+known switch port or router, it will not collect mac addresses on that port.  
+
+Start checking the logs from your macwalk device (you can do it from the web
+page now) and look for the uplink warnings.  Fix your topology file to match.
+
 =item SNMP::Info
 
 You will need SNMP::Info v0.9 in order to support the new netdisco-mibs package.
