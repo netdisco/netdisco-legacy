@@ -3,6 +3,8 @@
 # $Id$
 
 0.94beta ()
+    + Added Feature from Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
+        Device Inventory by SNMP location field.
     + Added Feature [ 836962 ] Admin Log.  Logs logins,logouts and things
         done inside the admin panel.  Reporting from the admin panel.
     + Added TimeFrame feature in Port_Report from Revital Shvarzman @yorku.ca

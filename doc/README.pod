@@ -1443,7 +1443,8 @@ Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), A.L.M Buxey
 (Loughborough University, UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov),
 George Pavel (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
 (saintmarys.edu), Revital Shvarzman (York U, Ontario), 
-Walter Gould (Auburn University).
+Walter Gould (Auburn University), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
+
 
 As well as these people for their donations :
 
