@@ -238,8 +238,8 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
 <INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
 &nbsp; &nbsp; &nbsp; &nbsp;
 <B>Resolve IPs</B>
-<INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
+<INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_dns eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_dns eq 'on'  ? 'CHECKED' : '' %>>On
 <P>
 <INPUT TYPE="submit" VALUE="Change View" NAME="submit">
 </FORM>
@@ -467,7 +467,14 @@ foreach my $port (sort sort_port @$ports){
             $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
             $link = "device.html?ip=$remote_ip&port=$remote_port";
         } else {
-            $name = "<SPAN CLASS=\"dead-link\">$remote_ip</SPAN>";
+            if ($arg_node_dns eq 'on') { 
+                $name = hostname($remote_ip) || $remote_ip;
+                $name =~ s/\Q$domain\E//; 
+            } else {
+                $name = $remote_ip;
+            }
+            $name = "<SPAN CLASS=\"dead-link\">$name</SPAN>";
+            $name .= " ($remote_port)";
             $link = "node.html?node=$remote_ip";
         }
 </%perl>
