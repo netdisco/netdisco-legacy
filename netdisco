@@ -173,6 +173,7 @@ sub run {
 =cut
 
 sub load_old_devices {
+    print "load_old_devices()\n" if $DEBUG;
     $OldDevices = sql_column('device',['ip','layers']);
     $Aliases = sql_column('device_ip',['alias','ip']);
 }
@@ -324,7 +325,7 @@ sub discover{
 
     print "Discover($hostname)\n";
 
-    my $device = get_device($hostname,undef) or return;
+    my $device = get_device($hostname) or return;
     my $ip     = $device->{_ip};
 
     # Store Device Info
@@ -350,22 +351,59 @@ sub discover{
 }
 
 
-=item get_device() - Calls create_device foreach community string.
+=item get_device(host)
+
+Calls create_device() with a community string
+
+If cached values are stored in the database for the SNMP version and community strings,
+they are used. 
+
+If no cached values are available, or if they fail, then the values from the config file are
+tried.
 
 =cut
 
 sub get_device {
-    my ($hostname,$version) = @_;
-    my $device=undef;
+    my $hostname = shift;
+    my $device   = undef;
+    my $comm     = undef;
 
-    foreach my $comm (@{$CONFIG{community}}) {
-        $device = create_device($hostname,$comm,$version);
+    print "  get_device($hostname)\n" if $DEBUG;
 
-        if (defined $device and $device == -1){
-            $device = undef;
-            last;
-        } elsif (defined $device){
-            last;
+    # Check to see if device is in database
+    my $ip      = &getip($hostname);
+    my $dev_ip  = &root_device($ip);
+
+    # Call with stored comm/ver unless supplied $ver
+    if (defined $dev_ip) { 
+        my $row     = sql_hash('device',['snmp_ver','snmp_comm'],{'ip'=>$dev_ip});
+        my $version = $row->{snmp_ver};
+           $comm    = $row->{snmp_comm};
+
+        print "  get_device($hostname) - Connecting using cached info: $dev_ip/$comm/$version\n"
+            if $DEBUG;
+        $device = create_device($dev_ip,$comm,$version);
+
+        print "!  Could not connect to $dev_ip with SNMP community and version info in database.\n"
+            unless defined $device;
+    }
+
+    # Stored community not available, or didn't work. 
+    if (!defined $device){
+        # Try each community string
+        foreach my $config_comm (@{$CONFIG{community}}) {
+
+            # Don't bother retrying the failed one.
+            next if (defined $comm and ($config_comm eq $comm));
+
+            $device = create_device($hostname,$config_comm);
+
+            if (defined $device and $device == -1){
+                $device = undef;
+                last;
+            } elsif (defined $device){
+                last;
+            }
         }
     }
     unless (defined $device) {
@@ -376,37 +414,51 @@ sub get_device {
     return $device;
 }
 
-=item get_vlan() -  Calls create_device for a given VLAN,Community and SNMP Version
+=item get_vlan(host,vlan number,community,snmp ver,snmp::info object type) 
+
+Calls create_device() for a given VLAN using the modified community string.
 
 =cut
 
 sub get_vlan {
-    my ($hostname,$vlan,$community,$version) = @_;
+    my ($hostname,$vlan,$community,$version,$objtype) = @_;
 
     my $device = undef;
     $community .= '@'.$vlan; 
     
-    return create_device($hostname,$community,$version);
+    return create_device($hostname,$community,$version,$objtype);
 }
 
-=item  create_device() -  Trys to connect to a device, calls device_type() and creates an object of that type.
-returns the device object or undef if the device isn't supported.
+=item  create_device(host,snmp_community[,snmp_version,snmp::info subclass]) 
+
+Tries to connect to a device with a given host and community string.
+
+The device is connected to using the generic SNMP::Info class and device_type() is called.
+
+Then the device is connected to using the more specific class returned by device_type() 
+and the device object is returned.
+
+If an optional version and subclass are given, no device type discovery is done.
+
+If a more specific device type is not found  (is probably not a network device) then -1 is returned.
 
 =cut
 
 sub create_device {
-    my ($hostname,$community,$version) = @_;
+    my ($hostname,$community,$version,$objtype) = @_;
 
-    my $ver = defined $version ? $version : $CONFIG{snmpver};
+    my $ver     = $version || $CONFIG{snmpver} || 2;
     my $retries = $CONFIG{snmpretries} || 2;  
    
-    print "create_device($hostname,$community,$ver)\n" if $DEBUG;
+    printf("  create_device(%s,%s,%d,%s)\n",
+           $hostname,$community,$ver, defined $objtype ? $objtype : 'undef')
+         if $DEBUG;
 
     # Get Device Info
-    my $device = new SNMP::Info( 'DestHost' => $hostname,
+    my $device = new SNMP::Info( 'DestHost'  => $hostname,
                                  'Community' => $community,
-                                 'Version'  => $ver,
-                                 'Retries'  => $retries
+                                 'Version'   => $ver,
+                                 'Retries'   => $retries
                                );
     
     $DEBUG and $device->debug($DEBUG);
@@ -416,23 +468,24 @@ sub create_device {
         return undef;
     }
 
-    my $objtype = $device->device_type();
+    # Get more specific method unless supplied
+    $objtype = $device->device_type() unless defined $objtype;
 
-    unless (defined $objtype){
-        # Try Version 1 (v1 screws up some hp switches )
-        # so we stick w/ 2 first.
+    # Try Version 1 if we haven't already
+    unless (defined $objtype and $ver != 1){
+        # v1 screws up some hp switches that support 2, so we stick w/ 2 first
+        $ver = 1; 
         print " [Trying SNMP Version 1] ";
         print "create_device($hostname,$community,1)\n" if $DEBUG;
-        $device = new SNMP::Info( 'DestHost' => $hostname,
-                                 'Community' => $community,
-                                 'Version'  => 1,
-                                 'Retries'  => $retries
+        $device = new SNMP::Info( 'DestHost'  => $hostname,
+                                  'Community' => $community,
+                                  'Version'   => 1,
+                                  'Retries'   => $retries
                                 );
 
         $objtype = $device->device_type();
 
         $DEBUG and $device->debug($DEBUG);
-        $version = 1;
     }
 
     return undef unless defined $objtype;
@@ -443,18 +496,27 @@ sub create_device {
         return -1;
     }
 
-    $DEBUG and print "  Device Type : $objtype ";
+    print "  Device Type : $objtype " if $DEBUG;
 
     # Make device obj
     $device = new $objtype(
-                'DestHost' => $hostname,
-                'Community' => $community,
-                'Version'  => $version,
-                'Retries'  => $retries
-                );
+                            'DestHost'  => $hostname,
+                            'Community' => $community,
+                            'Version'   => $ver,
+                            'Retries'   => $retries
+                          );
 
-    $device->{_ip} = &getip($hostname);
-    $device->{_dns} = &hostname($device->{_ip});
+    unless (defined $device){
+        print "!  create_device($hostname) - Failed to create device of type $objtype.";
+        return undef;
+    }
+
+    # Tag on some netdisco specific info to the SNMP::Info object.
+    $device->{_ip}       = &getip($hostname);
+    $device->{_dns}      = &hostname($device->{_ip});
+    $device->{_snmpver}  = $ver;
+    $device->{_snmpcomm} = $community;
+    $device->{_objtype}  = $objtype;
 
     # Set the SNMP Debug level
     $DEBUG and $device->debug($DEBUG);
@@ -554,6 +616,8 @@ sub store_device {
 
     $store{ip}          = $device->{_ip};
     $store{dns}         = $device->{_dns};
+    $store{snmp_ver}    = $device->{_snmpver};
+    $store{snmp_comm}   = $device->{_snmpcomm};
     $store{description} = $device->description();
     $store{uptime}      = $device->uptime();
     $store{contact}     = $device->contact();
@@ -771,6 +835,7 @@ ports, such as VLANs.
 =cut
 
 sub mac_getportmacs {
+    print "mac_getportmacs()\n" if $DEBUG;
     $PortMAC = sql_column('device_port',['mac','ip']); 
 }
 
@@ -818,9 +883,9 @@ sub macsuck{
 
     # Get our VLAN list (Catalyst 5xxx mainly)
     my $v_name = $device->v_name();
-
-    my $ver = $device->{_version};
-    my $comm = $device->{_community};
+    my $ver    = $device->{_version};
+    my $comm   = $device->{_community};
+    my $obj    = $device->{_objtype};
     # For each VLAN, connect and then macsuck
     foreach my $vid (keys %$v_name){
         my $vlan = $vid;
@@ -831,7 +896,7 @@ sub macsuck{
 
         # feeding all the connect info as a speedup, instead of 
         #   retrying all the versions and communities
-        my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver)
+        my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver,$obj)
             or next;
 
         walk_fwtable($vlan_device,\%dbports,$interfaces);
