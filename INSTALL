@@ -2,9 +2,19 @@ NAME
 
     Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
+VERSION
+
+    Netdisco 0.93 (Beta/CVS)
+
 AUTHOR
 
-    Max Baker
+    Originally created by Max Baker, See list at the end of README of all
+    the contributors.
+
+CURRENT VERSION
+
+    It is a good idea to check the latest version of this document at
+    <http://netdisco.org> for corrections and additions.
 
 SUPPORT
 
@@ -13,13 +23,11 @@ SUPPORT
     Please use the "netdisco-users" mailing list for all problems and
     comments.
 
-    http://lists.sourceforge.net/lists/listinfo/netdisco-users
+    <http://lists.sourceforge.net/lists/listinfo/netdisco-users>
 
     Please use the Bug interface from Source Forge page at :
 
-    http://sourceforge.net/projects/netdisco
-
-    Thanks to Mike Hunter at UCB for proofing this document.
+    <http://sourceforge.net/projects/netdisco>
 
 REQUIREMENTS
 
@@ -47,6 +55,7 @@ REQUIREMENTS
         Version to match Apache
 
     * GraphViz
+
     See *INSTALL* below for details on how to retrieve and install each one.
 
   OS
@@ -73,7 +82,7 @@ INSTALL
 
   1. Download and Un-archive Netdisco
 
-    Get the newest version from http://www.netdisco.org.
+    Get the newest version from <http://www.netdisco.org>.
 
         tar xvfz netdisco-x.xx.tar.gz    
 
@@ -93,7 +102,7 @@ INSTALL
             useradd -d /usr/local/netdisco netdisco
 
     BSD
-            useradd netdisco
+            adduser netdisco
 
     Give this user permission to the files:
 
@@ -120,8 +129,15 @@ INSTALL
    Install Postgres
 
     i. BSD
-            cd /usr/ports/database/postgres
-            make install
+        First install Postgres from ports:
+
+            cd /usr/ports/database/postgresql7
+            gmake install
+
+        Next initialize the database :
+
+            more /usr/local/pgsql/post-install-notes
+            su -l pgsql -c initdb 
 
     ii. Mandrake Linux
         Installing PostgreSQL the easy way:
@@ -134,7 +150,7 @@ INSTALL
 
         The following line uses an FTP site that has the 9.0 RPMs because I
         lost the CDs. Check the current mirror list at
-        http://www.mandrakelinux.com/en/ftp.php3 and choose a mirror close
+        <http://www.mandrakelinux.com/en/ftp.php3> and choose a mirror close
         to you.
 
             urpmi.addmedia ftpsite ftp://mirror.mcs.anl.gov/pub/Mandrake-old/9.0/i586/Mandrake/RPMS \
@@ -147,10 +163,14 @@ INSTALL
 
         Remember this for the Apache setup too.
 
+    iii. MAC OS X
+        See <http://developer.apple.com/internet/macosx/postgres.html> for
+        detailed instructions on installing PostgreSQL with OS X.
+
     iv. All Others
         There is probably a binary package all ready for you. See your
         distribution's instructions for more help. Otherwise download and
-        compile the source code from http://www.postgresql.org.
+        compile the source code from <http://www.postgresql.org>.
 
    Configure Postgres
 
@@ -164,7 +184,10 @@ INSTALL
 
     i. Permissions
         If you have just setup Postgres for the first time you may have to
-        change the default permissions in $PG_DATA/pg_hba.conf.
+        change the default permissions in $PG_DATA/pg_hba.conf. $PG_DATA
+        might be in "usr/local/pgsql" or in "var/db", depends on your OS.
+        Check the postgres users' homedir files for the location of
+        $PG_DATA.
 
         For installation you must give the database user access to the
         "template1" database. The following line will give all users who
@@ -195,13 +218,15 @@ INSTALL
 
         FreeBSD :
 
-            /usr/local/etc/rc.d/*postgres* restart
+            /usr/local/etc/rc.d/*pgsql* restart
 
         If there are problems with this step you will receieve an error that
         mentions something about pg_hba.conf.
 
     ii. Create Database.
-        First find out the name of your database user. The default name for
+        Make sure your copy of the database is running.
+
+        Next, find out the name of your database user. The default name for
         some Linux RPM versions is "postgres" and for some BSD installations
         "pgsql".
 
@@ -225,7 +250,7 @@ INSTALL
         by running "sql/pg_run". Enter the database user password given
         above.
 
-            cd /usr/local/netdiscosql
+            cd /usr/local/netdisco/sql
             ./pg_run
 
     iv. Create Tables
@@ -233,7 +258,7 @@ INSTALL
         database tables with "sql/pg_all". Type in the database user
         password once when prompted.
 
-            cd /usr/local/netdiscosql
+            cd /usr/local/netdisco/sql
             ./pg_all
 
     v. Optimizations
@@ -259,14 +284,24 @@ INSTALL
 
    A) Net-SNMP
 
-    Net-SNMP 5 lives at http://net-snmp.sourceforge.net.
+    Net-SNMP 5 lives at <http://net-snmp.sourceforge.net>.
 
     BSD For BSD install Net SNMP with ports :
 
             cd /usr/ports/net/net-snmp && make install
 
-        TODO : How do I give it the switch to add "--with-perl-modules"
-        again?
+        For a recent version of BSD you should get the Perl modules
+        installed automatically.
+
+        For a really old version, or for weird and multiple Perl installs do
+        it by hand!
+
+            cd /usr/ports/net/net-snmp
+            make
+            cd work/net-snmp-5
+            ./configure --with-perl-modules
+            make
+            make install
 
     Linux
         If you have installed the Net-SNMP RPM from Redhat or Mandrake it
@@ -305,15 +340,24 @@ INSTALL
 
         Reread the above line.
 
-    iii. Run "snmpconf" and set up your MIB directory.
-        (Default /usr/local/share/snmp/mibs)
+    iii. [OPTIONAL] Configure Net-SNMP for a non-standard setup
+        You probably will not have to do this step unless you have installed
+        net-snmp somewhere other than /usr/local/ or have some specific SNMP
+        defaults to change for these tools.
 
-        Make sure this new snmp.conf lives in /usr/local/share/snmp
+            snmpconf
+
+        Make sure to set the MIB dir if non-standard (Textual mib Parsing ->
+        Specifies directories to be searched for mibs) (default directory is
+        /usr/local/share/snmp/mibs)
+
+        Make sure this newly created snmp.conf lives in
+        /usr/local/share/snmp or wherever you put a custom install.
 
    B) SNMP::Info
 
     This Perl module is an integral part of Netdisco. It is available from
-    http://snmp-info.sourceforge.net. It requires that you have net-snmp
+    <http://snmp-info.sourceforge.net>. It requires that you have net-snmp
     installed first.
 
     SNMP::Info holds all the device-specific code to retrieve data from
@@ -326,10 +370,11 @@ INSTALL
 
     a. CPAN
             perl -MCPAN -e shell
-            install SNMP::Info
+                o conf prerequisites_policy ask
+                install SNMP::Info
 
     b. From Source
-        Download newest version from http://snmp-info.sourceforge.net
+        Download newest version from <http://snmp-info.sourceforge.net>
 
             tar xvfz SNMP-Info-0.x.tar.gz 
             cd SNMP-Info-0.x
@@ -348,7 +393,8 @@ INSTALL
 
             make snmp
 
-        To update to the most current CVS version.
+        To update to the most current CVS version. For BSD or Solaris
+        systems, use "gmake" instead of "make"
 
    C) MIBs
 
@@ -364,9 +410,10 @@ INSTALL
         Install all of the V2 and some of the V1 MIBs into
         /usr/local/share/snmp/mibs.
 
+            mkdir /usr/local/share/snmp/mibs
             cd /usr/local/share/snmp/mibs
             tar xvfz /path/to/v2.tar.gz
-            tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my
+            tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my TOKEN-RING-RMON-MIB.my
 
     Fix CISCO-TC-MIB
         There is a problem with the Cisco file CISCO-TC.my which is included
@@ -386,7 +433,7 @@ INSTALL
                 Gauge32,
                 Integer32,
                 Counter64,
-                Unsigned32,
+                Unsigned32
                     FROM SNMPv2-SMI
 
     Follow the instructions in "SNMP::Info" what MIBs to install for non
@@ -394,34 +441,14 @@ INSTALL
 
         perldoc SNMP::Info
 
-  6. OUI Database
-
-    The Organizationally Unique Identifier (OUI) database allows Netdisco to
-    identify the manufacture of a network card using the first 24 bits of a
-    MAC address.
-
-    The database of OUIs is needed by Netdisco and is available from the
-    IEEE.
-
-    If you have "lynx" installed you can install the OUI database by:
-
-        cd /usr/local/netdisco
-        make oui
-
-    Or do this by hand:
-
-    i. Download oui.txt from http://standards.ieee.org/regauth/oui/
-    ii. Run "netdisco -O"
-    A note about Make versions. The Makefile is a GNU Make version file. In
-    BSD you may have to type "gmake".
-
-  7. GraphViz
+  6. GraphViz  [OPTIONAL]
 
     GraphViz is used in the creation of the Network Map.
 
-    To Download:
+    It lives at <http://www.research.att.com/sw/tools/graphviz/>.
 
     i. Download
+
         BSD For BSD use ports:
 
                 cd /usr/ports/graphics/graphviz && make install
@@ -441,7 +468,11 @@ INSTALL
 
         Unix
             Get the newest version from
-            http://www.graphviz.org/pub/graphviz. Unarchive and install.
+            <http://www.graphviz.org/pub/graphviz>. Unarchive and install.
+
+        Mac OS X
+            It is reported to be in "DarwinPorts" or you can check out
+            <http://www.phil.uu.nl/~js/graphviz/>.
 
     ii. True Type Font
         Copy a True Type Font file (.ttf) into the Netdisco directory and
@@ -464,12 +495,20 @@ INSTALL
 
         perldoc GraphViz
 
-  8. Setup Apache
+  7. Setup Apache
 
     *Apache2* --
 
     Until mod_perl 2.0 is released as stable, Mason will not run under
     Apache2. Netdisco will not run under Apache2 until that point.
+
+   MAC OS X
+
+    See the following three links in addition to this document :
+
+    <http://www.oreillynet.com/pub/a/mac/2002/11/05/apache_osx.html>
+    <http://www.oreillynet.com/pub/a/mac/2002/12/18/apache_modssl.html>
+    <http://www.oreillynet.com/pub/a/mac/2003/02/07/libapreq_update.html>
 
    Mandrake 9.1
 
@@ -534,11 +573,11 @@ INSTALL
         rest of the modules as dynamically loadable objects (DSO).
 
         i. Download and Unarchive
-            Get Apache from http://httpd.apache.org
+            Get Apache from <http://httpd.apache.org>
 
-            Get mod_perl from http://perl.apache.org
+            Get mod_perl from <http://perl.apache.org>
 
-            Get mod_ssl from http://www.modssl.org
+            Get mod_ssl from <http://www.modssl.org>
 
             Unarchive all three to the same directory, maybe /usr/local/src
 
@@ -548,6 +587,7 @@ INSTALL
             Sets up the directory scheme.
 
         iii. In mod_ssl
+
             BSD
                 Installing OpenSSL :
 
@@ -654,7 +694,7 @@ INSTALL
     Dynamic Shared Object (DSO). This is known to be unstable, especially
     with Mason. Compile mod_perl statically using the method listed above.
 
-  9. Perl Modules and Mason
+  8. Perl Modules and Mason
 
     Below is a list of required modules for Netdisco, freely available from
     CPAN (http://www.cpan.org). Many of these modules have prerequisite
@@ -665,6 +705,7 @@ INSTALL
 
         perl -MCPAN -e shell
 
+            o conf prerequisites_policy ask
             install Digest::MD5
             install Bundle::DBI
             install Apache::DBI
@@ -678,7 +719,8 @@ INSTALL
             install Graph
             install GraphViz     (you may need to do a 'force install')
 
-    Some of these you will probably already have installed.
+    Some of these you will probably already have installed. Others you may
+    need to force with "force install ModuleName"
 
    Perl Location
 
@@ -686,7 +728,7 @@ INSTALL
     bin/doc_munge have the correct location for Perl listed at the very top
     of the file.
 
-  10. Netdisco Configuration
+  9. Netdisco Configuration
 
     netdisco.conf
         Modify netdisco.conf to match your site.
@@ -721,7 +763,31 @@ INSTALL
             your Perl binaries are installed.
 
         ii. Create Docs
-             cd /usr/local/netdisco && make doc
+             cd /usr/local/netdisco && gmake doc
+
+  10. OUI Database
+
+    The Organizationally Unique Identifier (OUI) database allows Netdisco to
+    identify the manufacture of a network card using the first 24 bits of a
+    MAC address.
+
+    The database of OUIs is needed by Netdisco and is available from the
+    IEEE.
+
+    If you have "lynx" installed you can install the OUI database by:
+
+        cd /usr/local/netdisco
+        make oui
+
+    ("gmake" for BSD/Solaris)
+
+    Or do this by hand:
+
+    i. Download oui.txt from http://standards.ieee.org/regauth/oui/
+    ii. Run "netdisco -O"
+
+    A note about Make versions. The Makefile is a GNU Make version file. In
+    BSD you may have to type "gmake".
 
   11. Start Apache
 
@@ -733,7 +799,7 @@ INSTALL
             /etc/rc.d/init.d/httpd restart
 
     HomeGrown Copies of Apache
-            /usr/local/apache/apachebin start
+            /usr/local/apache/bin/apachectl start
 
     Also, make sure that Apache starts on its own at reboot.
 
@@ -784,7 +850,7 @@ INSTALL
     Once you're sure Netdisco is setup correctly add the Cron jobs listed in
     netdisco.crontab.
 
-        su - -c "cron -u netdisco /usr/local/netdisco/netdisco.crontab"
+        su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
 
     You may want to fine-tune these jobs to your network.
 
@@ -804,8 +870,13 @@ INSTALL
 
 SUCCESS
 
-    Once you have succeded come join the Netdisco User's mailing list at
-    http://netdisco.org and pass on any hints you may have in the INSTALL
-    process. It's a good place to keep up on new features and releases, and
-    it's the place to ask any questions.
+    Now that you have spent ten hours of your life installing this go drink
+    a Beer, you deserve it.
+
+    Once you have or have not succeded, come join the Netdisco User's
+    mailing list at <http://netdisco.org> and pass on any hints you may have
+    in the INSTALL process.
+
+    It's a good place to keep up on new features and releases, and it's the
+    place to ask any questions.
 

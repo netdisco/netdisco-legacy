@@ -3,12 +3,19 @@
 # $Id$
 
 0.93beta ()
+    + Added Feature [ 824527 ] VLAN and VTP Domain membership info
+    + Added Feature - Search for and show IP phones that speak CDP
     + Added Feature [ 881202 ] Expire Devices and Nodes / Auto Database Maintenance
     + Added Feature [ 822720 ] Port Reporting
     + Added Feature [ 824521 ] Arpnip and Macsuck Exclusion lists
-    + Added devices : Catalyst 4000, C3750, C3500XL, C2970, HP 2650, HP 2626
+    + Added devices : Catalyst 4000,4500, C3750, C3500XL, C2970, HP 2650, HP 2626
     + Added ability to escape pound sign and commas for use in config file as \# or \,
 
+    * Update wireless access point list
+    + Organized output into the data directory a little better.
+    * batch_mode() now makes all directories automatically.
+    * Fixed Bug [738991] The infamous Login Bug.
+    * Fixed Bug [ 824534 ] Cisco VoIP CDP Enabled Phones mess up Topology
     * Fixed Bug [892024] Alias Clean (-k) wasn't working.
     * Fixed Bug [865492] Cisco port-channels not detected as uplink ports
     * Fixed Bug [824531] Graphviz was dependency.
@@ -16,6 +23,7 @@
     * Fixed Bug [810939] reverse lookup of the sysName.0 field used as IP
     * Fixed bug in device.html where the 'resolve ips' setting wasn't being kept
     * Fixed random warning in SNMP::Info -- see its ChangeLog
+    * Added one more spot to check for serial numbers.  C/O baetz
     = next five items fixed by Bradley Baetz
     * Fixed bug where colons in CDP info where not being kept
     + added dns resolution for dead cdp neighbors

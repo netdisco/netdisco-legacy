@@ -8,16 +8,87 @@ AUTHOR
 
 SUPPORT
 
-    See INSTALL or README or http://netdisco.org
+    See INSTALL or README or <http://netdisco.org>
 
 UPGRADING
 
     Here are some hints for upgrading between versions of Netdisco.
 
-    The best way is to back everything up, move the configuration files out
-    of the way, and then follow INSTALL for all but the database steps.
+    There are two methods of upgrading. Please backup the database (see
+    below) before continuing.
 
-    Then change the configuration files back to match.
+    1. Apply Patch
+        Each version starting with version 0.93 will have a ".patch" that
+        you can apply to get the newest version. If you have a lot of site
+        customizations, this might be the best way for you. Be prepared to
+        fix any conflicting merges that may happen. If you can't handle a
+        little code-diving, this may not be the method for you.
+
+        You will also need to get the newest SNMP::Info and possibly run a
+        ".sql" file to make changes to the database structure.
+
+    2. Fresh Upgrade
+        The best way is to back everything up, move the configuration files
+        out of the way and then follow INSTALL for all but the database
+        steps.
+
+        Then change the configuration files back to match.
+
+        You DO NOT wipe the database contents for an upgrade. But just in
+        case, you will have of course made a backup by now.
+
+VERSION SPECIFIC NOTES
+
+    v0.92 -> 0.93
+
+        GraphViz 0.10
+            You may want to install this latest version of GraphViz
+
+        Database Upgrades
+            For some of the new features, fields have been added to some of
+            the database tables. A .sql file has been made to make the
+            changes for you. Please run :
+
+             cd /usr/local/netdisco/sql
+             ./pg_run 
+
+        New MIB Files
+            I added the Q-BRIDGE-MIB for Vlan features that are new in 0.93,
+            and one of the MIB dependencies comes from v1.tar.gz from Cisco
+            and is probably not installed.
+
+                ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
+                cd /usr/local/share/snmp/mibs
+                tar xvfz /path/to/v1.tar.gz TOKEN-RING-RMON-MIB.my
+
+            Meanwhile I'm looking into the legailty of distrubiting a set of
+            "fixed" MIBs that include all the ones required by SNMP::Info
+            for all the vendors.
+
+            You may take this time to update v2.tar.gz as well, just don't
+            forget to repatch CISCO-TC-MIB as per INSTALL.
+
+            See
+            <http://sourceforge.net/mailarchive/message.php?msg_id=7113182>
+            for more details on what MIBs ship broken from Cisco.
+
+    v0.91 -> 0.92
+        Make sure you run "Database Cleanup" or "-K" when you are done
+        upgrading. The bug where the MAC address of switch ports showing up
+        on their own port has been fixed. SNMP::Info Version 0.7 required.
+
+    v0.90 -> 0.91
+
+        netdisco_apache.conf
+            Double check that your copy of netdisco_apache.conf has the
+            settings right for all the "session_*" directives.
+
+        GraphViz
+            Make sure you have GraphViz 0.9 installed.
+
+APPLICATIONS
+
+  Apache / Mod_perl
 
     You shouldn't have to upgrade apache, but now would be a good time to
     see if there are any security upgrades to apache or mod_perl.
@@ -25,7 +96,7 @@ UPGRADING
   SNMP::Info
 
     When upgrading to any version, please make sure you have the newest
-    version of SNMP::Info installed (at least 0.7) :
+    version of SNMP::Info installed (at least 0.8) :
 
     CVS Version
         To update a CVS version of SNMP::Info :
@@ -41,9 +112,9 @@ UPGRADING
 
     Manual Install Version
         Download the newest version from CPAN or
-        http://snmp-info.sourceforge.net and install.
+        <http://snmp-info.sourceforge.net> and install.
 
-  General Upgrade
+  General Upgrade Procedures
 
     Read INSTALL
         Read the INSTALL file that comes with the new version to see what
@@ -54,11 +125,14 @@ UPGRADING
         first.
 
             cd /usr/local/netdisco/sql
-            ./pg_dump
+            ./pg_back
+            scp db_back*.gz somesafehost:
 
     Backup Configuration Files
-        Make backups of all your configuration files.
+        Make backups of all your files.
 
+            tar cvf - -C /usr/local netdisco | gzip > netdisco-back.tgz
+            scp netdisco-back.tgz somesafehost:
             cp /usr/local/netdisco/*.conf /path/to/some_where_safe
             cp /usr/local/netdisco/*.txt  /path/to/some_where_safe
 
@@ -67,9 +141,12 @@ UPGRADING
 
             cp -R /path/to/netdisco-new-0.999 /usr/local/netdisco
 
-    Upgrade Perl Modules
-        Following the procedures in INSTALL, upgrade all the required Perl
-        modules.
+    [Optional] Upgrade Perl Modules
+        Following the procedures in INSTALL, now would be a good time to
+        upgrade all the required Perl modules.
+
+        This step is optional, unless a certain Perl module is listed for
+        your version.
 
     Check Permissions
         Make sure the permissions are set to let the web user read the html/
@@ -81,18 +158,23 @@ UPGRADING
         with Netdisco than try to add the new features to the old one. This
         helps get rid of old bugs too.
 
-  Version Notes
+    Restart Apache
+        You must do a full restart on apache (not a "graceful" or "restart")
+        so that Netdisco will use the newly installed version of
+        netdisco.pm.
 
-    v0.91 -> 0.92
-        Make sure you run "Database Cleanup" or "-K" when you are done
-        upgrading. The bug where the MAC address of switch ports showing up
-        on their own port has been fixed. SNMP::Info Version 0.7 required.
+            /usr/local/apache/bin/apachectl stop
+            /usr/local/apache/bin/apachectl start
 
-    v0.90 -> 0.91
-        netdisco_apache.conf
-            Double check that your copy of netdisco_apache.conf has the
-            settings right for all the "session_*" directives.
+    Restart Admin Daemon
+        You need to restart the admin daemon to run on the new copy of
+        Netdisco.
 
-        GraphViz
-            Make sure you have GraphViz 0.9 installed.
+            su - netdisco -c "/usr/local/netdisco -p restart"
+    
+    Reload Crontab
+        Review netdisco.crontab and reload it for the "netdisco" user.
+
+            su 
+            crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
