@@ -65,6 +65,25 @@ the changes for you.   Please run :
  ./pg_run 
 
 
+=item New MIB Files
+
+I added the Q-BRIDGE-MIB for Vlan features that are new in 0.93, and one
+of the MIB dependencies comes from v1.tar.gz from Cisco and is probably not
+installed. 
+
+    ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
+    cd /usr/local/share/snmp/mibs
+    tar xvfz /path/to/v1.tar.gz TOKEN-RING-RMON-MIB.my
+
+Meanwhile I'm looking into the legailty of distrubiting a set of C<fixed> MIBs
+that include all the ones required by SNMP::Info for all the vendors. 
+
+You may take this time to update v2.tar.gz as well, just don't forget to
+repatch CISCO-TC-MIB as per F<INSTALL>.
+
+See L<http://sourceforge.net/mailarchive/message.php?msg_id=7113182> for more details
+on what MIBs ship broken from Cisco.
+
 =back
 
 =item v0.91 -> 0.92

@@ -51,6 +51,8 @@ in mind.
 Only users you specify in Netdisco will have access to switch off a port.  Netdisco
 will also not allow people to switch off uplink ports by accident.
 
+=item * Supports Cisco VLAN Community String indexing (C<public@101>)
+
 =item * MAC Address to switch port resolution
 
 =item * IP Address to switch port resolution
@@ -119,13 +121,26 @@ will also not allow people to switch off uplink ports by accident.
 
 =back 
 
+=head2 SUPPORTED DEVICES
+
+Netdisco supports any Network device that talks SNMP and has basic information
+available through MIB-II (RFC 1213).   Additional vendor-specific information
+is available for a number of devices, but especially for Cisco, HP, and Bay
+devices.  
+
+Device support is handled through C<SNMP::Info> -- a Perl module that is
+an integral part of Netdisco that handles device-specific code.  See the
+C<Device Matrix> at L<http://snmp-info.sourceforge.net> for a list of 
+devices that have been tested against Netdisco.  SNMP::Info can be extended
+for new families of devices relatively easily with a little Perl knowledge.
+
 =head1 SUPPORT
 
 Please use the C<netdisco-users> mailing list for all problems and comments.
 
 L<http://lists.sourceforge.net/lists/listinfo/netdisco-users>
 
-In case of bugs, please use the Bug interface from Source Forge page at :
+In case of bugs, please use the Bug interface from SourceForge page at:
 
 L<http://sourceforge.net/projects/netdisco>
 
@@ -247,10 +262,31 @@ entry below.
 
 =item -B || --backup
 
-Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
-Calls database cleanup routines (L<-K>) as well.  Will export an NMIS config file if L<nmis_dump> is set.
+Backup and Nightly Maintenance.
 
-For a full backup run C<sql/pg_dump>.
+=over
+
+=item Removes 
+
+Devices and nodes that are old using the C<expire_*> config file directives (see below).
+
+=item Creates
+
+Archive data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
+
+=item Calls
+
+Database cleanup routines (L<-K>) as well. 
+
+=item Exports 
+
+NMIS config file if L<nmis_dump> is set.
+
+=back
+
+This routine should be run nightly.
+
+For a full backup run F<sql/pg_back> to backup the whole database.
 
 =item -d || --discover device
 
@@ -426,23 +462,30 @@ C<web_console_models> in C<netdisco.conf>.
 
 =item Refreshing a device
 
-To refresh the device and its ports, use the L<-d> command:
+To refresh or discover a device and its ports, use the L<-d> command:
 
     netdisco -d mydevice
 
 =item Importing Topology Information
 
+It is not necessary to import the topology information after changing F<netdisco-topology.txt>.  You should
+however restart the admin daemon.  The topology text file is reparsed each time you run netdisco.
+
+As a convience you can use the topology file to quickly seed Netdisco with devices. 
 To import all the topology information at once make sure the topology filename is set in C<netdisco.conf>
 and use the L<-T> command:
 
     netdisco -T
 
-=item Aborting a job
+=item Aborting a process of Netdisco
 
-Hit Ctrl-C if you are running the job, or send the job the INT signal. The job can cleanup after itself,
-write out its stats and log entries. 
+Hit Ctrl-C if you are running a netdisco process, or send the job the INT signal. 
+The job can cleanup after itself, write out its stats and log entries. 
 
     kill -INT jobpid
+
+There is currently no way to stop a job inside the Admin daemon.  Send the daemon an INT 
+signal and it will terminate after its current job has completed.
 
 =item Changing the IP Address of a Device
 
@@ -462,6 +505,27 @@ Changing the IP address of a device will:
 =item 3. Move the old nodes to the new device.
 
 =back
+
+=item Auto-Deleting Old Data From the Database
+
+In order for Netdisco to be self-maintaining data has to be taken out of the 
+database as well as put in.   The following config file directives are used to 
+auto-prune stuff from the database :
+
+=over
+
+=item expire_devices 
+
+=item expire_nodes
+
+=item expire_nodes_archive
+
+=back
+
+See each item's entry in the L<Config File> Section below for more details. 
+
+The expire data routines are called from the L<-B>/Backup routine, which should
+be running nightly via cron.
 
 =item Deleting a Device
 
@@ -498,8 +562,8 @@ Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
 
 =item Device Model comes up as 'Products.'
 
-The device is probably newer than your Cisco MIBs.  Redownload the v2.tar.gz and install these 
-newest mibs into F</usr/local/share/snmp/mibs>.
+The device is probably newer than your Cisco MIBs.  Redownload L<ftp://ftp.cisco.com/pub/mibs/v2/v2.tar.gz>
+and install these newest mibs into F</usr/local/share/snmp/mibs>.
 
 =item Things are getting Really slow
 
@@ -561,11 +625,14 @@ Procedure for doing a vacuum full :
 =head2 Topology Information
 
 Topology information is crucial to Netdisco's performance.  It allows the application to know
-which ports are uplink ports and which have connected nodes. 
+which ports are uplink ports and which have connected nodes.  Ports that are uplink ports
+that are not marked so in Netdisco will appear to B<steal> MAC address entries from their 
+rightful ports.  So it is critical to use the topology file and CDP to maintain a topology.
+
 
 =head3 Manual Topology Information
 
-Netdisco will autodiscover the layer two topology of a network using CDP.  However, many networks 
+Netdisco will auto-discover the layer-two topology of a network using CDP.  However, many networks 
 have parts of the topology that are not covered by CDP.
 
 Use the manual topology file C<netdisco-topology.txt> to supply the layout of the network
@@ -602,7 +669,8 @@ The device can be a DNS name or an IP Address.
 
 =item alias:
 
-NOT IMPLEMENTED!
+Not implemented for output.  The backup file will have these lines just for informations'
+sake.  Alias IPs on a device are found during discovery.
 
 Many network devices like routers have multiple IP addresses assigned to them.  If the device
 cannot or does not supply this information to Netdisco in a standard way, you can add IP
@@ -1226,12 +1294,11 @@ User information for web front end.
 I would like to thank the following people for their
 contributions to Netdisco :  
 
-    Mark Boolootian [Netdisco's Architect] (UCSC), Jim Warner (UCSC), 
-    Remo Rickli (PSI, Switzerland),  Mike Hunter (UCB), Brian Wilson (NCSU),
-    David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
-    Jean-Philippe Luiggi (sagem.com), Kismet Developers AP List, 
-    A.L.M Buxey (Loughborough University, UK), Kevin Cheek (UMICH), Bradley Baetz (bbaetz),
-    John Bigrow (bnl.gov), George Pavel (llnl.gov)
+Mark Boolootian (Through who's ideas Netdisco was born and shaped)  (UCSC), Jim Warner (UCSC), 
+Mike Hunter (UCB), Brian Wilson (NCSU), David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
+Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), 
+A.L.M Buxey (Loughborough University, UK), Kevin Cheek (UMICH), Bradley Baetz (bbaetz),
+John Bigrow (bnl.gov), George Pavel (llnl.gov), Charles Goldsmith (CompUSA)
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.

@@ -466,7 +466,7 @@ Install all of the V2 and some of the V1 MIBs into F</usr/local/share/snmp/mibs>
     mkdir /usr/local/share/snmp/mibs
     cd /usr/local/share/snmp/mibs
     tar xvfz /path/to/v2.tar.gz
-    tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my
+    tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my TOKEN-RING-RMON-MIB.my
 
 =item Fix CISCO-TC-MIB
 
@@ -476,7 +476,7 @@ if you run into errors about C<Unsigned32> in this file.
 
 Edit F</usr/local/share/snmp/mibs/CISCO-TC.my>
 
-Comment out line 192 that says C<SMI Unsigned32> with two dashes.
+Comment out line 192 that says C<SMI Unsigned32> with B<two dashes>.
 
     -- SMI Unsigned32
 
