@@ -1,7 +1,8 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <& SELF:matches &>
 <h3>Device Search</h3>
-<TABLE BORDER=0 CELLSPACING=4 CELLPADDING=0 CLASS="box">
+
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
 <TR>
     <TD COLSPAN=4><h4>Search All</h4></TD>
 </TR>
@@ -15,25 +16,25 @@
     <TD COLSPAN=4><h4>Advanced Search</h4></TD>
 </TR>
 <TR>
-    <TD>IP: </TD>
+    <TD> IP: </TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="ip" VALUE="<%$ip%>"></TD>
     <TD>Location:</TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="loc" VALUE="<%$loc%>"></TD>
 </TR>
 <TR>
-    <TD>DNS Name: </TD>
+    <TD> DNS Name: </TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="name" VALUE="<%$name%>"> </TD>
     <TD>Description: </TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="desc" VALUE="<%$desc%>"> </TD>
 </TR>
 <TR>
-    <TD>Vendor:</TD>
+    <TD> Vendor:</TD>
     <TD><SELECT MULTIPLE NAME="vendors" size=5>
 %       foreach my $vendor (sort keys %$vendors){
             <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@vendors) ? 'SELECTED' : ''%>><%$vendor%>
 %       } 
         </SELECT></TD>
-    <TD>Model:</TD>
+    <TD> Model:</TD>
     <TD><SELECT MULTIPLE NAME="models" SIZE=5>
 %       foreach my $model (sort {lc($a) cmp lc($b)} keys %$models){
             <OPTION VALUE="<%$model%>" <% grep(/^$model$/,@models) ? 'SELECTED': ''%>><%$model%>
@@ -41,17 +42,18 @@
         </SELECT></TD>
 </TR>
 <TR>
-    <TD>Layer:</TD>
+    <TD> Layer:</TD>
     <TD><SELECT MULTIPLE NAME="layers" size=2>
 %   foreach (1..7){ my $num=$_;
-        <OPTION VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'SELECTED' : ''%>><%$num%>
+            <OPTION VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'SELECTED' : ''%>><%$num%>
 %   }
+        </SELECT>
     </TD>
     <TD>&nbsp;</TD>
     <TD>&nbsp;</TD>
 </TR>
 <TR>
-    <TD>Search Scope:</TD>
+    <TD> Search Scope:</TD>
     <TD colspan=3>
     Any above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
     All above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
