@@ -4,4 +4,5 @@
 ALTER TABLE device_port ADD COLUMN remote_type text;
 ALTER TABLE device_port ADD COLUMN remote_id   text;
 ALTER TABLE device_port ADD COLUMN vlan        text;
-ALTER TABLE device_port ADD COLUMN vtpdomain   text; 
+
+ALTER TABLE device      ADD COLUMN vtp_domain  text;

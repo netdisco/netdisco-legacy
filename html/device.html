@@ -44,6 +44,7 @@ my %device_info = (
                    'Last ArpNip' => 'last_arpnip',
                    'Mac Address' => 'mac',
                    'OSI Layers' => 'layers',
+                   'VTP Management Domain' => 'vtp_domain',
                    #'Ports' => 'ports',
                    #'Backplane Slots' => 'slots',
                     );
@@ -83,7 +84,7 @@ if ($ip) {
                         ['ip','extract(epoch from creation) as creation','dns',
                          'description','uptime','contact','name','location','layers',
                          'ports','mac','serial','model','ps1_type','ps2_type','ps1_status',
-                         'ps2_status','fan','slots','vendor','log','os_ver','os',
+                         'ps2_status','fan','slots','vendor','log','os_ver','os','vtp_domain',
                          'extract(epoch from last_discover) as last_discover',
                          'extract(epoch from last_macsuck) as last_macsuck',
                          'extract(epoch from last_arpnip) as last_arpnip' ],
@@ -151,6 +152,12 @@ if ($ip) {
         my $aliases = sql_column('device_ip',['alias','dns'],
             {'ip'=> $switch, 'port'=>$port});
 
+        # Add VLAN info 
+        my $vlan = $portreq->{vlan};
+        if (defined $vlan and $vlan > 0){
+            $portreq->{portdisp} .= " <font size=-1>[v$vlan]</font>"; 
+        }
+
         # Add aliases to display of port name
         if (defined $aliases and scalar keys %$aliases) {
             foreach my $alias (sort sort_ip keys %$aliases){
@@ -161,6 +168,7 @@ if ($ip) {
                 $portreq->{portdisp} .= "<BR> $alias ($dns)";
             }
         }
+
     }
 
     # Get IP addresses of connected nodes
@@ -326,7 +334,7 @@ $web_dns =~ s/\Q$domain\E//;
 foreach my $item (sort keys %device_info) {
     my $db_col = $device_info{$item};
     my $val = $device->{$db_col};
-    next unless defined $val;
+    next unless defined $val and length($val);
 
     # Munge
     if ($db_col eq 'aliases'){

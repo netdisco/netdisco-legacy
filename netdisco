@@ -1552,6 +1552,13 @@ sub store_device {
         $device->{_alias}->{$ip}++;
     }
 
+    # VTP Management Domain -- assume only one.
+    my $vtpdomains = $device->vtp_d_name();
+    my $vtpdomain;
+    if (defined $vtpdomains and scalar(values(%$vtpdomains))) {
+        $vtpdomain = (values(%$vtpdomains))[-1];
+    }
+
     my %store = ();
 
     $store{ip}          = $device->{ip};
@@ -1577,6 +1584,7 @@ sub store_device {
     $store{vendor}      = $device->vendor();
     $store{os}          = $device->os();
     $store{os_ver}      = $device->os_ver();
+    $store{vtp_domain}  = $vtpdomain;
     #$store{log}         = $device->log();
     $store{last_discover} = localtime;
     
@@ -1613,6 +1621,7 @@ sub store_interfaces {
     my $i_duplex   = $device->i_duplex();
     my $i_duplex_admin = $device->i_duplex_admin();
     my $i_stp_state = $device->i_stp_state();
+    my $i_vlan     = $device->i_vlan();
 
     foreach my $if (keys %$interfaces) {
         print '.';
@@ -1639,6 +1648,7 @@ sub store_interfaces {
         $store{duplex}       = $i_duplex->{$if};
         $store{duplex_admin} = $i_duplex_admin->{$if};
         $store{stp}          = $i_stp_state->{$if};
+        $store{vlan}         = $i_vlan->{$if};
 
         insert_or_update('device_port', { 'ip' => $ip, 'port' => $store{port} }, 
                          \%store );        
