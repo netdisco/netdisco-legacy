@@ -50,7 +50,7 @@ VERSION SPECIFIC NOTES
             changes for you. Please run :
 
              cd /usr/local/netdisco/sql
-             ./pg_run 
+             ./pg_run upgrade-0.92-to-0.93.sql
 
         New MIB Files
             I added the Q-BRIDGE-MIB for Vlan features that are new in 0.93,

@@ -62,7 +62,7 @@ of the database tables.  A F<.sql> file has been made to make
 the changes for you.   Please run :
 
  cd /usr/local/netdisco/sql
- ./pg_run 
+ ./pg_run upgrade-0.92-to-0.93.sql
 
 
 =item New MIB Files
