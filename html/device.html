@@ -14,10 +14,11 @@ $ip         => ''   # Can be IP or hostname
 $submit     => ''   # Can have all/hide to control ports
 $device_age => 'off'
 $archive    => 'off'
+$node_ip    => 'off'
 </%args>
 <%shared>
-my ($arg_age,$arg_arch,$device,$devip);
-my $ports = [];
+my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip);
+my $ports = []; my $node_ips = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
 my $now    = time;
@@ -58,7 +59,7 @@ my $admin        = defined $m->session->{user_admin} and $m->session->{user_admi
 <%init>
 #  Parsing of Arguments
 $arg_age  = $device_age; $arg_arch = $archive; 
-@arg_port = @port;
+@arg_port = @port; $arg_node_ip = $node_ip;
 
 if ($ip) {
     # Save Search Term
@@ -71,7 +72,6 @@ if ($ip) {
     # Check if we're an alias of another device
     $devip = &root_device($ip);
     
-    # YOU ARE HERE
     # redirect to search if no match
     $m->redirect("device_search.html?text=$match") unless $devip;
 
@@ -137,6 +137,12 @@ if ($ip) {
             {'switch' => $switch, 'port' => $port } );
         $portreq->{macs} = (defined $nodes and scalar @$nodes) ? $nodes : undef;
 
+        # Save MAC addresses for IP lookup
+        foreach my $node (@$nodes){
+            my $mac = $node->{mac};
+            $node_ips->{$mac}++;
+        }
+
         # Get IP addresses on ports
         my $aliases = sql_column('device_ip',['alias','dns'],
             {'ip'=> $switch, 'port'=>$port});
@@ -150,6 +156,21 @@ if ($ip) {
                 
                 $portreq->{port} .= "<BR> $alias ($dns)";
             }
+        }
+    }
+
+    # Get IP addresses of connected nodes
+    if ($node_ip eq 'on'){
+        my @macs = keys %$node_ips;
+        my $ips = sql_rows('node_ip',['mac','ip'],
+                           {active => 1, mac => [\@macs] }
+                          );
+        $node_ips = {};
+        # Push IP address into list in %node_ips hash
+        foreach my $macip (@$ips){
+            my $mac = $macip->{mac};
+            my $ip  = $macip->{ip};
+            push ( @{$node_ips->{$mac}},$ip);
         }
     }
 }
@@ -203,6 +224,10 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
 <B>Show Archived Data</B>:
 <INPUT TYPE="radio" NAME="archive" VALUE="off" <%$arg_arch eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$arg_arch eq 'on'  ? 'CHECKED' : '' %>>On
+<BR>
+<B>Show Connected Device IP</B>:
+<INPUT TYPE="radio" NAME="node_ip" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
 <P>
 <INPUT TYPE="submit" VALUE="Change View" NAME="submit">
 </FORM>
@@ -436,20 +461,31 @@ foreach my $port (sort sort_port @$ports){
 <%perl>
     } 
     $m->out("<BR>\n") if (defined $remote_ip and defined $port->{macs});
+
+    # Show connected nodes
     my $seen_macs=0;
     if (defined $port->{macs}) { 
-        # list mac addresses connected
         foreach my $node (sort {$a->{mac} cmp $b->{mac}} @{$port->{macs}}) {
             my $mac       = $node->{mac};
             my $active    = $node->{active};
             my $time_last = $node->{time_last};
+
+            # Connected Device Age Stamp?
             my $age       = $now - $time_last;
             $age = sprintf("%d", ($age / (60*60*24)));
             my $show_age  = ($arg_age eq 'on' and $age > 0) ? " ($age days)" : '';
+
+            # Show Archived Data?
             next unless ($active or $arg_arch eq 'on');
             $seen_macs++;
 </%perl>
         <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR> 
+%       # Show node_ips?
+%           if ($arg_node_ip eq 'on' and defined $node_ips->{$mac}) {
+%               foreach my $ip (@{$node_ips->{$mac}}) {
+        <A HREF="node.html?node=<% $ip |u %>" TITLE="Node <%$mac|h%>  IP <%$ip|h%>"><%$ip%></A><BR>               
+%               }
+%           }
 %        }
 %    }
 %    unless ($seen_macs or defined $remote_ip) {
