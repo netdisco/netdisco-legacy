@@ -8,7 +8,13 @@ Netdisco 0.93 (Beta/CVS)
 
 =head1 AUTHOR
 
-Max Baker 
+Originally created by Max Baker,  See list at the end of README of all
+the contributors.
+
+=head1 CURRENT VERSION
+
+It is a good idea to check the latest version of this document
+at L<http://netdisco.org> for corrections and additions.
 
 =head1 SUPPORT
 
@@ -246,7 +252,9 @@ about F<pg_hba.conf>.
 
 =item ii. Create Database.
 
-First find out the name of your database user.  The default name for
+Make sure your copy of the database is running.
+
+Next, find out the name of your database user.  The default name for
 some Linux RPM versions is C<postgres> and for some BSD installations C<pgsql>.
 
 Edit the file C<pg_init> to match your database user name in F</usr/local/netdisco/sql/pg_init>
@@ -489,11 +497,11 @@ what MIBs to install for non Cisco devices or in case of trouble.
 
     perldoc SNMP::Info
 
-=head2 6. GraphViz 
+=head2 6. GraphViz  [OPTIONAL]
 
 GraphViz is used in the creation of the Network Map.
 
-To Download:
+It lives at L<http://www.research.att.com/sw/tools/graphviz/>.
 
 =over
 
@@ -524,6 +532,10 @@ make sure you have the F<gettext> packages installed :
 
 Get the newest version from L<http://www.graphviz.org/pub/graphviz>.
 Unarchive and install.
+
+=item Mac OS X
+
+It is reported to be in C<DarwinPorts> or you can check out L<http://www.phil.uu.nl/~js/graphviz/>.
 
 =back
 
@@ -967,7 +979,7 @@ If you have problems, check the F<error_log> of apache for messages.
 Once you're sure Netdisco is setup correctly add the Cron jobs listed in
 F<netdisco.crontab>.
 
-    su - -c "cron -u netdisco /usr/local/netdisco/netdisco.crontab"
+    su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
 
 You may want to fine-tune these jobs to your network.
 
@@ -987,8 +999,12 @@ the following line to your F</etc/rc.d/rc.local> file :
 
 =head1 SUCCESS
 
-Once you have succeded come join the Netdisco User's mailing list at 
+Now that you have spent ten hours of your life installing this go drink a Beer,
+you deserve it. 
+ 
+Once you have or have not succeded, come join the Netdisco User's mailing list at 
 L<http://netdisco.org> and pass on any hints you may have in the INSTALL process.
+
 It's a good place to keep up on new features and releases, and it's B<the>
 place to ask any questions. 
 
