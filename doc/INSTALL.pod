@@ -4,7 +4,7 @@ Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
 =head1 VERSION
 
-Netdisco 0.93 (Beta/CVS)
+Netdisco 0.93
 
 B<PLEASE> check the latest version of this document at 
 L<http://netdisco.org/install.html> in case of bugs.
