@@ -4,7 +4,7 @@ NAME
 
 VERSION
 
-    Netdisco 0.93 (Beta/CVS)
+    Netdisco 0.93
 
     PLEASE check the latest version of this document at
     <http://netdisco.org/install.html> in case of bugs.
@@ -99,6 +99,29 @@ INSTALL
     Move files to that dir
 
         mv netdisco-x.xx/* /usr/local/netdisco
+
+   Non-Standard install Directory
+
+    If you plan to install to a directory other than "/usr/local/netdisco"
+    then you must change a couple files. Otherwise Skip down to Number 2.
+
+    SQL Shell Scripts
+        Modify the following shell scripts :
+
+            sql/pg_run
+            sql/pg_init
+            sql/pg_back
+
+    netdisco.conf
+        Double-check the "home" option in netdisco.conf.
+
+    netdisco_apache.conf
+        Change all the appearances of "/usr/local/netdisco" in
+        netdisco_apache.conf to match your new directory.
+
+    netdisco_apache_dir.conf
+        Change all the appearances of "/usr/local/netdisco" in
+        netdisco_apache_dir.conf to match your new directory.
 
   2. Create a Unix User/Group for Netdisco
 
@@ -218,6 +241,11 @@ INSTALL
 
         You may have to swap "md5" for "crypt", Actual mileage may vary.
 
+        Finally if you would like to have root be able to access all
+        databases, try this one :
+
+            local all root trust
+
     2. Restart Postgres
         You must now restart Postgres
 
@@ -303,7 +331,7 @@ INSTALL
         When you run "./configure", make sure you add the switch
         "--with-perl-modules"
 
-            ./configure --with-perl-modules
+            ./configure --with-perl-modules --enable-shared
             make 
             make install
 
@@ -646,7 +674,7 @@ INSTALL
         This step sets up mod_perl for this copy of apache :
 
          cd ../mod_perl-1.x
-         /usr/local/bin/perl Makefile.pl \
+         /usr/local/bin/perl Makefile.PL \
                 APACHE_SRC=../apache_1.3.x/src \
                 EVERYTHING=1 \
                 DO_HTTPD=1 \
@@ -745,13 +773,15 @@ INSTALL
             install Apache::Session
             install Apache::Test (for Apache::Request, you may need to do a 'force install')
             install Apache::Request
+            install HTML::Entities
             install HTML::Mason
             install MasonX::Request::WithApacheSession
             install Graph
             install GraphViz     (you may need to do a 'force install')
 
     Some of these you will probably already have installed. Others you may
-    need to force with "force install ModuleName"
+    need to force with "force install ModuleName". Do Not include the
+    comments in (parens)!
 
    8.2. Perl Location header in executables.
 

@@ -1,0 +1,12 @@
+#!/bin/sh
+# fix_cvsroot - Max Baker
+# SourceForge changed its cvs server names from
+#   cvs.netdisco.sf.net to cvs.sf.net
+#   So all the Root entries must be changed.
+
+if [ "$1" = "" ]; then
+    echo "Usage: fix_cvsroot project_name"
+    exit 255;
+fi
+
+find . -name Root -print -exec sed -i -e "s/cvs.$1/cvs/" \{\} \;

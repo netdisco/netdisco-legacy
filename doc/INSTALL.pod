@@ -111,6 +111,39 @@ Move files to that dir
 
     mv netdisco-x.xx/* /usr/local/netdisco
 
+=head3 Non-Standard install Directory
+
+
+If you plan to install to a directory other than C</usr/local/netdisco> then you must
+change a couple files.  Otherwise Skip down to Number 2.
+
+=over
+
+=item SQL Shell Scripts
+
+
+Modify the following shell scripts :
+
+    sql/pg_run
+    sql/pg_init
+    sql/pg_back
+
+=item netdisco.conf
+
+Double-check the C<home> option in F<netdisco.conf>.
+
+=item netdisco_apache.conf
+
+Change all the appearances of C</usr/local/netdisco> in F<netdisco_apache.conf>
+to match your new directory.
+
+=item netdisco_apache_dir.conf
+
+Change all the appearances of C</usr/local/netdisco> in F<netdisco_apache_dir.conf>
+to match your new directory.
+
+=back
+
 =head2 2. Create a Unix User/Group for Netdisco  
 
 Create a user and group named C<netdisco>

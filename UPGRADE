@@ -14,6 +14,9 @@ UPGRADING
 
     Here are some hints for upgrading between versions of Netdisco.
 
+    FIRST! Go read below where it says "Backup Database" and "Backup
+    Configuration Files" and DO IT!
+
     There are two methods of upgrading. Please backup the database (see
     below) before continuing.
 

@@ -1388,7 +1388,8 @@ David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
 Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), A.L.M Buxey
 (Loughborough University, UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov),
 George Pavel (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
-(saintmarys.edu), Revital Shvarzman (York U, Ontario). 
+(saintmarys.edu), Revital Shvarzman (York U, Ontario), 
+Walter Gould (Auburn University).
 
 As well as these people for their donations :
 
