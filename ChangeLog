@@ -9,6 +9,8 @@
     + Added support for ifLastChange in SNMP::Info, device_port and device.html
     * Device Inventory drill down now shows model/vendor/os/version for every subsearch
     * Added Real Name and Notes field for users in User Admin.
+    * Bug Fixed - Trying to Making Graph when there is no topology info would fail
+            Found by Vaibhav Gupta
     * Added last_arpnip timestamp for arpnips that was never there??
 
 0.93beta (6/19/04)

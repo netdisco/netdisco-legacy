@@ -2581,6 +2581,11 @@ sub graph {
 
     my $G = make_graph();
 
+    unless (defined $G){
+        print "graph() - make_graph() failed.  Try running with debug (-D)\n";
+        return;
+    }
+
     my @S = $G->strongly_connected_components;
 
     # Count number of nodes in each subgraph

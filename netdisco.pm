@@ -687,6 +687,12 @@ sub make_graph {
         $devs{$ip} = $dns;
     }
 
+    # Check for no topology info
+    unless (scalar @$links){
+        print "make_graph() - No Topology information." if $::DEBUG; 
+        return undef;
+    }
+
     my %link_seen;
     my %linkmap;
     foreach my $link (@$links){
