@@ -24,7 +24,7 @@ use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
 use SNMP::Info 1.0;
 use netdisco qw/:all/;  
-use Socket qw/:all/;
+use Net::NBName;
 
 $| = 1;
 
@@ -2041,96 +2041,50 @@ Connects to node and gets NetBIOS information. Then adds entries to node_nbt tab
 
 Returns whether a node is answering netbios calls or not.
 
-Based on Remo Rickli's nbtstat.pl
-
 =cut
 
 sub nbtstat {
     my $host = shift;
-    my $port = 137;
-    my $tout = 0.5;
-    my $nbts = pack("C50",129,98,00,00,00,01,00,00,00,00,00,00,32,67,75,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,00,00,33,00,01);
-    my ($wsnam, $data, $rin);
-    my $sockaddr = 'S n a4 x8';                # magic
-    my $family   = &Socket::AF_INET;    
-    my $socktype = &Socket::SOCK_DGRAM;
-    $wsnam = $data = $rin = '';
-
+    my $ip = getip($host);
+    my $nb = Net::NBName->new;
+    
     print "nbtstat($host) : ";
 
-    my ($name, $aliases, $type, $len, $peer_addr) = gethostbyname($host);
-    my $ip=inet_ntoa($peer_addr);
-
-    my $me   = pack($sockaddr, $family, 0, '');
-    my $peer = pack($sockaddr, $family, $port, $peer_addr);
-
-    socket(S, PF_INET, SOCK_DGRAM, getprotobyname('udp'))
-         or die "Unable to create socket: $!";
-    bind(S, $me) or die "Unable to bind socket: $!";
-    unless (send(S, $nbts, 0, $peer)) {
-         print "Couldn't send: $!";
-         return 0;
-    }
-
-    # receive udp until timeout
-    vec($rin, fileno(S), 1) = 1;
-    while (select($rin, undef, undef, $tout)) {
-        unless (recv(S, $data, 1024, 0)) {
-            print "Couldn't receive: $!";
-            return 0;
-        }
-    }
-    close(S);
+    my $ns = $nb->node_status($ip);
 
     # Check for NetBIOS Info
-    unless (length($data) > 70 and $data =~ /AAAAAAAAAA/) {  
-        print "no Netbios.\n";
+    unless ($ns) {  
+        print "No NetBIOS.\n";
         return 0;
     }
 
-    my $num = unpack("C",substr($data,56,1));    # Get number of names
-    my $out = substr($data,57);            # get rid of WINS header
     my $server = 0;
     my $nbname = '';
     my $domain = '';
     my $nbuser = '';
 
-    for (my $i = 0; $i < $num;$i++){
-        my $nam = substr($out,18*$i,15);
-        $nam =~ s/ +//g;
-        # Skip IIS User 
-        next if $nam =~ /IS~/;
-        $nam =~ s/[^\d\w-]//g;
-
-        my $id = unpack("C",substr($out,18*$i+15,1));
-        my $fl = unpack("C",substr($out,18*$i+16,1));
-
-        # Machine Name
-        if ($id == 0 and $fl < 128){
-            $nbname = $nbname || $nam;
+    for my $rr ($ns->names) {
+        if ($rr->suffix == 0 && $rr->G eq "GROUP") {
+            $domain = $rr->name;
         }
-        # Domain or Workgroup
-        elsif ($id ==0 and $fl >= 128){
-            $domain = $nam;
+        if ($rr->suffix == 3 && $rr->G eq "UNIQUE") {
+            $nbuser = $rr->name;
         }
-        # Server service
-        elsif ($id eq "32") {
+        if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
+            $nbname = $rr->name unless $rr->name =~ /^IS~/;
+        }
+        if ($rr->suffix == 32 && $rr->G eq "UNIQUE") {
             $server = 1;
         }
-        # User Logon
-        elsif ($id eq "3"){
-            $nbuser = $nam;
-        }
     }
-
-    my @mac = unpack("C6",substr($out,18*$num,6));
-    my $mac = sprintf "%02X:%02X:%02X:%02X:%02X:%02X",@mac;
+    my $mac = $ns->mac_address;
+    $mac =~ s/-/:/g;
 
     unless ($nbname){
         print "No computer name found.\n";
         return 1;
     }
-
+        
     if (!$mac or $mac eq '00:00:00:00:00:00'){
         # Just assume it's the last MAC we saw this IP at.
         $mac = sql_scalar('node_ip',['mac'],{'ip'=>$ip,'active'=>1});
@@ -2145,9 +2099,9 @@ sub nbtstat {
     add_nbt($ip,$mac,$nbname,$domain,$server,$nbuser);
     $NbtTotal++;
 
-    return 1;
+    return 1;    
 }
-
+    
 =item nbtwalk() 
 
 Visits every node and trys to get its NetBIOS information.  
