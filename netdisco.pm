@@ -42,10 +42,19 @@ our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
 =over
 
-=item $netdisco::DBH - Holds Database Handle
+=item %netdisco::DBH
+
+Holds Database Handles, key is db name as set in config file.
 
 =cut
-our $DBH;
+our %DBH;
+
+=item %netdisco::DB
+
+Index of current Database Handle.  Default 'Pg';
+
+=cut
+our $DB = 'Pg';
 
 =item %netdisco::CONFIG - Holds config info from netdisco.conf
 
@@ -157,13 +166,11 @@ sub config {
         next unless (length $config);
 
         # Fill the %CONFIG hash
-        my ($var,$value) = split('=',$config);
 
-        # Allow space around the =
-        $var   =~ s/\s+$//;
-        $value =~ s/^\s+//;
-
-        $var = lc($var);
+        my $var = undef;  my $value = undef;
+        if ($config =~ /^([a-zA-z_-]+)\s*=\s*(.*)$/) {
+            $var = $1;  $value = $2;
+        } 
 
         unless(defined $var and defined $value){
             print STDERR "Bad Config Line : $config\n";
@@ -193,6 +200,16 @@ sub config {
                 $users{$user}++;
             }            
             $value = \%users;
+        }
+    
+        # Database Hash values 
+        if ($var =~ /^db_([a-zA-z]+)_opts$/){
+            my %opts;
+            foreach my $pair (split(/\s*,\s*/,$value)) {
+                my ($hash_key,$hash_value) = split(/\s*=>\s*/,$pair);
+                $opts{$hash_key}=$hash_value;
+            }
+            $value = \%opts;
         }
 
         $CONFIG{$var}=$value;
@@ -541,16 +558,20 @@ sub user_del{
 =item dbh() 
 
     Creates and returns a database handle. Creates once, then 
-    returns the cached copy.
+    returns the cached copy.  Select database handle in use by 
+    localizing $netdisco::DB;
 
 =cut
 sub dbh {
-    unless ($DBH && $DBH->ping) {
-        $DBH = DBI->connect("dbi:Pg:dbname=".$CONFIG{'db'},
-                        $CONFIG{'dbuser'},$CONFIG{'dbpw'})
-        or die "Can't connect to DB. \n";
+    unless ($DBH{$DB} && $DBH{$DB}->ping) {
+        my $connect = $CONFIG{"db_$DB"}        or die "dbh() - db_$DB not found in config info.\n";
+        my $user    = $CONFIG{"db_${DB}_user"} or die "dbh() - db_${DB}_user not found in config info.\n";
+        my $pw      = $CONFIG{"db_${DB}_pw"}   or die "dbh() - db_${DB}_pw not found in config info.\n";
+        my $options = $CONFIG{"db_${DB}_opts"} || {};
+        $DBH{$DB} = DBI->connect($connect,$user,$pw,$options)
+            or die "Can't connect to DB. $DBI::errstr\n";
     }
-    return $DBH; 
+    return $DBH{$DB}; 
 }
 
 #=item1 hash_diff($hashref_orig, $hashref_new)
@@ -933,6 +954,11 @@ sub sql_rows {
     carp($sql) if $SQLCARP;
 
     my $sth = $dbh->prepare($sql);
+    if (!defined $sth) {
+        # TODO:  warn or die?
+        carp("sql_rows($sql) - $DBI::errstr\n");
+        return undef;
+    }
     $sth->execute;
 
     # calling fetchall_ with {} forces it to return hashes
