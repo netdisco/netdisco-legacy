@@ -29,7 +29,7 @@ use netdisco qw/:all/;
 $| = 1;
 
 # Signal Handlers
-$SIG{INT}  = \&end;
+$SIG{INT}  = \&end_int_handler;
 $SIG{ALRM} = \&timeout;
 
 # --------------------------------------------------------------
@@ -625,6 +625,15 @@ sub batch_mode_end {
     return $file;
 }
 
+=item end_int_handler 
+
+=cut
+sub end_int_handler {
+    &end;
+    &batch_mode_end;
+    exit;
+}
+
 =item end()
 
 Cleanup routine that is called upon interrupt (ctrl-c) or end of routines. 
@@ -1161,22 +1170,24 @@ This is to make sure we don't mac-suck existing ports, such as VLANs.
 
 =cut
 sub mac_getportmacs {
-    print "mac_getportmacs()\n" if $DEBUG;
+    print "mac_getportmacs() ..." if $DEBUG;
     
     # I probably could have done this in a join but ...
 
-    my $portmacs = sql_rows('device_port',['mac','ip'],{'mac' => \\'is not null'}) || []; 
+    my $portmacs = sql_rows('device_port',['mac','ip'],{'mac' => \\'is not null'}); 
     foreach my $row (@$portmacs){
         my $mac = $row->{mac};
         my $ip  = $row->{ip};
-        $PortMAC->{mac}=$ip;
+        $PortMAC->{$mac}=$ip;
     }
-    my $devmacs = sql_rows('device',['mac','ip'],{'mac' => \\'is not null'}) || [];
+    my $devmacs = sql_rows('device',['mac','ip'],{'mac' => \\'is not null'});
     foreach my $row (@$devmacs){
         my $mac = $row->{mac};
         my $ip  = $row->{ip};
-        $PortMAC->{mac}=$ip;
+        $PortMAC->{$mac}=$ip;
     }
+
+    print " found ",scalar(keys %$PortMAC), " MACs.\n" if $DEBUG;
 }
 
 =item macsuck() 
@@ -1226,18 +1237,28 @@ sub macsuck{
 
     walk_fwtable($device,\%dbports,$interfaces);
 
-    # Get our VLAN list (Catalyst 5xxx mainly)
-    my $v_name = $device->v_name();
+    # For certain Cisco switches you have to connect to each
+    # VLAN and get the forwarding table out of it.
+    #   Notably the Catalyst 5k, 6k, and 3500 series
+    my $v_name = $device->v_name() || {};
     my $ver    = $device->snmp_ver();
     my $comm   = $device->snmp_comm();
     my $obj    = $device->class();
+
     # For each VLAN, connect and then macsuck
-    foreach my $vid (keys %$v_name){
+    foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//; 
+                            # Sort by VLAN id
+                            $aa <=> $bb
+                          } 
+                     keys %$v_name) 
+    {
+
+        # VLAN id comes as 1.142 instead of 142
         my $vlan = $vid;
-        # Trim vlan 1.142 to 142
         $vlan =~ s/^\d+\.//;
 
-        print " VLAN:$v_name->{$vid} ($vlan) : ";
+        my $vlan_name = $v_name->{$vid} || '(Unnamed)';
+        print " VLAN:$vlan_name ($vlan) : ";
 
         # feeding all the connect info as a speedup, instead of 
         #   retrying all the versions and communities
@@ -1591,7 +1612,7 @@ sub walk_fwtable {
     my ($device,$dbports,$interfaces) = @_;
 
     my $ip = $device->{ip};
-    my $fw_mac     = $device->fw_mac();
+    #my $fw_mac     = $device->fw_mac();
     my $fw_port    = $device->fw_port();
     my $bp_index   = $device->bp_index();
 
@@ -1599,14 +1620,16 @@ sub walk_fwtable {
     # physical device port we have this triple indirection:
     #      fw_port -> bp_index -> interfaces
     
-    foreach my $fw_index (keys %$fw_mac){
-        my $mac    = $fw_mac->{$fw_index};
+    #foreach my $fw_index (keys %$fw_mac){
+    foreach my $fw_index (keys %$fw_port){
+        # Convert the 0.254.123.456 index entry to a MAC address.
+        my $mac    = join(':',map {sprintf("%02x",$_)} split(/\./,$fw_index));
         my $bp_id  = $fw_port->{$fw_index};
 
         $MacTotal++;
 
         unless (defined $bp_id) {
-            print "  Port $fw_mac->{$fw_index} has no fw_port mapping. Skipping\n"
+            print "  MAC $mac has no fw_port mapping. Skipping\n"
                 if $DEBUG;
             next;
         }
