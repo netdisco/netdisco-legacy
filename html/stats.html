@@ -1,4 +1,4 @@
-<h3>Network Statistics</h3>
+<h3>Netdisco Statistics</h3>
 <UL>
     <LI><% $device_count %> Devices using <% $device_count + $device_ip_count %> IPs   <BR>
     <LI><% $device_port_count %> discovered interfaces. <BR>
@@ -6,21 +6,36 @@
     <LI>Seen <% $ip_count %> IPs in <% $ip_table_count %> entries.<BR>
 </UL>
 <P>
-Statistics took <%$time2 - $time1 %> seconds to process.
+Statistics took <%$time8 - $time1 %> seconds to process.
+<!-- 
+<% $time2-$time1 %>
+<% $time3-$time2 %>
+<% $time4-$time3 %>
+<% $time5-$time4 %>
+<% $time6-$time5 %>
+<% $time7-$time6 %>
+<% $time8-$time7 %>
+-->
 <%init>
     $m->flush_buffer();
     my $time1 = time;
     my $device_count = sql_scalar('device',['COUNT(*)']);
-    my $device_port_count = sql_scalar('device_port',['COUNT(*)']);
-    my $device_ip_count = sql_scalar('device_ip',['COUNT(alias)']);
-    my $node_count = sql_scalar('node',['COUNT(DISTINCT(mac))']);
-    my $node_table_count = sql_scalar('node',['COUNT(*)']);
-    my $ip_count = sql_scalar('node_ip',['COUNT(DISTINCT(ip))']);
-    my $ip_table_count = sql_scalar('node_ip',['COUNT(ip)']);
     my $time2 = time;
+    my $device_port_count = sql_scalar('device_port',['COUNT(*)']);
+    my $time3 = time;
+    my $device_ip_count = sql_scalar('device_ip',['COUNT(alias)']);
+    my $time4 = time;
+    my $node_count = sql_scalar('node',['COUNT(DISTINCT(mac))']);
+    my $time5 = time;
+    my $node_table_count = sql_scalar('node',['COUNT(*)']);
+    my $time6 = time;
+    my $ip_count = sql_scalar('node_ip',['COUNT(DISTINCT(ip))']);
+    my $time7 = time;
+    my $ip_table_count = sql_scalar('node_ip',['COUNT(ip)']);
+    my $time8 = time;
 </%init>
 <%method title>
-- Network Statistics \
+- Netdisco Statistics \
 </%method>
 %# $Id$
 %# vim:syntax=mason
