@@ -231,7 +231,8 @@ sub config {
     # all default to 0
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_splines portctl_uplinks
-                      portctl_nophones portctl_vlans macsuck_all_vlans
+                      portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
+                      bulkwalk_no
                      /;
 
     # these will make array refs of their comma separated lists
