@@ -18,9 +18,10 @@ $note  => undef
 </%args>
 <%shared>
 my ($this_user,$users,$is_admin,%user_hash,$arg_user);
-my $odd =0;
-my $err = '';
+my $odd    = 0;
+my $err    = '';
 my $secure = &is_secure;
+my $userip = $r->connection->remote_ip; 
 </%shared>
 <%init>
 $this_user = $m->session->{user};
@@ -48,13 +49,13 @@ if ($cmd eq 'add'){
     $user =~  s/^\s*//;
     $user =~  s/\s+.*//;
     unless ($user){
-        $err .= "Select a user name.<BR>\n";
+        $err .= "Select a user name.\n";
     }
     unless ($pw){
-        $err .= "Enter a password for this user.<BR>\n";
+        $err .= "Enter a password for this user.\n";
     }
     if (defined $user_hash{$user}) {
-        $err .= "There is already a user by that name.<BR>\n";
+        $err .= "There is already a user by that name.\n";
     }
     unless ($err){
         # Add
@@ -65,7 +66,12 @@ if ($cmd eq 'add'){
                                     'fullname' => $fullname,
                                     'note' => $note,
                                 ));
-        $err .= $rv ? "Could not Add user! $rv<BR>\n" : "User $user added.<BR>\n";
+        $err = $rv ? "User $user added.\n" : "Could not Add user!\n";
+
+        # Log addition
+        insert_or_update('user_log',{},
+                {'username'=>$m->session->{user},'event'=>'user_add',
+                 'userip'=>$userip,'details'=>"User: $user - $err"});
         
         # Reload hash
         $m->comp('SELF:load_users');
@@ -74,7 +80,7 @@ if ($cmd eq 'add'){
 
 if ($cmd eq 'Change'){
     unless (defined $user_hash{$user}){
-        $err .= "User $user not found.<BR>\n";
+        $err .= "User $user not found.\n";
     } 
     my %user_change;
     unless ($err){
@@ -106,11 +112,16 @@ if ($cmd eq 'Change'){
         if (scalar keys %user_change){
             my $rv = netdisco::user_add($user,%user_change);
             $err .= $rv ?
-                    "Could not modify user! $rv<BR>\n"
+                    "Could not modify user! $rv\n"
                         :
-                    "Changed ".join(',',keys %user_change)." for user $user.<BR>\n";
+                    "Changed ".join(',',keys %user_change)." for user $user.\n";
+
+            # Log Change
+            insert_or_update('user_log',{},
+                    {'username'=>$m->session->{user},'event'=>'user_change',
+                     'userip'=>$userip,'details'=>"User: $user - $err"});
+
             $m->comp('SELF:load_users');
-                         
         } 
 
     }
@@ -119,21 +130,27 @@ if ($cmd eq 'Change'){
 
 if ($cmd eq 'Delete'){
     unless (defined $user_hash{$user}){
-        $err .= "User $user not found.<BR>\n";
+        $err .= "User $user not found.\n";
     } 
 
     if ($user eq $this_user) {
-        $err .= "You cannot delete yourself.<BR>\n";
+        $err .= "You cannot delete yourself.\n";
     }
 
     if (!$err and $confirm){
         my $rv = netdisco::user_del($user);
 
         if (defined $rv){
-            $err .= "Deleted user $user.<BR>\n";
+            $err .= "Deleted user $user.\n";
         } else {
-            $err .= "Could not delete user $user.<BR>\n";
+            $err .= "Could not delete user $user.\n";
         }
+
+        # Log Change
+        insert_or_update('user_log',{},
+                {'username'=>$m->session->{user},'event'=>'user_del',
+                 'userip'=>$userip,'details'=> "User: $user - $err"});
+
         # Reload hash
         $m->comp('SELF:load_users');
     } 
@@ -199,6 +216,16 @@ if ($cmd eq 'Delete'){
     <TD>Password:</TD>
     <TD><INPUT TYPE="password" NAME="pw" SIZE="20" MAXLENGTH="50"></TD>
     <TD>Case Sensitive.</TD>
+</TR>
+<TR>
+    <TD>Full Name:</TD>
+    <TD><INPUT TYPE="text" NAME="fullname" SIZE=35 MAXLENGTH=255></TD>
+    <TD>(optional)</TD>
+</TR>
+<TR>
+    <TD>Note:</TD>
+    <TD><INPUT TYPE="text" NAME="note" SIZE=35 MAXLENGTH=255></TD>
+    <TD>(optional)</TD>
 </TR>
 <TR>
     <TD>Port Control:</TD>

@@ -41,6 +41,9 @@ $cmd  => undef
 $pw   => undef
 $done => undef
 </%args>
+<%shared>
+my $userip    = $r->connection->remote_ip; 
+</%shared>
 <%init>
 
 my $err = '';
@@ -74,6 +77,12 @@ if ($cmd eq 'login'){
 
     if ($err) {
         $m->session->{_logged_in} = 0;
+
+        # Log Failed Attempt
+        insert_or_update('user_log',{},
+                {'username'=>$user,'event'=>'login_failure',
+                 'userip'=>$userip,'details'=>$err});
+
         delete $m->session->{user};
         delete $m->session->{user_port_ctl};
         delete $m->session->{user_admin};
@@ -90,6 +99,11 @@ if ($cmd eq 'login'){
         insert_or_update('users',{'username' => $m->session->{user}},
                          {'last_on' => scalar(localtime)}
                         );
+
+        # Log Login
+        insert_or_update('user_log',{},
+                {'username'=>$m->session->{user},'event'=>'login',
+                 'userip'=>$userip,'details'=>$done});
 
         # Redirect
         if (defined $done and length($done)) {

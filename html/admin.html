@@ -1,41 +1,70 @@
 <h3>Administration Panel</h3>
-<h4>Device Control</h4>
-<A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0 ALIGN="middle"></A>
-[<A HREF="admin_dev.html">Device Control</A>]
-<h4>User Control</h4>
-&nbsp;&nbsp;&nbsp;<A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
-[<A HREF="admin_user.html">User Control</A>]
-<h4>Maintenance</h4>
-<FORM ACTION="admin_dev.html" METHOD=POST> 
-<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
-<TABLE CELLSPACING=2 CELLPADDING=3 CLASS="box" border=0>
-<TR>
-    <TD>Action :
-        <SELECT NAME="action" SIZE=3>
+<TABLE WIDTH="100%">
+<TR><TD>
+
+    <h4>Device Control</h4>
+    <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0 ALIGN="middle"></A>
+    [<A HREF="admin_dev.html">Device Control</A>]
+    <h4>User Control</h4>
+    &nbsp;&nbsp;&nbsp;<A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
+    [<A HREF="admin_user.html">User Control</A>]
+
+    <h4>Maintenance</h4>
+    <FORM ACTION="admin_dev.html" METHOD=POST> 
+    <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
+    <TABLE CELLSPACING=2 CELLPADDING=3 CLASS="box" border=0>
+    <TR>
+        <TD>Action :
+            <SELECT NAME="action" SIZE=3>
 % foreach my $c (sort keys %actions){
 %     next unless $c;
-            <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
+                <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
 % }
+            </SELECT>
+        </TD>
+    </TR>
+    <TR> 
+        <TD>
+            &nbsp;<BR>
+            <INPUT TYPE="submit" VALUE="Queue New Job">
+            [<A HREF="<%$r->uri%>">Reset</A>]
+            Debug :
+            <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
+            </FORM>
+        </TD>
+    </TR>
+    <TR>
+        <TD>
+            <FORM ACTION="admin_dev.html" METHOD=GET>
+            <INPUT TYPE=SUBMIT VALUE="View Job Queue">
+            </FORM>
+        </TD>
+    </TR>
+    </TABLE>
+
+</TD><TD>
+    <H4>Admin Log</H4>
+    <& SELF:show_log &>
+    <FORM ACTION="<%$r->uri%>" METHOD=GET>
+        <NOBR>
+        <u>Type:</u> <SELECT MULTIPLE NAME="type" SIZE=4>
+% foreach my $this_event (sort keys %$events) {
+                   <OPTION VALUE="<%$this_event%>" <% grep(/^$this_event$/,@type) ? 'SELECTED' : ''%>><%$log_events{$this_event} || $this_event%>
+% }
+               </SELECT>
+        </NOBR> &nbsp;&nbsp;
+        <NOBR>
+        <u>Entries</u>:
+        <SELECT NAME="entries" SIZE=3>
+% foreach (qw/All 10 20 50 100 200 500/){
+            <OPTION VALUE="<% $_|h %>"<% $_ eq $entries ? ' SELECTED' : ''%>><%$_|h%>
+%}
         </SELECT>
-    </TD>
-</TR>
-<TR> 
-    <TD>
-        &nbsp;<BR>
-        <INPUT TYPE="submit" VALUE="Queue New Job">
-        [<A HREF="<%$r->uri%>">Reset</A>]
-        Debug :
-        <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
-        </FORM>
-    </TD>
-</TR>
-<TR>
-    <TD>
-        <FORM ACTION="admin_dev.html" METHOD=GET>
-        <INPUT TYPE=SUBMIT VALUE="View Job Queue">
-        </FORM>
-    </TD>
-</TR>
+        </NOBR>
+        <BR>
+        [<A HREF="<%$r->uri%>">Reset</A>] <INPUT TYPE="submit" VALUE="Refresh">
+    </FORM>
+</TD></TR>
 </TABLE>
 <h4>Notes :</H4>
 <UL>
@@ -43,8 +72,11 @@
     <LI>Database cleanup jobs PERMANENTLY remove data.  Make sure you understand what they do before executing them.
 </UL>
 <%args>
+$entries => 20
+@type  => ()
 </%args>
 <%shared>
+my ($arg_entries,$logs);
 my $user      = $m->session->{user};
 my $is_admin  = $m->session->{user_admin};
 my $secure    = &is_secure;
@@ -57,8 +89,16 @@ my %actions = (
              'clean_nodes' => ['Database Cleanup - Nodes [-K]',1],
              'clean_alias' => ['Database Cleanup - Aliases [-k]',1]
            );
+my %log_events = (
+             'user_add'    => 'User Added',
+             'user_change' => 'User Changed',
+             'user_del'    => 'User Deleted',
+             'login'       => 'Login',
+             'logout'      => 'Logout',
+                  );
 </%shared>
 <%init>
+$arg_entries = $entries;
 # Send to https if not secure.
 unless ($secure){
     my $url = url_secure($r->uri);
@@ -70,7 +110,50 @@ unless ($is_admin) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
+
+# Get names of events in db
+my $events = sql_column('user_log',['distinct(event)','true']);
+
+# Limit by Type
+my $where = {};
+foreach my $this_type (@type){
+    next unless defined $this_type and $this_type;
+    push (@{$where->{event}},$this_type);
+}
+# Fetch Admin Log Entries
+# TODO: this is going to get slower and slower, so I need to use the DB to limit it.
+$logs = sql_rows('user_log',['username','userip','event','details',
+                 'extract(epoch from creation) as creation'],
+                 $where,1);
+
 </%init>
+%#
+%# show_log() - Barfs out contents of @$logs
+%#
+<%method show_log>
+<TABLE CELLSPACING=0 CLASS="box" BORDER=0>
+<TR>
+    <TH>Date</TH>
+    <TH>User</TH>
+    <TH>Event</TH>
+    <TH>IP</TH>
+    <TH>Log</TH>
+</TR>
+<TR><TD COLSPAN=5><HR NOSHADE></TD></TR>
+% my $count = 0;
+% foreach my $log (sort {$b->{creation} <=> $a->{creation} }@$logs){
+%   my $event = $log_events{$log->{event}} || $log->{event};
+<TR CLASS="match-<%$count%2%>">
+    <TD><NOBR><%scalar localtime($log->{creation})%></NOBR></TD>
+    <TD><%$log->{username}%></TD>
+    <TD><%$event%></TD>
+    <TD><%$log->{userip}%></TD>
+    <TD><%$log->{details}|h%></TD>
+</TR>
+%   $count++; last if ($arg_entries ne 'All' and $count >= $arg_entries);
+%}
+</TABLE>
+</%method>
 <%method title>
 - Administration Panel \
 </%method>

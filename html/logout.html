@@ -4,7 +4,12 @@
 </FORM>
 <%init>
 my $user = $m->session->{user};
+my $userip = $r->connection->remote_ip; 
 $m->session->{_logged_in} = 0;
+# Log Logout
+insert_or_update('user_log',{},
+        {'username'=>$m->session->{user},'event'=>'logout',
+         'userip'=>$userip});
 delete $m->session->{user};
 delete $m->session->{user_port_ctl};
 delete $m->session->{user_admin};

@@ -10,6 +10,7 @@ $cmd => undef
 </%args>
 <%shared>
 my $user   = $m->session->{user};
+my $userip = $r->connection->remote_ip; 
 my $secure = &is_secure;
 my $err    = '';
 </%shared>
@@ -33,6 +34,11 @@ if ($cmd eq 'change'){
     unless ($err){
         my $rv = netdisco::user_add($user,('pw' => $pw1));
         $err .= $rv ? "Could not Change Password! $rv<BR>\n" : "Password for $user changed.<BR>\n";
+
+        # Log Change Password
+        insert_or_update('user_log',{},
+                {'username'=>$user,'event'=>'pw_change',
+                 'userip'=>$userip,'details' => $rv ? 'Failed' : 'Succeeded'});
     }
     undef $cmd;
 }
