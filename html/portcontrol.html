@@ -8,8 +8,22 @@ $type => undef
 $ip   => undef
 $port => undef
 $log  => undef
+$log_num => 5
 $reason => ''
 </%args>
+<%shared>
+# scope
+my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num);
+my $user   = $r->connection->user;
+my $userip = $r->connection->remote_ip; 
+my $odd = 1 ;
+my %Reasons = ( 
+                ''          => 'Select a Reason',
+                'dos'       => 'Denial Of Serivce attack.',
+                'bandwidth' => 'Excessive BandWidth usage.',
+                'other'     => 'Other'
+              );
+</%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
 unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('https') eq 'on'
@@ -20,7 +34,7 @@ unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('
 }
 
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
-$arg_reason = $reason;
+$arg_reason = $reason; $arg_log_num = $log_num;
 
 # Check that port exists in netdisco
 $db_port = sql_hash('device_port',['up','up_admin','descr','name','mac','remote_ip','remote_port'],
@@ -37,6 +51,10 @@ if (!defined $db_port){
 if ($cmd eq 'switch' and (!defined $log or !length($log)) ){
     $cmd = 'err';
     $err = "You must add a log entry!";    
+}
+if ($cmd eq 'switch' and (!$reason) ){
+    $cmd = 'err';
+    $err .= "You must select a reason for bringing the port $type\n";
 }
 
 if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
@@ -61,33 +79,28 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
 
     # Log attempt 
     insert_or_update('device_port_log', {},
-                    {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
-                     'username'=>$user,'action'=>$type}); 
+                     {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
+                      'username'=>$user,'action'=>$type, 'reason' => $reason }
+                    ); 
 }
 
 </%init>
-<%shared>
-# scope
-my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason);
-my $user   = $r->connection->user;
-my $userip = $r->connection->remote_ip; 
-my $odd = 1 ;
-my %Reasons = ( 
-                ''          => 'Select a Reason',
-                'dos'       => 'Denial Of Serivce attack.',
-                'bandwidth' => 'Excessive BandWidth usage.',
-                'other'     => 'Other.  Enter below.'
-              );
-</%shared>
 <%method log>
 % my $logs = sql_rows('device_port_log', ['id','log','reason','username','userip','action','extract(epoch from creation) as creation'] , 
 %       {'ip'=>$arg_ip, 'port'=>$arg_port} );
-<h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A></h4>
-<TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2>
+% my $count = 0;
+<h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A>
+<& SELF:back &></h4>
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="log">
+<INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
+<INPUT TYPE="HIDDEN" NAME="port" VALUE="<%$arg_port|h%>">
+<TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>User</TH>
     <TH>Action</TH>
     <TH>Date</TH>
+    <TH>Reason</TH>
     <TH>Log</TH>
 </TR>
 % foreach my $entry (sort {$b->{creation} <=> $a->{creation} } @$logs) {
@@ -95,11 +108,22 @@ my %Reasons = (
     <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
     <TD><%$entry->{action}%></TD>
     <TD><%scalar localtime($entry->{creation})%></TD>
-    <TD><FORM><TEXTAREA ROWS=3 COLS=50 WRAP=soft><%$entry->{log}%></TEXTAREA></FORM></TD>
+    <TD><% $Reasons{$entry->{reason}}%></TD>
+    <TD><TEXTAREA ROWS=3 COLS=30 WRAP=soft><%$entry->{log}%></TEXTAREA>
+    </TD>
 </TR>
+
+% $count++;
+% last unless ($arg_log_num eq 'All' or $count < $arg_log_num);
 %}
 </TABLE>
-<& SELF:back &>
+Log Entires to Show : <SELECT NAME="log_num">
+% foreach my $num (qw/1 3 5 10 20 50 100 All/){
+    <OPTION VALUE="<%$num%>" <%$num eq $arg_log_num ? 'SELECTED' : ''%>><%$num%>
+%  }
+</SELECT>
+<INPUT TYPE="SUBMIT" VALUE="Refresh">
+</FORM>
 </%method>
 <%method switch>
 <FORM ACTION="<%$r->uri%>" METHOD="post">
