@@ -14,7 +14,7 @@ Archived Data:
 </FORM>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <H4>Search on MAC Address</H4>
-<TABLE>
+<TABLE BORDER=0>
 <TR>
     <TD>Partial MAC address:</TD>
     <TD COLSPAN=3><INPUT TYPE=text NAME="mac_search" VALUE="<%$mac_search%>">
@@ -321,7 +321,7 @@ if (scalar @search){
 <%method oui_matches>
 % return unless scalar @search;
 <h4>OUI Matches</h4>
-<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>OUI</TH>
     <TH>Count</TH>
@@ -347,7 +347,7 @@ if (scalar @search){
 <& SELF:oui_matches &>
 % return unless scalar @$matches;
 <h4>Node Matches</h4>
-<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>MAC</TH>
     <TH>Vendor</TH>
