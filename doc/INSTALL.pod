@@ -63,13 +63,16 @@ C<cron -u netdisco netdisco.crontab>
 
 =head2 PostgreSQL
 
-[Add permissions blurb here]
+The default settings for Postgres are 
+
+Username: C<netdisco>
+Database Name: C<netdisco>
 
 =over 
 
-=item 1. Change database settings in F<sql/pg_init>
+=item 1. [Optional] Change database name in F<sql/pg_init>
 
-=item 2. Change database settings in F<sql/pg_run>
+=item 2. [Optional] Change database name in F<sql/pg_run>
 
 =item 3. Create Database.
 
@@ -87,8 +90,13 @@ C<sql/pg_run>.  Enter the database user password created above.
 =item 5. Create Tables
 
 Once you are sure the database is setup correctly, create the database 
-tables with C<sql/pg_all>.  Type in the database user password once for each
-table.
+tables with C<sql/pg_all>.  Type in the database user password once 
+when prompted.
+
+=item 6. [Optional] Permissions
+
+If you have just setup postgresql, you may want to change the
+default permissions in F<data/pg_hba.conf> :
 
 =back
 
@@ -144,15 +152,24 @@ to setup directory scheme
 
 =item 2. Add in F</your/apache/conf/httpd.conf>
 
-C<Include /usr/local/netdisco/netdisco_apache.conf>
+=over
+ 
+=item In Each VirtualHost (SSL,Main...)
 
-=item 3. In F<netdisco_apache.conf>
+C<Include /usr/local/netdisco/netdisco_apache_dir.conf>
+
+=item In the Global Section
+
+C<Include /usr/local/netdisco/netdisco_apache.conf>
+ 
+=back
+
+=item 3. [Optional] In F<netdisco_apache.conf> and F<netdisco_apache_dir.conf>
 
 =over
 
-=item * Change the paths appropriately
+=item *  Change the web and physical paths appropriately.
 
-=item * Change the database information 
 
 =back
 
