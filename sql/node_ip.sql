@@ -1,8 +1,8 @@
 -- $Id$
 
-drop TABLE node_ip;
+DROP TABLE node_ip;
 
-create TABLE node_ip (
+CREATE TABLE node_ip (
     mac         macaddr,
     ip          inet,
     active      boolean,
