@@ -41,7 +41,7 @@ foreach my $class (sort keys %log_sort){
 </TABLE>
 <h4>Entry Types to Show</h4>
 % foreach my $c (keys %$db_classes){
-<%$c%> : <INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>>
+<%$c%>:<INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>> &nbsp;
 %}
 <BR>
 Number of Entries per category:
