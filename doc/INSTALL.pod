@@ -590,6 +590,15 @@ make sure you have the F<gettext> packages installed :
 Get the newest version from L<http://www.graphviz.org/pub/graphviz>.
 Unarchive and install.
 
+=item Solaris
+
+Follow the UNIX Instructions but ...
+
+Make the JPEG and EXPAT libraries first and when making the JPEG library
+make sure you have 
+
+    ./configure --enabled-shared --enabled-static
+
 =item Mac OS X
 
 It is reported to be in C<DarwinPorts> or you can check out L<http://www.phil.uu.nl/~js/graphviz/>.
