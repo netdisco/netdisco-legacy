@@ -1,0 +1,122 @@
+=head1 NAME
+
+Netdisco UPGRADE - Instructions on Upgrading between versions.
+
+=head1 AUTHOR
+
+Max Baker
+
+=head1 SUPPORT
+
+See INSTALL or README or L<http://netdisco.org>
+
+=head1 UPGRADING
+
+Here are some hints for upgrading between versions of Netdisco.
+
+The best way is to back everything up, move the configuration
+files out of the way and then follow F<INSTALL> over again.
+
+Then change the configuration files back to match.
+
+=head2 SNMP::Info
+
+When upgrading to any version, please make sure you have the
+newest version of SNMP::Info installed :
+
+=over
+
+=item CVS Version
+
+To update a CVS version of SNMP::Info : 
+
+    cd /usr/local/netdisco/SNMP
+    cvs update
+
+=item CPAN Version
+
+To update a version installed by CPAN :
+
+    perl -MCPAN -e shell
+    install SNMP::Info
+
+=item Manual Install Version
+
+Download the newest version from CPAN or L<http://snmp-info.sourceforge.net>
+and install.
+
+=back
+
+=head2 General Upgrade
+
+=over 
+
+=item Read INSTALL
+
+Read the INSTALL file that comes with the new version to see
+what has changed.  Make sure you have all the Requirements
+listed.
+
+=item Backup Database
+
+For any version you will want to make backup copies of all your 
+data first.  
+
+    cd /usr/local/netdisco/sql
+    ./pg_dump
+
+=item Backup Configuration Files
+
+Make backups of all your configuration files.
+
+    cp /usr/local/netdisco/*.conf /path/to/some_where_safe
+
+=item Install on top of existing Netdisco
+
+Put the new files in your F<netdisco/> directory 
+
+    cp -R /path/to/netdisco-new-0.999 /usr/local/netdisco
+
+=item Upgrade Perl Modules
+
+Following the procedures in F<INSTALL>, upgrade all
+the required Perl modules.
+
+=item Check Permissions
+
+Make sure the permissions are set to let the web user
+read the F<html/> directory and write to the F<mason/> directory.
+
+=item Modify the Configuration Files
+
+New options are always being added to the config files and 
+Netdisco.  It's usually a lot cleaner to modify the new config
+file that comes with Netdisco than try to add the new features
+to the old one.  This helps get rid of old bugs too.
+
+=back
+
+=head2 Version Notes
+
+=over
+
+=item 0.91 -> 0.92
+
+No version specific notes for this upgrade.
+
+=item 0.90 -> 0.91
+
+=over
+
+=item netdisco_apache.conf
+
+Double check that your copy of netdisco_apache.conf has the 
+settings right for all the C<session_*> directives.
+
+=item GraphViz
+
+Make sure you have GraphViz 0.9 installed.
+
+=back
+
+=back
