@@ -8,6 +8,7 @@ $type => undef
 $ip   => undef
 $port => undef
 $log  => undef
+$reason => ''
 </%args>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
@@ -19,6 +20,7 @@ unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('
 }
 
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
+$arg_reason = $reason;
 
 # Check that port exists in netdisco
 $db_port = sql_hash('device_port',['up','up_admin','descr','name','mac','remote_ip','remote_port'],
@@ -66,13 +68,19 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
 </%init>
 <%shared>
 # scope
-my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port);
+my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason);
 my $user   = $r->connection->user;
 my $userip = $r->connection->remote_ip; 
 my $odd = 1 ;
+my %Reasons = ( 
+                ''          => 'Select a Reason',
+                'dos'       => 'Denial Of Serivce attack.',
+                'bandwidth' => 'Excessive BandWidth usage.',
+                'other'     => 'Other.  Enter below.'
+              );
 </%shared>
 <%method log>
-% my $logs = sql_rows('device_port_log', ['id','log','username','userip','action','extract(epoch from creation) as creation'] , 
+% my $logs = sql_rows('device_port_log', ['id','log','reason','username','userip','action','extract(epoch from creation) as creation'] , 
 %       {'ip'=>$arg_ip, 'port'=>$arg_port} );
 <h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A></h4>
 <TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2>
@@ -101,28 +109,38 @@ my $odd = 1 ;
 <INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
 <TABLE>
 <TR>
-    <TD>Port : <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A>
-<BR>
-Logged: User <U><%$user%></U> at <%$userip%> <BR> on <u><% scalar localtime %></u></TD></TD>
+    <TD>Port :</TD>
+    <TD><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
 </TR>
 <TR>
-    <TD>
-    <TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
-    <BR>Required: Enter a useful description why the port is being turned <% $arg_cmd eq 'down' ? 'off' : 'on' %>.
+    <TD>User :</TD>
+    <TD><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
     </TD>
 </TR>
 <TR>
-    <TD>
+    <TD>Reason :</TD>
+    <TD><SELECT NAME="reason">
+% foreach my $this_r (sort keys %Reasons){
+        <OPTION VALUE="<%$this_r |h%>" <%$this_r eq $arg_reason ? 'SELECTED' : ''%>><%$Reasons{$this_r}%>
+%}
+    </SELECT>
+    </TD>
 </TR>
 <TR>
-    <TD><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+    <TD>Log:</TD>
+    <TD><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
+    <BR>Enter a useful description why the port is being turned <% $arg_cmd eq 'down' ? 'off' : 'on' %>.
+    </TD>
+</TR>
+<TR>
+    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
         </FORM>
-        <HR>
-        <& SELF:back &>    
     </TD>
 </TR>
 </TABLE>
+<HR>
+<& SELF:back &>    
 </%method>
 <%method err>
 <% $err %>
