@@ -404,6 +404,12 @@ Graph.  Creates graph -- both GIF and ImageMap.
 
 NOTE: You can safely ignore all warnings about C<size too small for label>.
 
+Make sure you have a relatively new version of GraphViz.  You need a newer
+version of GraphViz if you get an error similar to:
+
+  Creating CMAP : /usr/local/netdisco/html/netmap.map
+    warning, language cmap not recognized, use one of: ps hpgl pcl mif...
+
 =item -h || --help
 
 Prints out command line usage.

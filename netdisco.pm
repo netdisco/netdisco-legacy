@@ -124,7 +124,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 =item $VERSION - Sync'ed with Netdisco releases
 
 =cut
-$VERSION = '0.94-cvs';
+$VERSION = '0.94';
 
 =back
 

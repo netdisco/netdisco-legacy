@@ -62,11 +62,20 @@ ones.
 Note that it is safe to run the upgrade.sql scripts more than once (in case you are
 running a CVS or RC version). 
 
-=item Perl Modules
+=item GraphViz
 
 =over
 
-=item GraphViz 2.01
+=item Program
+
+Make sure you have a relatively new version.  If you get an error similar to
+
+  Creating CMAP : /usr/local/netdisco/html/netmap.map
+    warning, language cmap not recognized, use one of: ps hpgl pcl mif...
+
+You need a newer version of GraphViz
+
+=item GraphViz.pm 2.01
 
 The newest Perl interface to GraphViz (non-dependent on the GraphViz 
 release) has some better client map interfaces for the Network Graph.
@@ -80,13 +89,13 @@ Double check the version.
 
  perl -MGraphViz -e 'print $GraphViz::VERSION'
 
-=item Others
+=back
+
+=item Perl Modules
 
 A lot of the Perl modules that Netdisco depends on have released newer (better) versions.
 Go to the INSTALL and follow Part 8.1 C<Perl Modules and Mason>.   If you use CPAN, it will
 upgrade all the dependency modules for you too.
-
-=back
 
 =item Bay Switches
 

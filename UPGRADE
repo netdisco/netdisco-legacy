@@ -15,32 +15,86 @@ UPGRADING
     Here are some hints for upgrading between versions of Netdisco.
 
     FIRST! Go read below where it says "Backup Database" and "Backup
-    Configuration Files" and DO IT!
+    Configuration Files" and DO IT!.
 
-    There are two methods of upgrading. Please backup the database (see
-    below) before continuing.
+    The best way is to back everything up, move the configuration files out
+    of the way and then follow INSTALL for all but the database steps.
 
-    1. Apply Patch
-        Each version starting with version 0.93 will have a ".patch" that
-        you can apply to get the newest version. If you have a lot of site
-        customizations, this might be the best way for you. Be prepared to
-        fix any conflicting merges that may happen. If you can't handle a
-        little code-diving, this may not be the method for you.
+    Then change the configuration files back to match. If you reuse your old
+    configuration file, check it against the new one to see what config file
+    directives have been added / removed / changed.
 
-        You will also need to get the newest SNMP::Info and possibly run a
-        ".sql" file to make changes to the database structure.
-
-    2. Fresh Upgrade
-        The best way is to back everything up, move the configuration files
-        out of the way and then follow INSTALL for all but the database
-        steps.
-
-        Then change the configuration files back to match.
-
-        You DO NOT wipe the database contents for an upgrade. But just in
-        case, you will have of course made a backup by now.
+    You DO NOT wipe the database contents for an upgrade. But just in case,
+    you will have of course made a backup by now.
 
 VERSION SPECIFIC NOTES
+
+    v0.93 -> 0.94
+
+        Autodetection of Uplink Ports
+            Macsuck will now autodetect some uplink ports. If it sees the
+            MAC addres of a known switch port or router, it will not collect
+            mac addresses on that port.
+
+            Start checking the logs from your macwalk device (you can do it
+            from the web page now) and look for the uplink warnings. Fix
+            your topology file to match.
+
+        SNMP::Info
+            You will need SNMP::Info v0.9 in order to support the new
+            netdisco-mibs package.
+
+        Database Upgrades
+            Now would be a great time to upgrade to Postgres 7.4 if you
+            haven't already. There are some great speed benefits, and there
+            is no INDEX bloat problem. Upgrading from 7.2 or 7.3 does
+            require a data base dump/restore. See Postgres documentation.
+
+            You will have to run the following command to add new tables and
+            modify existing ones.
+
+             cd /usr/local/netdisco/sql
+             ./pg_run upgrade-0.93-to-0.94.sql
+
+            Note that it is safe to run the upgrade.sql scripts more than
+            once (in case you are running a CVS or RC version).
+
+        GraphViz
+
+            Program
+                Make sure you have a relatively new version. If you get an
+                error similar to
+
+                  Creating CMAP : /usr/local/netdisco/html/netmap.map
+                    warning, language cmap not recognized, use one of: ps hpgl pcl mif...
+
+                You need a newer version of GraphViz
+
+            GraphViz.pm 2.01
+                The newest Perl interface to GraphViz (non-dependent on the
+                GraphViz release) has some better client map interfaces for
+                the Network Graph.
+
+                Please make sure this newest version is installed.
+
+                 perl -MCPAN -e shell
+                    install GraphViz
+
+                Double check the version.
+
+                 perl -MGraphViz -e 'print $GraphViz::VERSION'
+
+        Perl Modules
+            A lot of the Perl modules that Netdisco depends on have released
+            newer (better) versions. Go to the INSTALL and follow Part 8.1
+            "Perl Modules and Mason". If you use CPAN, it will upgrade all
+            the dependency modules for you too.
+
+        Bay Switches
+            If you have bay switches, note that the naming scheme for the
+            ports has changed from 1 to 1.1 as they were folded into the new
+            Nortel classes. The above upgrade script will do the renaming
+            for you, so you won't lose data.
 
     v0.92 -> 0.93
 
@@ -60,24 +114,8 @@ VERSION SPECIFIC NOTES
             ("sql/pg_back")
 
         New MIB Files
-            I added the Q-BRIDGE-MIB for Vlan features that are new in 0.93,
-            and one of the MIB dependencies comes from v1.tar.gz from Cisco
-            and is probably not installed.
-
-                ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
-                cd /usr/local/share/snmp/mibs
-                tar xvfz /path/to/v1.tar.gz TOKEN-RING-RMON-MIB.my
-
-            Meanwhile I'm looking into the legailty of distrubiting a set of
-            "fixed" MIBs that include all the ones required by SNMP::Info
-            for all the vendors.
-
-            You may take this time to update v2.tar.gz as well, just don't
-            forget to repatch CISCO-TC-MIB as per INSTALL.
-
-            See
-            <http://sourceforge.net/mailarchive/message.php?msg_id=7113182>
-            for more details on what MIBs ship broken from Cisco.
+            If you insist on using this old version of netdisco, at least
+            download the "netdisco-mibs" package and use that.
 
     v0.91 -> 0.92
         Make sure you run "Database Cleanup" or "-K" when you are done
@@ -142,6 +180,17 @@ APPLICATIONS
             scp netdisco-back.tgz somesafehost:
             cp /usr/local/netdisco/*.conf /path/to/some_where_safe
             cp /usr/local/netdisco/*.txt  /path/to/some_where_safe
+
+    Vacuum full and reindex database
+        For PostgreSQL you may be suffering from severe space and
+        performance problems because of various issues. Especially for
+        versions before 7.4. Please consider upgrading to 7.4 and ALSO run
+        the Procedure, "Things are Getting Really Slow" in README.
+
+        This will REINDEX and VACUUM FULL your database.
+
+        On a recent Postgres 7.3 install this changed the database size from
+        16GB to 400 MB! Sound worth it?
 
     Install on top of existing Netdisco
         Put the new files in your netdisco/ directory

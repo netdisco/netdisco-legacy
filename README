@@ -8,25 +8,33 @@ AUTHOR
 
 DESCRIPTION
 
-    Netdisco is an Open Source web-based network management tool. Designed
-    for moderate to large networks, configuration information and connection
-    data for network devices are retrieved by SNMP. With Netdisco you can
-    locate the switch port of an end-user system by IP or MAC address. Data
-    is stored using a SQL database for scalability and speed.
+    Netdisco is an Open Source web-based network management tool.
 
-    Cisco Discovery Protocol (CDP) optionally provides automatic discovery
-    of the network topology. The network is inventoried by both device model
-    and operating system (like IOS). Netdisco uses router ARP tables and L2
-    switch MAC forwarding tables to locate nodes on physical ports and track
-    them by their IP addresses. For each node, a time stamped history of the
-    ports it has visited and the IP addresses it has used is maintained.
-    Netdisco gets all its data, including CDP topology information, with
-    SNMP polls and DNS queries. It does not use CLI access and has no need
-    for privilege passwords. Security features include a wire-side Wireless
-    Access Point (AP) locator.
+    Designed for moderate to large networks, configuration information and
+    connection data for network devices are retrieved and set by SNMP. With
+    Netdisco you can locate the switch port of an end-user system by IP or
+    MAC address. Data is stored using a SQL database for scalability and
+    speed.
 
-    Netdisco was designed and built at UCSC and is now hosted by Source
-    Forge.
+    Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP), and
+    SynOptics Network Management Protocol (SONMP) optionally provide
+    automatic discovery of the network topology.
+
+    The network is inventoried by both device model and operating system
+    (like IOS). Netdisco uses router ARP tables and L2 switch MAC forwarding
+    tables to locate nodes on physical ports and track them by their IP
+    addresses.
+
+    For each node, a time stamped history of the ports it has visited and
+    the IP addresses it has used is maintained. Netdisco gets all its data,
+    including topology information, with SNMP polls and DNS queries. It does
+    not use CLI access and has no need for privilege passwords. Security
+    features include a wire-side Wireless Access Point (AP) locator.
+
+    Netdisco was created at the University of California, Santa Cruz (UCSC),
+    Networking and Technology Services (NTS) department. UCSC continues to
+    support the development of Netdisco by providing development servers and
+    financial support. The Netdisco project is hosted by Source Forge.
 
     See <http://www.netdisco.org>
 
@@ -80,7 +88,6 @@ FEATURES
     * Graphing of network topology. Clickable image-map of devices. Link
     speed shown
     * Statistics for number of actual nodes connected to network
-    * Integration with Pinnacle Database
 
   Inventory of Network Devices
 
@@ -132,6 +139,11 @@ GLOSSARY
         row in the table maps a MAC address to a switch port. This process
         is what makes devices show up on switch ports.
 
+        Netdisco will attempt to detect uplink ports in case you are missing
+        topology data during macsuck. Check the logs of the macsuck /
+        macwalk for notifications of detected uplink ports, and add that
+        data to your netdisco-topology.txt.
+
         Fun Answer - From Douglas M. McKeown :
 
         "This is where you go to a switch (Layer 2) and find all the MAC (or
@@ -167,10 +179,17 @@ GLOSSARY
         address. Combined with the Macsuck process, Netdisco can ultimately
         resolve an IP address to a switch port.
 
-    CDP
-        Having topology information is crucial for Netdisco to function. So
-        if you network is not Cisco centric or does not have CDP turned on,
-        you must put the information in the netdisco-topology.txt file.
+        If you have a small network that only has layer-2 devices on it, and
+        you use a Linux or BSD box as your router, you will need to install
+        net-snmp on the machine, and then have netdisco discover that
+        machine. Otherwise you will not be able to resolve a MAC address to
+        an IP address.
+
+    CDP / FDP / SONMP
+        Having topology information is crucial for Netdisco to function. So.
+        if you network does not support one of the above Layer2 discover
+        protocols, you must put the information in the netdisco-topology.txt
+        file.
 
         See "Toplogy Information" in this file.
 
@@ -183,6 +202,9 @@ GLOSSARY
         discovering the topology. If your devices don't use CDP, then you
         need to work with the netdisco-topology.txt file to create a layout
         of your network."
+
+        Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported,
+        and anywhere you see CDP you can assume we mean FDP and SSOMP too.
 
 INSTALL
 
@@ -316,6 +338,15 @@ USING NETDISCO
     -g || --graph
         Graph. Creates graph -- both GIF and ImageMap.
 
+        NOTE: You can safely ignore all warnings about "size too small for
+        label".
+
+        Make sure you have a relatively new version of GraphViz. You need a
+        newer version of GraphViz if you get an error similar to:
+
+          Creating CMAP : /usr/local/netdisco/html/netmap.map
+            warning, language cmap not recognized, use one of: ps hpgl pcl mif...
+
     -h || --help
         Prints out command line usage.
 
@@ -336,7 +367,7 @@ USING NETDISCO
         Datbase Node Klean-up. Permanently deletes nodes matching:
 
         1. MAC Addresses that are Switch Port Addresses
-        2. MAC Addresses that are listed on non-existant ports
+        2. MAC Addresses that are listed on non-existent ports
         3. MAC Addresses that exist on ports with topology information
         (uplink ports)
 
@@ -368,6 +399,9 @@ USING NETDISCO
         Import Topology Data. Will import manual topology data stored in
         file specified by configuration option topofile . Use -F to specify
         a different file from the command line.
+
+        It is not necessary to do this after every change. This is only a
+        convenience switch.
 
     -u || --user [user] [password] [port_control?] [admin?]
         Add or Change a User. Supply all four arguments (user pw
@@ -456,10 +490,10 @@ USING NETDISCO
     Importing Topology Information
         It is not necessary to import the topology information after
         changing netdisco-topology.txt. You should however restart the admin
-        daemon. The topology text file is reparsed each time you run
+        daemon. The topology text file is re-parsed each time you run
         netdisco.
 
-        As a convience you can use the topology file to quickly seed
+        As a convenience you can use the topology file to quickly seed
         Netdisco with devices. To import all the topology information at
         once make sure the topology filename is set in "netdisco.conf" and
         use the -T command:
@@ -561,47 +595,86 @@ USING NETDISCO
         after a while. Even though we are doing frequent VACUUM's on all the
         data, it seems to be dragging down after a while.
 
-        In order to fix this we do a "VACUUM FULL ANALYZE VERBOSE" from
-        "pg_run". This command locks each table before it does the VACUUM,
-        and therefor can be more through. It's a good idea to take netdisco
-        down temporarily while you do this. I do this about once a month, or
-        when I notice it dragging down. Use "Netdisco Statistics" as a good
-        metric of things slowing down. This may get fixed with changes in
-        VACUUM in Postgres 7.4 and above.
+        This turns out to be an INDEX bloat problem on Postgres versions
+        less than 7.4. Recently doing this on a Postgres 7.3 install changed
+        the amount of space that i Netdisco's database was using from 16G to
+        400M !!!
 
-        Procedure for doing a vacuum full :
+        In order to fix this we do a "VACUUM FULL ANALYZE VERBOSE" and
+        "REINDEX" from "pg_run". This command locks each table before it
+        does the VACUUM, and therefor can be more through. It's a good idea
+        to take netdisco down temporarily while you do this. I do this about
+        once a month, or when I notice it dragging down. Use "Netdisco
+        Statistics" as a good metric of things slowing down. This may get
+        fixed with changes in VACUUM in Postgres 7.4 and above.
+
+        Procedure for doing a vacuum full (as root):
 
         1. Shutdown the admin daemon
-                su - netdisco -c "/usr/local/netdisco/netdisco -p stop"
+                /usr/local/netdisco/bin/netdisco_daemon stop
 
         2. Clear the cron tab for user netdisco
-                su - -c "crontab -u netdisco -r"
+                crontab -u netdisco -r
 
         3. Comment out the netdisco config file Includes in httpd.conf
         4. Restart Apache
-                su - -c "/usr/local/apache/bin/apachectl graceful"
+                /usr/local/apache/bin/apachectl graceful
 
         5. Check to see if any netdisco jobs are running and wait for them
         or kill them
                 ps
                 killall netdisco
-    
-        6. Run VACUUM FULL ANALYZE VERBOSE in psql
+
+        6. Run REINDEX and VACUUM FULL
+            Before:
+
+                df -h
                 /usr/local/netdisco/sql/pg_run
-                VACUUM FULL ANALYZE VERBOSE;
+                    # before comparison :
+                    select relname, relpages from pg_class order by relpages desc;
+
+                    REINDEX TABLE node;
+                    REINDEX TABLE node_ip;
+                    REINDEX TABLE device;
+                    REINDEX TABLE device_port;
+                    REINDEX TABLE device_port_log;
+                    VACUUM FULL ANALYZE VERBOSE;
+
+                    # after comparison :
+                    select relname, relpages from pg_class order by relpages desc;
+                    \q
+
+            After:
+
+                df -h
 
         7. Restart Postgres (just for fun)
-                su - -c "/usr/local/etc/rc.d/010.pgsql restart" 
+                /usr/local/etc/rc.d/010.pgsql restart 
+
+            OR
+
+                /etc/rc.d/init.d/pgsql restart
+
+            OR
+
+                /etc/rc.d/pgsql restart
 
         8. Uncomment lines in httpd.conf
         9. Restart Apache
-                su - -c "/usr/local/apache/bin/apachectl graceful"
+                /usr/local/apache/bin/apachectl graceful
 
         10. Reload crontab for user netdisco
-                su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
+                crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
         11. Restart Admin Daemon
-                su - netdisco -c "/usr/local/netdisco/netdisco -p start"
+                /usr/local/netdisco/bin/netdisco_daemon start
+
+    Clearing the Admin Queue
+        If your admin queue is just getting too long and you want to clear
+        it you can do it by just dropping the table and readding it.
+
+            cd sql
+            ./pg_run admin.sql
 
   Topology Information
 
@@ -609,8 +682,17 @@ USING NETDISCO
     application to know which ports are uplink ports and which have
     connected nodes. Ports that are uplink ports that are not marked so in
     Netdisco will appear to steal MAC address entries from their rightful
-    ports. So it is critical to use the topology file and CDP to maintain a
-    topology.
+    ports. So it is critical to use the topology file and CDP/FDP/SONMP to
+    maintain a topology.
+
+   Autodetection of uplink ports
+
+    During macsuck if Netdisco finds the MAC address of a known device or
+    switch port, then that port is marked as an uplink. Nodes will not
+    collect at these switch ports, and a warning message will be printed.
+    Check the logs of your macsuck and macwalk jobs in order to find and
+    correct autodetected uplink ports. Add these ports to your
+    netdisco-topology.txt file.
 
    Manual Topology Information
 
@@ -648,6 +730,10 @@ USING NETDISCO
 
         The Destination Device and Port tell Netdisco who is on the other
         end of this link. The device can be a DNS name or an IP Address.
+
+        NOTE: The port names must match exactly how Netdisco sees it. Go to
+        the device and check it out. You might think of it as "port 1" but
+        Netdisco might think of it as "RMONPort26onunit1".
 
     alias:
         Not implemented for output. The backup file will have these lines
@@ -696,8 +782,8 @@ USING NETDISCO
 
     2. Isolated Network Segment
         If you have a segment of your network that is not connected
-        directly, or conneted through a non physical link like a VPN, then
-        you might fudge an entry to connect that segement of the nework with
+        directly, or connected through a non physical link like a VPN, then
+        you might fudge an entry to connect that segment of the network with
         the main one.
 
     3. Attach a non-CDP speaking device
@@ -708,13 +794,13 @@ USING NETDISCO
   Cron Jobs
 
     Netdisco is controlled via cron jobs. Jobs are run as user "netdisco".
-    Mulitple jobs can be run at once.
+    Multiple jobs can be run at once.
 
     The default jobs are :
 
-    * MacSuck - Every 4 hours MacSuck all the devices in the database.
-    * ArpNip - Every 4 hours ArpNip all the devices in the database. (Offset
-    from Macsuck by 2 hours)
+    * MacSuck - Every 2 hours MacSuck all the devices in the database.
+    * ArpNip - Every 2 hours ArpNip all the devices in the database. (Offset
+    from Macsuck by 1 hours)
     * Refresh Devices - Once a day refresh device information.
     * Backup - Once a day backup information.
     * Graph - Once a day re-create the graph.
@@ -780,7 +866,7 @@ Config File
 
             arpnip_no = 192.168.0.0/24,192.168.0.1,192.168.1.0/24
 
-        You can NOT use an abbrievated CIDR subnet like "192/8".
+        You can NOT use an abbreviated CIDR subnet like "192/8".
 
     compress
         EXECUTABLE. Full path and command line arguments to the compression
@@ -795,7 +881,7 @@ Config File
 
     discover_no
         LIST:IPs and Subnets. Comma Separated list of devices and subnets
-        that will not get hit with an SNMP disovery event.
+        that will not get hit with an SNMP discovery event.
 
         See arpnip_no for more details.
 
@@ -809,6 +895,11 @@ Config File
 
     logextension
         STRING. The extension to add to log files.
+
+    macsuck_bleed
+        BOOLEAN. Set to true will let nodes accumulate on uplink ports
+        without topology information. This is a debug option to help you
+        figure out your topology and generally should not be set.
 
     macsuck_no
         LIST:IPs and Subnets. Comma Separated list of devices and subnets
@@ -871,8 +962,8 @@ Config File
 
     reverse_sysname
         BOOLEAN. Turn this on to have Netdisco do a reverse lookup of the
-        sysName.0 field to use as the managment IP address for a device. See
-        bug 810939 and device_root() for more info. Default "false"
+        sysName.0 field to use as the management IP address for a device.
+        See bug 810939 and device_root() for more info. Default "false"
 
     topofile
         FILE. Full path of the file that contains manual topology
@@ -926,12 +1017,34 @@ Config File
 
     db_Pg_env
         HASH. Environment variables to be set before running database calls.
+        Separate multiple entries with commas.
 
         Mainly used for Oracle.
 
         Default : not set.
 
+        Example :
+
+         db_Oracle_env  = ORACLE_HOME => /usr/local/oracle7, ORACLE_STUFF=>1
+
    SNMP Settings
+
+    bulkwalk_no
+        BOOLEAN. Set to true to use GETNEXT instead of BULKWALK for every
+        device. This slows things down, but might be necessary for problem
+        devices.
+
+        The final solution should be to add " sub bulkwalk_no { 1; } " to
+        the device class that is misbehaving in SNMP::Info. This will turn
+        off bulkwalk for a class of devices, not all.
+
+        Default is on. SNMP::Info 0.10 or higher required.
+
+    bulkwalk_repeaters
+        INT. Sets MaxRepeaters on BULKWALK operations. See "perldoc SNMP"
+        for more info.
+
+        Default is 20. SNMP::Info 0.10 or higher required.
 
     community
         LIST:STRING. A comma separated list of community strings to try on
@@ -1254,16 +1367,18 @@ THANKS
     UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov), George Pavel
     (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
     (saintmarys.edu), Revital Shvarzman (York U, Ontario), Walter Gould
-    (Auburn University), Lindsay Druet and Colin Palmer (U of Waikato,
-    Hamilton NZ)
+    (Auburn U), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ),
+    Dusty Hall (Auburn U), Jon Monroe (center pointe), Eric Miller
+    (jeneric).
 
     As well as these people for their donations :
 
      Richard Silver (East Alabama Medical Center)
      Linda Rosewood (UCSC)
-     "6pax4max!"    (???)
+     "6pax4max!","31337" (???)
      Dusty Hall     (Auburn University)
      Walter Gould   (Auburn University)
+     Frank Chatham  (Auburn University)
 
     And probably lots of other people I forgot to put in here. Not to
     mention the authors and communities of all the other software that
