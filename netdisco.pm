@@ -122,7 +122,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =item $VERSION - Sync'ed with Netdisco releases
 =cut
-$VERSION = '0.92';
+$VERSION = '0.93-cvs';
 
 =back
 
@@ -230,7 +230,10 @@ sub config {
 
         # Comma separated lists -> array ref
         if ($var =~ /(community|community_rw)/) {
-            my @com = split(/\s*,\s*/,$value);
+            my @com = split(/\s*(?<!\\),\s*/,$value);
+            foreach (@com){
+                $_ =~ s!\\,!,!g;
+            }
             $value = \@com;
         }
 
@@ -243,9 +246,10 @@ sub config {
         # Comma separated lists that map to defined hash keys.
         if ($var =~ /^(portcontrol|macsuck_no|admin|web_console_vendors|web_console_models|macsuck_no_vlan)$/) {
             my %seen;
-            foreach my $key (split(/\s*,\s*/,$value)){
+            foreach my $key (split(/\s*(?<!\\),\s*/,$value)){
                 $key =~ s/^\s+//;
                 $key =~ s/\s+$//;
+                $key =~ s!\\,!,!g;
                 $seen{$key}++;
             }            
             $value = \%seen;
@@ -254,7 +258,8 @@ sub config {
         # Database Hash values 
         if ($var =~ /^db_([a-zA-z]+)_opts$/){
             my %opts;
-            foreach my $pair (split(/\s*,\s*/,$value)) {
+            foreach my $pair (split(/\s*(?<!\\),\s*/,$value)) {
+                $pair =~ s!\\,!,!g;
                 my ($hash_key,$hash_value) = split(/\s*=>\s*/,$pair);
                 $opts{$hash_key}=$hash_value;
             }

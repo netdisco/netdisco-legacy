@@ -4,6 +4,8 @@
 
 0.93beta ()
     - Fixed Bug  [ 810939 ] reverse lookup of the sysName.0 field used as IP
+    - Fixed Bug - Could not have pound signs (#) in config options.  Use \#
+    - Fixed Bug - Could not have commas in certain config options. Use \,
 
 0.92beta (08/14/03)
     + Added feature [753750] Export to NMIS style config file
