@@ -1,5 +1,4 @@
-#!/usr/local/bin/perl -w
-##!/usr/bin/perl -w
+#!/usr/bin/perl -w
 
 use lib qw(/usr/local/netdisco/);
 use SNMP::Info;
