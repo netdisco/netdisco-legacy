@@ -33,7 +33,7 @@ use Digest::MD5;
 @netdisco::ISA = qw/Exporter/;
 our @EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
-                       all config sort_port sql_scalar root_device log
+                       all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail/;
 
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
@@ -305,6 +305,30 @@ sub mail {
     print SENDMAIL "Subject: $subject\n\n";
     print SENDMAIL $body;
     close (SENDMAIL) or die "Can't send letter. $!\n";
+}
+
+=item sort_ip() 
+
+Used by sort {} calls to sort by IP octet.  
+
+If passed two hashes, will sort on the key C<ip> or C<remote_ip>.
+
+=cut
+sub sort_ip {
+    my $aval = $::a->{ip} || $::a->{remote_ip} || $::a || $a->{ip} || $a->{remote_ip} || $a;
+    my $bval = $::b->{ip} || $::b->{remote_ip} || $::b || $b->{ip} || $b->{remote_ip} || $b;
+    my ($a1,$a2,$a3,$a4) = split(/\./,$aval);
+    my ($b1,$b2,$b3,$b4) = split(/\./,$bval);
+    
+    return 1 if ($a1 > $b1);
+    return -1 if ($a1 < $b1);
+    return 1 if ($a2 > $b2);
+    return -1 if ($a2 < $b2);
+    return 1 if ($a3 > $b3);
+    return -1 if ($a3 < $b3);
+    return 1 if ($a4 > $b4);
+    return -1 if ($a4 < $b4);
+    return 0;
 }
 
 #=item sort_port($a , $b) - for use by sort() - Sort by 1.2 vs 1.3
