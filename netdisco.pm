@@ -1,3 +1,5 @@
+# $Id$
+
 =head1 NAME
 
 netdisco.pm - Utility functions used for back and front ends
