@@ -62,18 +62,24 @@
 % if ($secure) {
 <IMG SRC="<%$path%>/icon_lock.gif" ALT="SSL Connected" HEIGHT=15 WIDTH=15>
 % }
+
+% if ($user) {
     User <TT><%$user%></TT> [<A HREF="<%$path%>/logout.html">Logout</A>]
+    <BR>[<A HREF="<%$path%>/change_pw.html">Change Password</A>]
+% } else {
+    [<A HREF="<%$path%>/login.html">Login</A>]
+%}
     </TD>
 </TR>
 </TABLE>
 <%once>
 </%once>
 <%shared>
-my $odd  = 0;
-my $path = $netdisco::CONFIG{webpath};
-my $user = $r->connection->user;
+my $odd    = 0;
+my $path   = $netdisco::CONFIG{webpath};
+my $user   = $m->session->{user};
 my $secure = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
-my $admin = defined $netdisco::CONFIG{admin}->{$user};
+my $admin  = $m->session->{user_admin};
 </%shared>
 %# $Id$
 %# vim:syntax=mason
