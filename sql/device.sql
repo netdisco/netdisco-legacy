@@ -11,7 +11,7 @@ CREATE TABLE device (
     contact      text,
     name         text,
     location     text,
-    layers       text,
+    layers       varchar(8),
     ports        integer,
     mac          macaddr,
     serial       text,
@@ -34,3 +34,5 @@ CREATE TABLE device (
 -- Indexing for speed-ups
 CREATE INDEX idx_device_dns    ON device(dns);
 CREATE INDEX idx_device_layers ON device(layers);
+CREATE INDEX idx_device_vendor ON device(vendor);
+CREATE INDEX idx_device_model  ON device(model);
