@@ -236,12 +236,13 @@ sub config {
                      /;
 
     # these will make array refs of their comma separated lists
-    my @array_refs = qw/community community_rw mibdirs bulkwalk_no/;
+    my @array_refs = qw/community community_rw mibdirs bulkwalk_no macsuck_no 
+                        arpnip_no discover_no/;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
-    my @hash_refs  = qw/portcontrol macsuck_no admin web_console_vendors
-                       web_console_models macsuck_no_vlan arpnip_no discover_no
+    my @hash_refs  = qw/portcontrol admin web_console_vendors
+                       web_console_models macsuck_no_vlan
                       /;
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
@@ -434,10 +435,15 @@ Second argument is an array ref as returned from config, eg. C<bulkwalk_no>.
 =cut
 sub in_device {
     my $device = shift;
-    my $to_match = shift || [];
+    my $to_match = shift;
+
+    return 0 unless defined $to_match;
+    return 0 unless defined $device;
 
     my ($ip,$model,$vendor);
 
+
+    # First Argument:
     # Passed a sql_hash from the device table
     if (ref($device) eq 'HASH'){
         $ip     = $device->{ip};
@@ -450,6 +456,7 @@ sub in_device {
         $vendor = '';
     }
 
+    # Second Argument:
     foreach my $term (@$to_match){
         $term =~ s/^\s*//;
         $term =~ s/\s*$//;
@@ -466,7 +473,8 @@ sub in_device {
             
         # Consider this a subnet / host
         } else {
-            return 1 if in_subnet($term,$ip);
+            #print "checking $term against $ip\n";
+            return 1 if in_subnet(getip($term),$ip);
         }
     }
 
