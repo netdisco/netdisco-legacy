@@ -31,7 +31,7 @@ if (defined $search and $search =~ /duplex/i){
 No Duplex Mismatches found.
 % return;}
 <h4>Search Results</h4>
-<TABLE CELLSPACING=4 CELLPADDING=0 BORDER=0 WIDTH=50%>
+<TABLE CELLSPACING=0 CELLPADDING=2 BORDER=0 WIDTH=75%>
 <TR>
     <TH>Device / Port</TH>
     <TH>Duplex</TH>
@@ -58,7 +58,7 @@ foreach my $result (@$results){
     $remote_name =~ s/\Q$domain\E//;
     $count++;
 </%perl>
-<TR>
+<TR CLASS="match-<% $count % 2 %>">
     <TD><A HREF="device.html?ip=<%$ip%>&port=<%$port%>"><%$name%> (<%$port%>)</A></TD>
     <TD><%$duplex%></TD>
     <TD><A HREF="device.html?ip=<%$remote_ip%>&port=<%$remote_port%>"><%$remote_name%> (<%$remote_port%>)</A></TD>
