@@ -199,6 +199,10 @@ Reads the config file and fills the C<%CONFIG> hash.
 sub config {
     my $file = shift;
 
+    my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
+                      port_info secure_server graph_overlap graph_splines
+                     /;
+
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
     my @configs=(<CONF>);    
     close(CONF);
@@ -227,9 +231,18 @@ sub config {
         }
 
         # Hacks
+        
+        # Booleans
+        if (grep /^\Q$var\E$/,@booleans) {
+            if ( $value =~ /^(1|t|y|yes|true|si|oui)$/i ) {
+                $value = 1;
+            } else {
+                $value = 0;
+            } 
+        }
 
         # Comma separated lists -> array ref
-        if ($var =~ /(community|community_rw)/) {
+        if ($var =~ /^(community|community_rw)$/) {
             my @com = split(/\s*(?<!\\),\s*/,$value);
             foreach (@com){
                 $_ =~ s!\\,!,!g;
@@ -269,6 +282,7 @@ sub config {
         $CONFIG{$var}=$value;
 
     }
+
     *::CONFIG = \%CONFIG;
     return \%CONFIG;
 }
@@ -1210,7 +1224,7 @@ sub sql_rows {
 
     my $sql = sprintf("SELECT %s FROM $table", join(',',@$column));
 
-    if (defined $wherehash) {
+    if (defined $wherehash and scalar(keys %$wherehash)) {
         my @where;
         foreach my $index (keys %$wherehash){
             my $val = $wherehash->{$index};
