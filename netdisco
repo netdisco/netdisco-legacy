@@ -1205,13 +1205,15 @@ sub macsuck{
 
     print "macsuck($hostname) : ";
 
+    unless (defined $ip){
+        print " Name does not resolve with DNS.\n";
+        return;
+    }
+
     if (defined $CONFIG{macsuck_no} and defined $CONFIG{macsuck_no}->{$ip}) {
         print "\n  Excluded from macsucking in config file.\n";
         return;
     }
-
-    &load_old_devices unless (defined $OldDevices);
-    &mac_getportmacs  unless (defined $PortMAC);
 
     # Get the device info and its interfaces
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
@@ -1222,6 +1224,9 @@ sub macsuck{
         print "\n  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
         return;
     }
+
+    &load_old_devices unless (defined $OldDevices);
+    &mac_getportmacs  unless (defined $PortMAC);
 
     # Move the ports from an array to a hash, indexed on port name
     my %dbports = ();
