@@ -18,6 +18,8 @@ Please use the Bug interface from Source Forge page at :
 
 L<http://sourceforge.net/projects/netdisco>
 
+Thanks to Mike Hunter at UCB for proofing this document.
+
 =head1 REQUIREMENTS
 
 Netdisco is built using lots of fine Open-Source tools: 
@@ -181,6 +183,8 @@ and their prerequisites automatically:
 =item install DBD::Pg
 
 =item install Apache::Session
+
+=item install Apache::Request
 
 =item install HTML::Mason
 
@@ -420,13 +424,13 @@ For BSD :
 
 =over
 
-=item a. cd /usr/ports/devel/mm & make install
+=item a. cd /usr/ports/devel/mm && make install
 
-=item b. cd /usr/ports/security/openssl & make insatll
+=item b. cd /usr/ports/security/openssl && make install
 
 =item c. Setup mod_ssl
 
- SSL_BASE=SYSTEM\
+ SSL_BASE=SYSTEM \
  ./configure \
     --with-apache=../apache_1.3.x \
     --disable_rule=SSL_COMPAT
@@ -442,7 +446,7 @@ Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
     --with-apache=../apache_1.3.x \        
     --disable_rule=SSL_COMPAT
 
-=item iii. In mod_perl-1.2x/
+=item iv. In mod_perl-1.2x/
 
  /usr/local/bin/perl Makefile.pl \
         APACHE_SRC=../apache_1.3.x/src \
@@ -453,7 +457,7 @@ Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
 
  make
 
-=item iv. Back in apache_1.3.x/
+=item v. Back in apache_1.3.x/
 
  ./configure \
         --prefix=/usr/local/apache \
@@ -466,7 +470,7 @@ Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
  make certificate
  make install
 
-=item v. Back in mod_perl-1.2x/
+=item vi. Back in mod_perl-1.2x/
 
  make install
 
@@ -519,8 +523,6 @@ The name of the user is listed in C<httpd.conf> under the C<User> directive.
 =item Start Apache
 
     /usr/local/apache/apachebin start
-
-Go to the webserver and 
 
 =back
 
@@ -603,9 +605,19 @@ network and start an autodiscovery from there:
 
 =head2 13. Test Web Side
 
+First restart Apache so that netdisco will see the changes that you have made
+in F<netdisco.conf>.  Note that a I<graceful> restart will not re-read the configuration
+file.  A full restart is required.
+
+    /usr/local/apache/bin/apachectl restart
+
 Point a browser to I</netdisco>  on the server you have Netdisco installed on. 
 If everything is working you should be able to login with the username and password
 you added in Step 10.  You should also be able to access the Admin Panel.
+
+If you have problems, check the F<error_log> of apache for messages.
+
+    tail /usr/local/apache/logs/error_log
 
 =head2 14. Add Cron Jobs
 
