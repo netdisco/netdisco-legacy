@@ -1,12 +1,18 @@
 #!/bin/sh
-# Max Baker <max@warped.org>
+# Netdisco - netdisco.org 
 # Postgresql setup shell script
+# $Id$
 
 # Change these to match your setup
-SYSDBUSER=pgsql
+# Linux Default 
+SYSDBUSER=postgres
+
+# BSD Default
+# SYSDBUSER=pgsql
+
 DB=netdisco
 
-CREATEUSER="createuser --createdb --no-adduser --pwprompt $DB"
+CREATEUSER="createuser --no-createdb --no-adduser --pwprompt $DB"
 
 echo "--> Creating User $DB."
 echo "Choose a password just for this new database user."
@@ -14,5 +20,5 @@ su $SYSDBUSER -c "$CREATEUSER"
 
 echo ""
 echo "Creating Database $DB.  Use the Password used above."
-createdb --username=$DB --password $DB "Storage and stuff"
+su $SYSDBUSER -c "createdb --password $DB"
 
