@@ -3,6 +3,7 @@
 # Created for UCSC
 # (C) 2002-2003 UC Regents
 # Author: Max Baker <max@warped.org>
+# $Id$
 
 use strict;
 # Add . to the library path
@@ -40,7 +41,7 @@ $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
 $configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
 $BatchMode  = defined $args{b};
-$Log        = (defined $args{D} or defined $args{L}) ? 0 : 1;
+$Log        = (!$BatchMode and (defined $args{D} or defined $args{L})) ? 0 : 1;
 $New_Only   = defined $args{N};
 
 # Signal Handlers
