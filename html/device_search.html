@@ -1,13 +1,19 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <& SELF:matches &>
 <h3>Device Search</h3>
-<TABLE>
+<TABLE BORDER=0 CELLSPACING=4 CELLPADDING=0 CLASS="box">
 <TR>
-    <TD>Search all text: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>"></TD>
-    <TD colspan=2><INPUT TYPE="submit" VALUE="Search"></TD>
+    <TD COLSPAN=4><h4>Search All</h4></TD>
+</TR>
+<TR>
+    <TD colspan=4>
+        <INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>">
+        <INPUT TYPE="submit" VALUE="Search All">
+    </TD>
 </TR> 
-<TR><TD COLSPAN=4"><HR></TD></TR>
+<TR>
+    <TD COLSPAN=4><h4>Advanced Search</h4></TD>
+</TR>
 <TR>
     <TD>IP: </TD>
     <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="ip" VALUE="<%$ip%>"></TD>
@@ -51,9 +57,10 @@
     All above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
     </TD>
 </TR>
+<TR>
+    <TD COLSPAN=4><P><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]
+</TR>
 </TABLE>
-<INPUT TYPE="submit" VALUE="Search"> 
-[ <A href="<%$r->uri%>">Reset</A> ]
 </FORM>
 <h4>Specific Searches</h4>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
