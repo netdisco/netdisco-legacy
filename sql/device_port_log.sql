@@ -7,6 +7,7 @@ CREATE TABLE device_port_log (
     id          serial, 
     ip          inet,
     port        text,
+    reason      text,
     log         text, 
     username    text,   -- user is a reserved word
     userip      inet,
