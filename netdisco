@@ -3146,7 +3146,7 @@ sub admin_daemon_ctl {
             }
             print "\n";
         } else {
-            print "Admin daemon is not currenlty running!\n";
+            print "Admin daemon is not currently running!\n";
         }
     }
 

@@ -931,8 +931,12 @@ sub dbh {
         my $user    = $CONFIG{"db_${DB}_user"} or die "dbh() - db_${DB}_user not found in config info.\n";
         my $pw      = $CONFIG{"db_${DB}_pw"}   or die "dbh() - db_${DB}_pw not found in config info.\n";
         my $options = $CONFIG{"db_${DB}_opts"} || {};
-        if (defined $CONFIG{"db_${DB}_env"}) {
-            my ($key,$val) = split(/\s*=>\s*/,$CONFIG{"db_${DB}_env"});
+        my $env     = $CONFIG{"db_${DB}_env"} || '';
+        # Multiple environmental variables separated by commas.
+        foreach my $e (split(/\s*(?<!\\),\s*/,$env) ) {
+            $e =~ s!\\,!,!g;
+            my ($key,$val) = split(/\s*=>\s*/,$e);
+            next unless (defined $key and defined $val and $key and $val);
             #warn "Setting ENV{$key} to $val\n";
             $ENV{$key}=$val;
         }

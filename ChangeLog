@@ -55,6 +55,7 @@ Bugfixes:
     * Bug Fixed - DBD::Pg::db unterminated quoted string bug.
             Problem turned out to be Postgres barfing on null terminated strings.
     * Topology File now resolves aliases to their root devices (Eric Miller)
+    * Multiple enviornment variables in db_*_env allowed now.
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
