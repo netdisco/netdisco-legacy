@@ -549,7 +549,7 @@ Lines that start with C<link:> connect two devices together.  The format is
 
     link:outgoing port,destination device,Destination port
 
-The outgoing port belongs to the device listed above the C<list:> line.
+The outgoing port belongs to the device listed above the C<link:> line.
 
 The Destination Device and Port tell Netdisco who is on the other end of this link.
 The device can be a DNS name or an IP Address.
