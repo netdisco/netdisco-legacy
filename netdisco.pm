@@ -48,22 +48,26 @@ Holds Database Handles, key is db name as set in config file.
 
 =item %netdisco::DB
 
-Index of current Database Handle.  Default 'Pg';
+Index of current Database Handle.  Default C<'Pg'>;
 
 =cut
 $DB = 'Pg';
 
-=item %netdisco::CONFIG - Holds config info from netdisco.conf
+=item %netdisco::CONFIG
+
+Holds config info from C<netdisco.conf>
 
 =cut
 
-=item %netdisco::GRAPH - Holds vertex information for make_graph()
+=item %netdisco::GRAPH
+
+Holds vertex information for C<make_graph()>
 
 =cut
 
 =item $netdisco::SENDMAIL 
 
-Full path to sendmail executable -- For mail()
+Full path to sendmail executable
 
 =cut
 $SENDMAIL = '/usr/sbin/sendmail';
@@ -85,7 +89,7 @@ $SQLCARP=0;
 
 =item %PORT_CONTROL_REASONS
 
-Reason why a port would be shutdown. These get fed into port_control_log
+Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =cut
 %PORT_CONTROL_REASONS = ( 
