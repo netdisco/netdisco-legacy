@@ -236,7 +236,7 @@ sub config {
                      /;
 
     # these will make array refs of their comma separated lists
-    my @array_refs = qw/community community_rw mibdirs/;
+    my @array_refs = qw/community community_rw mibdirs bulkwalk_no/;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
@@ -248,8 +248,42 @@ sub config {
     my @configs=(<CONF>);    
     close(CONF);
 
-    foreach my $config (@configs){
+    while(my $config = shift @configs){
         chomp $config;
+
+        # Check for wrap (\ at end of line)
+        my $cur_line = $config;
+        while ($cur_line =~ /\\\s*$/){
+            # Remove tailing \
+            $config =~ s/\\\s*$//;
+    
+            # Grab next line
+            my $next_line = shift(@configs);
+            chomp($next_line);
+
+            # Check for trailing \ on newline
+            if ($next_line =~ /\\\s*$/) { 
+                # If comments in line too, add the \ back in
+                if ($next_line =~ s/(?<!\\)#.*//){
+                    $next_line .= '\\'; 
+                }
+            # Otherwise just remove the comments
+            } else {
+                $next_line =~ s/(?<!\\)#.*//;
+            }
+            # Handle escaped pound signs
+            $next_line =~ s/\\#/#/g;
+            
+            # Trim out leading whitespace
+            $next_line =~ s/^\s*/ /;
+
+            # concat next line to current.
+            $config .= $next_line; 
+
+            # could have lots of \'d lines in a row
+            $cur_line = $next_line;
+        }
+
         # Take out Comments - Handle escaped pound signs
         $config =~ s/(?<!\\)#.*//;
         $config =~ s/\\#/#/g;
@@ -260,7 +294,6 @@ sub config {
         next unless (length $config);
 
         # Fill the %CONFIG hash
-
         my $var = undef;  my $value = undef;
         if ($config =~ /^([a-zA-Z_-]+)\s*=\s*(.*)$/) {
             $var = $1;  $value = $2;
