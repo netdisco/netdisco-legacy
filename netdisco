@@ -199,14 +199,14 @@ sub end {
 
     if ($ArpTotal > 0 ){
         print "Found $ArpTotal arp cache entries.\n";
-        log('arp',"$ArpTotal entries. $run_time minutes.\n") if $Log;
+        log('arp',"$ArpTotal entries. $run_time minutes.") if $Log;
     }
 
     my $mac_seen = scalar keys(%MacSeen);
     if ($mac_seen){
         
         print "Saw $mac_seen distinct nodes in $MacTotal forwarding table entries.\n";
-        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.\n") if $Log;
+        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.") if $Log;
     }
 
     my $discover_count = scalar(keys(%Discovered));
@@ -227,7 +227,8 @@ sub end {
 
         print "Discovered : $new new devices.  Missed: $old old devices.\n";
 
-        log('discover',"$discover_count devices. ($new new) ($old old)\n") if $Log;
+        log('discover',"$discover_count devices. ($new new) ($old old) $run_time minutes.") 
+            if $Log;
 
         if (scalar keys %NoCDP){
             print "Devices Found by CDP but without CDP info avail. via SNMP :\n";
@@ -408,6 +409,8 @@ sub create_device {
                                  'Retries'  => $retries
                                );
     
+    $DEBUG and $device->debug($DEBUG);
+
     unless (defined $device) {
         print "  Can't connect to $hostname\n";
         return undef;
@@ -428,6 +431,7 @@ sub create_device {
 
         $objtype = $device->device_type();
 
+        $DEBUG and $device->debug($DEBUG);
         $version = 1;
     }
 
