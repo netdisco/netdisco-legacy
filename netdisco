@@ -19,6 +19,9 @@ use IO::File;
 
 use netdisco qw/:all/;  
 
+# for daemon
+use POSIX qw/:errno_h/;
+
 use SNMP::Info;
 use SNMP::Info::Layer1;
 use SNMP::Info::Layer1::Allied;
@@ -41,7 +44,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only/;
 
-getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOr:SRtTV',\%args);
+getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOp:r:SRtTV',\%args);
 
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
@@ -78,7 +81,7 @@ $MacTotal = 0;
 %DeviceTopo = ();
 
 # Header
-&header if (join('',keys %args) =~ /[aABdeEFgikKmMOrRT]+/);
+&header if (join('',keys %args) =~ /[aABdeEFgikKmMOprRT]+/);
 
 # Commands
 defined $args{h} and die &usage;
@@ -115,9 +118,10 @@ defined $args{B} and &nightly;
 defined $args{E} and &expire_device($args{E},defined $args{n});
 defined $args{e} and &expire_nodes($args{e},defined $args{V});
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
+defined $args{p} and &admin_daemon_ctl($args{p});
 
 # Make sure we ran a command, else spit out the usage
-die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOrRtT]+/);
+die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOprRtT]+/);
 exit;
 
 =over
@@ -289,7 +293,7 @@ sub batch_mode{
     my $file_name = shift;
     my $want_time = shift;
 
-    my $file_path = $CONFIG{datadir};
+    my $file_path = $CONFIG{datadir} || 'data';
     my $extension = defined $CONFIG{logextension} ? $CONFIG{logextension} : 'log';
     
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
@@ -319,13 +323,18 @@ sub batch_mode{
     &header;
 }
 
-=item batch_mode_end()
+=item batch_mode_end(no_compress_flag)
 
-Returns output of stdout to previous value, optionally compresses 
+Returns control of stdout to previous value, optionally compresses 
 the finished output file.
+
+Function returns file name of closed output file.
+
+Pass something as first parameter to force no compression.
 
 =cut
 sub batch_mode_end {
+    my $no_compress = shift;
     return unless $BatchMode;
 
     return unless scalar @LogFile;
@@ -336,11 +345,13 @@ sub batch_mode_end {
     $fh->close() or die "Can't write $file. $!\n";
 
 
-    if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} =~ /(true|1|y)/i){
+    if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} =~ /(true|1|y)/i and ! defined $no_compress){
        print STDERR "\tCompressing $file\n";
        my $compress = defined $CONFIG{compress} ? $CONFIG{compress} : "/usr/bin/gzip -f";
        system("$compress $file") and warn "Compress of $file Failed.\n";
     }
+    
+    return $file;
 }
 
 =item discover(host) 
@@ -2021,13 +2032,236 @@ sub parse_oui {
     print "Found $oui_count entries in oui.txt\n";
 }
 
-sub test {
+=item admin_daemon_ctl(cmd)
 
+start,stop,restart,status
+
+=cut
+sub admin_daemon_ctl {
+    my $cmd = shift;
+
+    if ($cmd eq 'restart') {
+        &admin_daemon_ctl('stop');
+        &admin_daemon_ctl('start');
+    }
+
+    if ($cmd eq 'start'){
+        &admin_daemon; 
+    }
+
+    if ($cmd eq 'status'){
+        my $status = &admin_daemon_status;
+        if ($status) {
+            print "Admin daemon is running under pid $status.\n";
+        } else {
+            print "Admin daemon is not currently running.\n";
+        }
+    }
+
+    if ($cmd eq 'stop'){
+        my $pid = &admin_daemon_status;
+        if ($pid) {
+            print "Stopping admin daemon ($pid).\n\n Waiting until current job completes ";
+            kill INT => $pid;
+            while(admin_daemon_status($pid)){
+                print ".";
+                sleep(1);
+            }
+            print "\n";
+        } else {
+            print "Admin daemon is not currenlty running!\n";
+        }
+    }
+
+}
+
+=item admin_daemon_status(pid)
+
+Returns 0 if daemon is not running or returns pid number if running.
+
+pid argument is optional, used in stop function
+
+=cut
+sub admin_daemon_status {
+    my $pid = shift || &admin_daemon_pid;
+
+    if (defined $pid){
+        if (kill 0 => $pid) {
+            print "Admin Daemon is already running. ($pid)\n" if $DEBUG;
+            return $pid;
+        } elsif ($! == EPERM) {             # changed uid
+            warn "Admin Daemon ($pid) has escaped my control!\n";
+            return $pid;
+        } elsif ($! == ESRCH) {
+            print "Admin Daemon ($pid) is deceased, starting new one.\n" if $DEBUG;  # or zombied
+            return 0;
+        } else {
+            warn "No status of $pid: $!\n";
+            return 0;
+        }
+    }
+    return 0;
+}
+
+=item admin_daemon() 
+
+Resident copy of netdisco to handle requests from the admin panel.
+
+=cut
+sub admin_daemon {
+    my $pid = undef;
+    # Check if we're already running
+    if ($pid=admin_daemon_status){
+        print "Admin Daemon is already running. ($pid)\n";
+        return;
+    }
+    my $end_flag = 0;
+
+    local %SIG;
+    $SIG{INT} = $SIG{USR1} = $SIG{TERM} = 
+        sub {$end_flag++;};
+    $SIG{PIPE} = 'IGNORE';
+
+    # Throw Daemon in bg if wanted.
+    if (defined $CONFIG{daemon_bg} and $CONFIG{daemon_bg} =~ /(true|1|yes)/ ){
+        die "Can't fork: $!\n" unless defined($pid = fork());
+        # Exit parent thread
+        exit if $pid;
+        print "Running Daemon in Background.\n" if $DEBUG;
+    }
+
+    $pid = $$;
+    print "Starting new admin panel daemon ($pid)\n";
+
+    # Write out pid file
+    &admin_daemon_pid($pid);
+
+    my $poll_interval = $CONFIG{daemon_poll} || 2;
+
+    # Create log dir
+    my $datadir = $CONFIG{datadir};
+    system("mkdir -m 0775 -p $datadir/admin") unless (-d "$datadir/admin");
+
+    # Mark left over jobs as bad
+    sql_do("UPDATE admin SET status='error' WHERE status = 'running';"); 
+    # hmm, looks like insert_or_update() doesnt work for this sort of thing, assumes insert cuz no cases exist.
+
+    # Event Loop
+    until ($end_flag){
+        my $jobs = sql_rows('admin',['job','extract(epoch from entered) as entered',
+                                     'device','action','status', 'username','debug'],
+                            {'status' => 'queued'} );
+
+        # Run each Job
+        foreach my $job (sort {$a->{entered} <=> $b->{entered}} @$jobs) {
+            admin_daemon_job($job);
+            last if $end_flag;
+        }
+
+        sleep($poll_interval) unless $end_flag;
+    }
+
+    print "Daemon ending ($pid).\n";
+}
+
+=item admin_daemon_pid(pid_to_write)
+
+If not supplied arguments, Reads pid of daemon pid from F<netdisco_daemon.pid>
+
+If supplied arguments, writes the pid out to that file.
+
+=cut
+sub admin_daemon_pid {
+    my $pid = shift;
+    my $pid_file = $CONFIG{daemon_pid} || 'netdisco_daemon.pid';
+
+    if (defined $pid) {
+        print "Writing pid:$pid to $pid_file\n" if $DEBUG;
+        open (PIDFILE,"> $pid_file") or die "Can't open $pid_file. $!\n";
+        print PIDFILE $pid;
+        close (PIDFILE) or die "Can't write $pid_file. $!\n";
+    } else {
+        print "Reading pid from $pid_file\n" if $DEBUG;
+        open (PIDFILE,"< $pid_file") or return undef;
+        my $pid = (<PIDFILE>);
+        chomp($pid);
+        close (PIDFILE);
+        return $pid;
+    }
+}
+
+=item admin_daemon_job(job_obj)
+
+Runs each job. Redirects output to data/admin/job-num-date.log
+job_obj is the sql hash object for each job.
+
+=cut
+sub admin_daemon_job {
+    my $job = shift;
+    my $id     = $job->{job};
+    my $cmd    = $job->{action};
+    my $dev    = $job->{device};
+    my $debug  = $job->{debug};
+
+    print "Daemon: Working on job : $id\n" if $DEBUG;
+
+    # Set to running
+    insert_or_update('admin',{'job'=>$id },{'status'=>'running', 'started' => scalar(localtime)});
+
+    # Capture output
+    local $BatchMode = 1;
+    &batch_mode("admin/job-$id");
+    my $old_debug = $DEBUG;
+    $DEBUG = $debug;
+
+    # Device tasks
+    if ($cmd eq 'macsuck') {
+        &load_old_devices;
+        &mac_getportmacs;
+        &macsuck($dev);
+    }
+
+    if ($cmd eq 'arpnip') {
+        &mac_getportmacs;
+        &arpnip($dev);
+    }
+
+    if ($cmd eq 'refresh') {
+        &topo_load_file;
+        &discover($dev);
+    }
+
+    if ($cmd =~ /^delete(\+nodes)?$/) {
+        my $nodes = $1;
+        print "Delete currently turned off.\n"
+    }
+
+    # Clean Up
+    $DEBUG = $old_debug;
+    my $output_file = &batch_mode_end('no compress');
+    open(OUTFILE, "<$output_file") or die "admin_daemon_job() Can't open $output_file. $!\n";
+
+    # Slurp in log countents to a scalar.
+    my $log = undef;
+    {
+        local $/ = undef;
+        $log = <OUTFILE>;
+    }
+    close (OUTFILE);
+
+    # Mark job done
+    insert_or_update('admin',{'job'=>$id },{'status'=>'done', 
+                              'finished' => scalar(localtime), 'log'=>$log}
+                    );
+    return undef;
+}
+
+sub test {
 }
 
 sub header{
     print "n e t  d i s c o\n";
-    print '-'x70 . "\n";
+    print '-'x50 . "\n";
 }
 
 sub usage{
@@ -2064,6 +2298,8 @@ Commands:
     -E device - Expire Device (-n to delete nodes too)
     -e device - Expire Nodes  (-V to archiVe instead of delete)
     -i from_ip to_ip - Change IP Address of device
+
+    -p [start stop status restart] Control admin daemon
     
 _end_usage_
 }
