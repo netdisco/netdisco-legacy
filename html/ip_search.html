@@ -99,7 +99,7 @@ if ($cmd eq 'age'){
     $where->{active} = \'true' unless ($archive);
     if ($subnet){
         my $safenet = dbh_quote($subnet);
-        $where->{ip} = \\"<< $safenet"  if $subnet;
+        $where->{ip} = \\"<< inet $safenet"  if $subnet;
     } 
     $ips = sql_rows('node_ip',['age(now(),time_last) as age','extract(epoch from time_first) as time_first',
                                'extract(epoch from time_last) as time_last','ip','active'],
