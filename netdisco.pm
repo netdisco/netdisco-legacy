@@ -23,7 +23,7 @@ use strict;
 use Carp;
 use Exporter;
 use Socket;
-use Graph::Undirected;
+use Graph 0.50;
 use DBI;
 use Digest::MD5;
 

@@ -17,6 +17,7 @@ Bugfixes:
     * [1100029] Nbtwalk whole network bug - would die if couldn't connect to a node.
     * [1107565] Log file was trying to be written not in batch mode.
     * [1109221] node_nbt table not created in 0.94
+    * [1107568] Netdisco will not work with new version of Graph.pm (0.5x) (Stéphane Bernaud)
 
 
 0.94beta (12/06/04)

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # n e t  d i s c o
 # Created for UCSC
-# Changes from 0.92 on (C) 2003,2004 Max Baker - All rights Reserved.
+# Changes from 0.92 on (C)2003-2005 Max Baker - All rights Reserved.
 # (C) 2002,2003 UC Regents.  See bottom of this file.
 # $Id$
 
@@ -2952,11 +2952,11 @@ sub graph {
     &batch_mode("logs/$month/graph") unless $no_batch;
     print "graph() - Creating Graphs.\n";
 
-    eval "use GraphViz;";
+    eval "use GraphViz 2.02;";
     if ($@) {
         my $err = $@;
         $err =~ s/\n/ /g;
-        print "  GraphViz module not installed. See INSTALL.\n";
+        print "  GraphViz module not installed or needs to be updated to version 2.02 or newer.\n See INSTALL.\n";
         print "  Error Reported : $err\n";
         print "\n\nGraphn not created.\n";
         return;
@@ -2969,7 +2969,7 @@ sub graph {
         return;
     }
 
-    my @S = $G->strongly_connected_components;
+    my @S = $G->connected_components;
 
     # Count number of nodes in each subgraph
     my %S_count;
@@ -3022,26 +3022,26 @@ sub graph_each  {
     print "Creating new Graph\n";
 
     my $graph_defs = {
-                     'bgcolor' => $CONFIG{graph_bg},
-                     'color'   => $CONFIG{graph_color},
-                     'overlap' => $CONFIG{graph_overlap} || 'false',
-                     'fontpath'=> $CONFIG{home},
-                     'ranksep' => $CONFIG{graph_ranksep},
-                     'nodesep' => $CONFIG{graph_nodesep},
+                     'bgcolor' => $CONFIG{graph_bg}        || 'black',
+                     'color'   => $CONFIG{graph_color}     || 'white',
+                     'overlap' => $CONFIG{graph_overlap}   || 'scale',
+                     'fontpath'=> $CONFIG{graph_fontpath}  || $CONFIG{home},
+                     'ranksep' => $CONFIG{graph_ranksep}   || 0.3,
+                     'nodesep' => $CONFIG{graph_nodesep}   || 2,
+                     'ratio'   => $CONFIG{graph_ratio}     || 'compress',
                      'splines' => $CONFIG{graph_splines} ? 'true' : 'false',
-                     'ratio'   => 'compress'
                      };
     my $node_defs = { 
-                    'shape'     => $CONFIG{node_shape},
-                    'fillcolor' => $CONFIG{node_fillcolor},
-                    'fontcolor' => $CONFIG{node_fontcolor},
-                    'style'     => $CONFIG{node_style},
-                    'fontname'  => $CONFIG{node_font},
-                    'fontsize'  => $CONFIG{node_fontsize},
-                    'fixedsize' => 'true'
+                    'shape'     => $CONFIG{node_shape}     || 'box',
+                    'fillcolor' => $CONFIG{node_fillcolor} || 'dimgrey',
+                    'fontcolor' => $CONFIG{node_fontcolor} || 'white',
+                    'style'     => $CONFIG{node_style}     || 'filled',
+                    'fontname'  => $CONFIG{node_font}      || 'lucon',
+                    'fontsize'  => $CONFIG{node_fontsize}  || 12,
+                    'fixedsize' => $CONFIG{node_fixedsize} || 'true',
                     };
     my $edge_defs = {
-                    'color' => $CONFIG{edge_color}
+                    'color' => $CONFIG{edge_color}         || 'wheat',
                     };
 
     my $epsilon = undef;
@@ -3051,13 +3051,13 @@ sub graph_each  {
     
     my %gv = (
                directed => 0,
-               layout   => $CONFIG{graph_layout},
-               graph => $graph_defs,
-               node => $node_defs,
-               edge => $edge_defs,
-               width => $CONFIG{graph_x},
-               height => $CONFIG{graph_y},
-               epsilon => $epsilon,
+               layout   => $CONFIG{graph_layout} || 'twopi',
+               graph    => $graph_defs,
+               node     => $node_defs,
+               edge     => $edge_defs,
+               width    => $CONFIG{graph_x}      || 30,
+               height   => $CONFIG{graph_y}      || 30,
+               epsilon  => $epsilon,
               );
 
     my $gv = new GraphViz(%gv);
@@ -3079,19 +3079,16 @@ sub graph_each  {
 
     my @edges = $G->edges;
 
-    while (scalar @edges){
-        my $link = shift @edges;
-        my $dest = shift @edges;
+    while (my $e = shift @edges){
+        my $link = $e->[0];
+        my $dest = $e->[1];
         my $speed = $netdisco::GRAPH_SPEED{$link}->{$dest}->{speed};
         print "  ! No link speed for $link -> $dest\n" unless defined $speed;
-        #print "$link $dest $speed\n";
-        #my %edge = ( dir => 'none' );
         my %edge = ();
         my $val = ''; my $suffix = '';
         if ($speed =~ /^([\d.]+)\s+([a-z])bps$/i) {
             $val = $1; $suffix = $2;
         }
-        #print "\t $val $suffix\n";
         if ( ($suffix eq 'k') or ($speed =~ m/(t1|ds3)/i) ){
             $edge{color} = 'green';
             $edge{style} = 'dotted';
@@ -3117,6 +3114,8 @@ sub graph_each  {
 
         $gv->add_edge($link => $dest, %edge );
     }
+
+    print "Ignore all warnings about node size.\n";
 
     if (defined $CONFIG{graph_raw} and $CONFIG{graph_raw}){
         my $graph_raw = "$CONFIG{home}/$CONFIG{graph_raw}";
@@ -3193,7 +3192,8 @@ sub graph_addnode {
         $node{fillcolor} = $CONFIG{node_problem};
     }
 
-    return $gv->add_node($ip, %node);
+    my $rv = $gv->add_node($ip, %node);
+    return $rv;
 }
 
 =back

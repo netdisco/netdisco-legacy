@@ -896,8 +896,8 @@ and their prerequisites automatically:
         install HTML::Entities
         install HTML::Mason
         install MasonX::Request::WithApacheSession
-        install Graph
-        install GraphViz     (you may need to do a 'force install')
+        install Graph        ( > 0.50 )
+        install GraphViz     ( > 2.02 )
         install Compress::Zlib (probably already have this one)
         install Net::NBName
 

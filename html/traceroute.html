@@ -1,5 +1,6 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <h3>L2 Trace Route</h3>
+<%$err%>
 <& SELF:results &>
 From: <INPUT TYPE="text" NAME="from" VALUE="<%$from%>">
 To: <INPUT TYPE="text" NAME="to" VALUE="<%$to%>">
@@ -26,10 +27,12 @@ $to   => undef
 - Trace Route (L2)\
 </%method>
 <%shared>
-my ($path,$sentto,$sentfrom,$G,$H);
+my ($sentto,$sentfrom,$G,$H,$err);
+my $path = [];
 my (%from,%to);
 my $have_path=0;
-my $domain = $netdisco::CONFIG{domain};
+my $domain  = $netdisco::CONFIG{domain};
+my $timeout = $netdisco::CONFIG{graph_timeout} || 60;
 </%shared>
 <%init>
 $sentto = $to;
@@ -102,7 +105,7 @@ if (defined $from{type} and defined $to{type}) {
     my $toip   = $to{type}   eq 'node' ? $to{next}   : $to{ip};
     
     # Check to see if we have a path
-    my @S = $G->strongly_connected_components;
+    my @S = $G->connected_components;
     for (my $i; $i < @S; $i++){
         next unless grep(/^\Q$fromip\E$/,@{$S[$i]});
         next unless grep(/^\Q$toip\E$/,@{$S[$i]});
@@ -120,9 +123,21 @@ if (defined $from{type} and defined $to{type}) {
     }
 
     if ($have_path){
-        $H = $G->SSSP_Dijkstra($fromip);
-        my %attr = $H->get_attributes($toip);
-        $path = $attr{path};
+        local $SIG{ALRM} = sub { die "timeout"; };
+        eval {
+            alarm($timeout);
+            $H = $G->SSSP_Dijkstra($fromip);
+            $path = [ $H->path_vertices($fromip,$toip) ];
+            alarm(0);
+        }; 
+
+        if ($@ =~ /timeout/) {
+            $err = "Shortest Path Algorithm timed out in $timeout sec.<BR>";
+            $have_path=0;
+        } elsif ($@) {
+            $err = "Error w/ SSSP. $@";
+            $have_path=0;
+        }   
     } 
 }
 </%init>

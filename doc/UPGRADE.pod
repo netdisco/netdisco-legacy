@@ -36,12 +36,15 @@ of course made a backup by now.
 =head2 New and Updated Perl Modules
 
 This version of Netdisco is based around the new API for the Graph module, so you need 
-to have version 0.50 or greater.  Also we are now using the Net::NBName module to scan nodes for netbios information, 
+to have version 0.50 or greater and GraphViz 2.02 or greater.  
+
+Also we are now using the Net::NBName module to scan nodes for netbios information, 
 and this module must be installed.
 
  perl -MCPAN -e shell
         install Net::NBName
         install Graph
+        install GraphViz
 
 =item v0.93 -> 0.94
 

@@ -130,6 +130,7 @@ my $where = {};
 my $awhere = {};
 my $arg_exact;
 my $winsize = 5;    # max size for select boxes.
+my $title = 'Search Results';     # Search Result Title
 </%shared>
 <%init>
 my $time1= time;
@@ -150,6 +151,7 @@ if (defined $specific and length($specific)){
 }
 
 if ($specific =~ /alias/i){
+    $title = 'Device Aliases (IPs) without DNS Entries';
     # Show these cols
     $where->{location}++;
     $where->{alias}++;
@@ -158,7 +160,8 @@ if ($specific =~ /alias/i){
                         ['d.ip','d.dns','d.location','i.alias','d.name'],
                         {'i.dns' => 'is null','i.alias' => 'is not null'});
 
-} elsif ($specific =~ /dns/i){
+} elsif ($specific =~ /DNS entries/){
+    $title = 'Devices without DNS entries';
     $where->{vendor}++;
     $where->{model}++;
     $where->{location}++;
@@ -168,13 +171,14 @@ if ($specific =~ /alias/i){
                         {'dns' => 'is null'});
 
 } elsif ($specific =~ /orphan/i){
+    $title = 'Devices Orphaned by missing topology info';
     # Show these cols
     $where->{vendor}++;
     $where->{model}++;
     $where->{location}++;
 
     my $G = make_graph();
-    my @S = $G->strongly_connected_components;
+    my @S = $G->connected_components;
 
     # Find the strongly connected component that is biggest
     my $biggest = 0;
@@ -196,7 +200,9 @@ if ($specific =~ /alias/i){
                               {'ip'=>$orphan});
         push (@$matches,$match) if defined $match;
     }
+
 } elsif ($specific =~ /multiple/i){
+    $title = 'Device ports with multiple nodes attached';
     $where->{port}++;
     $where->{count}++;
 
@@ -205,7 +211,9 @@ if ($specific =~ /alias/i){
                         {'i.ip' => \'d.ip', 'd.ip' => \'n.switch', 'd.port' => \'n.port',
                          'd.remote_ip' => 'is null', 'n.active' => 1}, undef,
                         "group by d.ip,d.port,i.dns having count(distinct(n.mac)) > 1");
+
 } elsif ($specific =~ /disabled/i){
+    $title = 'Ports administratively disabled';
     $where->{port}++;
     $where->{up_admin}++;
 
@@ -213,7 +221,9 @@ if ($specific =~ /alias/i){
                         ['d.ip','d.dns','p.port','p.up_admin'],
                         {'d.ip' => \'p.ip', 'up_admin' => 'down'}
                        );
+
 } elsif ($specific =~ /blocking/i){
+    $title = 'Device ports that are blocking';
     $where->{port}++;
     $where->{stp}++;
     $matches = sql_rows('device_port p, device d',
@@ -228,15 +238,16 @@ if ($specific =~ /alias/i){
     push (@$matches,@$matches_blocking);
     
 } elsif ($specific =~ /broken/i){
-# select d.ip,d.dns,p.port,p.remote_ip,p.remote_port from device_port p , device d
-#        where 
-#           d.ip = p.ip 
-#        and not exists 
-#           (select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port) 
-#        and not exists 
-#           (select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port) 
-#        and p.remote_ip is not null and p.remote_port is not null 
-#        order by p.ip;
+    $title = 'Broken topology links';
+    # select d.ip,d.dns,p.port,p.remote_ip,p.remote_port from device_port p , device d
+    #        where 
+    #           d.ip = p.ip 
+    #        and not exists 
+    #           (select 1 from device_port q where q.ip = p.remote_ip and q.port = p.remote_port) 
+    #        and not exists 
+    #           (select 1 from device_ip a, device_port q where a.alias = p.remote_ip and q.ip = a.ip and q.port = p.remote_port) 
+    #        and p.remote_ip is not null and p.remote_port is not null 
+    #        order by p.ip;
     $matches = sql_rows('device_port p, device d',
                            ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port','p.remote_type','p.remote_id'],
                            {'d.ip' => \'p.ip',
@@ -253,6 +264,7 @@ if ($specific =~ /alias/i){
     $where->{remote_type}++;
 
 } elsif ($specific =~ /ip.phone/i){
+    $title = 'IP Phones discovered through SNMP';
     $matches = sql_rows('device_port p, device d',
                            ['d.ip','d.dns','p.ip','p.port','p.remote_ip','p.remote_port','p.remote_type','p.remote_id'],
                            {'d.ip' => \'p.ip',
@@ -418,7 +430,7 @@ my $time2 = time;
 %#
 <%method matches >
 %return unless defined $matches;
-<h3>Search Results</h3>
+<h3><%$title%></h3>
 % unless (scalar @$matches) {
     No Results Found.
 %    return;
@@ -466,6 +478,7 @@ foreach my $result (@sort_matches){
 %}
   </TABLE>
 <% $count %> matches.
+<P>
 </%method>
 %#
 %# title()
