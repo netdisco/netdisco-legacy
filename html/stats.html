@@ -1,0 +1,22 @@
+<h3>Network Statistics</h3>
+<%perl>
+    $m->flush_buffer();
+    my $device_count = sql_scalar('device',['COUNT(ip)']);
+    my $device_port_count = sql_scalar('device_port',['COUNT(ip)']);
+    my $device_ip_count = sql_scalar('device_ip',['COUNT(distinct(alias))']);
+    my $node_count = sql_scalar('node',['COUNT(DISTINCT(mac))']);
+    my $node_table_count = sql_scalar('node',['COUNT(mac)']);
+    my $ip_count = sql_scalar('node_ip',['COUNT(DISTINCT(ip))']);
+    my $ip_table_count = sql_scalar('node_ip',['COUNT(ip)']);
+</%perl>
+<UL>
+    <LI><% $device_count %> Devices using <% $device_count + $device_ip_count %> IPs   <BR>
+    <LI><% $device_port_count %> discovered interfaces. <BR>
+    <LI>Found <% $node_count %> Nodes in <% $node_table_count %> entries. <BR>
+    <LI>Seen <% $ip_count %> IPs in <% $ip_table_count %> entries.<BR>
+</UL>
+<%method title>
+- Network Statistics \
+</%method>
+%# $Id$
+%# vim:syntax=mason

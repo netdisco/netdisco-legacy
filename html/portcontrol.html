@@ -1,0 +1,140 @@
+<h3>Device Port Control</h3>
+% $m->comp('SELF:switch') if $cmd =~ /^(up|down)$/;
+% $m->comp('SELF:log') if $cmd eq 'log';
+% $m->comp('SELF:err') if $cmd eq 'err';
+<%args>
+$cmd  => undef
+$type => undef
+$ip   => undef
+$port => undef
+$log  => undef
+</%args>
+<%init>
+# Check Authorization - User in portcontrol list in config file, and connected via https
+unless (defined $netdisco::CONFIG{portcontrol}->{$user} and $r->subprocess_env('https') eq 'on'
+        and $cmd =~ /^(up|down|log|err|switch)$/) {
+    # is there a better way to check if we're in using SSL?
+    $m->clear_buffer;
+    $m->abort(401) 
+}
+
+$arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
+
+# Check that port exists in netdisco
+$db_port = sql_hash('device_port',['up','up_admin','descr','name','mac','remote_ip','remote_port'],
+                {'ip'=>$ip, 'port'=>$port});
+
+if (!defined $db_port){
+    $cmd = 'err';
+    $err = "Port [ $ip / $port ] not found in netdisco.";
+} elsif (defined $db_port->{remote_ip}){
+    $cmd = 'err';
+    $err = "Port [ $ip / $port ] is an uplink port.  Control from netdisco not allowed."; 
+}
+
+if ($cmd eq 'switch' and (!defined $log or !length($log)) ){
+    $cmd = 'err';
+    $err = "You must add a log entry!";    
+}
+
+if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
+    
+    # Switch
+    my $rv = system('/usr/local/netdisco/port_control',$ip,$port,$type);
+    $rv /= 256;
+
+    # Switch Failed
+    if ($rv) {
+        $cmd = 'err';
+        $err = "Switching of port failed. ($rv)\n";
+        # Log anyways.
+        $log .= " [FAILED] Could not bring port $type. ($rv)"; $type = 'fail';
+    } 
+
+    # Switch Succeeded - Update netdisco
+    else {  
+        insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$type});
+        $cmd = 'log';
+    }
+
+    # Log attempt 
+    insert_or_update('device_port_log', {},
+                    {'ip'=>$ip,'port'=>$port,'log'=>$log,'username'=>$user,'action'=>$type}); 
+}
+
+</%init>
+<%shared>
+# scope
+my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port);
+my $user = $r->connection->user;
+my $odd = 1 ;
+</%shared>
+<%method log>
+% my $logs = sql_rows('device_port_log', ['id','log','username','action','extract(epoch from creation) as creation'] , 
+%       {'ip'=>$arg_ip, 'port'=>$arg_port} );
+<h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A></h4>
+<TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2>
+<TR>
+    <TH>User</TH>
+    <TH>Action</TH>
+    <TH>Date</TH>
+    <TH>Log</TH>
+</TR>
+% foreach my $entry (sort {$b->{creation} <=> $a->{creation} } @$logs) {
+<TR CLASS="match-<% ++$odd % 2 %>">
+    <TD><%$entry->{username}%></TD>
+    <TD><%$entry->{action}%></TD>
+    <TD><%scalar localtime($entry->{creation})%></TD>
+    <TD><FORM><TEXTAREA ROWS=3 COLS=50 WRAP=soft><%$entry->{log}%></TEXTAREA></FORM></TD>
+</TR>
+%}
+</TABLE>
+<& SELF:back &>
+</%method>
+<%method switch>
+<FORM ACTION="<%$r->uri%>" METHOD="post">
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="switch">
+<INPUT TYPE="HIDDEN" NAME="type" VALUE="<%$arg_cmd |h%>">
+<INPUT TYPE="HIDDEN" NAME="port" VALUE="<%$arg_port |h%>">
+<INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
+<TABLE>
+<TR>
+    <TD>Port : <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A>
+<BR>
+Logged: User <U><%$user%></U> at <u><% scalar localtime %></u></TD></TD>
+</TR>
+<TR>
+    <TD>
+    <TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
+    <BR>Required: Enter a useful description why the port is being turned <% $arg_cmd eq 'down' ? 'off' : 'on' %>.
+    </TD>
+</TR>
+<TR>
+    <TD>
+</TR>
+<TR>
+    <TD><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+        <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
+        </FORM>
+        <HR>
+        <& SELF:back &>    
+    </TD>
+</TR>
+</TABLE>
+</%method>
+<%method err>
+<% $err %>
+    <& SELF:back &>
+</%method>
+<%method back>
+<FORM ACTION="device.html" METHOD="get">
+<INPUT TYPE="hidden" NAME="ip" VALUE="<%$arg_ip |h%>">
+<INPUT TYPE="hidden" NAME="port" VALUE="all">
+<INPUT TYPE="submit" VALUE="Back to Device View">
+</FORM>
+</%method>
+<%method title>
+- Port Control \
+</%method>
+%# $Id$
+%# vim:syntax=mason

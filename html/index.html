@@ -1,0 +1,119 @@
+<h3>Intro</h3>
+Netdisco is an network management application.  
+<P>
+Netdisco collects statistics about the device that create a network, and the nodes that
+are attached to those devices.  
+
+<P>Layer 2 Network topology is automatically generated using Cisco Discovery Protocol (CDP),
+and Bay's Topology Discovery.  Topology information is also enterable manually.
+<P>
+Things connected to the network are divided into two categories: 
+<UL>
+    <LI><u>Devices</u> - Network appliances such as routers,switches, and hubs that
+        support SNMP.  Each device has multiple interfaces (ports) and 
+        can have IPs assigned to those interfaces.  
+    <LI><u>Nodes</u> - Anything on the network that has a MAC address that isn't a device :
+        Printers, Computers, Servers... 
+</UL>
+
+<h3>Known Issues and Current Work</h3>
+
+<FORM>
+<UL>
+    <LI>Web based admin - Ability to do some admin tasks via a web interface.
+    <LI>Release - Open Source release, prep, packaging...
+    <LI>CATALYST 2926 - On daily refresh, some devices (pcat,kcat) dont have all their data for their interfaces. 
+    Some SNMP wierdness with 2926's. 
+    <LI>LOCALHOST - 127.0.0.x Showing up here and there -- SSRES is squawking
+    it's IP as localhost via CDP
+</UL>
+
+<!-- back burner
+    <LI>Limit connected device view by age in device
+    <LI>Statistics on ports that are inactive by connected device age
+    <LI>Refresh device/mac buttons?
+    <LI>Current speed vs admin speed
+    <LI>Link into billing/contact info?
+    <LI>BAY - Need topology info for bay 405 devices.
+-->
+
+<h3>Recently Finished Bugs and Features</H3>
+<UL TYPE=CIRCLE>
+    <LI>DEVICE_SEARCH - Added search for ports that are blocking or broken (STP)
+    <LI>DEVICE - Added new indicator for ports that are blocking via STP
+    <LI>STP - Added suport in SNMP::Info::Bridge for STP values
+    <LI>Port Admin  - Module to administratvely enable/disable ports <LI>C3550 - Added SubClass for Catalyst 3550 L2/L3 Switches.
+    <LI>GRAPH - Fixed topology problems and switched to radial layout.
+    <LI>SNMP::Info - Changed HPs to resolve Jxxxx part number to normal model number.
+    <LI>NODE - Devices found in results will now point towards their device page
+    <LI>NODE_SEARCH - Restructure of database and calls for speedups.
+    <LI>BACKEND - Change in manual topology method so that manual topology information is added back in 
+        every time a discover() happens.  This way the topology isn't broken for 2 hours every day while
+        the refresh is happening. 
+    <LI>Network Statistics.  Moved to separate page because they took too long to load.
+    <LI>Layer 1.  Added subclass for Asante 1015 hubs. Fixed topology <LI>Layer 1 Devices.  New Feature.  Added support for Layer 1 managed devices, such as
+    Asante Hubs.  Nodes attached will still be seen on the same port the Layer 1 device lives
+    on. 
+<!--
+Archive:
+    <LI>Node Search - New Feature.  Search for nodes that have more than one IP address active on them.
+    <LI>ARPNIP - Bug Fix.  Old IP Addresses were not being archived correctly.  Nodes on dynamic-IP
+    were having IP's piling up.  Will correct itself as each IP is seen again, thereby archiving
+    the older times it was seen. 
+    <LI>Device Search - New Feature.  Search for device ports with more than one active node attached.
+    <LI>Device Search - New Feature.  Search for device alias IP's without DNS entries.
+    <LI>Graph - Devices w/out DNS but that are still good are now grey, not red.
+    <LI>Discovery - Fixed bug that if you discovered on an alias name, the root IP would be found,
+        but not the root dns entry.
+    <LI>Discovery - Nasty bug that created loop in discovery process fixed.
+    <LI>DEVICE - Failed quick searches now roll-over to a full text search on device_search
+    <LI>Speedup node_search by OUI
+    <LI>Set timeout for macwalk() for problem devices like that one bay 450
+    <LI>Way to remove devices
+    <LI>Way to expire Nodes/IPs
+    <LI>Agestamp on MAC addresses in device
+    <LI>Duplex MisMatch finder
+    <LI>Pretty Print uptime
+    <LI>Admin Duplex vs Current Duplex
+    <LI>MACSUCK - Unique found vs total found - log?
+    <LI>Multiple IP's (aliases) per device
+    <LI>Logging / Time Stamps
+    <LI>Node Search
+    <LI>OID Database
+    <LI>L2 Traceroute
+    <LI>Database Speedups.  Added lots of indexing, speeding up things greatly.
+    <LI>1900c - Got some more duplex and port info 
+    <LI>RESNET - Some uplink ports on HP devices are still sucking mac addresses
+        until we get the topology info in there (A or B port normally)
+    <LI>Device_port - Remote CDP listed but not discovered - list as link to node. 
+    <LI>SPEED - Slow response times on pages w/ lots of DNS lookups.  Removed to db call.
+    <LI>NODE - Clean out MACs that match device port macs (see bothcat)
+    <LI>CISCO 2900 - Mismatch in port names between 'neighbor' (CDP) and the real port for 2900's
+    <LI>SIDEBAR - Node Search only accepts host/ip, not mac
+    <LI>MAC - Ports that respond to CDP wont get their forwarding tables walked,
+        even if we can't get access to them.  Solution : Walk the ports that have   
+        a neighbor, but that doesnt exist in the device table (we dont have access to).
+        See root.ucsc.edu should be on hub64/J7 but the IP phone is responding w/ CDP.
+    <LI>2524 - Port name screwin up (ssres.resnet)
+    <LI>FOUNDRY - Got some more info out of resnet-g
+    <LI>Device Search - Search for IP only searches root devices, not aliases.
+    <LI>ALIASES - Grouping devices w/ multiple ip/dns entries that are the same device.
+-->
+</UL>
+</FORM>
+If you get an ugly dump screen with lots of Perl debugging info, chances are i'm
+in the process of breaking something, no need to mail me.  
+
+<P>If you see an un-desired
+behavior on a seemingly working page, <a href="mailto:max@warped.org">mail me</a>.
+%#<%init>
+%#my $device_count = sql_scalar('device',['COUNT(ip)']);
+%#my $device_port_count = sql_scalar('device_port',['COUNT(ip)']);
+%#my $device_ip_count = sql_scalar('device_ip',['COUNT(distinct(alias))']);
+%#my $node_count = sql_scalar('node',['COUNT(DISTINCT(mac))']);
+%#my $node_table_count = sql_scalar('node',['COUNT(mac)']);
+%#my $ip_count = sql_scalar('node_ip',['COUNT(DISTINCT(ip))']);
+%#my $ip_table_count = sql_scalar('node_ip',['COUNT(ip)']);
+%#</%init>
+%# $Id$
+%# vim:syntax=mason

@@ -1,0 +1,350 @@
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<& SELF:matches &>
+<h3>Device Search</h3>
+<TABLE>
+<TR>
+    <TD>Search all text: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>"></TD>
+    <TD colspan=2><INPUT TYPE="submit" VALUE="Search"></TD>
+</TR> 
+<TR><TD COLSPAN=4"><HR></TD></TR>
+<TR>
+    <TD>IP: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="ip" VALUE="<%$ip%>"></TD>
+    <TD>Location:</TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="loc" VALUE="<%$loc%>"></TD>
+</TR>
+<TR>
+    <TD>DNS Name: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="name" VALUE="<%$name%>"> </TD>
+    <TD>Description: </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="desc" VALUE="<%$desc%>"> </TD>
+</TR>
+<TR>
+    <TD>Vendor:</TD>
+    <TD><SELECT MULTIPLE NAME="vendors" size=5>
+%       foreach my $vendor (sort keys %$vendors){
+            <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@vendors) ? 'SELECTED' : ''%>><%$vendor%>
+%       } 
+        </SELECT></TD>
+    <TD>Model:</TD>
+    <TD><SELECT MULTIPLE NAME="models" SIZE=5>
+%       foreach my $model (sort {lc($a) cmp lc($b)} keys %$models){
+            <OPTION VALUE="<%$model%>" <% grep(/^$model$/,@models) ? 'SELECTED': ''%>><%$model%>
+%       } 
+        </SELECT></TD>
+</TR>
+<TR>
+    <TD>Layer:</TD>
+    <TD><SELECT MULTIPLE NAME="layers" size=2>
+%   foreach (1..7){ my $num=$_;
+        <OPTION VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'SELECTED' : ''%>><%$num%>
+%   }
+    </TD>
+    <TD>&nbsp;</TD>
+    <TD>&nbsp;</TD>
+</TR>
+<TR>
+    <TD>Search Scope:</TD>
+    <TD colspan=3>
+    Any above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="or" <% $boolean eq 'or' ? 'CHECKED' : ''%> >
+    All above criteria:<INPUT TYPE="radio" NAME="boolean" VALUE="and" <% $boolean eq 'and' ? 'CHECKED' : ''%>>
+    </TD>
+</TR>
+</TABLE>
+<INPUT TYPE="submit" VALUE="Search"> 
+[ <A href="<%$r->uri%>">Reset</A> ]
+</FORM>
+<h4>Specific Searches</h4>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries"><BR>
+<INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries"><BR>
+<INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info"><BR>
+<INPUT TYPE="submit" name="specific" VALUE="Device Ports with multiple nodes attached."><BR>
+<INPUT TYPE="submit" name="specific" VALUE="Device Ports that are blocking."><BR>
+<INPUT TYPE="submit" name="specific" VALUE="Ports Administratively disabled">
+</FORM>
+
+<h4>Hints</h4>
+<UL type=square>
+    <LI>Matches on <u>DNS</u> or <u>IP</u> may be matching aliases <i>inside</i> those devices.
+        Check inside the device for the matching entries.
+    <LI>These are all wildcard entries, so if you search on DNS=cat, you will get all
+entries that have "cat" in them.
+    <LI>You can add your own wildcards with *
+    <LI>If you want to find blank entries, search on "is null" or conversely,
+        "is not null"
+    <LI>You can select multiple for Model,Vendor, and Layers by holding down CTRL as you click.
+</UL>
+<%args>
+@models   => undef
+@layers   => undef
+@vendors  => undef
+$ip       => undef
+$text     => undef
+$name     => undef
+$desc     => undef
+$boolean  => 'or'
+$loc      => undef
+$specific => undef
+</%args>
+%#
+<%method title>
+- Device Search\
+</%method>
+<%shared>
+my $matches = undef;
+my $where = {};
+my $awhere = {};
+</%shared>
+%#
+<%init>
+$netdisco::SQLCARP = 0 ;
+# Get Form values
+my $models = sql_column('device',['distinct(model)','vendor']); 
+my $vendors = sql_column('device',['distinct(vendor)','vendor']); 
+
+# Specific Searches
+
+#   Clear non-specific terms
+if (defined $specific and length($specific)){
+    @models = @layers = @vendors = undef;
+    $ip = $text = $name = $desc = $loc = undef;
+}
+
+if ($specific =~ /alias/i){
+    # Show these cols
+    $where->{location}++;
+    $where->{alias}++;
+    $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
+                        ['d.ip','d.dns','d.location','i.alias'],
+                        {'i.dns' => 'is null','i.alias' => 'is not null'});
+
+} elsif ($specific =~ /dns/i){
+    $where->{vendor}++;
+    $where->{model}++;
+    $where->{location}++;
+    $matches = sql_rows('device',
+                        ['ip','vendor','model','location'],
+                        {'dns' => 'is null'});
+
+} elsif ($specific =~ /orphan/i){
+    # Show these cols
+    $where->{vendor}++;
+    $where->{model}++;
+    $where->{location}++;
+
+    my $G = make_graph();
+    my @S = $G->strongly_connected_components;
+
+    # Find the strongly connected component that is biggest
+    my $biggest = 0;
+    for (my $sub = 0; $sub < @S; $sub++){
+        $biggest = scalar @{$S[$sub]} > scalar @{$S[$biggest]} ?
+                          $sub : $biggest;
+    }
+
+    my @orphans;
+    for (my $j; $j < @S; $j++){
+        next if $j == $biggest;
+        push (@orphans,@{$S[$j]}); 
+    }
+    
+    # This should be changed to a single SQL command
+
+    while (my $orphan = shift @orphans ){
+        push @$matches,  sql_hash('device',['ip','dns','vendor','model','location'],
+                              {'ip'=>$orphan});
+    
+    }
+} elsif ($specific =~ /multiple/i){
+    $where->{port}++;
+    $where->{count}++;
+
+    $matches = sql_rows('device_port d, node n, device i',
+                        ['d.ip','i.dns','d.port','count(distinct(n.mac))'],
+                        {'i.ip' => \'d.ip', 'd.ip' => \'n.switch', 'd.port' => \'n.port',
+                         'd.remote_ip' => 'is null', 'n.active' => 1}, undef,
+                        "group by d.ip,d.port,i.dns having count(distinct(n.mac)) > 1");
+} elsif ($specific =~ /disabled/i){
+    $where->{port}++;
+    $where->{up_admin}++;
+
+    $matches = sql_rows('device_port p, device d',
+                        ['d.ip','d.dns','p.port','p.up_admin'],
+                        {'d.ip' => \'p.ip', 'up_admin' => 'down'}
+                       );
+} elsif ($specific =~ /blocking/i){
+    $where->{port}++;
+    $where->{stp}++;
+    $matches = sql_rows('device_port p, device d',
+                        ['d.ip','d.dns','p.port','p.up_admin','stp'],
+                        {'d.ip' => \'p.ip', 'stp' => 'broken'}
+                       );
+    my $matches_blocking = sql_rows('device_port p, device d',
+                        ['d.ip','d.dns','p.port','p.up_admin','stp'],
+                        {'d.ip' => \'p.ip', 'stp' => 'blocking'}
+                       );
+
+    push (@$matches,@$matches_blocking);
+    
+}
+
+# Generalized Search Terms
+
+# Search on Model
+foreach my $model (@models){
+    next unless defined $model and length($model);
+    push (@{$where->{'d.model'}},$model);
+}
+
+# Search on Layers
+my @layer_search = ('_','_','_','_','_','_','_');
+# @layer_search is computer indexed, left->right
+foreach my $layer (@layers){
+    next unless defined $layer and length($layer);
+    next unless ($layer > 0 and $layer < 8);
+    $layer_search[$layer-1] = 1;
+}
+# the database field is in order 87654321
+my $layer_string = join('', reverse @layer_search);
+if ($layer_string =~ /1/){
+    $layer_string = '%'.$layer_string;
+    push (@{$where->{'d.layers'}},$layer_string);
+}
+# Search on Vendor
+foreach my $vendor (@vendors){
+    next unless defined $vendor and length($vendor);
+    push (@{$where->{'d.vendor'}},$vendor);
+}
+
+# Search on all text fields
+if (length($text)) {
+    my $match = $m->comp('.match', 'match' => $text);
+    push(@{$where->{'d.dns/i.dns'}},  $match);
+    #push(@{$a_where->{'dns'}},  $match);
+    push(@{$where->{'d.name'}}, $match);
+    push(@{$where->{'d.description'}}, $match);
+    push(@{$where->{'d.location'}}, $match);
+    push(@{$where->{'d.serial'}}, $match);
+    $boolean = 'or';
+}
+
+# Search on Location
+if (length($loc)){
+    my $match = $m->comp('.match', 'match' => $loc);
+    push(@{$where->{'d.location'}}, $match);
+}
+
+# Search on Description
+if (length($desc)){
+    my $match = $m->comp('.match', 'match' => $desc);
+    push(@{$where->{'d.description'}}, $match);
+}
+
+# Search on DNS entry
+if (length($name)){
+    my $match = $m->comp('.match', 'match' => $name);
+    push(@{$where->{'d.dns/i.dns'}}, $match);
+    #push(@{$a_where->{'dns'}}, $match);
+}
+
+# Search on IP
+if (length($ip)){
+    my $match = $m->comp('.match', 'match' => $ip);
+    push(@{$where->{'d.ip/i.alias'}}, $match);
+    #push(@{$a_where->{'alias'}}, $match);
+}
+
+# Run Query
+if (scalar keys %$where and ! defined $specific and ! length($specific)){
+    #$matches = sql_rows('device',['*'],$where,$boolean eq 'or');
+
+    my @cols = ();
+    foreach my $col (keys %$where){
+        next if ($col =~ /^i\./);
+        next if ($col =~ /^d\.ip$/);
+        next if ($col =~ /d\.dns/);
+        push(@cols,split('/',$col)); 
+    }
+
+    $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
+                        ['distinct(d.ip)','d.dns',@cols],
+                        $where,
+                        $boolean eq 'or');
+}
+
+</%init>
+%#
+%#
+<%def .match>
+<%args>
+$match
+</%args>
+<%perl>
+
+# Trim white space
+$match =~ s/^\s+//;
+$match =~ s/\s+$//;
+
+# Leave IS (not) NULL queries alone
+unless ($match =~ /^is\s+(not)?\s*null$/i){
+    # Otherwise, make these wild cards with %
+    $match =~ s/[*]+/\%/g;
+    $match = '%'. $match . '%';
+}
+return $match;
+</%perl>
+</%def>
+%#
+%#
+<%method matches >
+%return unless defined $matches;
+<h3>Search Results</h3>
+% unless (scalar @$matches) {
+    No Results Found.
+%    return;
+% }
+ <TABLE cellspacing=0 cellpadding=3 WIDTH=100%>
+    <TR>
+        <TH>Device</TH>
+%#        <TH>IP</TH>
+%    foreach my $col (sort keys %$where){
+%       my $colview = $col;
+%       $colview =~ s/^[^.]+\.//;
+%       next if $colview =~ /^(ip|dns|port)$/i;
+%       $colview = $colview eq 'count' ? 'Number of Active<BR>Nodes Connected' : $colview;
+    <TH><%$colview%></TH>
+%    }
+    </TR>
+<%perl>
+my $count=0;
+my @sort_matches = exists $where->{port} ? 
+                     sort {$b->{count} <=> $a->{count} } @$matches :
+                     sort {$a->{dns} cmp $b->{dns}} @$matches;
+foreach my $result (@sort_matches){
+   my $ip =  $result->{ip};
+   my $dns = $result->{dns};
+   my $port = $result->{port};
+   $dns = defined $dns ? $dns : $ip;
+   $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
+   $dns .= " ($port)" if defined $port;
+   $count++;
+</%perl>
+    <TR CLASS="match-<% $count % 2%>">
+    <TD><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&port=' : ''%><% $port|u %>"><% $dns %></A></TD>
+%#    <TD><% $ip %></TD>
+<%perl>
+    foreach my $col (sort keys %$where){
+       # Trim off table name for column
+       $col =~ s/^[^.]+\.//;
+       next if $col =~ /^(ip|dns|port)$/i; </%perl>
+   <TD><%$result->{$col}%></TD>
+%    }
+    </TR>
+%}
+  </TABLE>
+<% $count %> Devices matching.
+</%method>
+%# $Id$
+%# vim:syntax=mason

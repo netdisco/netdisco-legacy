@@ -1,0 +1,219 @@
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<& SELF:matches &>
+
+<h3>Search for a Node</h3>
+Enter a MAC, Hostname or IP:<INPUT TYPE="text" name="node" maxlength=20 size=20 VALUE="<%$node%>"><BR>
+Time Stamps: 
+<INPUT TYPE="radio" NAME="showdates" VALUE="1" <%$showdates ? 'CHECKED' : '' %>>On
+<INPUT TYPE="radio" NAME="showdates" VALUE="0" <%$showdates ? '' : 'CHECKED' %>>Off 
+<BR>
+Archived Data:
+<INPUT TYPE="checkbox" NAME="archives" VALUE="1" <%$archives ? 'CHECKED' : '' %>
+<BR>
+Show Vendor :
+<INPUT TYPE="radio" NAME="showoui" VALUE="1" <%$showoui ? 'CHECKED' : ''%>>On
+<INPUT TYPE="radio" NAME="showoui" VALUE="0" <%$showoui ? '' : 'CHECKED' %>>Off
+<BR>
+<INPUT TYPE="submit" Value="Search">
+<A HREF="<%$r->uri%>">[Clear]</A>
+</FORM>
+
+<h3>Advanced Search</h3>
+
+<BR>
+Search:
+<UL>
+<LI>by OUI
+<LI>by Partial MAC Address
+<LI>for Wireless Access Points (APs)
+</UL>
+<P>
+<!--[<A HREF="node_search.html">Advanced Search</A>]-->
+<FORM METHOD="GET" ACTION="node_search.html">
+<INPUT TYPE="submit" VALUE="Advanced Search">
+
+<P>
+* <font size=-2>Advanced Search takes a few seconds to load.</font>
+</FORM>
+<%args>
+$node => undef
+$showdates => 1
+$archives => 0
+$showoui => 1
+</%args>
+%#
+<%method title>
+- Node Search\
+</%method>
+%#
+<%shared>
+my @matches = ();
+my $badmatch = 0;
+my $dates = 0;
+my $archive = 0;
+my $oui = 0;
+</%shared>
+%#
+<%init>
+# Pass the form argument to the global for <%methods>
+$dates = $showdates;
+$archive = $archives;
+$oui = $showoui;
+
+# Search by MAC
+$m->flush_buffer() if defined $node;
+my $is_mac = defined $node ? &is_mac($node) : 0;
+if (defined $node and $is_mac) {
+   my $ips = sql_rows('node_ip',
+                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                {'mac'=>$node}
+                );
+   my $ports = sql_rows('node',
+                ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                {'mac'=>$node}
+                );   
+   foreach my $node_ip (@$ips){
+       $node_ip->{type} = 'ip';
+       $node_ip->{host} = hostname($node_ip->{ip});
+       $node_ip->{host} =~ s/\.ucsc\.edu//;
+       $node_ip->{oui}  = substr($node_ip->{mac},0,8);
+       push (@matches,$node_ip);
+   }
+
+   foreach my $port (@$ports) {
+       $port->{type} = 'port';
+       $port->{switchname} = &hostname($port->{switch});
+       $port->{switchname} =~ s/\.ucsc\.edu//;
+       push (@matches,$port);
+    }
+}
+
+# Search by HOST 
+if (defined $node and !$is_mac) {
+    my $hostname = &hostname($node);
+    my $realip = &getip($node);
+    
+    my @foundmacs = ();
+    my $macs = sql_rows('node_ip',
+                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                {'ip'=>$realip}
+                );
+    $hostname =~ s/\.ucsc\.edu//;
+
+    my $device = root_device($realip);
+
+    foreach my $mac (@$macs){
+        $mac->{host} = $hostname;
+        $mac->{type} = 'host_ip';
+        $mac->{dev}  = $device;
+        $mac->{oui}  = substr($mac->{mac},0,8);
+        push (@matches,$mac);
+        push (@foundmacs, $mac->{mac});
+    }
+
+    foreach my $mac (@foundmacs){
+        my $ports = sql_rows('node',
+                    ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                    {'mac'=>$mac}
+                    );   
+        foreach my $port (@$ports) {
+            $port->{type} = 'port';
+            $port->{switchname} = &hostname($port->{switch});
+            $port->{switchname} =~ s/\.ucsc\.edu//;
+            push(@matches,$port);
+        }
+    }
+}
+
+# Lookup OUI for matches
+my %ouis;
+foreach my $match (@matches){
+    #my $mac = $match->{mac};
+    #my $oui = substr(uc($mac),0,8);
+    my $oui = uc($match->{oui});
+    # only look each up once.
+    unless ( defined $ouis{$oui} ){
+        $ouis{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
+    }
+    $match->{oui} = $ouis{$oui};
+}
+
+if ($node and ! scalar @matches ){
+    $badmatch = $node;
+    $node = undef;
+}
+</%init>
+%#
+%# matches() - Outputs each match depending on type
+%#
+<%method matches>
+% return unless (scalar @matches or $badmatch);
+<h3>Search Results</H3>
+% if (! scalar(@matches) and $badmatch) {
+Did not find anything for <% $badmatch %>.
+% return; }
+<TABLE cellspacing=0 cellpadding=4 border=0 width=100%>
+<TR>
+    <TH>MAC</TH>
+% if ($oui) {
+    <TH>NIC Vendor</TH>
+%}
+    <TH>Match</TH>
+    <TH>Device or Node</TH>
+% if ($dates) {
+    <TH>First Seen</TH>
+    <TH>Last Seen</TH>
+% }
+</TR>
+% my $odd=0;
+% foreach my $match (@matches) {
+%     my $mac = $match->{mac};
+%     my $active = $match->{active};
+%     next if (!$active and !$archive);
+<TR CLASS="match-<% ++$odd % 2 %>">
+<TD>
+    <A HREF="node.html?node=<% $mac |u %>"><%$mac%></A>
+    <% $active ? '' : '<SUP>*</SUP>' %>
+</TD>
+% if ($oui){
+    <TD><%$match->{oui}%></TD>
+%}
+% if ($match->{type} eq 'ip') {
+    <TD>MAC -> IP</TD>
+    <TD><A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %> )
+    </TD>
+% } elsif ($match->{type} eq 'port') { 
+    <TD>MAC -> Switch</TD>
+    <TD>
+    <A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A>
+    (<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)
+    </TD>
+%} elsif ($match->{type} =~ /^host/ and defined $match->{dev}) {
+    <TD>IP -> Device</TD>
+    <TD><A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
+    </TD>
+% } elsif ($match->{type} =~ /^host/){
+    <TD>IP -> MAC</TD>
+    <TD><A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
+    (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
+    </TD>
+%} else  {
+    <TD>Bad Match</TD>
+    <TD>Type : <%$match->{type}%></TD>
+%}
+% if ($dates) {
+%   my $time_first = $match->{time_first} ? localtime($match->{time_first}) : '&nbsp;';
+%   my $time_last = $match->{time_last} ? localtime($match->{time_last}) : '&nbsp;';
+    <TD><% $time_first %></TD>
+    <TD><% $time_last %></TD>
+% }
+
+</TD></TR>
+% }
+</TABLE>
+% $m->out("* - Denotes archived data.") if $archive;
+</%method>
+%# $Id$
+%# vim:syntax=mason

@@ -1,0 +1,242 @@
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<h3>L2 Trace Route</h3>
+<& SELF:results &>
+From: <INPUT TYPE="text" NAME="from" VALUE="<%$from%>">
+To: <INPUT TYPE="text" NAME="to" VALUE="<%$to%>">
+<BR>
+<INPUT TYPE="submit" Value="Trace Route">
+<A HREF="<%$r->uri%>">[Clear]</A>
+<h4>Hints</h4>
+<UL>
+    <LI>L2 Traceroute only finds a <i>Possible</i> route through the
+        network, using Dykstra's shortest path algorithm.  The 
+        <i>Actual</i> path of packets may well be very different .
+    <LI>Enter the MAC Address, IP Address or Hostname of a node or device for the
+        <TT>to</TT> and <tt>from</tt> fields. 
+    <LI>For segments of the network missing topology info, no path
+        may be found.  See <i>Devices Orphaned by Missing Topology Info</i> in
+        [<a href="device_search.html">Device Search</A>]. 
+</UL>
+</FORM>
+<%args>
+$from => undef
+$to   => undef
+</%args>
+<%method title>
+- Trace Route (L2)\
+</%method>
+<%shared>
+my ($path,$sentto,$sentfrom,$G,$H);
+my (%from,%to);
+my $have_path=0;
+my $domain = $netdisco::CONFIG{domain};
+</%shared>
+<%init>
+$sentto = $to;
+$sentfrom = $from;
+
+# Check FROM for node-mac,device,node-host
+if ($from and &is_mac($from)){
+    my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$from,'active'=>1});
+    if (defined $dev){
+        $from{mac}      = $from;
+        $from{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,active=>1});
+        $from{type}     = 'node';
+        $from{next}     = $dev->{switch};
+        $from{to_port}  = $dev->{port};
+    }
+} elsif ($from) {
+    $from{ip} = getip($from);
+    # Check if device
+    if (my $devip = &root_device($from{ip})){
+        $from{ip}=$devip;  
+        $from{type} = 'device';
+    } else {
+    # Check if node
+        my $devmac = sql_scalar('node_ip',['mac'],{'ip'=>$from{ip}});
+        my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$devmac,'active'=>1});
+        if (defined $dev){
+            $from{mac} = $devmac;
+            $from{type} = 'node';
+            $from{next}  = $dev->{switch};
+            $from{to_port}  = $dev->{port};
+        }
+    }
+}
+
+# Check TO for node-mac,device,node-host
+if ($to and &is_mac($to)){
+    my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$to,'active'=>1});
+    if (defined $dev){
+        $to{mac}      = $to; 
+        $to{ip}       = sql_scalar('node_ip',['ip'],{'mac'=>$from,active=>1});
+        $to{type}     = 'node';
+        $to{next}     = $dev->{switch};
+        $to{from_port}  = $dev->{port};
+    }
+} elsif ($to) {
+    $to{ip} = getip($to);
+    # Check if device
+    if (my $devip = &root_device($to{ip})){
+        $to{ip}=$devip;  
+        $to{type} = 'device';
+    } else {
+    # Check if node
+        my $devmac = sql_scalar('node_ip',['mac'],{ 'ip'=>$to{ip} } );
+        my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$devmac,'active'=>1});
+        if (defined $dev){
+            $to{mac}      = $devmac;
+            $to{type}     = 'node';
+            $to{next}     = $dev->{switch};
+            $to{from_port}  = $dev->{port};
+        }
+    }
+}
+
+if (defined $from{type} and defined $to{type}) {
+    # this could take a while
+    $m->flush_buffer;
+    $G = make_graph();
+
+    my $fromip = $from{type} eq 'node' ? $from{next} : $from{ip};
+    my $toip   = $to{type}   eq 'node' ? $to{next}   : $to{ip};
+    
+    # Check to see if we have a path
+    my @S = $G->strongly_connected_components;
+    for (my $i; $i < @S; $i++){
+        next unless grep(/^\Q$fromip\E$/,@{$S[$i]});
+        next unless grep(/^\Q$toip\E$/,@{$S[$i]});
+        $have_path++;
+
+        # Found path, delete all the other subgraphs to speed up the search
+        for (my $j; $j < @S; $j++){
+            next if $i == $j;
+            $G->delete_vertices(@{$S[$j]})
+        }
+
+        # We should only be in one connected graph, so first found is the only 
+        #   sub graph.  multiple paths in that one subgraph will exist.
+        last;
+    }
+
+    if ($have_path){
+        $H = $G->SSSP_Dijkstra($fromip);
+        my %attr = $H->get_attributes($toip);
+        $path = $attr{path};
+    } 
+}
+</%init>
+<%method results>
+%return unless (length($sentfrom) and length($sentto));
+<h4> Route </h4>
+<%perl>
+unless (defined $from{type}){
+    $m->out("No matching device or node found for $sentfrom.<BR>\n");
+}
+unless (defined $to{type}){
+    $m->out("No matching device or node found for $sentto.<BR>\n");
+}
+return unless (defined $from{type} and defined $to{type});
+
+unless ($have_path){
+    $m->out("No Path found between $sentfrom and $sentto. <BR>\n");
+    return;
+}
+
+my %path_info;
+for (my $i=0; $i < @$path; $i++){
+    my $this = $path->[$i];
+    my $dns = sql_scalar('device',['dns'],{'ip'=>$this});
+    $dns = defined $dns ? $dns : $this;
+    $dns =~ s/\Q$domain\E//;
+    $path_info{$this}->{dns} = $dns;
+    last if ($i == scalar(@$path)-1);
+    my $that = $path->[$i+1];
+
+    # remote_ip of port may be set to an alias, so we check for connections to alias ips.
+    my $aliases = sql_rows('device_ip',['alias'],{'ip'=>$that});
+
+    # Add our root device to the list of ips to check first
+    unshift (@$aliases, {'alias'=>$that});
+
+    my $port;
+    foreach my $alias (@$aliases){
+        my $alias_ip = $alias->{alias};
+        $port = sql_hash('device_port',['port','remote_port'],{'ip'=>$this,'remote_ip'=>$alias_ip});
+        # take the first one we find.
+        last if defined $port;
+    }
+
+    $path_info{$this}->{type}='device';
+    $path_info{$this}->{next}=$that;
+    $path_info{$this}->{to_port} = $port->{port};
+    $path_info{$that}->{from_port} = $port->{remote_port};
+
+}
+
+# Add node to beg
+if ($from{type} eq 'node'){
+    my $this = defined $from{ip} ? $from{ip} : $from{mac};
+    my $dns  = defined $from{ip} ? &hostname($from{ip}) : $this;
+    $dns = defined $dns ? $dns : $this;
+    $dns =~ s/\Q$domain\E//;
+    my $that = $from{next};
+    $path_info{$this}->{next}      = $that;
+    $path_info{$this}->{dns}       = $dns    ;
+    $path_info{$that}->{from_port} = $from{to_port};
+    $path_info{$this}->{type}      = 'node';
+    unshift(@$path,$this);
+}
+
+# Add node to end
+if ($to{type} eq 'node'){
+    my $this = defined $to{ip} ? $to{ip} : $to{mac};
+    my $dns  = defined $to{ip} ? &hostname($to{ip}) : $this;
+    $dns = $dns ? $dns : $this;
+    $dns =~ s/\Q$domain\E//;
+    $path_info{$this}->{type}      = 'node';
+    $path_info{$this}->{dns}       = $dns    ;
+    my $that = $to{next};
+    $path_info{$that}->{next}      = $this;
+    $path_info{$that}->{to_port}   = $to{from_port};
+    push(@$path,$this);
+}
+my $odd = 0;
+</%perl>
+
+<%$sentfrom%> --&gt; <%$sentto%>
+<P>
+<TABLE CELLSPACING=2 CELLPADDING=2>
+<TR>
+    <TH>&nbsp;</TH>
+    <TH class="tr_head">Port<BR>In</TH>
+    <TH class="tr_head"> Device </TH>
+    <TH class="tr_head">Port<BR>Out</TH>
+</TR>
+<TR><TD COLSPAN=4><% '-' x 60 %></TD></TR>
+<%perl>
+while (my $this = shift(@$path)){
+    my $that = $path_info{$this}->{next};
+    my $from_port = $path_info{$this}->{from_port};
+    my $to_port   = $path_info{$this}->{to_port};
+
+    my $link      = $path_info{$this}->{type} eq 'node' ? 
+                    "node.html?node=$this" :
+                    "device.html?ip=$this";
+    $link .= "\&port=$from_port" if defined $from_port;
+    $link .= "\&port=$to_port"   if defined $to_port;
+    $odd++;
+</%perl>
+
+<TR class="tr_data-<%$odd % 2 %>">
+    <TD class="tr_data-<%$odd % 2 %>"><%$odd%>.</TD>
+    <TD class="tr_data-<%$odd % 2 %>"><% defined $from_port ? "[$from_port]" : '&nbsp;' %></TD>
+    <TD class="tr_data-<%$odd % 2 %>"><A HREF="<%$link%>"><%$path_info{$this}->{dns}%></A></TD>
+    <TD class="tr_data-<%$odd % 2 %>"><% defined $to_port ? "[$to_port]" : '&nbsp;' %></TD>
+</TR>
+%}
+</TABLE>
+<HR>
+</%method>
+%# $Id$
+%# vim:syntax=mason

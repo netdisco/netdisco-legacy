@@ -1,0 +1,387 @@
+<& SELF:matches &>
+<h3>Node Search</h3>
+<h4>Search for Single Node</h4>
+<FORM ACTION="node.html" METHOD="get">
+Enter a MAC, Hostname or IP:<INPUT TYPE="text" name="node" maxlength=20 size=20 ><BR>
+Time Stamps: 
+<INPUT TYPE="radio" NAME="showdates" VALUE="1" CHECKED>On
+<INPUT TYPE="radio" NAME="showdates" VALUE="0"        >Off 
+<BR>
+Archived Data:
+<INPUT TYPE="checkbox" NAME="archives" VALUE="1">
+<BR>
+<INPUT TYPE="submit" Value="Search">
+</FORM>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<H4>Search on MAC Address</H4>
+<TABLE>
+<TR>
+    <TD>Partial MAC address:</TD>
+    <TD COLSPAN=3><INPUT TYPE=text NAME="mac_search" VALUE="<%$mac_search%>">
+    <font size=-2>* is wildcard</font>
+    </TD>
+</TR>
+<TR><TD COLSPAN=4><h4>Search on Organizationally Unique Identifier (OUI)</h4></TD></TR>
+<TR>
+    <TD>Vendor:</TD>
+    <TD><SELECT MULTIPLE NAME="vendors" SIZE=5>
+%       foreach my $vendor (sort keys %$vendors){
+            <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@vendors) ? 'SELECTED' : ''%>><%$vendor%>
+%       } 
+        </SELECT></TD>
+    <TD>OUI:</TD>
+    <TD><SELECT MULTIPLE NAME="oui" SIZE=5>
+%       foreach my $oui (sort keys %$ouis){
+            <OPTION VALUE="<%$oui%>" <% grep(/^$oui$/,@oui) ? 'SELECTED' : ''%>><%$oui%> : <%$ouis->{$oui}%>
+%       } 
+        
+        </SELECT></TD>
+</TR>
+<TR>
+    <TD>Archived Data:</TD>
+    <TD COLSPAN=3>On:<INPUT TYPE="radio" name="archive" VALUE="on" <%$archive eq 'on' ? 'CHECKED' :''%>>
+                  Off:<INPUT TYPE="radio" name="archive" VALUE="off" <%$archive eq 'off' ? 'CHECKED' :''%>>
+    </TD>
+</TR>
+</TABLE>
+<INPUT TYPE="submit" VALUE="Search"> 
+[ <A href="<%$r->uri%>">Reset</A> ]
+</FORM>
+<h4>Specific Searches</h4>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<UL>
+<LI><INPUT TYPE="SUBMIT" NAME="specific" VALUE="Search for possible Wireless Access Points (APs)">
+<BR>These aren't guranteed to be wireless access points, they just have MACs that fall into 
+the right range.  Also remember people can hide them under fake MAC addresses as well.
+<LI><INPUT TYPE="SUBMIT" NAME="specific" VALUE="Search for nodes with multiple active IP addresses">
+<BR>Search takes a while
+<BR>Data is temporarily skewed because of fixed bug. IPs were not being archived when they
+moved from one device to another (like with DHCP).  
+As IPs are refreshed through arpnip() they will be archived and this list will get a lot shorter (data fixed).
+</UL>
+</FORM>
+<!--
+search 1 :<%$time2 - $time1%> search 2 :<%$time3 - $time2%>
+-->
+<%args>
+@vendors    => undef
+@oui        => undef
+$mac_search => undef
+$specific   => undef
+$archive    => 'off'
+</%args>
+<%method title>
+- Node Search \
+</%method>
+<%shared>
+#$netdisco::SQLCARP=1;
+my $vendors = {
+            'Cisco' => qr/cisco/i,
+            '3Com'  => qr/3 ?com/i,
+            'Compaq' => qr/compaq/i,
+            'Intel'  => qr/intel/i,
+            'Apple'  => qr/apple/i,
+            'Sun'    => qr/sun\s+/i,
+            'HP'     => qr/(hp|hewlett.*packard)/i,
+            'Linksys' => qr/linksys/i,
+            'SGI'   => qr/silicon.*graphics/i,
+            'D-Link' => qr/d-link/i,
+            'IBM'  => qr/ibm/i,
+            'Dell'  => qr/dell/i,
+            'Bay'   => qr/bay.*networks/i,
+            'APC'   => qr/american.*power.*conversion/i,
+            'Lexmark' => qr/lexmark/i,
+            'Kingston' => qr/kingston/i,
+            'GW2000' => qr/gateway.*2000/i,
+            '[No OUI]' => qr/\[NA\]/,
+              }; 
+
+my $wireless = {
+                '00:00:94:CB' => 'Asante',
+                '00:01:03:7C' => '3Com',
+                '00:01:24:F0' => 'Acer',
+                '00:01:24:F1' => 'Acer',
+                '00:01:f4' => 'Enterasys Networks',
+                '00:02:2d' => 'Agere Systems',
+                '00:02:a5:6e:46' => 'Compaq Computer Corporation',
+                '00:02:a5:6e:47' => 'Compaq Computer Corporation',
+                '00:02:a5:6f' => 'Compaq Computer Corporation',
+                '00:02:b3:65' => 'Intel Corporation',
+                '00:02:b3:86' => 'Intel Corporation',
+                '00:02:b3:92' => 'Intel Corporation',
+                '00:02:b3:94' => 'Intel Corporation',
+                '00:02:b3:B1' => 'Intel Corporation',
+                '00:03:2f' => 'Global Sun Technology, Inc.',
+                '00:04:5a:0c' => 'The Linksys Group, Inc.',
+                '00:04:5a:0e' => 'The Linksys Group, Inc.',
+                '00:04:5a:0f' => 'The Linksys Group, Inc.',
+                '00:04:5a:23' => 'The Linksys Group, Inc.',
+                '00:04:5a:26' => 'The Linksys Group, Inc.',
+                '00:04:5a:2e' => 'The Linksys Group, Inc.',
+                '00:04:5a:2f' => 'The Linksys Group, Inc.',
+                '00:04:5a:cc' => 'The Linksys Group, Inc.',
+                '00:04:5a:cd' => 'The Linksys Group, Inc.',
+                '00:04:5a:ce' => 'The Linksys Group, Inc.',
+                '00:04:5a:cf' => 'The Linksys Group, Inc.',
+                '00:04:5a:d0' => 'The Linksys Group, Inc.',
+                '00:04:5a:d1' => 'The Linksys Group, Inc.',
+                '00:04:5a:d2' => 'The Linksys Group, Inc.',
+                '00:04:5a:d8' => 'The Linksys Group, Inc.',
+                '00:04:5a:da' => 'The Linksys Group, Inc.',
+                '00:04:5a:db' => 'The Linksys Group, Inc.',
+                '00:04:5a:dd' => 'The Linksys Group, Inc.',
+                '00:04:5a:e4' => 'The Linksys Group, Inc.',
+                '00:04:5a:e8' => 'The Linksys Group, Inc.',
+                '00:04:5a:eb' => 'The Linksys Group, Inc.',
+                '00:04:5a:ee' => 'The Linksys Group, Inc.',
+                '00:04:5a:f6' => 'The Linksys Group, Inc.',
+                '00:04:5a:f9' => 'The Linksys Group, Inc.',
+                '00:04:5a:fa' => 'The Linksys Group, Inc.',
+                '00:04:5a:fc' => 'The Linksys Group, Inc.',
+                '00:04:5a:fd' => 'The Linksys Group, Inc.',
+                '00:04:75:62' => '3 Com Corporation',
+                '00:04:76:a5' => '3 Com Corporation',
+                '00:04:8a' => 'Temia Vertriebs GmbH',
+                '00:04:db' => 'Tellus Group Corp.',
+                '00:04:e2:0e' => 'SMC Networks, Inc.',
+                '00:04:e2:1b' => 'SMC Networks, Inc.',
+                '00:05:5d:25' => 'D-Link Systems, Inc.',
+                '00:05:5d:ea' => 'D-Link Systems, Inc.',
+                '00:05:5d:ec' => 'D-Link Systems, Inc.',
+                '00:05:5d:ed' => 'D-Link Systems, Inc.',
+                '00:05:5d:ee' => 'D-Link Systems, Inc.',
+                '00:05:5d:f1' => 'D-Link Systems, Inc.',
+                '00:05:5d:f2' => 'D-Link Systems, Inc.',
+                '00:05:5f' => 'Cisco Systems, Inc.',
+                '00:06:25:0e' => 'The Linksys Group, Inc.',
+                '00:06:25:50' => 'The Linksys Group, Inc.',
+                '00:06:25:51' => 'The Linksys Group, Inc.',
+                '00:06:25:53' => 'The Linksys Group, Inc.',
+                '00:06:25:54' => 'The Linksys Group, Inc.',
+                '00:06:25:59' => 'The Linksys Group, Inc.',
+                '00:06:25:5d' => 'The Linksys Group, Inc.',
+                '00:06:25:61' => 'The Linksys Group, Inc.',
+                '00:06:25:64' => 'The Linksys Group, Inc.',
+                '00:06:25:66' => 'The Linksys Group, Inc.',
+                '00:06:25:6d' => 'The Linksys Group, Inc.',
+                '00:06:25:75' => 'The Linksys Group, Inc.',
+                '00:06:25:76' => 'The Linksys Group, Inc.',
+                '00:07:50' => 'Cisco Systems, Inc.',
+                '00:09:5b:2a' => 'Netgear, Inc.',
+                '00:10:e7' => 'BreezeCom',
+                '00:20:d8' => 'Nortel Networks',
+                '00:30:65:03' => 'Apple',
+                '00:30:65:04' => 'Apple',
+                '00:30:65:05' => 'Apple',
+                '00:30:65:13' => 'Apple',
+                '00:30:65:15' => 'Apple',
+                '00:30:65:1B' => 'Apple',
+                '00:30:65:1C' => 'Apple',
+                '00:30:65:1D' => 'Apple',
+                '00:30:65:1E' => 'Apple',
+                '00:30:65:1F' => 'Apple',
+                '00:30:65:2D' => 'Apple',
+                '00:30:ab:07' => 'DELTA NETWORKS, INC.',
+                '00:30:ab:0a' => 'DELTA NETWORKS, INC.',
+                '00:30:ab:0c' => 'DELTA NETWORKS, INC.',
+                '00:30:ab:0d' => 'DELTA NETWORKS, INC.',
+                '00:30:ab:16' => 'DELTA NETWORKS, INC.',
+                '00:30:f1:10' => 'Accton Technology Corp.',
+                '00:30:f1:26' => 'Accton Technology Corp.',
+                '00:40:05:ac' => 'ANI COMMUNICATIONS INC.',
+                '00:40:05:de' => 'ANI COMMUNICATIONS INC.',
+                '00:40:05:df' => 'ANI COMMUNICATIONS INC.',
+                '00:40:96' => 'Aironet Wireless Communication',
+                '00:50:18' => 'ADVANCED MULTIMEDIA INTERNET TECHNOLOGY INC.',
+                '00:50:8b:99' => 'COMPAQ COMPUTER CORPORATION',
+                '00:50:da:97' => '3COM CORPORATION',
+                '00:60:1d' => 'LUCENT TECHNOLOGIES',
+                '00:60:b3' => 'Z-COM, INC.',
+                '00:80:c6:e3' => 'SOHOWare',
+                '00:90:4b' => 'GemTek Technology Co., Ltd.',
+                '00:90:d1' => 'LEICHU ENTERPRISE CO., LTD.',
+                '00:a0:f8' => 'SYMBOL TECHNOLOGIES, INC.',
+                '00:e0:03' => 'NOKIA WIRELESS BUSINESS COMMUN',
+                '00:e0:63' => 'CABLETRON - YAGO SYSTEMS, INC.',
+               };
+my $ouis = undef;
+my $matches = undef;
+my $odd=1;
+my @search = ();
+</%shared>
+<%init>
+
+# Populate Form
+my $time1 = time;
+$ouis = sql_column('node',['distinct(oui)','true']); 
+my $time2 = time;
+
+foreach my $oui (keys %$ouis){
+    my $company = sql_scalar('oui',['company'],{'oui' => uc($oui) } );
+    $company = defined $company ? $company : '[NA]' ;
+    
+    $ouis->{$oui}=$company;
+}
+my $time3 = time;
+
+# --- Search ---
+
+# Specific Searches
+if (defined $specific and $specific !~ /^\s*$/){
+    # remove other search criteria
+    @oui = (); $mac_search = undef; @vendors = ();
+}
+
+# Search for wireless access points
+if ($specific =~ /wireless/i){
+    push (@search,keys %$wireless);
+
+# Search for multiple IP per node
+} elsif ($specific =~ /ip/i){
+
+    # select n.mac,n.switch,n.port,count(distinct(i.ip)),d.dns
+    # from node_ip i, node n left join device d on d.ip = n.switch
+    # where n.mac = i.mac and i.active = true and n.active = true 
+    # group by n.mac, n.switch, n.port,d.dns
+    # having count(distinct(i.ip)) > 1 
+    # order by count desc;
+    
+    $matches = sql_rows('node_ip i, node n left join device d on d.ip = n.switch',
+                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))'],
+                        {'n.mac' => \'i.mac', 'i.active' => 1, 'n.active' => 1},
+                        undef,
+                        'group by n.mac, n.switch, n.port, d.dns having count(distinct(i.ip)) > 1'
+                       );
+}
+
+# Partial MAC Search
+if (defined $mac_search and $mac_search !~ /^\s*$/){
+    $mac_search .= '%';
+    # take out doubles
+    $mac_search =~ s/\%+/\%/g;
+    my $where = {'n.mac' => $mac_search};
+    $where->{'n.active'} = 1 if $archive eq 'off';
+    my $submatch = sql_rows('node n left join device d on d.ip = n.switch',
+                           ['n.mac','d.dns','n.switch','n.port','n.active'], $where);
+
+    push @$matches, @$submatch;
+    $mac_search =~ s/\%/*/g;
+}
+
+# OUI Search
+push(@search,@oui);
+
+# Vendor Search
+foreach my $vendor_search (@vendors){
+    next unless defined $vendors->{$vendor_search};
+    my $regex = $vendors->{$vendor_search};
+    # Look for OUIs that match our regex
+    foreach my $oui (keys %$ouis){
+        my $company = $ouis->{$oui};
+        if ($company =~ m/$regex/){
+            push(@search,$oui) 
+        }
+    }
+}
+
+if (defined $mac_search and length($mac_search)){
+    $mac_search = uc($mac_search);
+    $mac_search =~ s/\*/\%/g;
+    $mac_search =~ s/[^0-9A-F.:%]*//g;
+}
+
+if (scalar @search){
+
+    # These are taking a while, so we put this here
+    #   to let em know we're still working...
+    $m->flush_buffer;
+
+    # Sort search by length
+    my %search_length;
+    foreach my $search (@search){
+        my $length = length($search);
+        # add to queue matching length
+        push @{$search_length{$length}},$search;
+    } 
+
+    # New method using substr() and IN (list) for speed
+    foreach my $length (keys %search_length){
+        next unless defined $length and scalar @{$search_length{$length}};
+        next unless $length > 0;
+        my $where = {"substr(n.mac,1,$length)" => [$search_length{$length}]};
+        $where->{'n.active'} = 1 if $archive eq 'off';
+        my $submatch = sql_rows('node n left join device d on d.ip = n.switch',
+                               ['n.mac','d.dns','n.switch','n.port','n.active'], $where);
+        push @$matches, @$submatch;
+    }
+
+    # don't list OID matches for wireless 
+    if (defined $specific and $specific =~ /wireless/i){
+        @search = ();
+    }
+}
+
+</%init>
+<%method oui_matches>
+% return unless scalar @search;
+<h4>OUI Matches</h4>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2>
+<TR>
+    <TH>OUI</TH>
+    <TH>Count</TH>
+    <TH>Company</TH>
+</TR>
+%foreach my $search (@search){
+%   next unless defined $search and length($search);
+%my $count   = sql_scalar('node',['count(distinct(mac))'],
+%                {'mac' => "$search\%" });
+%   my $oui = lc(substr($search,0,8));
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><%$search%></TD>
+    <TD>(<%$count%>)</TD>
+    <TD><% $ouis->{$oui} %></TD>
+</TR>
+%}
+</TABLE>
+<% scalar @$matches %> total nodes.
+</%method>
+<%method matches>
+%return unless defined $matches;
+<h3>Search Results</h3>
+<& SELF:oui_matches &>
+% return unless scalar @$matches;
+<h4>Node Matches</h4>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2>
+<TR>
+    <TH>MAC</TH>
+    <TH>Vendor</TH>
+    <TH>Location</TH>
+</TR>
+<%perl>
+my @matches = defined $matches->[0]->{count} ?
+              sort {$b->{count} <=> $a->{count} } @$matches : 
+              sort {$a->{mac} cmp $b->{mac} } @$matches ; 
+foreach my $match (@matches){
+    my $mac     = $match->{mac};
+    my $switch_ip  = $match->{switch};
+    my $port    = $match->{port};
+    my $oui     = substr($mac,0,8);
+    my $company = $ouis->{$oui};
+    my $dns     = $match->{dns};
+    my $switch  = defined $dns ? $dns : $switch_ip;
+    my $domain  = $netdisco::CONFIG{domain};
+    my $active  = $match->{active};
+    my $count   = $match->{count};
+    $switch     =~ s/\Q$domain\E//;
+</%perl>
+<TR CLASS="match-<%++$odd%2%>">
+    <TD><A HREF="node.html?node=<%$mac |u%>"><%$mac%></A><% defined $count ? " ($count IPs)" : ''%><%$active ? '' : ' *'%></TD>
+    <TD><%$company%></TD>
+    <TD><A HREF="device.html?ip=<%$switch%>&port=<%$port%>"><% $switch %> (<% $port%>)</A></TD>
+</TR>
+%}
+</TABLE>
+Matched <% scalar @$matches %> nodes.
+</%method>
+%# $Id$
+%# vim:syntax=mason

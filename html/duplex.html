@@ -1,0 +1,77 @@
+<h3>Duplex Mismatch Finder</h3>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<& SELF:results &>
+<h4>Search</h4>
+<INPUT TYPE="submit" name="search" value="Search for Duplex Mismatches between device ports">
+<P>
+This search could take a while.
+</FORM>
+<%args>
+$search => undef
+</%args>
+<%method title>
+- Duplex Mismatch Finder \
+</%method>
+<%shared>
+my $results = undef;
+</%shared>
+<%init>
+if (defined $search and $search =~ /duplex/i){
+    $results = sql_rows('device_port d, device_port t',
+                           ['d.ip','d.port','d.duplex','t.ip as remote_ip','t.port as remote_port','t.duplex as remote_duplex'],
+                           {'d.remote_ip' => \'t.ip', 'd.remote_port' => \'t.port', 'd.duplex' => \'!t.duplex'}
+                          ); 
+
+    $results = 'none' unless (defined $results and scalar (@$results));
+}
+</%init>
+<%method results>
+% return unless defined $results;
+% if ($results eq 'none'){
+No Duplex Mismatches found.
+% return;}
+<h4>Search Results</h4>
+<TABLE CELLSPACING=4 CELLPADDING=0 BORDER=0 WIDTH=50%>
+<TR>
+    <TH>Device / Port</TH>
+    <TH>Duplex</TH>
+    <TH>Device / Port<BR>(remote)</TH>
+    <TH>Duplex<BR>(remote)</TH>
+</TR>
+<TR><TD COLSPAN=4><HR></TD></TR>
+<%perl>
+my %seen; my $count;
+my $domain = $netdisco::CONFIG{domain};
+foreach my $result (@$results){
+    my $ip            = $result->{ip};
+    my $port          = $result->{port};
+    my $duplex        = $result->{duplex};
+    my $remote_ip     = $result->{remote_ip};
+    my $remote_port   = $result->{remote_port};
+    my $remote_duplex = $result->{remote_duplex}; 
+    next if defined $seen{$ip}->{$port};
+    my $dns           = sql_scalar('device',['dns'],{'ip' => $ip});
+    my $remote_dns    = sql_scalar('device',['dns'],{'ip' => $remote_ip});
+    my $name          = defined $dns ? $dns : $ip;
+    $name =~ s/\Q$domain\E//;
+    my $remote_name   = defined $remote_dns ? $remote_dns : $remote_ip;
+    $remote_name =~ s/\Q$domain\E//;
+    $count++;
+</%perl>
+<TR>
+    <TD><A HREF="device.html?ip=<%$ip%>&port=<%$port%>"><%$name%> (<%$port%>)</A></TD>
+    <TD><%$duplex%></TD>
+    <TD><A HREF="device.html?ip=<%$remote_ip%>&port=<%$remote_port%>"><%$remote_name%> (<%$remote_port%>)</A></TD>
+    <TD><%$remote_duplex%></TD>
+</TR>
+<%perl>
+    $seen{$ip}->{$port}++;
+    $seen{$remote_ip}->{$remote_port}++;
+}
+</%perl>
+</TABLE>
+<P>
+Found <% $count %> Mismatches
+</%method>
+%# $Id$
+%# vim:syntax=mason

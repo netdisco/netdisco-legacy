@@ -1,0 +1,63 @@
+<TABLE class="sidebar-bg" cellpadding=5 cellspacing=0 border=1>
+<TR>
+    <TD CLASS="sidebar-2">
+    <A HREF="<%$path%>/index.html"><IMG SRC="<%$path%>/netdiscoball.gif" BORDER=0 width=82 height=90 alt="[Disco Ball]"></A><BR>
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-1">
+    [<A HREF="<%$path%>/netmap.html">Network Map</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-2">
+    [<A HREF="<%$path%>/device_search.html">Device Search</A>]
+    <FORM ACTION="<%$path%>/device.html" METHOD=GET>
+    <INPUT TYPE="text" size=10 maxlength=60 NAME="ip">
+    </FORM>
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-1">
+    [<A HREF="<%$path%>/node.html">Node Search</A>]
+    <FORM ACTION="<%$path%>/node.html" METHOD=GET>
+    <INPUT TYPE="text" size=10 maxlength=60 NAME="node">
+    </FORM>
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-2">
+    [<A HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-1">
+    [<A HREF="<%$path%>/duplex.html">Duplex Mismatch Finder</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-2">
+    [<A HREF="<%$path%>/log.html">Log</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-1">
+    [<A HREF="<%$path%>/stats.html">Network Statistics</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-2">
+    [<A HREF="<%$path%>/doc">Documentation</A>]
+    </TD>
+</TR>
+<TR>
+    <TD CLASS="sidebar-1">
+    User <TT><% $r->connection->user %></TT> logged in.
+    </TD>
+</TR>
+</TABLE>
+<%once>
+my $path = $netdisco::CONFIG{webpath};
+</%once>
+%# $Id$
+%# vim:syntax=mason

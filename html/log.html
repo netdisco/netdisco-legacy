@@ -1,0 +1,91 @@
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<h3>Log Entries</h3>
+<TABLE CELLSPACING=2 CELLPADDING=2 >
+<TR>
+    <TH>Class</TH>
+    <TH>Entry</TH>
+    <TH>Time Stamp</TH>
+</TR>
+<%perl>
+my $odd = 0;
+foreach my $class (sort keys %log_sort){
+    next unless grep(/^$class$/,@classes);
+    foreach my $log_hash 
+            (sort {$b->{timestamp} <=> $a->{timestamp} } 
+            @{$log_sort{$class}}) {
+        my $time = localtime($log_hash->{timestamp});
+        my $entry = $log_hash->{entry};
+        # Make each nocdp log entry into links to device_search
+        if ($class =~ /(nocdp|timeout)/){
+            my @ret;
+            foreach my $nocdp (split / /, $entry){
+                  push (@ret, "<A HREF=\"device.html?ip=$nocdp\">$nocdp</A>");
+            }
+            $entry = join(' ',@ret);
+        } elsif ($class =~ /(nosnmp)/){
+            my @ret;
+            foreach my $nosnmp (split / /, $entry){
+                  push (@ret, "<A HREF=\"node.html?node=$nosnmp\">$nosnmp</A>");
+            }    
+            $entry = join(' ',@ret);
+        }
+        my $odd = ++$odd % 2;
+</%perl>
+<TR CLASS="match-<%$odd%>">
+    <TD><% $log_hash->{class} %></TD>
+    <TD><% $entry %></TD>
+    <TD><% $time %></TD>
+</TR>
+%   }
+%}
+</TABLE>
+<h4>Entry Types to Show</h4>
+% foreach my $c (keys %$db_classes){
+<%$c%> : <INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>>
+%}
+<BR>
+Number of Entries per category:
+<SELECT NAME="number">
+% foreach my $num (1,5,10,20,30,40,50,60) {
+    <OPTION VALUE="<%$num%>" <% $number eq $num ? 'SELECTED' : '' %>><%$num%>
+%}
+</SELECT>
+<BR>
+<INPUT TYPE="submit" VALUE="Show Entries">
+</FORM>
+<%method title>
+- Log \
+</%method>
+<%args>
+@classes => qw/arp discover mac/
+$number => 1
+</%args>
+<%init>
+
+# Check for stuffing of non-numerics
+$number = 5 unless $number =~ /^\d+$/;
+
+my $db_classes = sql_column('log',['distinct(class)','class']); 
+
+my $log = [];
+# Get the log entries we want
+foreach my $class (@classes){
+    # Check for non existant
+    next unless defined $db_classes->{$class};
+    my $logs = sql_rows('log', 
+                    ['extract(epoch from creation) as timestamp','class','entry'],
+                    {'class' => $class},undef,
+                    "order by timestamp desc limit $number");
+    push (@$log,@$logs);
+}
+
+# Split them up by class into separate arrays stored in this hash
+my %log_sort;
+foreach my $log_hash (@$log){
+   my $class = $log_hash->{class};
+   push (@{$log_sort{$class}},$log_hash);
+}
+
+</%init>
+%# $Id$
+%# vim:syntax=mason

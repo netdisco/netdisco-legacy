@@ -1,0 +1,22 @@
+<%init>
+my $dir = $m->current_comp->source_dir();
+my @files = glob("$dir/*.html");
+</%init>
+<TABLE>
+<TR>
+    <TH>File</TH>
+    <TH>Title</TH>
+<TR>
+%foreach my $file (sort @files){
+%   my $title = `grep "<TITLE>" $file`;
+%   $title =~ s/<TITLE>(.*)<\/TITLE>/$1/i;
+%   $file =~ s/$dir\///;
+%   next if $file eq 'index.html';
+%   my $name = $file;
+%   $name =~ s/\.html//;
+<TR>
+   <TD><A HREF="<%$file%>"><%$name%></A></TD>
+   <TD><%$title%></TD>
+</TR>
+%}
+</TABLE>

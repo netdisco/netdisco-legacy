@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>n e t  d i s c o <& SELF:title &> </TITLE>
+<STYLE TYPE="text/css" MEDIA="screen">
+<!--
+    A { text-decoration:none; }
+    H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
+         background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
+    H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; }
+    TH { font-family:arial,helvetica,sans-serif; font-size:12pt; }
+    TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
+    INPUT { font-family:monospace; font-size:9pt; }
+    .otopbar { background-color:#2e8b57; color:#00bfff; text-align:center; 
+              font-family:arial,helvetica,serif; font-size:14pt; } 
+    .topbar { background-color:#8b7e66; color:#eed8ae; 
+              font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
+    .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align:center;
+              vertical-align:middle; font-family:arial,helvetica,serif; font-size:10pt; border:black; } 
+    .sidebar-bg { background-color:darkblue; border:black; }
+    .sidebar-1 { text-align:center; background-color:#eed8ae;}
+    .sidebar-2 { text-align:center; background-color:#ffe7ba;}
+    .match-1 { text-align:center; background-color:#eed8ae;}
+    .match-0 { text-align:center; background-color:#ffe7ba;}
+    .port_up { color:black;}
+    .port_off { color:red;}
+    .port_down { color:#a0a0a0; }
+    .port_block { color:#33ccff; }
+    .dead_link { color:white; background-color:red;}
+    .tr_head   { text-align:left; font:normal normal 12pt monospace;}
+    .tr_data-0 { text-align:left; font-family:monospace; background-color:#eed8ae; }
+    .tr_data-1 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
+
+//-->
+</STYLE>
+</HEAD>
+<BODY bgcolor="#f5deb3" text="black" LINK="#191970" ALINK="#191970" VLINK="#191970">
+<TABLE width="95%" height="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0>
+<TR VALIGN=TOP>
+    <TD COLSPAN=2 class="topbar" height=5%>
+    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
+    </TD>
+</TR>
+<TR VALIGN=TOP>
+    <TD ALIGN=LEFT WIDTH=15%>
+        <& sidebar.html &>
+    </TD>
+    <TD VALIGN=TOP ALIGN=LEFT WIDTH=85%>
+%       $m->call_next;
+    </TD>
+</TR>
+<TR>
+    <TD VALIGN=BOTTOM colspan=2 class="botbar">
+        Netdisco created for UCSC -> Cats -> NTS by Max Baker.  
+    </TD>
+</TR>
+</TABLE>
+</BODY>
+</HTML>
+<%once>
+use lib qq#/usr/local/netdisco#;
+use netdisco qw/:all/; 
+config('/usr/local/netdisco/netdisco.conf');
+my $path = $netdisco::CONFIG{webpath};
+</%once>
+<%method title>
+\
+</%method>
+%# $Id$
+%# vim:syntax=mason

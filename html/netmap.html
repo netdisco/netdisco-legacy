@@ -1,0 +1,72 @@
+<MAP NAME="netmap">
+<%perl>
+my $comp = $m->current_comp;
+my $dir  = $comp->source_dir;
+open (MAP, "< $dir/netmap.map") or die "Can't open ImageMap!\n";
+my @map = (<MAP>);
+close (MAP);
+
+foreach my $line (@map){
+    my @entry = split(/\s+/,$line);
+    my $shape = shift @entry;
+    $shape =~ s/rectangle/RECT/i;
+    my $name  = pop @entry;
+    my $href  = pop @entry;
+    # the rest of entry is coordinates
+    my $coord = join(',',@entry);
+    $coord =~ s/[()]//g; 
+</%perl>
+    <AREA SHAPE="<% $shape %>" COORDS="<% $coord %>" HREF="<% $href %>" ALT="<% $name %>">
+% }
+</MAP>
+<IMG SRC="netmap.gif" ISMAP USEMAP="#netmap" BORDER=0>
+<h4>Key</h4>
+<TABLE>
+<TR>
+    <TD>
+        <TABLE>
+        <TR>
+            <TD bgcolor="black"><font color="yellow">[</font><font color="white">dev</font><font color="yellow">]</font></TD>
+            <TD>Yellow Border - ResNet</TD>
+        </TR>
+        <TR>
+            <TD bgcolor="black"><font color="blue">[cat]</font></TD>
+            <TD>Blue Box - Catalyst Device</TD>
+        </TR>
+        <TR>
+            <TD bgcolor="black"><font color="green">[dev-g]</font></TD>
+            <TD>Green Box - Gateway / Router</TD>
+        </TR>
+        <TR>
+            <TD bgcolor="black"><font color="red">[bad-dev]</font></TD>
+            <TD>Red Box - Device unaccessable</TD>
+        </TR>
+        </TABLE>
+    </TD>
+    <TD>
+        <TABLE>
+        <TR>
+            <TD BGCOLOR="black"><font color="green">--------</font></TD>
+            <TD>Green Lines - WAN</TD>
+        </TR>
+        <TR>
+            <TD BGCOLOR="black"><font color="#f5deb3">-------</font></TD>
+            <TD>Thin lines - 10Mbps</TD>
+        </TR>
+        <TR>
+            <TD BGCOLOR="black"><font color="#f5deb3">=====</font></TD>
+            <TD>Thick Lines - 100Mbps</TD>
+        </TR>
+        <TR>
+            <TD BGCOLOR="black"><font color="cyan">=====</font></TD>
+            <TD>Cyan Lines - 1.0 Gpbs</TD>
+        </TR>
+        </TABLE>
+    </TD>
+</TR>
+</TABLE>
+<%method title>
+- Network Map UCSC \
+</%method>
+%# $Id$
+%# vim:syntax=mason
