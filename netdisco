@@ -73,6 +73,7 @@ GetOptions(\%args,'a|arpwalk',
                   'D|debug',
                   'e|expirenodes=s',
                   'E|expiredevice=s',
+                  'expire-nodes-subnet=s',
                   'F|discoverfile=s',
                   'g|graph',
                   'h|help',
@@ -85,7 +86,7 @@ GetOptions(\%args,'a|arpwalk',
                   'M|macsuck=s',
                   'n|nodestoo',
                   'N|newonly',
-                  'O|oid',
+                  'O|oui',
                   'P|port=s',
                   'p|daemon=s',
                   'r|discoverall=s',
@@ -96,7 +97,6 @@ GetOptions(\%args,'a|arpwalk',
                   'u|user',
                   'v|version|ver',
                   'V|archive',
-                  'expire-nodes-subnet=s',
           );
 $DEBUG             = $args{D} || 0;
 $netdisco::SQLCARP = $args{S} || 0;
@@ -1138,7 +1138,7 @@ sub get_subnets {
     my $nets = $CONFIG{networks};
     return unless defined $nets;
     foreach my $net (split(/\s*,\s*/,$nets)){
-        # TODO - Parse nets with there bitmask
+        # TODO - Parse nets with their bitmask
         my $subnets = $device->ipr_mask($net);
         foreach my $route (sort sort_ip keys %$subnets){
             my $mask = mask_to_bits($subnets->{$route});
@@ -2869,10 +2869,7 @@ sub admin_daemon_job {
 =cut
 
 sub test {
-    &mac_getportmacs;
-    
 }
-
 
 sub header{
     print "n e t  d i s c o\n";
@@ -2890,44 +2887,48 @@ sub version {
 
 sub usage{
     print <<"_end_usage_";
-Network Discovery and Management
+Netdisco - Network Discovery and Management ($VERSION)
 
 netdisco [Options] Command(s)
 
 Options:
-    -b               Batch Mode - Redirect stdout to log files
-    -C config_file   Use non default config file
-    -L               DEBUG - No logging
-    -D               DEBUG - Copious output
-    -S               DEBUG - Dump SQL commands
+    -b --batchmode              Batch Mode - Redirect stdout to log files
+    -C --configfile   file      Specify path to config file
+    -n --nodestoo               Delete nodes when using --expiredevice
+    -N --newonly                For --discoverall and --discoverfile
+    -P --port         port      Restrict --expirenodes to a single port 
+    -V --archive                Archive instead of deleting in --expirenodes
+    -D --debug                  DEBUG - Copious output
+    -L --nologging              DEBUG - No logging
+    -S --dumpsql                DEBUG - Dump SQL commands
 
 Network Commands:
-    -r device  - Discover Network starting from device (-N for new only)
-    -F  file   - Discover/Refresh Devices from File    (-N for new only)
-    -T         - Import Topology info from topofile
-    -R         - Refresh all Devices
-    -m         - Mac Suck whole network
-    -a         - Arp Nip whole network
+    -r --discoverall  device    Discover network starting from device
+    -F --discoverfile file      Discover/Refresh devices from file
+    -T --topofile               Import Topology info from topofile
+    -R --refresh                Refresh all Devices
+    -m --macwalk                Macsuck whole network
+    -a --arpwalk                Arpnip whole network
 
 Device Commands:
-    -d device  - Discover/Refresh single device
-    -M device  - Mac Suck single device
-    -A device  - Arp Nip single device
-    -E device  - Expire/Delete Device                  (-n to delete nodes too)
-    -e device  - Expire/Archive Nodes      (-V to archiVe) (-P to specify port)
-    -I         - Expire IPs not used in node or device_port
-    --expire-nodes-subnet subnet - Run -E for all devices in a subnet. 
+    -d --discover     device    Refresh single device
+    -M --macsuck      device    Macsuck single device
+    -A --arpnip       device    Arpnip  single device
+    -E --expiredevice device    Delete device
+    -e --expirenodes  device    Delete/Archive nodes on a device
+    -I --expireips              Expire IPs not seen on switch ports 
+    -i --changeip     old new   Change IP address of device and its nodes
 
 Administration:
-    -B         - Maintanance. Backups data to datadir. Database Cleanup.
-    -g         - Create Graph and image-map files.
-    -i old new - Change IP Address of Device and its nodes
-    -k         - Clean Aliases. Deletes devices that are listed as aliases. Use with caution.
-    -K         - Clean Nodes that are on uplink ports
-    -O         - Import oid.txt into database
-    -p (start stop status restart) - Admin Daemon Control
-    -u [user] [password] [port_control] [admin] - Add/Change User.
-                                                  No args for Interactive
+    -B --backup                 Backups data and runs database cleanup 
+   --expire-nodes-subnet subnet Runs --expirenodes for all devices in a subnet
+    -g --graph                  Create network map files 
+    -k --cleanalias             Deletes devices listed as aliases of another
+    -K --cleannodes             Clean out nodes listed on uplink ports
+    -O --oui                    Import oid.txt into database
+    -p (start,stop,status,restart) Admin Daemon Control
+    -u [user] [pw] [port] [admin]  Add/Change User 
+    -v --version                Version info for Netdisco components
 
 _end_usage_
     exit;
