@@ -2032,9 +2032,14 @@ sub nbtstat {
         return 1;
     }
 
-    unless ($mac){
-        print "No MAC Address found.\n";
-        return 1;
+    if (!$mac or $mac eq '00:00:00:00:00:00'){
+        # Just assume it's the last MAC we saw this IP at.
+        $mac = sql_scalar('node_ip',['mac'],{'ip'=>$ip,'active'=>1});
+        unless (defined $mac){
+            print "No MAC in given or in DB.\n";
+            return 1;
+        }
+        print "(No MAC)" if $DEBUG;
     }
 
     print "\\\\$domain\\$nbname $nbuser $mac ",$server ? 'server' : 'client', "\n";
