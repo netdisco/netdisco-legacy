@@ -827,6 +827,12 @@ sub find_neighbors {
 
         next unless (defined $remote_ip and length($remote_ip));
 
+        my $port_exists = sql_scalar('device_port',['1'],{'ip'=>$ip,'port'=>$port});
+        unless (defined $port_exists and $port_exists){
+            print "  Port $port not in DB -> $remote_ip/$remote_port.\n";
+            next;
+        }
+
         my %store;
         $store{'remote_ip'} = $remote_ip;
         $store{'remote_port'} = $remote_port;
