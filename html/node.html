@@ -830,9 +830,15 @@ foreach my $node_ip (@$ips){
 <%filter>
 my $open = '<SPAN CLASS="highlight">';
 my $close = '</SPAN>';
+my $search = $arg_node;
+# Quote all special chars
+$search =~ s/(\W)/\\$1/g;
+# But turn back on ? and *
+$search =~ s/\\\*/[^<]*/g;
+$search =~ s/\\\?/[^<]/g;
 # find things after > but before < to make sure we don't mess w/
 #   the HTML.
-s{(>[^<]*)($arg_node)([^<]*<)} {$1$open$2$close$3}ig;
+s{(>[^<]*)($search)([^<]*<)} {$1$open$2$close$3}ig;
 </%filter>
 %#
 %# $Id$
