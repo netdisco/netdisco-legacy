@@ -914,6 +914,14 @@ are installed.
 
 =back
 
+=item 6. Change Permissions on Config files
+
+Since the config files contain SNMP community strings and database passwords,
+you must make them only available to the administrators for security.
+
+ chgrp netdisco /usr/local/netdisco/*.conf
+ chmod 660 /usr/local/netdisco/*.conf
+
 =back
 
 =head2 10. OUI Database

@@ -796,6 +796,14 @@ INSTALL
         ii. Create Docs
              cd /usr/local/netdisco && gmake doc
 
+    6. Change Permissions on Config files
+        Since the config files contain SNMP community strings and database
+        passwords, you must make them only available to the administrators
+        for security.
+
+         chgrp netdisco /usr/local/netdisco/*.conf
+         chmod 660 /usr/local/netdisco/*.conf
+
   10. OUI Database
 
     The Organizationally Unique Identifier (OUI) database allows Netdisco to
