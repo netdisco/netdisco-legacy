@@ -2,6 +2,7 @@
 % $m->comp('SELF:switch') if $cmd =~ /^(up|down)$/;
 % $m->comp('SELF:log') if $cmd eq 'log';
 % $m->comp('SELF:err') if $cmd eq 'err';
+% $m->comp('SELF:reasons') unless $cmd eq 'err';
 <%args>
 $cmd  => undef
 $type => undef
@@ -129,7 +130,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
     <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
     <TD><%$entry->{action}%></TD>
     <TD><%scalar localtime($entry->{creation})%></TD>
-    <TD><% $Reasons{$entry->{reason}}%></TD>
+    <TD><A HREF="#<%$entry->{reason}%>"><%$Reasons{$entry->{reason}}->[0]%></A></TD>
     <TD><TEXTAREA ROWS=3 COLS=30 WRAP=soft><%$entry->{log}%></TEXTAREA>
     </TD>
 </TR>
@@ -165,6 +166,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 <TR CLASS="match-1">
     <TD>Reason :<BR>&nbsp;</TD>
     <TD CLASS="tr_data-1"><SELECT NAME="reason" SIZE=1>
+% $arg_reason = 'other' if $arg_cmd eq 'up';
 % foreach my $this_r (sort keys %Reasons){
         <OPTION VALUE="<%$this_r |h%>" <%$this_r eq $arg_reason ? 'SELECTED' : ''%>> \
 %   if ($this_r){        
@@ -188,6 +190,10 @@ Log Entires to Show : <SELECT NAME="log_num">
     </TD>
 </TR>
 </TABLE>
+</FORM>
+<& SELF:back &>    
+</%method>
+<%method reasons>
 <h4>Reason Descriptions</h4>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3>
 <TR>
@@ -200,16 +206,13 @@ Log Entires to Show : <SELECT NAME="log_num">
 % foreach my $this_r (sort keys %Reasons){
 %    next unless $this_r;
 %    my $long = $Reasons{$this_r}->[1];
-%    $long =~ s/\s+/ /g;
+%    $long =~ s!\s+! !g;
 <TR>
-    <TD><B><%$this_r%></B></TD>
+    <TD><A NAME="<%$this_r%>"><B><%$this_r%></B></A></TD>
     <TD><%$long%></TD>
 </TR>
 % }
 </TABLE>
-</FORM>
-<HR>
-<& SELF:back &>    
 </%method>
 <%method err>
 <% $err %>
