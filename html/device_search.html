@@ -265,22 +265,35 @@ if ($specific =~ /alias/i){
 }
 
 # Generalized Search Terms
+my @show_cols = ();
 
 # Search on Model
 foreach my $model (@models){
     next unless defined $model and length($model);
+    if ($model eq 'show'){
+        push (@show_cols,'d.model');
+        next;
+    }
     push (@{$where->{'d.model'}},$model);
 }
 
 # Search on OS
 foreach my $this_os (@os){
     next unless defined $this_os and $this_os;
+    if ($this_os eq 'show'){
+        push (@show_cols,'d.os');
+        next;
+    }
     push (@{$where->{'d.os'}},$this_os);
 }
 
 # Search on OS Version
 foreach my $this_ver (@os_ver){
     next unless defined $this_ver and $this_ver;
+    if ($this_ver eq 'show'){
+        push (@show_cols,'d.os_ver');
+        next;
+    }
     push (@{$where->{'d.os_ver'}},$this_ver);
 }
 
@@ -301,6 +314,10 @@ if ($layer_string =~ /1/){
 # Search on Vendor
 foreach my $vendor (@vendors){
     next unless defined $vendor and length($vendor);
+    if ($vendor eq 'show'){
+        push (@show_cols,'d.vendor');
+        next;
+    }
     push (@{$where->{'d.vendor'}},$vendor);
 }
 
@@ -352,10 +369,22 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
         push(@cols,split('/',$col)); 
     }
 
+    # Add Columns to Grab info but not part of Search Terms
+    foreach my $show (@show_cols){
+        next if (grep /^$show$/,@cols);
+        push @cols,$show;
+    }
+
     $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
                         ['distinct(d.ip)','d.dns',@cols],
                         $where,
                         $boolean eq 'or');
+
+    # Add Info Columns to columns to display
+    foreach my $w (@show_cols){
+        next if (grep /^$w$/,keys(%$where));
+        push(@{$where->{$w}},undef);
+    }
 
 }
 
