@@ -18,8 +18,6 @@ Please use the Bug interface from Source Forge page at :
 
 L<http://sourceforge.net/projects/netdisco>
 
-Thanks to Mike Hunter at UCB for proofing this document.
-
 =head1 REQUIREMENTS
 
 Netdisco is built using lots of fine Open-Source tools: 
@@ -139,8 +137,15 @@ is reported to be in development.
 
 =item i. BSD 
 
-    cd /usr/ports/database/postgres
+First install Postgres from ports:
+
+    cd /usr/ports/database/postgresql7
     make install
+
+Next initialize the database :
+
+    more /usr/local/pgsql/post-install-notes
+    su -l pgsql -c initdb 
 
 =item ii. Mandrake Linux
 
@@ -252,7 +257,7 @@ and in F<netdisco.conf>.
 Now as a non-privileged user make sure you can get into the database by running 
 C<sql/pg_run>.  Enter the database user password given above. 
 
-    cd /usr/local/netdiscosql
+    cd /usr/local/netdisco/sql
     ./pg_run
 
 =item iv. Create Tables
@@ -261,7 +266,7 @@ Once you are sure the database is setup correctly, create the database
 tables with C<sql/pg_all>.  Type in the database user password once 
 when prompted.
 
-    cd /usr/local/netdiscosql
+    cd /usr/local/netdisco/sql
     ./pg_all
 
 =item v. Optimizations
@@ -308,7 +313,16 @@ For BSD install Net SNMP with ports :
 
     cd /usr/ports/net/net-snmp && make install
 
-TODO : How do I give it the switch to add C<--with-perl-modules> again?
+For a recent version of BSD you should get the Perl modules installed automatically.
+
+For a really old version, or for weird and multiple Perl installs do it by hand!
+
+    cd /usr/ports/net/net-snmp
+    make
+    cd work/net-snmp-5
+    ./configure --with-perl-modules
+    make
+    make install
 
 =item Linux
 
@@ -351,12 +365,19 @@ B<DO NOT> INSTALL the SNMP:: modules off of CPAN or the NET::SNMP module off of 
 
 Reread the above line.
 
+=item iii. [OPTIONAL] Configure Net-SNMP for a non-standard setup
 
-=item iii. Run C<snmpconf> and set up your MIB directory. 
+You probably will not have to do this step unless you have installed 
+net-snmp somewhere other than F</usr/local/> or have some specific SNMP defaults to change 
+for these tools. 
 
-(Default F</usr/local/share/snmp/mibs>)
+    snmpconf
 
-Make sure this new F<snmp.conf> lives in F</usr/local/share/snmp>
+Make sure to set the MIB dir if non-standard (Textual mib Parsing -> Specifies directories
+to be searched for mibs) (default directory is F</usr/local/share/snmp/mibs>)
+
+Make sure this newly created F<snmp.conf> lives in F</usr/local/share/snmp> or wherever you
+put a custom install.
 
 =back
 
@@ -455,33 +476,7 @@ what MIBs to install for non Cisco devices or in case of trouble.
 
     perldoc SNMP::Info
 
-=head2 6. OUI Database
-
-The Organizationally Unique Identifier (OUI) database allows Netdisco to 
-identify the manufacture of a network card using the first 24 bits of a
-MAC address.  
-
-The database of OUIs is needed by Netdisco and is available from the IEEE.
-
-If you have C<lynx> installed you can install the OUI database by:
-
-    cd /usr/local/netdisco
-    make oui
-
-Or do this by hand:
-
-=over
-
-=item i. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
-
-=item ii. Run C<netdisco -O>
-
-=back
-
-A note about Make versions.  The Makefile is a GNU Make version file.  In BSD you may
-have to type C<gmake>.
-
-=head2 7. GraphViz 
+=head2 6. GraphViz 
 
 GraphViz is used in the creation of the Network Map.
 
@@ -545,7 +540,7 @@ make sure the Graphviz Perl module got installed
 
     perldoc GraphViz
 
-=head2 8. Setup Apache
+=head2 7. Setup Apache
 
 I<Apache2> -- 
 
@@ -768,7 +763,7 @@ a Dynamic Shared Object (DSO).  This is known to be unstable, especially
 with Mason.   Compile mod_perl statically using the method listed
 above.
 
-=head2 9. Perl Modules and Mason
+=head2 8. Perl Modules and Mason
 
 Below is a list of required modules for Netdisco, freely available from
 CPAN (http://www.cpan.org).   Many of these modules have prerequisite 
@@ -799,7 +794,7 @@ Some of these you will probably already have installed.
 If you have Perl installed in C</usr/bin>, make sure that F<netdisco> and F<bin/doc_munge>
 have the correct location for Perl listed at the very top of the file.
 
-=head2 10. Netdisco Configuration
+=head2 9. Netdisco Configuration
 
 =over
 
@@ -849,6 +844,33 @@ are installed.
 =back
 
 =back
+
+=head2 10. OUI Database
+
+The Organizationally Unique Identifier (OUI) database allows Netdisco to 
+identify the manufacture of a network card using the first 24 bits of a
+MAC address.  
+
+The database of OUIs is needed by Netdisco and is available from the IEEE.
+
+If you have C<lynx> installed you can install the OUI database by:
+
+    cd /usr/local/netdisco
+    make oui
+
+Or do this by hand:
+
+=over
+
+=item i. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
+
+=item ii. Run C<netdisco -O>
+
+=back
+
+A note about Make versions.  The Makefile is a GNU Make version file.  In BSD you may
+have to type C<gmake>.
+
 
 =head2 11. Start Apache
 
