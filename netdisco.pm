@@ -27,7 +27,7 @@ use Graph::Undirected;
 use DBI;
 use Digest::MD5;
 
-use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS/;
+use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
@@ -119,6 +119,10 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
                                    address.'],
                 'other'       => ['Other', 'Does not fit in any other catagory.  Make a <i>very</i> detailed <TT>Log</TT> entry.']
               );
+
+=item $VERSION - Sync'ed with Netdisco releases
+=cut
+$VERSION = '0.91-cvs';
 
 =back
 
