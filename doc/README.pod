@@ -1,6 +1,6 @@
 =head1 NAME
 
-Netdisco 0.92 - README
+Netdisco 0.93 (CVS Beta) - README
 
 =head1 AUTHOR
 

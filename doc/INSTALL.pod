@@ -140,7 +140,7 @@ is reported to be in development.
 First install Postgres from ports:
 
     cd /usr/ports/database/postgresql7
-    make install
+    gmake install
 
 Next initialize the database :
 
@@ -421,7 +421,8 @@ This will create the SNMP/ directory where SNMP::Info will live.   Periodically 
 
     make snmp
 
-To update to the most current CVS version.
+To update to the most current CVS version.  For BSD or Solaris systems, use C<gmake> instead
+of C<make>
 
 =back
 
@@ -839,7 +840,7 @@ are installed.
 
 =item ii. Create Docs
 
- cd /usr/local/netdisco && make doc
+ cd /usr/local/netdisco && gmake doc
 
 =back
 
@@ -857,6 +858,9 @@ If you have C<lynx> installed you can install the OUI database by:
 
     cd /usr/local/netdisco
     make oui
+
+
+(C<gmake> for BSD/Solaris)
 
 Or do this by hand:
 
