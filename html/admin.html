@@ -5,7 +5,13 @@
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <TABLE>
 <TR>
-    <TD><INPUT TYPE="submit" VALUE="List Queue Entries"></TD>
+    <TD><INPUT TYPE="submit" VALUE="Update Queue Listing">
+        Finished Jobs: <SELECT NAME="old_jobs">
+% foreach my $num (qw/1 5 10 20 30 50 100/) {
+            <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
+% }
+        </SELECT>
+    </TD>
 </TR>
 </TABLE>
 </FORM>
@@ -29,6 +35,7 @@ $action  => undef
 @logs    => ()
 $nodes   => undef
 $confirm => undef
+$old_jobs => 5
 </%args>
 <%shared>
 my $user = $r->connection->user;
@@ -134,15 +141,18 @@ if ($cmd eq 'add' and defined $action and $action eq 'delete') {
     $cmd = 'del'; # order matters between delete and verify
 }
 
+# Taint check
+$old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
+
 # Queue
 $queue = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
-                           'device','action','status','username'],
-                  {'status' => [['queued','running','error']]}
+                           'extract(epoch from started) as started','device','action','status','username'],
+                  {'status' => [['queued','running']]}
                  );
 my $done = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
-                             'device','action','status','username'],
-                    {'status' => [['done','del']], 'age(entered)' => \\"< interval '1 day'",
-                     'username' => $user}
+                             'extract(epoch from started) as started','device','action','status','username'],
+                    {'status' => [['done','error']], 'username' => $user},undef,
+                     "order by entered desc limit $old_jobs"
                    );
 push (@$queue,@$done);
 
@@ -183,22 +193,22 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
 <%method dev_control>
 <TABLE>
 <TR>
-    <TD>Device : </TD>
+    <TD>Choose Device : </TD>
     <TD>
-% if ($arg_dev) {
-        <INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev">
-%} else {
         <& SELF:list_dev &>
-%}
     </TD>
-    <TD>Action : </TD>
-    <TD>
+    <TD ROWSPAN=2>Action : </TD>
+    <TD ROWSPAN=2>
         <SELECT NAME="action" SIZE=3>
 % foreach my $c (sort keys %cmds){
             <OPTION VALUE="<%$c|h%>"><%$cmds{$c}%>
 % }
         </SELECT>
     </TD>
+</TR>
+<TR>
+    <TD>or Enter Device : </TD>
+    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev"></TD>
 </TR>
 <TR> 
     <TD COLSPAN=4>
@@ -230,7 +240,7 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
   <TR>
     <TH>Job</TH>
     <TH>Action</TH>
-    <TH>Start / Finished</TH>
+    <TH>Time</TH>
     <TH>Status</TH>
     <TH>View<BR>Log</TH>
 % if (scalar keys %logs){
@@ -239,18 +249,27 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
   </TR>
 <%perl>
 foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
-    my $start = scalar localtime($job->{entered});
-    my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : '(None)';
-    my $act   = $job->{action};
-    my $dev   = $job->{device};
-    my $id    = $job->{job};
+    my $entered = scalar localtime($job->{entered});
+    my $start   = defined $job->{started} ? scalar localtime($job->{started}) : undef;
+    my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : undef;
+    my $time  = (defined $job->{started} and defined $job->{finished}) ?
+        $job->{finished} - $job->{started} : undef;
+    my $timestamp = defined $time ?
+         sprintf("Ended: %s<BR> %-2.2f min.",$end,$time/60) 
+         : undef;
+    $timestamp = "Start: $start" if (! defined $timestamp and defined $start);
+    $timestamp = "Queued: $entered" if (! defined $timestamp and ! defined $start);
+    my $status = $job->{status};
+    my $act    = $job->{action};
+    my $dev    = $job->{device};
+    my $id     = $job->{job};
     $act .= " (<A HREF=\"device.html?ip=$dev\">$dev</A>)" if $dev;
 </%perl>
   <TR CLASS="match-<% ++$odd%2 %>">
     <TD><%$id%> - <%$job->{username}%></TD>
     <TD><%$act%></TD>
-    <TD><NOBR><%$start%></NOBR> / <NOBR><%$end%></NOBR></TD>
-    <TD><%$job->{status}%></TD>
+    <TD><%$timestamp%></TD>
+    <TD><%$status%></TD>
     <TD><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
 % if (scalar keys %logs) {
     <TD>
