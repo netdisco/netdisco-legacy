@@ -11,31 +11,21 @@ Device name or IP :<INPUT TYPE="text" name="ip" maxlength=20 size=20>
 <A HREF="<%$r->uri%>">[Clear]</A>
 </FORM>
 <h4>[<A href="device_search.html">Full Search</A>]</h4>
-%# Form Data
 <%args>
-$ip => undef
-$oldip => undef
-@port => undef
-@portcol => undef
-$submit => undef
+$ip         => undef
+$oldip      => undef
+@port       => undef
+@portcol    => undef
+$submit     => undef
 $device_age => 'off'
-$archive => 'off'
+$archive    => 'off'
 </%args>
-%# Page Title
-<%method title>
-- Device View \
-</%method>
-%# Data Shared between methods on this page
 <%shared>
+my ($dev_age,$dev_arch,$device,$ports,$devip) = undef;
 my $domain = $netdisco::CONFIG{domain};
-my $now = time;
-my $dev_age = undef;
-my $dev_arch = undef;
-my $device = undef;
-my $ports = undef;
-my $match = 0;
-my $devip;
-my $odd = 1;
+my $now    = time;
+my $match  = 0;
+my $odd    = 1;
 # Change which columns are shown in ports by default.
 my %port_cols = (
                  'descr'=>   ['Description',0],
@@ -72,15 +62,22 @@ my %device_info = (
                    'Backplane Slots' => 'slots',
                     );
 
+# These are switches that we want a link to their web interface.
+my %web_vendors = ( 'hp' => 1,
+                    'bay' => 1);
+
+my %web_models  = ( 'wsc1900' => 1,
+                    'wsc1900c' => 1
+                  );
+
 my $user         = $m->session->{user};
 my $secure       = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $port_ctl     = $m->session->{user_port_ctl};
 my $port_control = ($port_ctl and $secure);
 </%shared>
-%#  Parsing of Arguments
 <%init>
-$dev_age  = $device_age;
-$dev_arch = $archive;
+#  Parsing of Arguments
+$dev_age  = $device_age; $dev_arch = $archive;
 
 if ($ip or $oldip) {
     # Form input vs new input
@@ -242,10 +239,18 @@ if (!defined $device and !$match) {
 
 $devip = $device->{ip};
 my $dns = defined $device->{dns} ? $device->{dns} : '[No DNS]';
+my $vendor = $device->{vendor};
+my $model  = $device->{model};
+my $want_web_link = (defined $web_vendors{$vendor} or defined $web_models{$model});
+my $web_dns = $dns;
+$web_dns =~ s/\Q$domain\E//;
 </%perl>
 <h3>Device Information</h3>
 <B><%$dns%></B> (<%$devip%>)
-<HR>
+% if ($want_web_link) {
+<BR>[<A HREF="switch/<%$web_dns|u%>/">Web Console</A>]
+% } 
+<HR NOSHADE>
 <TABLE CELLSPACING=0 CELLPADDING=3 BORDER=0>
 <%perl>
 # Print out each item in the database that we have using the 
@@ -523,6 +528,9 @@ foreach my $port (@newports){
 </TABLE>
 <P>
 <& SELF:show_all &>
+</%method>
+<%method title>
+- Device View \
 </%method>
 %# $Id$
 %# vim:syntax=mason
