@@ -201,7 +201,8 @@ Follow these steps to setup Netdisco in PostgreSQL.
 =item i. Permissions
 
 If you have just setup Postgres for the first time you may have to change the
-default permissions in F<$PG_DATA/pg_hba.conf>.  
+default permissions in F<$PG_DATA/pg_hba.conf>.  $PG_DATA might be in L</usr/local/pgsql> or in
+L</var/db>, depends on your OS.  Check the postgres users' homedir files for the location of $PG_DATA.
 
 For installation you must give the database user access to the C<template1> database.
 The following line will give all users who have logon permissions in Unix access
@@ -408,7 +409,8 @@ You have three different options in installing SNMP::Info
 =item a. CPAN
 
     perl -MCPAN -e shell
-    install SNMP::Info
+        o conf prerequisites_policy ask
+        install SNMP::Info
 
 =item b. From Source
 
@@ -453,6 +455,7 @@ Download the Version 1 and Version 2 MIBs from
 
 Install all of the V2 and some of the V1 MIBs into F</usr/local/share/snmp/mibs>.
 
+    mkdir /usr/local/share/snmp/mibs
     cd /usr/local/share/snmp/mibs
     tar xvfz /path/to/v2.tar.gz
     tar xvfz /path/to/v1.tar.gz BRIDGE-MIB.my SNMP-REPEATER-MIB.my ESSWITCH-MIB.my
@@ -792,6 +795,7 @@ and their prerequisites automatically:
 
     perl -MCPAN -e shell
 
+        o conf prerequisites_policy ask
         install Digest::MD5
         install Bundle::DBI
         install Apache::DBI
@@ -805,7 +809,8 @@ and their prerequisites automatically:
         install Graph
         install GraphViz     (you may need to do a 'force install')
 
-Some of these you will probably already have installed.
+Some of these you will probably already have installed. Others you may need to force 
+with C<force install ModuleName>
 
 =head3 Perl Location
 
