@@ -20,10 +20,31 @@ my $secure    = $r->subprocess_env('https');
 my $userip    = $r->connection->remote_ip; 
 my $odd = 1 ;
 my %Reasons = ( 
-                ''          => 'Select a Reason',
-                'dos'       => 'Denial Of Serivce attack.',
-                'bandwidth' => 'Excessive BandWidth usage.',
-                'other'     => 'Other'
+                ''            => ['Select a Reason',''],
+                'address'     => ['Address Allocation Abuse',
+                                  'A system which does not obtain and/or use its address in a legitimate
+                                   fashion.  This includes machines that self-assign IP addresses and those
+                                   that modify their MAC address.'],
+                'dos'         => ['Denial Of Serivce',
+                                  'Any kind of data flow, mailicious or otherwise, which is involved
+                                   in a service-affecting disruption.  This includes activities such
+                                   as ICMP and UDP floods, SYN attacks, and other service disruptive
+                                   flows.  A system involved in a DoS attack is usually compromised.'],
+                'bandwidth'   => ['Excessive BandWidth',
+                                  'A user has sent/received data in excess of campus acceptable use standards.'],
+                'compromised' => ['System Compromised',
+                                  'The system has been compromised and poses a high risk to campus
+                                   resources. If other behavior is observed, such as involvement in a DoS attack, that reason code should be used in place of this one.'],
+                'copyright'   => ['Copyright Violation',
+                                  "Following the takedown provision of the DMCA to limit the University's copyright liability."],
+                'exploit'     => ['Remote Exploit Possible',
+                                  'A remotely exploitable vulnerability posing high risk exists on the system.'],
+                'polling'     => ['Excessive Polling of DNS/DHCP/SNMP',
+                                  'Distinct from DoS attacks, excessive polling is often due to
+                                   misconfigured systems or malfunctioning protocol stacks.  An example of
+                                   this would be sustained, repetitive polling of the DHCP server for an
+                                   address.'],
+                'other'       => ['Other', 'Does not fit in any other catagory.  Make a <i>very</i> detailed <TT>Log</TT> entry.']
               );
 </%shared>
 <%init>
@@ -131,38 +152,62 @@ Log Entires to Show : <SELECT NAME="log_num">
 <INPUT TYPE="HIDDEN" NAME="type" VALUE="<%$arg_cmd |h%>">
 <INPUT TYPE="HIDDEN" NAME="port" VALUE="<%$arg_port |h%>">
 <INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
-<TABLE>
-<TR>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box">
+<TR CLASS="match-1">
     <TD>Port :</TD>
-    <TD><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
+    <TD CLASS="tr_data-1"><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
 </TR>
-<TR>
+<TR CLASS="match-0">
     <TD>User :</TD>
-    <TD><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
+    <TD CLASS="tr_data-0"><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
     </TD>
 </TR>
-<TR>
-    <TD>Reason :</TD>
-    <TD><SELECT NAME="reason">
+<TR CLASS="match-1">
+    <TD>Reason :<BR>&nbsp;</TD>
+    <TD CLASS="tr_data-1"><SELECT NAME="reason" SIZE=1>
 % foreach my $this_r (sort keys %Reasons){
-        <OPTION VALUE="<%$this_r |h%>" <%$this_r eq $arg_reason ? 'SELECTED' : ''%>><%$Reasons{$this_r}%>
+        <OPTION VALUE="<%$this_r |h%>" <%$this_r eq $arg_reason ? 'SELECTED' : ''%>> \
+%   if ($this_r){        
+[<%$this_r%>] \
+%   }
+<%$Reasons{$this_r}->[0]%> 
 %}
     </SELECT>
+    <BR><FONT SIZE=-3>See below for descriptions.</FONT>
     </TD>
 </TR>
-<TR>
+<TR CLASS="match-0">
     <TD>Log:</TD>
-    <TD><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
+    <TD CLASS="tr_data-0"><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
     <BR>Enter a useful description why the port is being turned <% $arg_cmd eq 'down' ? 'off' : 'on' %>.
     </TD>
 </TR>
-<TR>
-    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+<TR CLASS="match-1">
+    <TD COLSPAN=2 CLASS="tr_data-1"><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
-        </FORM>
     </TD>
 </TR>
 </TABLE>
+<h4>Reason Descriptions</h4>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3>
+<TR>
+    <TH>Reason</TH>
+    <TH>Description</TH>
+</TR>
+<TR>
+    <TD COLSPAN=2><HR NOSHADE></TD>
+</TR>
+% foreach my $this_r (sort keys %Reasons){
+%    next unless $this_r;
+%    my $long = $Reasons{$this_r}->[1];
+%    $long =~ s/\s+/ /g;
+<TR>
+    <TD><B><%$this_r%></B></TD>
+    <TD><%$long%></TD>
+</TR>
+% }
+</TABLE>
+</FORM>
 <HR>
 <& SELF:back &>    
 </%method>
