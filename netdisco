@@ -1329,16 +1329,24 @@ sub macsuck{
     if ($cisco_comm_indexing){
         print " Device supports Cisco commuinty string indexing. Connecting to each VLAN:\n";
         my $v_name = $device->v_name() || {};
+        my $i_vlan = $device->i_vlan() || {};
         my $ver    = $device->snmp_ver();
         my $comm   = $device->snmp_comm();
         my $obj    = $device->class();
 
+        # Get list of VLANs currently in use by ports
+        my %vlans;
+        foreach my $key (keys %$i_vlan){
+            my $vlan = $i_vlan->{$key};
+            $vlans{$vlan}++;
+        }
+    
         # For each VLAN, connect and then macsuck
-        foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//; 
+        foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
                                 # Sort by VLAN id
                                 $aa <=> $bb
-                              } 
-                         keys %$v_name) 
+                              }
+                         keys %$v_name)
         {
 
             my $vlan_name = $v_name->{$vid} || '(Unnamed)';
@@ -1351,14 +1359,25 @@ sub macsuck{
                 next;
             }
 
+            # Only macsuck VLAN if in use by port
+            #   but check to see if device serves us that list first
+            if (scalar keys(%$i_vlan) and !defined $vlans{$vlan}
+                and !$CONFIG{macsuck_all_vlans}){
+                print " VLAN:$vlan_name ($vlan) Skipped because not in use by a port.\n";
+                next;
+            }
+
             print " VLAN:$vlan_name ($vlan) : ";
 
-            # feeding all the connect info as a speedup, instead of 
+            # feeding all the connect info as a speedup, instead of
             #   retrying all the versions and communities
-            my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver,$obj)
-                or next;
-
+            my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver,$obj);
+            unless (defined $vlan_device){
+                print "!\n";
+                next;
+            }
             walk_fwtable($vlan_device,\%dbports,$interfaces);
+
         }
     }
 
@@ -1404,9 +1423,11 @@ sub macwalk {
             print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
         }
     }
-    print "Vacuuming node table...";
+    print "Vacuuming node table... ";
+    my $vac_time_1 = time;
     sql_vacuum('node');
-    print "\n";
+    my $vac_time_2 = time;
+    print int($vac_time_2 - $vac_time_1) , " seconds\n";
 
     &end;
 }
