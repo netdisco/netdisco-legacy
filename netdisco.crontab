@@ -9,7 +9,7 @@ PATH=/bin:/usr/bin:/usr/local/bin
 # -- Weekly --
 
 # Walk network for new devices once a week (Wed @ 14:00)
-0 14 * * 3      /usr/local/netdisco/netdisco -b -r !!center_network_device_here!!
+0 14 * * 3      /usr/local/netdisco/netdisco -b -r center_network_device
 
 # -- Daily --
 
@@ -27,11 +27,11 @@ PATH=/bin:/usr/bin:/usr/local/bin
 
 # -- Hourly --
 
-# Arp Nip every 4 hours
-0 0,4,8,12,16,20 * * *  /usr/local/netdisco/netdisco -b -a 
+# Arp Nip every hour on the half hour
+30 * * * *  /usr/local/netdisco/netdisco -b -a 
 
-# Mac Suck every 4 hours (takes up to two hours)
-0 2,6,10,14,18,22 * * * /usr/local/netdisco/netdisco -b -m 
+# Mac Suck every 2 hours
+0 */2 * * * /usr/local/netdisco/netdisco -b -m 
 
 # Grab NetBios Info from Nodes three times a day
 0 8,13,21 * * * /usr/local/netdisco/netdisco -b -w
