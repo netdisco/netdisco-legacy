@@ -58,10 +58,12 @@ FEATURES
     speed shown.
     * Layer Two traceroute
     * Automatic inventory and search of network hardware
+    * Administratively enable / disable ports with Read/Write Community
+    String
     * Statistics for number of actual nodes connected to network
     * Duplex Mismatch Finder
     * Logging
-    * Search on :
+    * Searches :
         * Device Model
         * Device Vendor
         * Device OSI Layers Served
@@ -69,11 +71,13 @@ FEATURES
         * sysDescr field
         * DNS Name
         * IP Subnet
-    * Search by OUI (MAC Address Vendor)
-    * Search for Wireless Access Points (APs) from wired-side of network
-    * Search for Device Ports with multiple Nodes attached
-    * Search for Nodes with multiple IP addresses
-    * Search for Devices using IP's w/out DNS entries
+        * OUI (MAC Address Vendor)
+        * Device Ports that are blocking (via Spanning Tree Protocol)
+        * Device Ports that are administratively shutdown.
+        * Wireless Access Points (APs) from wired-side of network
+        * Device Ports with multiple Nodes attached
+        * Nodes with multiple IP addresses
+        * Devices using IP's w/out DNS entries
     Netdisco is a *pure-Perl* product.
 
 INSTALL AND REQUIREMENTS

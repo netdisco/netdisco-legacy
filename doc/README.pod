@@ -74,13 +74,15 @@ and the IP addresses that have been associated with it.
 
 =item * Automatic inventory and search of network hardware
 
+=item * Administratively enable / disable ports with Read/Write Community String
+
 =item * Statistics for number of actual nodes connected to network
 
 =item * Duplex Mismatch Finder
 
 =item * Logging 
 
-=item * Search on :
+=item * Searches :
 
 =over
 
@@ -98,17 +100,21 @@ and the IP addresses that have been associated with it.
 
 =item * IP Subnet
 
+=item * OUI (MAC Address Vendor)
+
+=item * Device Ports that are blocking (via Spanning Tree Protocol)
+
+=item * Device Ports that are administratively shutdown.
+
+=item * Wireless Access Points (APs) from wired-side of network
+
+=item * Device Ports with multiple Nodes attached
+
+=item * Nodes with multiple IP addresses
+
+=item * Devices using IP's w/out DNS entries
+
 =back 
-
-=item * Search by OUI (MAC Address Vendor)
-
-=item * Search for Wireless Access Points (APs) from wired-side of network
-
-=item * Search for Device Ports with multiple Nodes attached
-
-=item * Search for Nodes with multiple IP addresses
-
-=item * Search for Devices using IP's w/out DNS entries
 
 =back
 
