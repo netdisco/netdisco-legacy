@@ -178,6 +178,18 @@ Make backups of all your files.
     cp /usr/local/netdisco/*.conf /path/to/some_where_safe
     cp /usr/local/netdisco/*.txt  /path/to/some_where_safe
 
+=item Vacuum full and reindex database
+
+For PostgreSQL you may be suffering from severe space and
+performance problems because of various issues.  Especially for 
+versions before 7.4.  Please consider upgrading to 7.4 and ALSO
+run the Procedure, "Things are Getting Really Slow" in README.
+
+This will REINDEX and VACUUM FULL your database.  
+
+On a recent Postgres 7.3 install this changed the database size from
+16GB to 400 MB!   Sound worth it?
+
 =item Install on top of existing Netdisco
 
 Put the new files in your F<netdisco/> directory 
