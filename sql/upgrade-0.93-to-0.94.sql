@@ -15,16 +15,15 @@ CREATE TABLE user_log (
                       );
 
 CREATE TABLE node_nbt (
+    mac         macaddr PRIMARY KEY,
     ip          inet,
-    mac         macaddr,
     nbname      text,
     domain      text,
     server      boolean,
     nbuser      text,
     active      boolean,
     time_first  timestamp default now(),
-    time_last   timestamp default now(),
-    PRIMARY KEY(ip,mac)
+    time_last   timestamp default now()
 );
 
 -- Indexing speed ups.

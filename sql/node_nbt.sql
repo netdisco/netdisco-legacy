@@ -4,16 +4,15 @@
 DROP TABLE node_nbt;
 
 CREATE TABLE node_nbt (
+    mac         macaddr PRIMARY KEY,
     ip          inet,
-    mac         macaddr,
     nbname      text,
     domain      text,
     server      boolean,
     nbuser      text,
-    active      boolean,
+    active      boolean,    -- do we need this still?
     time_first  timestamp default now(),
-    time_last   timestamp default now(),
-    PRIMARY KEY(ip,mac)
+    time_last   timestamp default now()
 );
 
 -- Indexing speed ups.
