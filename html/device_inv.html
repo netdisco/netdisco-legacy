@@ -15,8 +15,8 @@
         <OPTION VALUE="last"<%$age_type eq 'last' ? ' SELECTED' : ''%>>Last Updated
     </SELECT>
     <SELECT NAME="age_bool">
-% for (('in the last','not in')){
-        <OPTION VALUE="<%$_%>|h"<%$age_bool eq $_ ? ' SELECTED' : ''%>><%$_%>
+% for ('in the last','not in'){
+        <OPTION VALUE="<%$_ | h %>"<%$age_bool eq $_ ? ' SELECTED' : ''%>><%$_%>
 % }
     </SELECT>
     <SELECT NAME="age_val">
