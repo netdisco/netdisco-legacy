@@ -1099,50 +1099,16 @@ sub sql_do {
 
 Returns reference to hash representing single row.
 
-Supports:
-
-    * Auto-Quotes Values
-    * NULL/NOT NULL
-    * Pattern Matching
+Internally calls sql_rows() -- See for Usage.
 
     my $hashref = sql_hash('device',['ip','ports'], {'ip'=>'127.0.0.1'});
 
 =cut
 sub sql_hash {
-    my $dbh = &dbh;
-
-    my ($table, $column, $wherehash) = @_;
-
-    my $sql = sprintf("SELECT %s FROM $table", join(',',@$column));
-
-    if (defined $wherehash) {
-        my @where;
-        foreach my $index (keys %$wherehash){
-            my $value = $wherehash->{$index};
-            unless (defined $value){
-                carp("sql_hash($table,$index) value for where:$index is undef.\n");
-                next;
-            }
-            my $con ;
-            if ($value =~  m/^\s*is\s+(not)?\s*null$/i ){
-                $con = '';
-            } elsif ($value =~ m/\%/ ) {
-                $con = 'ilike';
-                $value = $dbh->quote($value);
-            } else {
-                $con = '=';
-                $value = $dbh->quote($value);
-            }
-
-            push(@where, sprintf("$index $con $value"));
-        }
-
-        $sql .= sprintf(" WHERE %s", join(' AND ',@where));
-    }
-    
-    carp($sql) if $SQLCARP;
-
-    return $dbh->selectrow_hashref($sql);
+    my $results = sql_rows(@_);
+    return undef unless defined $results;
+    return undef unless scalar (@$results);
+    return shift(@$results); 
 }
 
 =item sql_match(text,exact_flag)
@@ -1396,7 +1362,7 @@ sub sql_rows {
 
 Returns a scalar of value of first column given.
 
-Internally calls C<sql_hash()>
+Internally calls C<sql_hash()> which calls C<sql_rows()>
 
 All arguments are passed directly to C<sql_hash()>
 
