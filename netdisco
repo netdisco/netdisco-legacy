@@ -1787,34 +1787,6 @@ sub dev_dump {
     $BatchMode=$old_batch;
 }
 
-=item sort_ip() 
-
-Used by sort {} calls to sort by IP octet.  
-
-If passed two hashes, will sort on the key "remote_ip".
-
-=cut
-sub sort_ip {
-    my $aval = ref $a eq 'HASH' ?
-            $a->{remote_ip} :
-            $a;
-    my $bval = ref $b eq 'HASH' ?
-            $b->{remote_ip} :
-            $b;
-    my ($a1,$a2,$a3,$a4) = split(/\./,$aval);
-    my ($b1,$b2,$b3,$b4) = split(/\./,$bval);
-    
-    return 1 if ($a1 > $b1);
-    return -1 if ($a1 < $b1);
-    return 1 if ($a2 > $b2);
-    return -1 if ($a2 < $b2);
-    return 1 if ($a3 > $b3);
-    return -1 if ($a3 < $b3);
-    return 1 if ($a4 > $b4);
-    return -1 if ($a4 < $b4);
-    return 0;
-}
-
 =item topo_load_file(file) 
 
 Loads and parses manual topography file. 
@@ -2343,7 +2315,7 @@ sub add_user {
 }
 
 sub test {
-    mail ('max@warped.org','this is atest','blah blah blah');
+    &arp_dump;
 
 }
 
