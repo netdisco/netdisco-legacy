@@ -23,6 +23,8 @@ CREATE TABLE device (
     fan          text,
     slots        integer,
     vendor       text,      
+    os           text,
+    os_ver       text,
     log          text,      -- HP Devices can store their log in here.
     snmp_ver     integer,   -- Holds the SNMP Version of device 
     snmp_comm    text,      -- Holds the SNMP Community String
