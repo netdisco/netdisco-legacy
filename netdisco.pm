@@ -27,13 +27,14 @@ use Exporter;
 use Socket;
 use Graph::Undirected;
 use DBI;
+use Digest::MD5;
 
 #use vars qw/$DBH/;
 @netdisco::ISA = qw/Exporter/;
 our @EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_port sql_scalar root_device log
-                       make_graph is_mac/;
+                       make_graph is_mac user_add/;
 
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
@@ -425,6 +426,50 @@ sub root_device {
 
 =back
 
+=head2 User Functions
+
+=over
+
+=item user_add(user,%args)
+
+Adds or changes a user account.
+
+%args can have key values of { pw, admin, port }
+
+Returns error message if problem.
+
+=cut
+sub user_add {
+    my ($user, %args) = @_;
+
+    unless (defined($user) and scalar(keys(%args))){
+        return "Not enough arguments passed.";
+    }
+
+    $user = lc($user);
+
+    my %db_args;
+    foreach my $arg (keys %args){
+        my $val = $args{$arg};
+        if ($arg eq 'pw'){
+            $db_args{password} = Digest::MD5::md5_hex($val);
+        }
+        
+        if ($arg eq 'admin' and $val =~ /^(1|true|yes|y)$/i){
+            $db_args{admin} = 1; 
+        }
+
+        if ($arg eq 'port' and $val =~ /^(1|true|yes|y)$/i){
+            $db_args{port_control} = 1; 
+        }
+
+    }
+
+    return insert_or_update('users',{'username'=>$user},{'username'=>$user,%db_args});
+}
+
+=back
+
 =head2 SQL Functions
 
 =over
@@ -474,6 +519,8 @@ sub hash_diff {
     Supports
         * Auto Quoting of Values
 
+    Returns error string if problem.
+
 =cut
 sub insert_or_update {
     my ($table, $indexes, $values) = @_;
@@ -508,6 +555,7 @@ sub insert_or_update {
             carp($sql) if $SQLCARP;
 
             $dbh->do($sql); 
+            if ($dbh->err) { return $dbh->errstr; }
             return;
         } elsif (defined $row and !$diff) { 
             return;
