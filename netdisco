@@ -2530,10 +2530,11 @@ sub graph_each  {
     my $graph_defs = {
                      'bgcolor' => $CONFIG{graph_bg},
                      'color'   => $CONFIG{graph_color},
-                     'overlap' => $CONFIG{graph_overlap},
+                     'overlap' => $CONFIG{graph_overlap} || 'false',
                      'fontpath'=> $CONFIG{home},
                      'ranksep' => $CONFIG{graph_ranksep},
-                     'splines' => $CONFIG{graph_splines},
+                     'nodesep' => $CONFIG{graph_nodesep},
+                     'splines' => $CONFIG{graph_splines} ? 'true' : 'false',
                      'ratio'   => 'compress'
                      };
     my $node_defs = { 
@@ -2606,7 +2607,7 @@ sub graph_each  {
             }
         }
         if ($suffix eq 'G'){
-            $edge{style} = 'bold';
+            #$edge{style} = 'bold';
             $edge{color} = 'cyan1';
         }
 
