@@ -3,8 +3,23 @@
 #
 # Add a line for each device you want to add manually
 # Add link lines for topology information in the format
-#   link:outport,destination router,inport 
 #
-# eg:
-#    myrouter.company.com
-#      link:14,otherrouter,A5
+# device
+#   link:outport,destination router,destination port
+#
+# An Example:
+# 
+# Let's connect these two routers manually:
+#
+# [router1]  --> [router2]
+#  Port 14         Port 5
+#
+# The following two lines would be added to this file:
+#
+#    router1
+#      link:14,router2,5
+#
+# Notes:
+#   1. Only one side is needed, both sides are forced to this info
+#   2. You can use DNS host names or IP addresses
+#   3. See "Manual Topology Information" in README

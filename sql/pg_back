@@ -1,0 +1,9 @@
+#!/bin/sh
+
+DATE=`date "+%Y%m%d"`
+FILE=db_back-${DATE}.sql
+DB=netdisco
+
+pg_dump -a -d -D -O -U ${DB} ${DB} | gzip > ${FILE}.gz
+
+chmod go-rwx ${FILE}.gz

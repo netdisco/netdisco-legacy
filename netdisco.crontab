@@ -3,7 +3,7 @@
 #       Output is found in /data/netdisco/logs
 # $Id$
 
-MAILTO=max
+#MAILTO=max
 PATH=/bin:/usr/bin:/usr/local/bin
 
 # -- Weekly --
