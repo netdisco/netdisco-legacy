@@ -17,57 +17,28 @@ README for how to use Netdisco.
 =cut
 
 use strict;
-# Add . to the library path
-use FindBin;
+use Getopt::Std;
+use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
-use IO::File;
-
+use IO::File;            # For batch_mode()
+use POSIX qw/:errno_h/;  # for Admin Daemon
+use GraphViz;
+use SNMP::Info;         
 use netdisco qw/:all/;  
 
-# for daemon
-use POSIX qw/:errno_h/;
+$| = 1;
 
-use SNMP::Info;
-use SNMP::Info::Layer1;
-use SNMP::Info::Layer1::Allied;
-use SNMP::Info::Layer1::Asante;
-use SNMP::Info::Layer2;
-use SNMP::Info::Layer2::Aironet;
-use SNMP::Info::Layer2::Bay;
-use SNMP::Info::Layer2::C1900;
-use SNMP::Info::Layer2::C2900;
-use SNMP::Info::Layer2::Catalyst;
-use SNMP::Info::Layer2::HP;
-use SNMP::Info::Layer3;
-use SNMP::Info::Layer3::Aironet;
-use SNMP::Info::Layer3::C3550;
-use SNMP::Info::Layer3::Foundry;
+# Signal Handlers
+$SIG{INT}  = \&end;
+$SIG{ALRM} = \&timeout;
 
-use GraphViz;
-use Getopt::Std;
+# --------------------------------------------------------------
+#                         Globals                               
+# --------------------------------------------------------------
 use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
             %TimedOut $Aliases $OldDevices $PortMAC $start_time $end_time $ArpTotal %MacSeen
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only/;
-
-getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuV',\%args);
-
-$DEBUG      = defined $args{D} ? $args{D} : 0;
-$netdisco::SQLCARP = defined $args{S} ? 1 : 0;
-$configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
-$BatchMode  = defined $args{b};
-$Log        = (!$BatchMode and (defined $args{D} or defined $args{L})) ? 0 : 1;
-$New_Only   = defined $args{N};
-
-# Signal Handlers
-$SIG{INT} = \&end;
-$SIG{ALRM}  = \&timeout;
-
-# Parse Config File
-config($configfile);
-
-# GLOBALS
-$| = 1;
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -86,10 +57,25 @@ $MacTotal = 0;
 @LogFile   = ();
 %DeviceTopo = ();
 
-# Header
+# --------------------------------------------------------------
+#              Command Line Flags                               
+# --------------------------------------------------------------
+getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuV',\%args);
+$DEBUG      = defined $args{D} ? $args{D} : 0;
+$netdisco::SQLCARP = defined $args{S} ? 1 : 0;
+$configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
+$BatchMode  = defined $args{b};
+$Log        = (!$BatchMode and (defined $args{D} or defined $args{L})) ? 0 : 1;
+$New_Only   = defined $args{N};
+
+# Parse Config File
+config($configfile);
+# Print Header
 &header if ((join('',keys %args) =~ /[aABdeEFgIikKmMOprRTu]+/) and !$BatchMode);
 
-# Commands
+# --------------------------------------------------------------
+#             Run Commands                                      
+# --------------------------------------------------------------
 defined $args{h} and die &usage;
 
 #   Discovery
@@ -1184,6 +1170,132 @@ sub macwalk {
     print "\n";
 
     &end;
+}
+
+=item port_control(switch,port,direction)
+
+=cut
+sub port_control {
+    my ($switch,$port,$direction,$job) = @_;
+
+    unless (defined $switch and defined $port and defined $direction){
+        print "Usage : port_control(switch,port,up/down)\n";
+        return;
+    }
+    unless (defined $CONFIG{community_rw} and scalar @{$CONFIG{community_rw}}){
+        print "No read-write community string has been set. Please add a community_rw setting to the Config file.\n";
+        return undef;
+    } 
+
+    # Check for device in DB
+    my $ip = getip($switch);
+    $ip    = root_device($ip);
+
+    # Get dev info from database
+    my $db_dev = sql_hash('device',['*'],{'ip' => $ip}) if defined $ip;
+
+    unless (defined $ip and defined $db_dev){
+        print "Device $switch not found in netdisco.  Please discover device and try again.\n";
+        return undef;
+    } 
+    
+    # Check for port
+    my $db_port = sql_hash('device_port',['*'],{ 'ip'=>$ip, 'port'=>$port });
+    unless (defined $db_port){
+        print "Port : $port not found in database for device $switch\n";
+        return undef;
+    }
+    # Check if uplink port
+    if (defined $db_port->{remote_ip}){
+        print "Port : $port is an uplink port. Control from netdisco not allowed.\n";
+        return undef;
+    } 
+
+    # SNMP connect
+    my $device;
+    my $snmp_ver = $db_dev->{snmp_ver} || 2;
+    foreach my $comm (@{$CONFIG{community_rw}}) {
+        $device = create_device($ip,$comm,$snmp_ver);
+        last if (defined $device and $device != -1); 
+    }
+
+    unless (defined $device){
+        print "Could not connect to device with read-write community string.\n";
+        return undef; 
+    }
+    
+    my $interfaces = $device->interfaces();
+    my %rev_if     = reverse %$interfaces;
+    my $iid        = $rev_if{$port};
+
+    # Switch the port
+    my $rv = $device->set_i_up_admin(lc($direction),$iid);
+    
+    unless (defined $rv){
+        my $error = $device->erorr() || '';
+        print "Set failed. $error\n";
+        return undef;
+    }
+
+    # Mark down change in netdisco
+    insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$direction});
+
+    print "Succesfully set Port:$port $direction on $switch\n";
+    return 1;
+}
+
+=item port_switch({})
+
+=cut
+sub port_switch {
+    my $job = shift;
+
+    # Not sent from front-end via admin daemon
+    unless (defined $job){
+        
+    }
+    my $user   = $job->{username};
+    my $userip = $job->{userip};
+    my $ip     = $job->{device};
+    my $port   = $job->{port};
+    my ($dir,$reason) = split('-',$job->{subaction});
+    my $long_reason = $netdisco::PORT_CONTROL_REASONS{$reason}->[0];
+    my $log    = $job->{log};
+    my $dns    = &hostname($ip);
+   
+    # Switch the Port
+    my $rv = port_control($ip,$port,$dir); 
+
+    if (!defined $rv){
+        $log = "[FAILED] - See admin queue job log. \n $log";
+        return undef;
+    }
+
+    # Send E-Mail to Abuse
+    my $portctl_email = $CONFIG{portctl_email};
+    if (defined $portctl_email){
+        print "Sending notification to $portctl_email\n";
+        my $action = $dir;
+        $action = 'enable'  if $dir eq 'up';
+        $action = 'disable' if $dir eq 'down';
+        my $body = <<"end_body";
+........ n e t d i s c o .........
+  Device : $dns ($ip) 
+  Port   : $port
+  Action : $action
+  User   : $user \@ $userip 
+  Reason : [$reason] - $long_reason
+  Log    : $log
+
+end_body
+
+        &mail($portctl_email,"port $dir $dns($ip)/$port",$body);
+    }
+    # Log
+    insert_or_update('device_port_log', {},
+                     {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
+                      'username'=>$user,'action'=>$dir, 'reason' => $reason }
+                    ); 
 }
 
 =item store_device() 
@@ -2385,8 +2497,17 @@ sub admin_daemon_job {
     return undef;
 }
 
+=back
+
+=cut
 
 sub test {
+# port_control(@ARGV);
+
+    my $rv = insert_or_update('admin',{},{'status'=>'error','username'=>'max','action'=>'test'});
+
+    print "$rv\n";
+    
 }
 
 
@@ -2435,5 +2556,3 @@ Administration:
 
 _end_usage_
 }
-
-=back
