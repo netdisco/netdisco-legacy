@@ -21,6 +21,7 @@
     .sidebar-1 { text-align:center; background-color:#ffe7ba;}
     .match-1 { text-align:center; background-color:#eed8ae;}
     .match-0 { text-align:center; background-color:#ffe7ba;}
+    .box     { background-color:#eed8ae; border:thin solid; border-color:#191970; }
     .port_up { color:black;}
     .port_off { color:red;}
     .port_down { color:#a0a0a0; }
