@@ -16,11 +16,12 @@ back:
 
 doc: $(LIBS) readme install_doc api_doc
 
-# Adds the <%text> </%text> tags to the HTML for mason
+# Makes documentation for all .pm's 
 $(LIBS):
 	echo "Making Docs for $@..."
 	$(POD2MAN)  $@ > doc/$(subst /,-,$(@:.pm=.man))
 	$(POD2TEXT) $@ > doc/$(subst /,-,$(@:.pm=.txt))
+    # Adds the <%text> </%text> tags to the HTML for mason
 	$(POD2HTML) $@ | sed  -e '1s/^/<%text>!/;1y/!/\n/' -e '$$ G;$$ s/$$/<\/%text>/' > html/doc/$(subst /,-,$(@:.pm=.html))
 
 install_doc:
