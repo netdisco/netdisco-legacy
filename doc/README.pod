@@ -142,7 +142,7 @@ Netdisco Requires:
 
 =item - Graphviz          (Open Source graphing software for network map)
 
-=item - MIBS              (SNMP MIBs for your devices)
+=item - MIBS              (SNMP MIBs for your devices, part of SNMP::Info)
 
 =back
 
@@ -673,6 +673,11 @@ to a port.
 
 Holds the interface (port) information for each device.  One row for each interface
 exists with information about the port status.
+
+=item device_port_log
+
+Contains log entries for port_control, tool used for administratively enabling and disabling 
+ports.
 
 =item log
 
