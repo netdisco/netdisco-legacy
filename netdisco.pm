@@ -240,7 +240,7 @@ sub config {
         }
 
         # Comma separated lists that map to defined hash keys.
-        if ($var =~ /^(portcontrol|no_mapsuck|admin|web_console_vendors|web_console_models)$/) {
+        if ($var =~ /^(portcontrol|macsuck_no|admin|web_console_vendors|web_console_models|macsuck_no_vlan)$/) {
             my %seen;
             foreach my $key (split(/\s*,\s*/,$value)){
                 $key =~ s/^\s+//;
