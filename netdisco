@@ -27,6 +27,7 @@ use SNMP::Info::Layer1;
 use SNMP::Info::Layer1::Allied;
 use SNMP::Info::Layer1::Asante;
 use SNMP::Info::Layer2;
+use SNMP::Info::Layer2::Aironet;
 use SNMP::Info::Layer2::Bay;
 use SNMP::Info::Layer2::C1900;
 use SNMP::Info::Layer2::C2900;
@@ -374,7 +375,7 @@ sub discover{
     print "Discover($hostname)\n";
 
     my $device = get_device($hostname) or return;
-    my $ip     = $device->{_ip};
+    my $ip     = $device->{ip};
 
     # Store Device Info
     store_device($device);
@@ -496,75 +497,60 @@ sub create_device {
     my $retries = $CONFIG{snmpretries} || 2;  
    
     printf("  create_device(%s,%s,%d,%s)\n",
-           $hostname,substr($community,-1,1),$ver, defined $objtype ? $objtype : 'undef')
+           $hostname,substr($community,-1,1),$ver, $objtype || 'undef')
          if $DEBUG;
 
     # Get Device Info
-    my $device = new SNMP::Info( 'DestHost'  => $hostname,
-                                 'Community' => $community,
-                                 'Version'   => $ver,
-                                 'Retries'   => $retries
+    my $device = new SNMP::Info( 
+                                'Debug'       => $DEBUG,
+                                'AutoSpecify' => 1,
+                                'DestHost'    => $hostname,
+                                'Community'   => $community,
+                                'Version'     => $ver,
+                                'Retries'     => $retries
                                );
     
-    $DEBUG and $device->debug($DEBUG);
-
     unless (defined $device) {
         print "  Can't connect to $hostname\n";
         return undef;
     }
 
-    # Get more specific method unless supplied
-    $objtype = $device->device_type() unless defined $objtype;
+    # Test for connectivity
+    my $layers = $device->layers();
 
     # Try Version 1 if we haven't already
-    if (!defined $objtype and $ver != 1){
-        # v1 screws up some hp switches that support 2, so we stick w/ 2 first
-        $ver = 1; 
+    #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
+    if (!defined $layers and $ver != 1){
+        
         print " [Trying SNMP Version 1] ";
         printf("create_device(%s,%s,1)\n",$hostname,substr($community,-1,1)) if $DEBUG;
-        $device = new SNMP::Info( 'DestHost'  => $hostname,
-                                  'Community' => $community,
-                                  'Version'   => 1,
-                                  'Retries'   => $retries
+        $device = new SNMP::Info(
+                                  'Debug'       => $DEBUG, 
+                                  'AutoSpecify' => 1,
+                                  'DestHost'    => $hostname,
+                                  'Community'   => $community,
+                                  'Version'     => 1,
+                                  'Retries'     => $retries
                                 );
-
-        $objtype = $device->device_type();
-
-        $DEBUG and $device->debug($DEBUG);
     }
 
-    return undef unless defined $objtype;
+    my $class = $device->class();
+    if (!defined $class or !defined $class){
+        print "  Could not connect to $hostname.\n";
+        return undef;
+    }
         
-    if ($objtype eq 'SNMP::Info'){
+    if ($class eq 'SNMP::Info'){
         my $layers = $device->layers();
         print "  Device Talks SNMP but only has layers $layers.  Skipping\n";
         return -1;
     }
 
-    print "  Device Type : $objtype " if $DEBUG;
-
-    # Make device obj
-    $device = new $objtype(
-                            'DestHost'  => $hostname,
-                            'Community' => $community,
-                            'Version'   => $ver,
-                            'Retries'   => $retries
-                          );
-
-    unless (defined $device){
-        print "!  create_device($hostname) - Failed to create device of type $objtype.";
-        return undef;
-    }
+    $DEBUG and print "  Device Type : $class ";
 
     # Tag on some netdisco specific info to the SNMP::Info object.
-    $device->{_ip}       = &getip($hostname);
-    $device->{_dns}      = &hostname($device->{_ip});
-    $device->{_snmpver}  = $ver;
-    $device->{_snmpcomm} = $community;
-    $device->{_objtype}  = $objtype;
-
-    # Set the SNMP Debug level
-    $DEBUG and $device->debug($DEBUG);
+    $device->{ip}        = &getip($hostname);
+    $device->{dns}       = &hostname($device->{ip});
 
     return $device;
 }
@@ -578,7 +564,7 @@ Checks for root_ip() method, then tries to lookup the reverse entry for sysName.
 sub device_root {
     my $device = shift;
     
-    my $foundip = $device->{_ip};
+    my $foundip = $device->{ip};
 
     # use the device override
     my $root_ip = $device->root_ip();
@@ -606,16 +592,16 @@ sub store_device {
     print "  Fetching Device Info           : ";
 
     # Deal w/ devices with multiple IP address like most routers
-    my $foundip = $device->{_ip};
+    my $foundip = $device->{ip};
     my $devip = device_root($device);
-    $device->{_ip} = $devip;
+    $device->{ip} = $devip;
 
     if ($devip ne $foundip) {
         print "  Using $devip instead of $foundip " if $DEBUG;
 
         # Set device name to root, not alias
         my $new_dns = &hostname($devip);
-        $device->{_dns} = $new_dns if (defined $new_dns and length($new_dns));
+        $device->{dns} = $new_dns if (defined $new_dns and length($new_dns));
     }
 
     my $ip_index   = $device->ip_index();
@@ -661,10 +647,10 @@ sub store_device {
 
     my %store = ();
 
-    $store{ip}          = $device->{_ip};
-    $store{dns}         = $device->{_dns};
-    $store{snmp_ver}    = $device->{_snmpver};
-    $store{snmp_comm}   = $device->{_snmpcomm};
+    $store{ip}          = $device->{ip};
+    $store{dns}         = $device->{dns};
+    $store{snmp_ver}    = $device->snmp_ver();
+    $store{snmp_comm}   = $device->snmp_comm();
     $store{description} = $device->description();
     $store{uptime}      = $device->uptime();
     $store{contact}     = $device->contact();
@@ -687,7 +673,7 @@ sub store_device {
     
 
     print ".\n";
-    insert_or_update('device', {'ip' => $device->{_ip} },
+    insert_or_update('device', {'ip' => $device->{ip} },
                     \%store);
 }
 
@@ -701,7 +687,7 @@ sub store_interfaces {
     my $device = shift;
     
     print "  Fetching Interface Information : ";
-    my $ip = $device->{_ip};
+    my $ip = $device->{ip};
 
     # Delete old interface information (for dynamic,vlan...)
     sql_do(qq/DELETE from device_port where ip = '$ip'/);
@@ -765,7 +751,7 @@ sub find_neighbors {
    
     print "  Fetching Neighbor Information  : ";
 
-    my $ip = $device->{_ip};
+    my $ip = $device->{ip};
     my $c_ip       = $device->c_ip();
 
     unless ($device->hasCDP() or scalar keys %$c_ip){
@@ -978,7 +964,7 @@ for the given device, and then adds MAC addresses to the node table.
 sub walk_fwtable {
     my ($device,$dbports,$interfaces) = @_;
 
-    my $ip = $device->{_ip};
+    my $ip = $device->{ip};
     my $fw_mac     = $device->fw_mac();
     my $fw_port    = $device->fw_port();
     my $bp_index   = $device->bp_index();
@@ -2367,8 +2353,17 @@ sub add_user {
 }
 
 sub test {
-    &arp_dump;
-
+    local $netdisco::DB = 'Oracle';
+#    my $dbh = &dbh;
+#
+    my $rows = sql_rows('netdisco_vw2',['bldg']);
+#    my $rows = sql_rows('nsdfasdfasdfafetdisco_vw2',['bldg']);
+    print "found ", scalar(@$rows), " rows.\n";
+    #my $db_ports = sql_rows('device_port',['port'],{'ip'=>'169.233.7.231' });
+    #my @port_list = sort sort_port map {$_->{port}} @$db_ports;
+    #for (my $i=0;$i < scalar @port_list; $i++){
+    #    print "$i $port_list[$i]\n";    
+    #} 
 }
 
 
