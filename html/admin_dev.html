@@ -3,6 +3,7 @@
 <FORM ACTION="<% $r->uri %>" METHOD=GET> 
 <& SELF:list_queue &>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
+<INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
 <INPUT TYPE="submit" VALUE="Refresh Queue Listing">
 Finished Jobs: <SELECT NAME="old_jobs">
 % foreach my $num (qw/1 3 5 10 20 30 50 100/) {
@@ -15,6 +16,7 @@ Ignore Actions of type:
     <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
 % }
 </SELECT>
+[<A HREF="<%$r->uri%>">Reset</a>]
 </FORM>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
@@ -37,7 +39,7 @@ $nodes    => ''
 $confirm  => ''
 $old_jobs => 3
 $port     => ''
-@act_ignore => ('portcontrol','test')
+@act_ignore => ()
 </%args>
 <%shared>
 my $user      = $m->session->{user};
@@ -53,10 +55,11 @@ my %actions = (
              'refresh'     => ['Refresh Device',0]
            );
 # Globals
-my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,@arg_act_ignore);
+my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types);
 my $need_confirm = 0; my $commit = 0; my $odd = 0;
 my %logs = ();
 my $err =  '';
+my @act_ignore_default = qw/portcontrol test/;
 </%shared>
 %#
 %#
@@ -69,7 +72,8 @@ unless ($secure and $is_admin){
 
 # Move args to shared space for methods
 $arg_dev = $dev; $arg_act = $action;
-$arg_debug = $debug; @arg_act_ignore = @act_ignore;
+$arg_debug = $debug; 
+@act_ignore = @act_ignore_default unless scalar @act_ignore ;
 %logs = map {$_ => 1} @logs;
 
 
@@ -320,7 +324,6 @@ Debug Output
 <%perl>
 foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
     my $act    = $job->{action};
-    #next if grep(/^$act$/,@arg_act_ignore);
     my $entered = scalar localtime($job->{entered});
     my $start   = defined $job->{started} ? scalar localtime($job->{started}) : undef;
     my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : undef;
