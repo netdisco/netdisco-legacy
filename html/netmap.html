@@ -1,3 +1,17 @@
+% unless ($ok) {
+<H3>Map data missing</h3>
+
+Have you run <B><TT>netdisco -g</TT></B> yet?
+<P>
+netmap.gif : <% $have_gif ? "OK" : "unaccessible" %>.<BR>
+netmap.map : <% $have_map ? "OK" : $! %>.
+<P>
+You can also do this from the <A HREF="admin.html">Admin Panel</A> if you have
+administrative rights.
+%#
+% } else {
+%#
+%#
 <MAP NAME="netmap">
 <%perl>
 foreach my $line (@map){
@@ -15,6 +29,7 @@ foreach my $line (@map){
 </MAP>
 <IMG SRC="netmap.gif" ISMAP USEMAP="#netmap" BORDER=0>
 <BR>Map Data is <%$map_days%> days old.
+% }
 <h4>Key</h4>
 <TABLE BORDER=0>
 <TR>
@@ -45,13 +60,21 @@ foreach my $line (@map){
 <%init>
 my $comp = $m->current_comp;
 my $dir  = $comp->source_dir;
-open (MAP, "< $dir/netmap.map") or die "Can't open ImageMap!\n";
-my @map = (<MAP>);
-close (MAP);
-my $map_age = (stat("$dir/netmap.gif"))[9];
-$map_age = time - $map_age;
-my $secs_per_day = 60*60*24;
-my $map_days = sprintf("%-2.2f", $map_age/$secs_per_day);
+my $have_map = open (MAP, "< $dir/netmap.map");
+my (@map, $map_age, $secs_per_day, $map_days);
+
+my $have_gif = -r "$dir/netmap.gif";
+
+my $ok = ($have_map && $have_gif);
+
+if ($ok){ 
+    @map = (<MAP>);
+    close (MAP);
+    $map_age = (stat("$dir/netmap.gif"))[9];
+    $map_age = time - $map_age;
+    $secs_per_day = 60*60*24;
+    $map_days = sprintf("%-2.2f", $map_age/$secs_per_day);
+}
 </%init>
 <%method title>
 - Network Map UCSC \
