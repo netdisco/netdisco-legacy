@@ -68,18 +68,27 @@ if (!defined $db_port){
 } elsif (defined $db_port->{remote_ip}){
     $cmd = 'err';
     $err = "Port [ $ip / $port ] is an uplink port.  Control from netdisco not allowed."; 
+} else {
+        # Check for port alias/dns
+        my $dns = sql_scalar('device_ip',['dns'],{'ip'=>$ip,'port'=>$port});
+        $dns = sql_scalar('device',['dns'],{'ip'=>$ip}) unless defined $dns;
+        $db_port->{dns} = $dns;
 }
 
-if ($cmd eq 'switch' and (!defined $log or !length($log)) ){
-    $cmd = 'err';
-    $err = "You must add a log entry!";    
-}
+# Don't require log entry, only reason code.
+#if ($cmd eq 'switch' and (!defined $log or !length($log)) ){
+#    $cmd = 'err';
+#    $err = "You must add a log entry!";    
+#}
 if ($cmd eq 'switch' and (!$reason) ){
     $cmd = 'err';
     $err .= "You must select a reason for bringing the port $type\n";
 }
 
 if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
+    my $dir = $type;
+    $dir = 'enable' if $type eq 'up';
+    $dir = 'disable' if $type eq 'down';
     
     # Switch
     my $rv = system('/usr/local/netdisco/port_control',$ip,$port,$type);
@@ -91,18 +100,35 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
         $err = "Switching of port failed. ($rv)\n";
         # Log anyways.
         $log .= " [FAILED] Could not bring port $type. ($rv)"; $type = 'fail';
-    } 
 
     # Switch Succeeded - Update netdisco
-    else {  
+    } else {  
         insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$type});
         $cmd = 'log';
+
+        # Send E-Mail to Abuse
+        my $portctl_email = $netdisco::CONFIG{portctl_email};
+        # Pretty Print
+        if (defined $portctl_email){
+            my $dns = $db_port->{dns};
+            my $body = <<"end_body";
+........ n e t d i s c o .........
+  Device : $dns ($ip) 
+  Port   : $port
+  Action : $dir
+  User   : $user \@ $userip 
+  Reason : [$reason] - $Reasons{$reason}->[0]
+  Log    : $log
+
+end_body
+            mail($portctl_email,"port $dir $dns($ip)/$port",$body);
+        }
     }
 
     # Log attempt 
     insert_or_update('device_port_log', {},
                      {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
-                      'username'=>$user,'action'=>$type, 'reason' => $reason }
+                      'username'=>$user,'action'=>$dir, 'reason' => $reason }
                     ); 
 }
 
