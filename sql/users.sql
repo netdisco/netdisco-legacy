@@ -7,6 +7,6 @@ CREATE TABLE users (
     password        text,   -- md5 
     creation        TIMESTAMP DEFAULT now(),
     last_on         TIMESTAMP,
-    port_control    boolean,
-    admin           boolean
+    port_control    boolean DEFAULT false,
+    admin           boolean DEFAULT false
                     );
