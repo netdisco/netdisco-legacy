@@ -545,7 +545,7 @@ See F<README> for detailed configuration descriptions.
 
 Change settings on lines:
 
-    session_user
+    session_user_name
     session_password
     session_cookie_domain
 

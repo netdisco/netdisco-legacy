@@ -8,100 +8,114 @@ Max Baker <max@warped.org>
 
 =head1 DESCRIPTION
 
-Netdisco is a network administration and security tool.  
+Netdisco is an Open Source web-based network management tool.
+Designed for moderate to large networks, configuration information and
+connection data for network devices are retrieved by SNMP.  With Netdisco
+you can locate the switch port of an end-user system by IP or MAC address.
+Data is stored using a SQL database for scalability and speed.
 
-Netdisco will auto-discover the physical (layer 2) topology of a network using the Cisco Discovery Protocol (CDP), or work on a supplied topology.  
+Cisco Discovery Protocol (CDP) optionally provides automatic discovery of
+the network topology.  The network is inventoried by both device model and
+operating system (like IOS).  Netdisco uses router ARP tables and L2 switch  
+MAC forwarding tables to locate nodes on physical ports and track them by 
+their IP addresses.  For each node, a time stamped history of the ports it
+has visited and the IP addresses it has used is maintained.  Netdisco gets all
+its data, including CDP topology information, with SNMP polls and DNS queries.
+It does not use CLI access and has no need for privilege passwords.  Security 
+features include a wire-side Wireless Access Point (AP) locator.  
 
-Netdisco uses only SNMP to poll devices and does not require enable passwords.  
+Netdisco was designed and built at UCSC and is now hosted by Source Forge.
 
-Netdisco was designed and built at UCSC.
+See L<http://www.netdisco.org>
 
-Netdisco is hosted by Source Forge and lives at L<http://www.netdisco.org>.
+=head1 FEATURES
 
-=head1 FEATURES - OVERVIEW
+=head2 Switch Ports
 
-=over 
+From the web interface devices connected to switch and router ports are listed by 
+MAC address.  A history of which switch ports a MAC address has been seen at is 
+kept.  With a click the you can browse a network device connected to an uplink port.
+With another click you can disable or enable the switch port, logging the reason, user and
+date.
 
-=item -> Controllable through Web Interface or Command Line Interface (CLI)
+=over
 
-=item -> Database store for scalability and speed (Postgresql)
+=item * Central location to disable/enable switch ports.  
 
-=item -> Easily extendible to new network devices
+Network administrators can disable and enable ports without having to know enable or
+privilege passwords.  Reasons for switching on/off ports are logged for end-of-the-year 
+auditing and reporting.   Non-IOS savvy managers can control port access from a familiar
+browser interface.  This feature was designed with a University Residential Networks (ResNet)
+in mind.
 
-=item -> User system to restrict access and features 
-
-=back
-
-=head3 Network Security
-
-=over 
+Only users you specify in Netdisco will have access to switch off a port.  Netdisco
+will also not allow people to switch off uplink ports by accident.
 
 =item * MAC Address to switch port resolution
 
 =item * IP Address to switch port resolution
 
-=item * Logging 
-
-=item * Find Wireless Access Points (APs) from wired-side of network
-
 =item * Find Switch Ports with multiple nodes attached
 
-=item * Find nodes using multiple IP addresses.
+=item * Find nodes using multiple IP addresses
+
+=item * Find nodes by vendor (using MAC address OUI)
 
 =back
 
-=head3 Network Administration
+=head2 Easy Administration
+
+=over 
+
+=item * Controllable through Web Interface or Command Line Interface (CLI)
+
+=item * Database store for scalability and speed (Postgresql)
+
+=item * Easily extendible to new network devices
+
+=item * User system to restrict access and features 
+
+=back
+
+=head2 Network Administration and Security
 
 =over
 
 =item * Automatic inventory and search of network hardware
 
-=item * Administratively enable/disable switch ports from web interface with logging.
+=item * Administratively enable/disable switch ports from web interface with logging
 
 =item * Duplex Mismatch Finder
+
+=item * Find Wireless Access Points (APs) from wired-side of network
 
 =item * Layer Two Traceroute
 
 =back
 
-=head3 Reporting
+=head2 Reporting
 
 =over
 
-=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
+=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown
 
 =item * Statistics for number of actual nodes connected to network
 
-=item * Auto-archiving of data.  History of where a MAC address has shown up,
-and the IP addresses that have been associated with it.
-
-=item * Integration with Pinnacle Database.
+=item * Integration with Pinnacle Database
 
 =back
 
-=head3 Searches 
+=head2 Inventory of Network Devices
 
 =over
 
-=item * Device Model
+=item * by Operating System (IOS,CatOS,HP...)
 
-=item * Device Vendor
+=item * by Model, Vendor, OSI Layer, DNS Name
 
-=item * Device OSI Layers Served
+=item * Find device ports that are blocking (via Spanning Tree Protocol)
 
-=item * sysLocation field
-
-=item * sysDescr field
-
-=item * DNS Name
-
-=item * IP Subnet
-
-=item * OUI (MAC Address Vendor)
-
-=item * Device Ports that are blocking (via Spanning Tree Protocol)
-
-=item * Devices using IP's w/out DNS entries
+=item * Find devices using IP's w/out DNS entries
 
 =back 
 
@@ -232,6 +246,8 @@ ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 
 Backup.  Create backup data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"item_device">, and L<device_ip|"item_device_ip"> tables.
 Calls database cleanup routines (L<-K>) as well.
+
+For a full backup run C<sql/pg_dump>.
 
 =item -d 
 
