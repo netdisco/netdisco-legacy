@@ -273,15 +273,13 @@ my @show_cols = ();
 
 # Search on all text fields
 if (length($text)) {
-    $arg_exact = 0;
-    my $match = $m->comp('.match', 'match' => $text);
+    my $match = sql_match($text,0);
     push(@{$where->{'d.dns/i.dns'}},  $match);
     push(@{$where->{'d.name'}}, $match);
     push(@{$where->{'d.description'}}, $match);
     push(@{$where->{'d.location'}}, $match);
     push(@{$where->{'d.serial'}}, $match);
     $boolean = 'or';
-    $arg_exact = $exact;
 }
 
 # Generalized Search Terms
@@ -343,31 +341,31 @@ foreach my $vendor (@vendors){
 
 # Search on Location
 if (length($loc)){
-    my $match = $m->comp('.match', 'match' => $loc);
+    my $match = sql_match($loc,$exact);
     push(@{$where->{'d.location'}}, $match);
 }
 
 # Search on Description
 if (length($desc)){
-    my $match = $m->comp('.match', 'match' => $desc);
+    my $match = sql_match($desc,$exact);
     push(@{$where->{'d.description'}}, $match);
 }
 
 # Search on DNS entry
 if (length($dns)){
-    my $match = $m->comp('.match', 'match' => $dns);
+    my $match = sql_match($dns,$exact);
     push(@{$where->{'d.dns/i.dns'}}, $match);
 }
 
 # Search on sysName
 if (length($name)){
-    my $match = $m->comp('.match', 'match' => $name);
+    my $match = sql_match($name,$exact);
     push(@{$where->{'d.name'}}, $match);
 }
 
 # Search on IP
 if (length($ip)){
-    my $match = $m->comp('.match', 'match' => $ip);
+    my $match = sql_match($ip,$exact);
     push(@{$where->{'d.ip/i.alias'}}, $match);
     push(@show_cols,'d.name');
 }
@@ -415,30 +413,6 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
 
 my $time2 = time;
 </%init>
-%#
-%# .match(match) - Formats the match term for SQL a bit.
-%#
-<%def .match>
-<%args>
-$match
-</%args>
-<%perl>
-# Trim white space
-$match =~ s/^\s+//;
-$match =~ s/\s+$//;
-
-# Leave IS (not) NULL queries alone
-unless ($match =~ /^is\s+(not)?\s*null$/i){
-    # Otherwise, make  * and ? into % and _
-    $match =~ s/[*]+/%/g;
-    $match =~ s/[?]/_/g;
-    # Non-exact match means we add a * to both sides.
-    $match = '%'. $match . '%' unless $arg_exact;
-    $match =~ s/\%+/%/g;
-}
-return $match;
-</%perl>
-</%def>
 %#
 %# matches()  - Display search results stored in @$matches.
 %#
