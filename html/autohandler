@@ -35,6 +35,7 @@
 
 //-->
 </STYLE>
+<& SELF:html_head &>
 </HEAD>
 <BODY bgcolor="#f5deb3" text="black" LINK="#000099" ALINK="#000099" VLINK="#000099">
 <TABLE width="95%" HEIGHT="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0 id="page">
@@ -86,6 +87,9 @@ unless ($ok or $target eq 'login.html') {
 # For Logging, tell apache what user is in:
 $r->connection->user($m->session->{user}) if defined($m->session->{user});
 </%init>
+<%method html_head>
+\
+</%method>
 <%method title>
 \
 </%method>
