@@ -182,16 +182,16 @@ Log Entires to Show : <SELECT NAME="log_num">
 <TABLE BORDER=0 CELLSPACING=0 CLASS="box">
 <TR CLASS="match-1">
     <TD>Port :</TD>
-    <TD CLASS="tr_data-1"><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
+    <TD CLASS="tr-data-1"><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
 </TR>
 <TR CLASS="match-0">
     <TD>User :</TD>
-    <TD CLASS="tr_data-0"><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
+    <TD CLASS="tr-data-0"><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
     </TD>
 </TR>
 <TR CLASS="match-1">
     <TD>Reason :<BR>&nbsp;</TD>
-    <TD CLASS="tr_data-1"><SELECT NAME="reason" SIZE=1>
+    <TD CLASS="tr-data-1"><SELECT NAME="reason" SIZE=1>
 % $arg_reason = 'other' if $arg_cmd eq 'up';
 % foreach my $this_r (sort keys %Reasons){
         <OPTION VALUE="<%$this_r |h%>" <%$this_r eq $arg_reason ? 'SELECTED' : ''%>> \
@@ -206,12 +206,12 @@ Log Entires to Show : <SELECT NAME="log_num">
 </TR>
 <TR CLASS="match-0">
     <TD>Log:</TD>
-    <TD CLASS="tr_data-0"><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
+    <TD CLASS="tr-data-0"><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
     <BR>Enter a useful description why the port is being turned <% $arg_cmd eq 'down' ? 'off' : 'on' %>.
     </TD>
 </TR>
 <TR CLASS="match-1">
-    <TD COLSPAN=2 CLASS="tr_data-1"><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+    <TD COLSPAN=2 CLASS="tr-data-1"><INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
     </TD>
 </TR>
