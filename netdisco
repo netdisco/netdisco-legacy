@@ -78,8 +78,8 @@ config($configfile);
 # --------------------------------------------------------------
 #             Run Commands                                      
 # --------------------------------------------------------------
-defined $args{h} and die &usage;
-defined $args{v} and die &version;
+defined $args{h} and &usage;
+defined $args{v} and &version;
 
 #   Discovery
 defined $args{R} and &refresh_all;
@@ -118,7 +118,7 @@ defined $args{p} and &admin_daemon_ctl($args{p});
 defined $args{u} and &add_user;
 
 # Make sure we ran a command, else spit out the usage
-die &usage unless (join('',keys %args) =~ /[aABdeEFgiIkKmMnNOprRtTu]+/);
+&usage unless (join('',keys %args) =~ /[aABdeEFgiIkKmMnNOprRtTu]+/);
 exit;
 
 =head1 FUNCTIONS
@@ -2566,11 +2566,11 @@ sub version {
     print "Net-SNMP Version   : $SNMP::VERSION\n";
     print "SNMP::Info Version : $SNMP::Info::VERSION\n";
     print "Netdisco Version   : $VERSION\n";
-    return "\n";
+    exit;
 }
 
 sub usage{
-    return <<"_end_usage_";
+    print <<"_end_usage_";
 Network Discovery and Management
 
 netdisco [Options] Command(s)
@@ -2610,6 +2610,7 @@ Administration:
                                                   No args for Interactive
 
 _end_usage_
+    exit;
 }
 
 =head1 COPYRIGHT AND LICENCE
