@@ -87,9 +87,9 @@ $r->connection->user($m->session->{user}) if defined($m->session->{user});
 %#
 %#
 <%once>
-use lib qq#/usr/local/netdisco#;
-use netdisco qw/:all/; 
-config('/usr/local/netdisco/netdisco.conf');
+#use lib qq#/usr/local/netdisco#;
+#use netdisco qw/:all/; 
+#config('/usr/local/netdisco/netdisco.conf');
 my $path = $netdisco::CONFIG{webpath};
 </%once>
 <%method title>
