@@ -12,12 +12,12 @@
     TH { font-family:arial,helvetica,sans-serif; font-size:12pt; }
     TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
     INPUT { font-family:monospace; font-size:9pt; }
-    .otopbar { background-color:#2e8b57; color:#00bfff; text-align:center; 
-              font-family:arial,helvetica,serif; font-size:14pt; } 
-    .topbar { background-color:#8b7e66; color:#eed8ae; 
+    BODY { position:absolute; top:0; left:0; }
+    BODY, #page { margin:0; padding:0; width:100%; height:100%; }
+    .topbar { background-color:#8b7e66; color:#eed8ae; height:16pt;
               font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
-    .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align:center;
-              vertical-align:middle; font-family:arial,helvetica,serif; font-size:10pt; border:black; } 
+    .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; 
+              vertical-align:bottom; font-family:arial,helvetica,serif; font-size:10pt; }
     .sidebar-bg { background-color:darkblue; border:black; }
     .sidebar-0 { text-align:center; background-color:#eed8ae;}
     .sidebar-1 { text-align:center; background-color:#ffe7ba;}
@@ -37,10 +37,10 @@
 </STYLE>
 </HEAD>
 <BODY bgcolor="#f5deb3" text="black" LINK="#191970" ALINK="#191970" VLINK="#191970">
-<TABLE width="95%" height="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0>
+<TABLE width="95%" HEIGHT="95%" CELLSPACING=0 CELLPADDING=0 BORDER=0 id="page">
 <TR VALIGN=TOP>
-    <TD COLSPAN=2 class="topbar" height="5%">
-    <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
+    <TD COLSPAN=2 class="topbar" height="20">
+        <IMG SRC="<%$path%>/corner-tl.png" BORDER=0 ALIGN=TOP ALT="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N e t  d i s c o 
     </TD>
 </TR>
 <TR VALIGN=TOP>
@@ -52,7 +52,7 @@
     </TD>
 </TR>
 <TR>
-    <TD VALIGN=BOTTOM colspan=2 class="botbar">
+    <TD VALIGN=BOTTOM colspan=2 class="botbar" ALIGN=CENTER>
         Netdisco created for UCSC -&gt; Cats -&gt; NTS by Max Baker.  
     </TD>
 </TR>
