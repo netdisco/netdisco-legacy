@@ -1682,6 +1682,7 @@ sub change_device_ip {
     print "  Checking for Old Device ($from_ip)\n";
     unless (defined $OldDevices->{$from_ip}){
         print "  !$from_ip not found as device.\n";
+        return 0;
     }
 
     if (defined $Aliases->{$from_ip}) {
@@ -1699,23 +1700,24 @@ sub change_device_ip {
 
     unless (defined $OldDevices->{$to_ip}){
         print "  !Device $to_ip did not discover.  Not moving old entries to this one. Fix and run again.\n";
-        return;
+        return 0;
     } 
     
     print "  Removing Old Device its Aliases, and Ports\n";
     expire_device($from_ip);
     
+    print "  Moving old Nodes to New Device.\n";
+    sql_do(qq/UPDATE node set switch='$to_ip' where switch='$from_ip'/);
+
     # TODO - Check to see if the port numbers have stayed the same, otherwise 
     #        axe the old nodes.
 
-    print "  Moving old Nodes to New Device.\n";
-    sql_do(qq/UPDATE node set switch='$to_ip' where switch='$from_ip'/);
-    
+    return 1;
 }
 
 =item db_clean() 
 
-Removes all the entries in node_ip that are switch ports. 
+Removes all the entries in C<node> that are switch ports. 
 
 Checks for nodes on non existant ports and prints a warning
 
@@ -1999,7 +2001,7 @@ sub mac_dump {
     $BatchMode=$old_batch;
 }
 
-=item nightly() 
+=item nightly(no_batch)
 
 Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
 
@@ -2007,8 +2009,9 @@ Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
 
 =cut
 sub nightly {
+    my $no_batch = shift || 0;
     # Log backup
-    &batch_mode('logs/back',1);
+    &batch_mode('logs/back',1) unless (defined $no_batch and $no_batch);
     my $datadir = $CONFIG{datadir} || 'data';
     $datadir = "$CONFIG{home}/$datadir";
 
@@ -2033,7 +2036,7 @@ sub nightly {
     print "Running Database Vacuum...\n";
     &sql_do("VACUUM ANALYSE;");
 
-    &batch_mode_end;
+    &batch_mode_end unless $no_batch;
 }
 
 =back
@@ -2042,13 +2045,14 @@ sub nightly {
 
 =over
 
-=item graph() 
+=item graph(no_batch) 
 
 Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
 
 =cut
 sub graph {
-    &batch_mode('logs/graph');
+    my $no_batch = shift || 0;
+    &batch_mode('logs/graph') unless $no_batch;
     print "Creating Graphs.\n";
 
     my $G = make_graph();
@@ -2090,7 +2094,7 @@ sub graph {
         last;
     }
 
-    &batch_mode_end;
+    &batch_mode_end unless $no_batch;
 }
 
 =item graph_each(Graph_obj, name) 
@@ -2489,6 +2493,31 @@ sub admin_daemon_job {
         $job_error = port_switch($job); 
     }
 
+    # Global Tasks
+    elsif ($cmd eq 'expire_ips'){
+        &expire_ips;
+    }
+
+    elsif ($cmd eq 'graph'){
+        &graph(1);    
+    }
+
+    elsif ($cmd eq 'backup'){
+        &nightly(1);
+    }
+
+    elsif ($cmd eq 'change_ip'){
+        &change_device_ip($dev,$subaction);
+    }
+
+    elsif ($cmd eq 'clean_nodes'){
+        &db_clean;
+    }
+
+    elsif ($cmd eq 'clean_alias'){
+        &alias_clean;
+    }
+    
     else {
         print "Command $cmd not supported.\n";
         $job_error++;
@@ -2560,9 +2589,11 @@ Device Commands:
 Administration:
     -B         - Maintanance. Backups data to datadir. Database Cleanup.
     -g         - Create Graph and image-map files.
+    -i old new - Change IP Address of Device and its nodes
+    -k         - Clean Aliases. Deletes devices that are listed as aliases. Use with caution.
+    -K         - Clean Nodes that are on uplink ports
     -O         - Import oid.txt into database
     -p (start stop status restart) - Admin Daemon Control
-    -i old new - Change IP Address of Device and its nodes
     -u [user] [password] [port_control] [admin] - Add/Change User.
                                                   No args for Interactive
 
