@@ -258,7 +258,7 @@ $web_dns =~ s/\Q$domain\E//;
 <TR CLASS="match-<%++$odd %2%>">
     <TD><U>OS / Version</U></TD>
     <TD ALIGN=LEFT><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
-                   <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver}%></A>
+                   <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
     </TD>
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
@@ -288,14 +288,6 @@ $web_dns =~ s/\Q$domain\E//;
     </TD>
 </TR>
 % }
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U></U></TD>
-    <TD ALIGN=LEFT></TD>
-</TR>
-<TR>
-    <TD><U></U></TD>
-    <TD ALIGN=LEFT></TD>
-</TR>
 <%perl>
 # Print out each item in the database that we have using the 
 #   %device_info map.
@@ -341,8 +333,10 @@ my $log = $device->{log};
 if (defined $log and length($log)){
     my $logclass = ++$odd % 2;
 </%perl>
-    <TR CLASS="match-<%$logclass%>"><TD ALIGN=CENTER><u>Log</u></TD>
-    <TD ALIGN=LEFT><TEXTAREA ROWS=3 COLS="50" WRAP="soft"><%$log|h%></TEXTAREA></TD></TR>
+<TR CLASS="match-<%$logclass%>">
+    <TD ALIGN=CENTER><u>Log</u></TD>
+    <TD ALIGN=LEFT><TEXTAREA ROWS=3 COLS="50" WRAP="soft"><%$log|h%></TEXTAREA></TD>
+</TR>
 %}
 </TABLE>
 <& SELF:show_ports &>
