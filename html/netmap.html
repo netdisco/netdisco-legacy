@@ -13,18 +13,8 @@ administrative rights.
 %#
 %#
 <MAP NAME="netmap">
-<%perl>
-foreach my $line (@map){
-    my @entry = split(/\s+/,$line);
-    my $shape = shift @entry;
-    $shape =~ s/rectangle/RECT/i;
-    my $name  = pop @entry;
-    my $href  = pop @entry;
-    # the rest of entry is coordinates
-    my $coord = join(',',@entry);
-    $coord =~ s/[()]//g; 
-</%perl>
-    <AREA SHAPE="<% $shape %>" COORDS="<% $coord %>" HREF="<% $href %>" ALT="<% $name |h%>" TITLE="<%$name|h%>">
+% foreach my $line (@map){
+    <%$line%>
 % }
 </MAP>
 <IMG SRC="netmap.gif" ISMAP USEMAP="#netmap" BORDER=0>
