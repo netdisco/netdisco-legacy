@@ -23,7 +23,7 @@ CREATE TABLE device (
     fan          text,
     slots        integer,
     vendor       text,
-    log          text
+    log          text,
     last_discover TIMESTAMP,
     last_macsuck  TIMESTAMP,
     last_arpnip   TIMESTAMP
