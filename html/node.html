@@ -62,33 +62,56 @@ $archive = (defined $archives and $archives == 1) ? 1 : 0;
 $oui = $showoui;
 
 # Search by MAC
-$m->flush_buffer() if defined $node;
+if (defined $node){
+    $m->flush_buffer;
+    $node =~ s/^\s+//;
+    $node =~ s/\s+$//;
+}
 my $is_mac = defined $node ? &is_mac($node) : 0;
 if (defined $node and $is_mac) {
     my $where = { 'mac' => $node };
     $where->{'active'} = 1 unless $archive;
-   my $ips = sql_rows('node_ip',
+
+    # Lookup IPs associated with this MAC
+    my $ips = sql_rows('node_ip',
                 ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                 $where
                 );
-   my $ports = sql_rows('node',
+
+    foreach my $node_ip (@$ips){
+        $node_ip->{type} = 'ip';
+        $node_ip->{host} = hostname($node_ip->{ip});
+        $node_ip->{host} =~ s/\Q$domain\E//;
+        $node_ip->{oui}  = substr($node_ip->{mac},0,8);
+        push (@matches,$node_ip);
+    }
+
+    # Lookup what switch ports this MAC was seen at.
+    my $ports = sql_rows('node',
                 ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                 $where
                 );   
-   foreach my $node_ip (@$ips){
-       $node_ip->{type} = 'ip';
-       $node_ip->{host} = hostname($node_ip->{ip});
-       $node_ip->{host} =~ s/\Q$domain\E//;
-       $node_ip->{oui}  = substr($node_ip->{mac},0,8);
-       push (@matches,$node_ip);
-   }
 
-   foreach my $port (@$ports) {
-       $port->{type} = 'port';
+    foreach my $port (@$ports) {
+        $port->{type} = 'port';
         #TODO - Switch to db call
-       $port->{switchname} = &hostname($port->{switch});
-       $port->{switchname} =~ s/\Q$domain\E//;
-       push (@matches,$port);
+        $port->{switchname} = &hostname($port->{switch});
+        $port->{switchname} =~ s/\Q$domain\E//;
+        push (@matches,$port);
+    }
+
+    # Check the posibilty that this could be a switch port's MAC
+    my $switch_ports = sql_rows('device_port', 
+            ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
+            {'mac' => $node});
+
+    foreach my $sp (@$switch_ports){
+        $sp->{type} = 'swport';
+        $sp->{active} = 1;
+        $sp->{oui}  = substr($sp->{mac},0,8);
+        $sp->{switchname} = sql_scalar('device',['dns'],{'ip' => $sp->{ip}});
+        $sp->{switchname} =~ s/\Q$domain\E//;
+        push (@matches,$sp);
     }
 }
 
@@ -97,8 +120,10 @@ if (defined $node and !$is_mac) {
     my $hostname = &hostname($node);
     $hostname =~ s/\Q$domain\E//;
     my $realip = &getip($node);
+    # see if this is a listed device or one of its aliases.
     my $device = root_device($realip);
 
+    # Find MACs associated with this IP
     my $where = { 'ip'=>$realip};
     $where->{'active'} = 1 unless $archive;
     my $macs = sql_rows('node_ip',
@@ -107,6 +132,8 @@ if (defined $node and !$is_mac) {
                        );
 
     my @foundmacs = ();
+
+    # Add info to each entry
     foreach my $node_ip (@$macs){
         $node_ip->{host} = $hostname;
         $node_ip->{type} = 'host_ip';
@@ -116,6 +143,7 @@ if (defined $node and !$is_mac) {
         push (@foundmacs, $node_ip->{mac});
     }
 
+    # Get details for each MAC associated with this IP
     foreach my $mac (@foundmacs){
         $where = { 'mac' => $mac };
         $where->{'active'} = 1 unless $archive;
@@ -131,6 +159,20 @@ if (defined $node and !$is_mac) {
             push(@matches,$port);
         }
     }
+
+    # If the IP belongs to a device, but we have no info, must be a VLAN or unused ALIAS
+    if (!scalar @matches and $device) {
+        my $entry = {};
+        $entry->{type} = 'alias';
+        $entry->{mac} = $realip;
+        $entry->{active} = 1;
+        $entry->{dev}  = $device;
+        $entry->{dns}  = sql_scalar('device',['dns'],{'ip'=>$device});
+        $entry->{dns}  =~ s/\Q$domain\E//;
+        $entry->{ip} = $realip;
+        push (@matches,$entry);
+    }
+    
 }
 
 # Lookup OUI for matches
@@ -207,6 +249,13 @@ Did not find anything for <% $badmatch %>.
     <TD><A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>
     (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)
     </TD>
+% } elsif ($match->{type} eq 'swport'){
+    <TD>Switch Port</TD>
+    <TD><A HREF="device.html?ip=<%$match->{ip}|u%>&port=<%$match->{port}|u%>"><%$match->{switchname}%> / <%$match->{port}%></A></TD>
+% } elsif ($match->{type} eq 'alias'){
+    <TD>Device IP w/out MAC</TD>
+    <TD><A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> \
+(<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A></TD>
 %} else  {
     <TD>Bad Match</TD>
     <TD>Type : <%$match->{type}%></TD>
