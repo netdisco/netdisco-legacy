@@ -3,17 +3,12 @@
 <FORM ACTION="<% $r->uri %>" METHOD=GET> 
 <& SELF:list_queue &>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
-<TABLE>
-<TR>
-    <TD><INPUT TYPE="submit" VALUE="Refresh Queue Listing">
-        Finished Jobs: <SELECT NAME="old_jobs">
+<INPUT TYPE="submit" VALUE="Refresh Queue Listing">
+Finished Jobs: <SELECT NAME="old_jobs">
 % foreach my $num (qw/1 5 10 20 30 50 100/) {
-            <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
+    <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
 % }
-        </SELECT>
-    </TD>
-</TR>
-</TABLE>
+</SELECT>
 </FORM>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
@@ -24,11 +19,6 @@
 % } elsif ($cmd eq 'del') {
 <& SELF:del_dev &>
 % }
-</FORM>
-<h4>User Control</h4>
-<FORM ACTION="<% $r->uri %>" METHOD=POST>
-<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="user">
-
 </FORM>
 <%args>
 $dev     => undef
@@ -203,7 +193,7 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
 %# dev_control() - Prints out the device control menu form.
 %#
 <%method dev_control>
-<TABLE>
+<TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
 <TR>
     <TD>Choose Device : </TD>
     <TD>
@@ -223,9 +213,11 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
     <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text"></TD>
 </TR>
 <TR> 
-    <TD COLSPAN=4>
-        <INPUT TYPE="submit" VALUE="Queue Action">
-        [<A HREF="<%$r->uri%>">Clear</A>]
+    <TD COLSPAN=2>
+        <INPUT TYPE="submit" VALUE="Queue New Job">
+        [<A HREF="<%$r->uri%>">Reset</A>]
+    </TD>
+    <TD COLSPAN=2>
         Debug :
         <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
     </TD>
@@ -249,7 +241,7 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
 %#
 <%method list_queue>
 % return unless scalar @$queue;
-<TABLE WIDTH=100%>
+<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0> 
   <TR>
     <TH>Job</TH>
     <TH>Action</TH>
