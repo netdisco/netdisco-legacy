@@ -108,7 +108,7 @@ $Log               = (!$BatchMode and ($DEBUG or defined $args{L})) ? 0 : 1;
 # Parse Config File
 config($configfile);
 # Print Header
-&header if ((join('',keys %args) =~ /[aABdeEFgIikKmMOprRTu]+/) and !$BatchMode);
+&header if (grep(/^([aABdeEFgIikKmMOprRTu]|expire-nodes-subnet)$/,keys %args) and !$BatchMode);
 
 # --------------------------------------------------------------
 #             Run Commands                                      
@@ -128,14 +128,11 @@ if (defined $args{F} or defined $args{T}) {
 }
 
 #   Mac Sucking
-#defined $args{M} and &load_old_devices;
-#defined $args{M} and &mac_getportmacs;
 defined $args{M} and &macsuck($args{M});
 defined $args{m} and &macwalk;
 
 #   Arp Nipping
 defined $args{a} and &arpwalk;
-defined $args{A} and &mac_getportmacs;
 defined $args{A} and &arpnip($args{A});
 
 #   Other
@@ -154,7 +151,7 @@ defined $args{u} and &add_user;
 defined $args{'expire-nodes-subnet'} and &expire_nodes_subnet($args{'expire-nodes-subnet'});
 
 # Make sure we ran a command, else spit out the usage
-&usage unless (join('',keys %args) =~ /[aABdeEFgiIkKmMnNOprRtTu]+/);
+&usage unless ( grep(/^([aABdeEFgiIkKmMnNOprRtTu]|expire-nodes-subnet)$/,keys %args) );
 exit;
 
 =head1 FUNCTIONS
@@ -785,6 +782,8 @@ sub arpnip {
     my $ip = getip($hostname);
 
     print "arpnip($hostname)\n";
+
+    &mac_getportmacs unless defined $PortMAC;
 
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
 
@@ -2069,6 +2068,7 @@ sub expire_nodes_subnet {
 
     unless (defined $devices and scalar @$devices){
         print "No devices found in subnet $subnet.\n";
+        print "Are you sure you specified the subnet CIDR format? Eg. 192.168.0.0/24\n";
         return;
     }
 
