@@ -299,63 +299,15 @@ if ($port =~ /^\d+$/){
 }
 
 # Load Ports from database :
-my $db_ports = $m->comp('SELF:db_ports',hub_ip => $hub_ip);
+my $db_ports =  $m->comp('SELF:db_ports',hub_ip => $hub_ip);
 
-my $parse_cards = 0; my $parse_reg = '';
-# Cisco 292x - FastEthernet1/35
-if ($port =~ /^FastEthernet\d+\/\d+$/){
-    $parse_cards++;
-    $parse_reg = '^FastEthernet(\d+)\/(\d+)$';
+# New Method, let sort_port do the math and we're golden?
+my @ports_sorted = map {$_->{port} } sort {sort_port} @$db_ports;
+for (my $i=0; $i<@ports_sorted; $i++){
+    #$m->out($i+1 . " $ports_sorted[$i]<BR>\n");
+    return $i+1 if $ports_sorted[$i] eq $port;
 }
-
-# Cisco 5500 - 10.1
-if ($port =~ /^\d+\.\d+$/){
-    $parse_cards++;
-    $parse_reg = '^(\d+)\.(\d+)$';
-}
-
-# HP 410x - C15
-if ($port =~ /^[a-zA-Z]{1}\d+$/){
-    $parse_cards++;
-    $parse_reg = '^([a-zA-z]{1})(\d+)$';
-}
-
-# Get number of ports in each card
-my %max_port;
-foreach my $dev_port (@$db_ports){
-    $dev_port = $dev_port->{port};
-    # find the largest port for each card: 
-    if ($dev_port =~ /$parse_reg/){
-        my $dev_card = $1; my $dev_sub_port = $2; 
-        $max_port{$dev_card} = $dev_sub_port 
-            if (! defined $max_port{$dev_card} 
-                  or $max_port{$dev_card} < $dev_sub_port
-               );
-    }
-}
-
-# Add on the number of ports for each card above
-if ($parse_cards and $port =~ /$parse_reg/){
-    my $card = $1;  my $sub_port = $2;
-
-    # Don't bother calculating if we're the first card
-    return $sub_port if ($card  =~ /^(0|a|A|FastEthernet0)$/);
-
-    # Go through each card and add ports if card is above us
-    foreach my $dev_card (keys %max_port){
-        # See if the card names are alpha, check for lower alpha
-        if ($dev_card =~ /^[a-z]$/i){
-            # hope that there is no case mixing in port names
-            $sub_port += $max_port{$dev_card} if (ord($dev_card) < ord($card));
-        }
-
-        # Numeric Card Names
-        if ($dev_card =~ /^\d+$/){
-            $sub_port += $max_port{$dev_card} if ($dev_card < $card);
-        }
-    }
-    return $sub_port;
-}
+return undef;
 </%perl>
 </%method>
 %#
@@ -370,22 +322,7 @@ $port
 </%args>
 <%perl>
 my $db_ports = $m->comp('SELF:db_ports',hub_ip => $hub_ip);
-# Remove VLANs from port list
-my @db_ports_cleansed = ();
-
-foreach my $p (@$db_ports){
-    foreach my $k (keys %$p){
-        #warn "$k $p->{$k}\n";
-    }
-    #warn keys(%$p),"\n";
-    next if (defined $p->{type} and $p->{type} =~ /(^53)/i );
-    push(@db_ports_cleansed,$p->{port});
-}
-# TODO: WTF
-#warn ("port list1 : ",join(',',@db_ports_cleansed),"\n");
-my @port_list = sort sort_port @db_ports_cleansed;
-#warn ("port list2: ",join(',',@port_list),"\n");
-## Check for out of range index
+my @port_list = map { $_->{port} } sort {sort_port} @$db_ports;
 return undef if $port >= scalar @port_list;
 return $port_list[$port-1];
 </%perl>
@@ -399,8 +336,15 @@ $hub_ip
 </%args>
 <%perl>
 return $db_ports_cache{$hub_ip} if defined $db_ports_cache{$hub_ip};
-$db_ports_cache{$hub_ip} = sql_rows('device_port',['ip','port','type'],{'ip'=>$hub_ip});
-return $db_ports_cache{$hub_ip};
+my $ports = sql_rows('device_port',['ip','port','type'],{'ip'=>$hub_ip});
+my @ports_no_vlans = ();
+foreach my $p (@$ports){
+    my $type = $p->{type} || '';
+    next if ($type eq '53' or $type =~ /vlan/i);
+    push(@ports_no_vlans,$p);
+}
+$db_ports_cache{$hub_ip} = \@ports_no_vlans;
+return $ports;
 </%perl>
 </%method>
 %#
