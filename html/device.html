@@ -428,7 +428,7 @@ foreach my $port (sort sort_port @$ports){
     #   in our database. Consider an SNMP problem.  Or consider your routes off-site
     #   where your ISP might squawk CDP, but we don't have SNMP.  We don't want to
     #   allow people to turn those off.
-    my $is_uplink   = (defined $remote_ip and (defined $remote_type and $remote_type !~ /ip.phone/i)) ? 1 : 0;
+    my $is_uplink   = (defined $remote_ip and !(defined $remote_type and $remote_type =~ /ip.phone/i)) ? 1 : 0;
     my $class = $up eq 'down' ? 'port-down' : 'port-up';
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking, but not down
