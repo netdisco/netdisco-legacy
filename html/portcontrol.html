@@ -17,7 +17,7 @@ $reason => ''
 my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num);
 my $user      = $m->session->{user};
 my $port_ctl  = $m->session->{user_port_ctl};
-my $secure    = $r->subprocess_env('https');
+my $secure    = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $userip    = $r->connection->remote_ip; 
 my $odd = 1 ;
 my %Reasons = ( 
@@ -50,7 +50,7 @@ my %Reasons = (
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
-unless ($secure eq 'on' and $port_ctl and $cmd =~ /^(up|down|log|err|switch)$/) {
+if ($cmd =~ /^(up|down|switch)$/ and (!$port_ctl or !$secure)) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
