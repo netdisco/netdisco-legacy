@@ -12,7 +12,7 @@ then
 	echo -n "This will nuke all the data in the table.  You Sure (y/n)?"
 	read REPLY
 	if [ "$REPLY" = "y" ]; then
-		psql -e -U $DB $DB -f $1
+		psql -e -f $1 -U $DB $DB
 	else
 		echo "Never Mind"
 	fi
