@@ -1,0 +1,696 @@
+=head1 NAME
+
+Netdisco - Network Management and Discovery
+
+=head1 AUTHOR
+
+Max Baker <max@warped.org>
+
+=head1 DESCRIPTION
+
+Netdisco is a network administration tool that will auto-discover the physical (layer 2) topology of 
+a network using the Cisco Discovery Protocol (CDP).  Netdisco uses only SNMP to poll devices and does
+not require enable passwords.  A read-only SNMP community string is all that is required.
+
+
+Netdisco has three components :
+
+=over 4
+
+=item 1. Backend 
+
+The backend talks to devices via SNMP.  Contained in the backend is the logic to create the topology,
+collect statistics and generate graphs. 
+
+=item 2. Database
+
+Netdisco uses PostgreSQL to store all its information.  Careful abstraction of the database calls
+means that Netdisco can be ported to another SQL platform easily.
+
+=item 3. Frontend
+
+The frontend operates on stored data only.  This abstraction is both for speed and security.
+
+The number of people using netdisco can scale with the web server capacity, and will create no extra load
+on the devices. 
+
+=back
+
+Netdisco was custom built for UCSC
+
+=head1 GLOSSARY
+
+=over 4
+
+=item Device
+
+Any device connected to the network that contributes to the physical topology.
+Devices need to be accessible via SNMP.  A device usually has multiple interfaces
+(ports) and can have multiple IP addresses.
+
+=item Node
+
+A node is anything connected to a device.   Nodes are uniquely identified by their
+MAC addresses.  A node may or may not have IP addresses associated with it.
+
+=back
+
+=head1 FEATURES
+
+=over
+
+=item * Database backend for speed and scalability
+
+=item * MAC Address to switch port resolution
+
+=item * IP Address to switch port resolution
+
+=item * Auto-archiving of data.  History of where a MAC address has shown up,
+and the IP addresses that have been associated with it.
+
+=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
+
+=item * Layer Two traceroute
+
+=item * Automatic inventory and search of network hardware
+
+=item * Statistics for number of actual nodes connected to network
+
+=item * Duplex Mismatch Finder
+
+=item * Logging 
+
+=item * Search on :
+
+=over
+
+=item * Device Model
+
+=item * Device Vendor
+
+=item * Device OSI Layers Served
+
+=item * sysLocation field
+
+=item * sysDescr field
+
+=item * DNS Name
+
+=item * IP Subnet
+
+=back 
+
+=item * Search by OUI (MAC Address Vendor)
+
+=item * Search for Wireless Access Points (APs) from wired-side of network
+
+=item * Search for Device Ports with multiple Nodes attached
+
+=item * Search for Nodes with multiple IP addresses
+
+=item * Search for Devices using IP's w/out DNS entries
+
+=back
+
+Netdisco is a I<pure-Perl> product.
+
+=head1 INSTALL AND REQUIREMENTS 
+
+Netdisco Requires:
+
+=over 4
+
+=item - Perl              (5.005,5.6.1,5.8.1... something stable)
+
+=item - PostgreSQL        (7 recommended)
+
+=item - Net-SNMP 5        (4 may work)
+
+=item - Mason             (see L<INSTALL|INSTALL> or L<"http://www.masonhq.com">)
+
+=item - Apache/mod_perl   (recommended not required)
+
+=item - OtherPerl Modules (see L<INSTALL|INSTALL>)
+
+=item - SNMP::Info        (Perl module designed for Netdisco)
+
+=item - Graphviz          (Open Source graphing software for network map)
+
+=item - MIBS              (SNMP MIBs for your devices)
+
+=back
+
+see L<INSTALL|INSTALL> for full instructions
+
+=head1 USING NETDISCO
+
+=head2 Command-Line Options
+
+=over
+
+=item -b
+
+Batch Mode.  Redirect output to log file.  Log file directory set in configuration file 
+under L<"datadir">.
+
+=item -C
+
+Set Config file. Default is netdisco.conf.
+
+=item -D
+
+DEBUG.  Sends copious information to STDOUT
+
+=item -L 
+
+No Log.  This will not add entries to the L<"log"> table.
+
+=item -n
+
+Delete Nodes.  Used with L<"-E"> only.
+
+=item -N 
+
+New Only.  On a network discovery L<"-r">, only discover found devices that aren't in the database. 
+
+=item -S
+
+Debug.  carp() SQL commands.  Sets $netdisco::SQLCARP to 1.
+
+=item -V
+
+archiVe nodes.  Used with L<"-e"> only.
+
+=back
+
+=head2 Command-Line Commands
+
+=over
+
+=item -a
+
+Arp Walk.  ArpNip each device that has Layer 3 capabilities.
+
+=item -A
+
+ArpNip.  ArpNip's a single device.  See L<"ArpNipper"> in Design.
+
+=item -B
+
+Backup.  Create backup data files for node,node_ip,device, and device_ip tables.
+
+=item -d 
+
+Discover Device.   
+
+=item -e
+
+Expire Nodes for given device. Use L<"-V"> to archiVe instead of delete.
+
+=item -E 
+
+Expire given device. Use L<"-n"> to delete nodes as well.
+
+=item -F 
+
+Discover Device from given File.   Used to restore backed up info from L<"-B">, and to 
+discover devices that are not available through topology information.  Use L<"-T"> to 
+only import Topology Information.
+
+=item -g
+
+Graph.  Creates graph -- both GIF and ImageMap.
+
+=item -i
+
+Change IP address of device.  Creates new entry, removes old one and moves nodes
+over to the new one. 
+
+=item -k
+
+alias klean-up.  DANGEROUS.  Deletes from the F<device> table any 
+IP address that is found as an alias in the F<alias> table.
+
+=item -K
+
+node Klean-up. DANGEROUS.  Deletes nodes matching: 
+
+=over 
+
+=item 1. MAC Addresses that are Switch Port Addresses
+
+=item 2. MAC Addresses that are listed on non-existant ports
+
+=item 3. MAC Addresses that exist on ports with topology information (uplink ports)
+
+=back
+
+=item -m
+
+Mac Suck each device in the database that has Layer 2 capabilities.
+
+=item -M
+
+Mac Suck given device only.
+
+=item -O
+
+Import OUI information from oui.txt
+
+=item  -r 
+
+Walk the network with the given root.  Use L<"-N"> to discover new devices only.  Given root device
+will always be discovered.
+
+=item -R 
+
+Refresh devices.  Will run a discover (L<"-d">) for each device in the database.
+
+=back
+
+=head2 Tasks
+
+=over
+
+=item Refreshing a device
+
+To refresh the device and its ports, use the L<"-d"> command:
+
+C<netdisco -d mydevice>
+
+Remember to re-import the topology information (see below) if the device needs 
+manual topology data.
+
+=item Importing Topology Information
+
+To import topology information, make sure the topology filename is set in netdisco.conf
+and use the L<"-T"> command:
+
+C<netdisco -T>
+
+=item Aborting a job
+
+Hit Ctrl-C if you are running the job, or send the job the INT signal. The job can cleanup after itself,
+write out its stats and log entries. 
+
+C<kill -INT jobpid>
+
+=item Changing the IP Address of a Device
+
+If a device is being replaced with a different device and a different IP, see L<"Deleting a Device">
+below.
+
+C<netdisco -i old-ip-address new-ip-address>
+
+Changing the IP address of a device will:
+
+=over
+
+=item Discover the new device
+
+=item Remove Old Device Entry, port, and aliases
+
+=item Move the old nodes to the new device.
+
+=back
+
+=item Deleting a Device
+
+To delete a device use the L<"-E"> command followed by the device name or IP.  Set L<"-n"> to 
+delete all the nodes seen on that device as well 
+
+This is rather permanent.  Make sure you run L<"-B">ackup before you do this.
+
+=item Deleting Nodes
+
+To delete nodes you have two options : Database Cleanup or Expire Nodes
+
+Expire Nodes will delete (or archive) all the nodes for one device using the L<"-e"> command.
+
+Database Cleanup L<"-K"> will delete nodes that seem to be extraneous.  See L<"-K"> for more details.
+
+This is rather permanent.  Make sure you run L<"-B">ackup before you do this.
+
+=item Adding / Changing Users
+
+C</usr/local/apache/bin/htpasswd /usr/local/netdisco/users.pw newusername>
+
+=back
+
+=head2 Cron Jobs
+
+Netdisco is controlled via cron jobs.  Jobs are run as user ``netdisco''.   Mulitple jobs
+can be run at once. 
+
+The default jobs are :
+
+=over
+
+=item * MacSuck - Every 4 hours MacSuck all the devices in the database.
+
+=item * ArpNip  - Every 4 hours ArpNip  all the devices in the database. (Offset from Macsuck by 2 hours)
+
+=item * Refresh Devices - Once a day refresh device information.
+
+=item * Backup - Once a day backup information.
+
+=item * Graph - Once a day re-create the graph.
+
+=item * Walk Network - Once a week (Wed @ 14:00) try and discover new devices.
+
+=back
+
+=head2 Config File (netdisco.conf)
+
+These settings are used both in the back-end and the front-end for Netdisco.
+
+Multiple config files can be created, and then used by calling netdisco with the
+-C option:
+
+    ``netdisco -C myotherfile.conf''
+
+=head3 General Items
+
+=over 
+
+=item domain
+
+Trimmed from all DNS names viewed.  Leave blank to show all domain names.
+
+=item topofile
+
+Full path of the file that contains manual topology information.  Defaults to
+netdisco-topology.txt
+
+=item datadir
+
+Full path to the directory that backups and logs will be stored in
+
+=item compress
+
+Full path and command line arguments to the compression program used in L<compresslogs>
+
+=item compresslogs 
+
+Set to true to compress log files.  See L<compress> entry above.
+
+=item logextension
+
+The extension to add to log files.
+
+=item ignore_private_nets
+
+Set to true to ignore aliases that are part of private nets:
+
+    10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24  
+
+=item webpath
+
+URL Path added to the beginning of links on the web front-end
+
+=item timeout
+
+Timeout for refreshing or discovering a device (in seconds).
+
+=item macsuck_no
+
+Comma Separated list of devices not to use when macsucking.
+
+=item macsuck_timeout
+
+Timeout in seconds for devices when mac sucking.
+
+=back
+
+=head3 Database Settings
+
+=over
+
+=item db
+
+Database name
+
+=item dbuser
+
+Database user
+
+=item dbpw
+
+Database Password
+
+=back
+
+=head3 SNMP Settings
+
+=over
+
+=item community
+
+A comma separated list of community strings to try on each device.
+
+=item snmpver
+
+Default version to connect with via SNMP.
+
+=item snmpretries
+
+Settings for 'Retries' field passed to SNMP::Session
+
+=back
+
+=head3 Graph Settings
+
+=over
+
+=item graph
+
+Full path and name to the GIF graph of the network.  Path should be the same
+as the netmap.html component.
+
+=item graph_timeout
+
+Time in minutes to allow C<neato> to try and solve the graph.  Default 60min.
+
+=item graph_map
+
+Full path and name to the ISMAP data for the network.  Path should be the 
+same as the netmap.html component.
+
+=item graph_epsilon
+
+Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
+Set to an integer value.  This will improve the mapping and visual quality of
+them graph. Each integer step can mean an exponential time increase in the solving
+of the graph.
+
+=item graph_x, graph_y
+
+The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
+100 (96 actually).  So 30x30 will give you a graph that is about 3000x3000 pixels wide.
+
+=item graph_fontpath
+
+Full path to the True Type Font (TTF) used in L<node_font>.
+
+=item graph_bg
+
+Background color for the graph.
+
+=item graph_color
+
+Text color for the graph
+
+=item graph_overlap 
+
+Parameter passed to GraphViz for the overlap="" feature.
+
+=item node_shape
+
+Default shape for device
+
+=item node_fillcolor
+
+Default background color for device
+
+=item node_font
+
+Name of the True Type Font used for label of node.  See L<graph_fontpath> above.
+Exclude .ttf in name.
+
+=item node_fontsize
+
+Size of text in Pixels.  Note that for the graph_overlap=scale option, the font gets scaled down
+and so an oversized font is used.
+
+=item node_fontcolor
+
+Color of text
+
+=item node_style
+
+Default style of device, normally filled.
+
+=item node_problem
+
+Color to use for devices that are not accessable
+
+=item edge_color
+
+Default color for link between devices.
+
+=item node_map
+
+Colon separated list of values.  Multiple node_map entries can exist.
+Entry is in format:
+    
+    Variable:Regular Expression:Attribute:Value
+
+Variables that you can use include : label,ip
+
+Attributes can be any node attribute usable in GraphViz, such as fillcolor and color
+
+Examples:
+
+    label:cat(?!-g):fillcolor:blue
+
+If the label (dns name) matches cat, but not cat-g, make it blue
+
+    ip:^169\.233:color:yellow
+
+If the IP address of the device starts with 169.233, then make the border around the 
+device yellow.
+
+=back
+
+=head2 Logs
+
+=head1 DESIGN
+
+=head2 Design Goals
+
+=over 4
+
+=item * Use of SNMP Leaf Names only; No OIDs
+
+=item * Easily extendable to new devices. No device-specific hacks in logic
+
+=item * Modular backend-database-frontend setup
+
+=item * Security.  Front-end abstraction from device manipulation means 
+sensitive network devices are not exposed to a web interface .
+
+=item * Data Archiving.  Data structures and backup routines to provide
+online and offline storage of network structure and usage.
+
+=item * Highly Configurable.  Extract out all possible options to F<netdisco.conf>
+and avoid site-specific code.
+
+=back
+
+=head2 Backend Components
+
+=over 4
+
+=item netdisco.pm
+
+Perl Module that holds all the SQL interaction routines as well as some
+helper routines.  Used by both the backend and frontend. 
+
+=item SNMP::Info
+
+Perl Modules created for this project that are used to provide the interaction
+between the device and Netdisco over SNMP.  All device-specific changes are 
+done in these modules.
+
+=item Network Walker
+
+Using a device as a starting point (root), the walker then tries to visit every
+device directly connected to the starting point.  Neighboring devices are found
+with CDP.  
+
+Design inspiration and ideas from the most excellent Nedi project (L<"http://nedi.web.psi.ch">), written
+by Remo Rickli.
+
+=item ArpNipper 
+
+The ArpNipper is visits each discovered device with Layer 3 capabilities.
+Each device's ARP Cache is read and the IP address to MAC address translation is stored
+in the B<node_ip> table. 
+
+The original ArpNipper was written by Jim Warner (warner@ucsc.edu)
+
+=item MacSucker
+
+The MacSucker visits each device with Layer 2 capabilities.
+Each device's Forwarding Table is read.  MAC addresses that are on ports without
+a physical mapping (virtual ports) are skipped.  MAC Addresses on ports with a
+neighbor recorded are skipped (uplink ports).  MAC Addresses that are actually 
+switch ports are skipped.  The remaining MAC addresses are recorded
+as nodes in the B<nodes> table.  
+
+If the device supports the v_name() call, and has VLANs, then the MacSucker tries to 
+connect to each VLAN and macksuck() each VLAN.  This is required for some devices like
+the Cisco Catalyst 5000 series.
+
+The original MacSucker was written by Mark Boolootian (booloo@ucsc.edu)
+
+=item Helper Routines
+
+All the routines for creating backups, logging, etc.
+Extract more info with C<pod2text netdisco E<gt> netdisco.txt>, 
+or just browse the source code.
+
+=back
+
+=head2 Database
+
+Netdisco uses PostgreSQL as its database store.  Indexing is used heavily to speed up 
+queries and facilitate large data sets.   See the sql/ directory and L<INSTALL|INSTALL>
+for more information.
+
+=head3 SQL Tables 
+
+=over
+
+=item device
+
+Holds device information.  Each device is identified by unique IP Address. 
+
+=item device_ip
+
+Holds alias IP Addresses for devices.  Each device can have multiple IP's stored 
+in this table.  The master IP address is either taken from SNMP information or 
+from the reverse DNS entry of the device name.  Also used to link a certain alias
+to a port.
+
+=item device_port
+
+Holds the interface (port) information for each device.  One row for each interface
+exists with information about the port status.
+
+=item log
+
+Holds log entries for human use.
+
+=item node
+
+Holds an entry for each MAC address connected to the network that isn't a device. Tells
+on which switch port the node was seen, and when it was seen there.  Also holds the archived
+data on node location.  Archived data has the column ''active'' set to false. Data comes from 
+L<"MacSucker">
+
+=item node_ip
+
+Maps a MAC Address to an IP address.  Has no notion of where this node was seen.   Keeps
+time stamps of when this is from.  Data comes from L<"ArpNipper">.  Archived data is similar
+to the L<"node"> table, where ``active'' is set to false for archived data.
+
+=item oui
+
+Populated with data from oui.txt  Oui.txt contains the Organizationally Unique Identifiers (OUI) that 
+map a MAC address to a vendor.  The database is controlled by the IEEE.  See L<INSTALL|INSTALL> for more
+information.
+
+=back
+
+=cut

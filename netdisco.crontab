@@ -1,0 +1,22 @@
+# Netdisco - crontab
+#       This is the crontab for the netdisco user
+#       Output is found in /data/netdisco/logs
+
+# Mac Suck every 4 hours (takes up to two hours)
+0 2,6,11,14,18,22 * * * /usr/local/netdisco/netdisco -b -m 
+# 10 -> 11 to give time to finish 9am refresh
+
+# Arp Nip every 4 hours
+0 0,4,8,12,16,20 * * *  /usr/local/netdisco/netdisco -b -a 
+
+# Walk network for new devices once a week (Wed @ 14:00)
+0 14 * * 3      /usr/local/netdisco/netdisco -b -r commcat 
+
+# Refresh Devices at 9:00 every day
+0 9 * * *      /usr/local/netdisco/netdisco -b -R 
+
+# Backup at 1am every day
+0 1 * * *       /usr/local/netdisco/netdisco -b -B 
+
+# Refresh Graph every day
+0 3 * * *       /usr/local/netdisco/netdisco -b -g 

@@ -1,0 +1,12 @@
+#!/bin/sh
+#pg_all - Max Baker <max@warped.org>
+# 	run pg_run on all the tables in this dir.
+
+echo "If a password is required, it will ask you for it for every table =["
+echo ""
+for file_name  in *.sql ;
+do	
+	echo "[ $file_name ]"
+	./pg_run $file_name;
+	echo ""
+done;

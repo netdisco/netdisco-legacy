@@ -1,0 +1,280 @@
+=head1 NAME
+
+INSTALL - Instructions for setting up Netdisco
+
+=head1 AUTHOR
+
+Max Baker
+
+=head1 REQUIREMENTS
+
+=over 
+
+=item * Perl       (5.6.1 and newer advised)
+
+=item * Perl Modules (see below)
+
+=item * Net-SNMP   (5.0.2 and newer advised)
+
+=item * PostgreSQL (7.2   and newer advised)
+
+=item * Mason      (1.14 or newer required)
+
+=item * Apache     (1.3.x advised)
+
+=item * mod_perl   (version to match Apache)
+
+=item * GraphViz   
+
+=back
+
+=head1 INSTALL
+
+=over 
+
+=item 1. Uncompress the netdisco archive 
+
+=item 2. Create a directory for netdisco 
+
+Default F</usr/local/netdisco>
+
+=item 3. Create a user and group for netdisco  
+
+Default C<netdisco / netdisco>
+
+=item 4. Add Users who will be able to manage netdisco to the group created.
+
+=item 5. Modify F<netdisco.conf> to match your site.  
+
+See F<README> for detailed configuration descriptions.
+
+=item 6. Follow the Instructions below for each required piece of software
+
+=item 7. Try to discover a device with 
+
+C<./netdisco -d devicename>
+
+=item 8. Once you're sure netdisco is setup correctly, add the CRON jobs by first
+modifying F<netdisco.crontab>  then as root :
+
+C<cron -u netdisco netdisco.crontab>
+
+=back
+
+=head2 PostgreSQL
+
+[Add permissions blurb here]
+
+=over 
+
+=item 1. Change database settings in F<sql/pg_init>
+
+=item 2. Change database settings in F<sql/pg_run>
+
+=item 3. Create Database.
+
+As root (or the database user F<pgsql>) run C<sql/pg_init> to create 
+the database and user for Netdisco.  The password you will be asked
+for twice is the new password for the database user you are creating. 
+This is the same password you will be putting in F<netdisco_apache.conf>
+and in F<netdisco.conf>.
+
+=item 4. Check Settings
+
+Now as a non-privledged user make sure you can get into the database by running 
+C<sql/pg_run>.  Enter the database user password created above. 
+
+=item 5. Create Tables
+
+Once you are sure the database is setup correctly, create the database 
+tables with C<sql/pg_all>.  Type in the database user password once for each
+table.
+
+=back
+
+=head2 Apache
+
+=over
+
+=item 1. Install Apache 1.3.x and mod_perl 1.x
+
+If you haven't installed apache and mod_perl before, below is the method
+I usually use to statically include mod_perl, but leave the rest of the 
+modules as dynamically loadable objects (DSO).
+
+=over
+
+=item Download and unarchive
+
+http://httpd.apache.org and http://perl.apache.org
+
+=item in apache_1.3.x/  
+
+ ./configure 
+
+to setup directory scheme
+
+=item in mod_perl-1.2x/
+
+ /usr/local/bin/perl Makefile.pl \
+        APACHE_SRC=../apache_1.3.27/src \
+        EVERYTHING=1 \
+        DO_HTTPD=1 \
+        USE_APACI=1 \
+        PREP_HTTPD=1
+
+ make
+
+=item in apache_1.3.x/
+
+ ./configure \
+        --prefix=/usr/local/apache \
+        --enable-module=most \
+        --enable-shared=max \
+        --activate-module=src/modules/perl/libperl.a \
+        --with-perl=/usr/local/bin/perl
+ make
+ make install
+
+=item in mod_perl-1.2x/
+
+ make install
+
+=back
+
+=item 2. Add in F</your/apache/conf/httpd.conf>
+
+C<Include /usr/local/netdisco/netdisco_apache.conf>
+
+=item 3. In F<netdisco_apache.conf>
+
+=over
+
+=item * Change the paths appropriately
+
+=item * Change the database information 
+
+=back
+
+=back
+
+Note: Some Linux distributions such as Redhat 6.x install mod_perl as 
+a Dynamic Shared Object (DSO).  This is known to be unstable, especially
+with Mason.   Compile mod_perl statically into Apache.
+
+=head3 Apache2
+
+Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
+Netdisco will not run under Apache2 until that point.
+
+=head2 Perl and Mason
+
+Below is a list of required modules for Netdisco, freely available from
+CPAN (http://www.cpan.org).   Many of these modules have pre-requisite 
+modules.   Use the CPAN module that comes with Perl to install the modules
+and their prerequisites automatically:
+
+C<perl -MCPAN -e shell>
+
+=over 4
+
+=item install SNMP::Info
+
+=item install Time::HiRes
+
+=item install DBI
+
+=item install DBD::Pg
+
+=item install Apache::DBI
+
+=item install Storable
+
+=item install Apache::Session
+
+=item install Apache::Request
+
+=item install HTML::Mason
+
+=item install MasonX::Request::WithApacheSession
+
+=item install Graph
+
+=item install GraphViz (optional)
+
+=back
+
+Some of these you will probably already have installed.
+
+=head2 SNMP
+
+=over
+
+=item 1. Download and install net-snmp from http://net-snmp.sourceforge.net
+
+=item 2. Install F<SNMP> Perl module that comes inside the distribution.
+
+=item 3. Run C<snmpconf> and set up your MIB directory. 
+
+(Default F</usr/local/share/snmp/mibs>)
+
+Make sure this new F<snmp.conf> lives in F</usr/local/share/snmp>
+
+=back
+
+=head3 MIBs
+
+MIBs are required for F<SNMP::Info>. 
+
+=over 
+
+=item 1.  Get MIBS from:
+
+=over
+
+=item ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
+
+=item ftp://ftp.cisco.com/pub/mibs/v2/v2.tar.gz
+
+=item http://www.hp.com/rnd/software/MIBs.htm
+
+=back
+
+=item 2. Install to F</usr/local/share/snmp/mibs>
+
+=back
+
+=head2 OUI
+
+The Organizationally Unique Identifier (OUI) database allows Netdisco to 
+identify the manufacture of a network card using the first 24 bits of a
+MAC address.  The database is available from the IEEE.
+
+=over 
+
+=item 1. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
+
+=item 2. Run C<netdisco -O>
+
+=back
+
+=head2 GraphViz (optional)
+
+GraphViz is used in the creation of the Network Map and is an optional
+feature. Note that if you choose not to install GraphViz, you still
+need to install the F<Graph> module (see Perl above).
+
+=over 
+
+=item 1. Download and install the newest version from http://www.graphviz.org/pub/graphviz
+
+If you run BSD: C<cd /usr/ports/graphics/graphviz && make install>
+
+=item 2. Copy a True Type Font file (F<.ttf>) into this directory and 
+change C<node_font> in F<netdisco.conf> to match.
+
+=item 3. Review other graph settings in F<netdisco.conf>
+
+=back
+
+=cut

@@ -1,0 +1,1922 @@
+#!/usr/local/bin/perl -w
+# n e t  d i s c o
+# Created for UCSC
+# (C) 2002-2003 UC Regents
+# Author: Max Baker <max@warped.org>
+
+use strict;
+# Add . to the library path
+use FindBin;
+use lib $FindBin::Bin;
+use IO::File;
+
+use netdisco qw/:all/;  
+
+use SNMP::Info;
+use SNMP::Info::Layer1;
+use SNMP::Info::Layer1::Allied;
+use SNMP::Info::Layer1::Asante;
+use SNMP::Info::Layer2;
+use SNMP::Info::Layer2::Bay;
+use SNMP::Info::Layer2::C1900;
+use SNMP::Info::Layer2::C2900;
+use SNMP::Info::Layer2::Catalyst;
+use SNMP::Info::Layer2::HP;
+use SNMP::Info::Layer3;
+use SNMP::Info::Layer3::Aironet;
+use SNMP::Info::Layer3::C3550;
+use SNMP::Info::Layer3::Foundry;
+
+use GraphViz;
+use Getopt::Std;
+use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
+            %TimedOut $Aliases $OldDevices $PortMAC $start_time $end_time $ArpTotal %MacSeen
+            $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
+            $New_Only/;
+
+getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOr:SRtTV',\%args);
+
+$DEBUG      = defined $args{D} ? $args{D} : 0;
+$netdisco::SQLCARP = defined $args{S} ? 1 : 0;
+$configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
+$BatchMode  = defined $args{b};
+$Log        = (defined $args{D} or defined $args{L}) ? 0 : 1;
+$New_Only   = defined $args{N};
+
+# Signal Handlers
+$SIG{INT} = \&end;
+$SIG{ALRM}  = \&timeout;
+
+# Parse Config File
+config($configfile);
+
+# GLOBALS
+$| = 1;
+%Discovered = ();
+%Discovered_Alias = ();
+@Discover_Queue = ();
+%NoCDP = ();
+%UnDiscovered = ();
+%TimedOut = ();
+$Aliases = undef;
+$OldDevices = undef;
+$PortMAC = undef;
+$start_time=$end_time=0;
+$ArpTotal = 0;
+%MacSeen = ();
+$MacTotal = 0; 
+@OldSTDOUT = ();
+@LogFH     = ();
+@LogFile   = ();
+%DeviceTopo = ();
+
+# Header
+&header if (join('',keys %args) =~ /[aABdeEFgikKmMOrRT]+/);
+
+# Commands
+defined $args{h} and die &usage;
+
+#   Discovery
+defined $args{R} and &refresh_all;
+defined $args{d} and &topo_load_file;
+defined $args{d} and &discover($args{d});
+defined $args{r} and &run($args{r});
+if (defined $args{F} or defined $args{T}) {
+    &schlop( defined $args{F} ? $args{F} : $CONFIG{topofile}, 
+             defined $args{T}
+           );
+}
+
+#   Mac Sucking
+defined $args{M} and &load_old_devices;
+defined $args{M} and &mac_getportmacs;
+defined $args{M} and &macsuck($args{M});
+defined $args{m} and &macwalk;
+
+#   Arp Nipping
+defined $args{a} and &arpwalk;
+defined $args{A} and &mac_getportmacs;
+defined $args{A} and &arpnip($args{A});
+
+#   Other
+defined $args{K} and &db_clean;
+defined $args{k} and &alias_clean;
+defined $args{g} and &graph;
+defined $args{t} and &test;
+defined $args{O} and &parse_oui;
+defined $args{B} and &backup;
+defined $args{E} and &expire_device($args{E},defined $args{n});
+defined $args{e} and &expire_nodes($args{e},defined $args{V});
+defined $args{i} and &change_device_ip($args{i},shift @ARGV);
+
+# Make sure we ran a command, else spit out the usage
+die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOrRtT]+/);
+exit;
+
+# run() - Event loop that calls discover as long as the 
+#        Discover_Queue has something in it.
+sub run {
+    my $root_device = shift;
+    
+    &batch_mode('logs/discover_net',1);
+
+    print "Network discovery starting from root $root_device at " . localtime() . "\n";
+
+
+    # Getting old devices for statistics.
+    &load_old_devices;
+    topo_load_file();
+
+    $start_time = time;
+    push (@Discover_Queue, $root_device);
+
+    my $timeout = $CONFIG{timeout};
+
+    
+    while (my $this_dev = shift @Discover_Queue){ 
+        # We've already been here.
+        next if defined $Discovered{$this_dev};
+        next if defined $Discovered_Alias{$this_dev};
+
+        # We couldn't connect already, dont try again.
+        next if defined $UnDiscovered{$this_dev};
+
+        # New Only scan, ignore existing devices
+        #   except let us rediscover our target
+        next if ( ((defined $OldDevices->{$this_dev} or defined $Aliases->{$this_dev}) and $New_Only)
+                  and ($this_dev ne $root_device)                                               
+                );
+
+        # Set time out 
+        eval {
+            alarm($timeout);
+            discover($this_dev);
+            alarm(0);   # Cancel alarm if we return in time.
+        };
+
+        if ($@ =~ /timeout/){
+            $TimedOut{$this_dev}++;
+            print "\n  ! Device Timed out ($timeout sec)\n";
+        }
+    }
+    
+    #print "Reloading manual topology info...\n";
+    #schlop($CONFIG{topofile},1);
+
+    &end;
+    
+}
+
+=item load_old_devices()  - Populates the Old_Devices hash so we know
+    which devices are in the database already.
+
+=cut
+
+sub load_old_devices {
+    $OldDevices = sql_column('device',['ip','layers']);
+    $Aliases = sql_column('device_ip',['alias','ip']);
+}
+
+=item timeout() -  Signal handler for SIGALARM
+
+=cut
+sub timeout {
+    die "timeout";
+}
+
+
+=item end() -  Cleanup routine that is called upon interrupt (ctrl-c) or end of routines. 
+prints various statistics to stdout (or batch_redirect()) and calls Netdisco::log().
+
+=cut
+sub end {
+    exit unless $start_time != 0;
+
+    $end_time = time;
+    my $run_time = sprintf("%-.2f",($end_time-$start_time)/60);
+    print "\n" .'-'x70 . "\n";
+    print "Run took $run_time minutes\n";
+
+    if ($ArpTotal > 0 ){
+        print "Found $ArpTotal arp cache entries.\n";
+        log('arp',"$ArpTotal entries. $run_time minutes.\n") if $Log;
+    }
+
+    my $mac_seen = scalar keys(%MacSeen);
+    if ($mac_seen){
+        
+        print "Saw $mac_seen distinct nodes in $MacTotal forwarding table entries.\n";
+        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.\n") if $Log;
+    }
+
+    my $discover_count = scalar(keys(%Discovered));
+    if ($discover_count){
+        print "Discovered $discover_count devices.\n";
+
+        # Check for new/old devices
+        my $new = 0;
+        my $old = scalar keys %$OldDevices;
+
+        foreach my $device (keys %Discovered){
+            $new++ unless defined $OldDevices->{$device};
+        }
+
+        foreach my $device (keys %$OldDevices){
+            $old-- if defined $Discovered{$device};
+        }
+
+        print "Discovered : $new new devices.  Missed: $old old devices.\n";
+
+        log('discover',"$discover_count devices. ($new new) ($old old)\n") if $Log;
+
+        if (scalar keys %NoCDP){
+            print "Devices Found by CDP but without CDP info avail. via SNMP :\n";
+            foreach my $dev (keys %NoCDP){
+                print "    $dev\n";
+            } 
+            log('nocdp',join(' ',keys %NoCDP)) if $Log;
+        }
+        
+        if (scalar keys %UnDiscovered) {
+            print "Devices Found by CDP but not reachable by SNMP : \n";
+            foreach my $dev (keys %UnDiscovered){
+                print "    $dev\n";
+            } 
+            log('nosnmp',join(' ',keys %UnDiscovered)) if $Log;
+        }
+
+        if (scalar keys %TimedOut){
+            print "Devices timed out : \n";
+            foreach my $dev (keys %TimedOut){
+                print "    $dev\n";
+            }
+            log('timeout',join(' ',keys %TimedOut)) if $Log;
+        }
+    }
+    &batch_mode_end;
+    exit;
+}
+
+# batch_mode(name,time_too?) - Redirects STDOUT to a log file with timestamp.
+#       Can be called recursively.  call batch_mode_end() to return to previous
+#       Output.
+sub batch_mode{
+    return unless $BatchMode;
+
+    my $file_name = shift;
+    my $want_time = shift;
+
+    my $file_path = $CONFIG{datadir};
+    my $extension = defined $CONFIG{logextension} ? $CONFIG{logextension} : 'log';
+    
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+
+    # YYYYMMDD-HHmm
+    my $date = sprintf("%d%02d%02d",$year+1900,$mon+1,$mday);
+    my $time = sprintf("%02d:%02d",$hour,$min);
+
+    my $timestamp = (defined $want_time) ? "$date-$time" : $date;
+    
+    my $file = "$file_path/$file_name-$timestamp.$extension";
+
+    my $fh = new IO::File;
+    my $old_umask = umask(0000);
+    $fh->open($file,O_WRONLY|O_CREAT,0664) or die "Can't open $file. $!\n";
+    umask($old_umask);
+    
+    # Redirect output to log
+    push (@OldSTDOUT, select($fh) );
+    push (@LogFH,$fh);
+    push (@LogFile,$file);
+
+    # No Buffering output
+    $| = 1;
+
+    print STDERR "Batch Mode - Output in $file\n";
+    &header;
+}
+
+sub batch_mode_end {
+    return unless $BatchMode;
+
+    return unless scalar @LogFile;
+
+    my $file = pop @LogFile;
+    select (pop @OldSTDOUT);
+    my $fh = pop @LogFH;
+    $fh->close() or die "Can't write $file. $!\n";
+
+
+    if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} =~ /(true|1|y)/i){
+       print STDERR "\tCompressing $file\n";
+       my $compress = defined $CONFIG{compress} ? $CONFIG{compress} : "/usr/bin/gzip -f";
+       system("$compress $file") and warn "Compress of $file Failed.\n";
+    }
+}
+
+=item  discover(host) - Discovers one device, stores its info,
+interfaces, and neighbors, and returns.
+
+=cut
+sub discover{
+    my $hostname = shift;
+
+    print "Discover($hostname)\n";
+
+    my $device = get_device($hostname,undef) or return;
+    my $ip     = $device->{_ip};
+
+    # Store Device Info
+    store_device($device);
+
+    # Walk Interfaces
+    store_interfaces($device);
+
+    # Walk Modules
+
+    # Walk neighbors
+    find_neighbors($device);
+
+    # Manual Topology Info
+    topo_add_link( $DeviceTopo{$ip} ) if defined $DeviceTopo{$ip}; 
+
+    $Discovered{ $ip }++;
+
+    foreach my $alias (keys %{$device->{_alias}}){
+        next unless defined $alias and length($alias);
+        $Discovered_Alias{ $alias }++;
+    }
+}
+
+
+=item get_device() - Calls create_device foreach community string.
+
+=cut
+
+sub get_device {
+    my ($hostname,$version) = @_;
+    my $device=undef;
+
+    foreach my $comm (@{$CONFIG{community}}) {
+        $device = create_device($hostname,$comm,$version);
+
+        if (defined $device and $device == -1){
+            $device = undef;
+            last;
+        } elsif (defined $device){
+            last;
+        }
+    }
+    unless (defined $device) {
+        $UnDiscovered{$hostname}++;
+        print "! Device Not Supported, or can't connect to SNMP.\n";
+        return undef;
+    }
+    return $device;
+}
+
+=item get_vlan() -  Calls create_device for a given VLAN,Community and SNMP Version
+
+=cut
+
+sub get_vlan {
+    my ($hostname,$vlan,$community,$version) = @_;
+
+    my $device = undef;
+    $community .= '@'.$vlan; 
+    
+    return create_device($hostname,$community,$version);
+}
+
+=item  create_device() -  Trys to connect to a device, calls device_type() and creates an object of that type.
+returns the device object or undef if the device isn't supported.
+
+=cut
+
+sub create_device {
+    my ($hostname,$community,$version) = @_;
+
+    my $ver = defined $version ? $version : $CONFIG{snmpver};
+    my $retries = $CONFIG{snmpretries} || 2;  
+   
+    print "create_device($hostname,$community,$ver)\n" if $DEBUG;
+
+    # Get Device Info
+    my $device = new SNMP::Info( 'DestHost' => $hostname,
+                                 'Community' => $community,
+                                 'Version'  => $ver,
+                                 'Retries'  => $retries
+                               );
+    
+    unless (defined $device) {
+        print "  Can't connect to $hostname\n";
+        return undef;
+    }
+
+    my $objtype = $device->device_type();
+
+    unless (defined $objtype){
+        # Try Version 1 (v1 screws up some hp switches )
+        # so we stick w/ 2 first.
+        print " [Trying SNMP Version 1] ";
+        print "create_device($hostname,$community,1)\n" if $DEBUG;
+        $device = new SNMP::Info( 'DestHost' => $hostname,
+                                 'Community' => $community,
+                                 'Version'  => 1,
+                                 'Retries'  => $retries
+                                );
+
+        $objtype = $device->device_type();
+
+        $version = 1;
+    }
+
+    return undef unless defined $objtype;
+        
+    if ($objtype eq 'SNMP::Info'){
+        my $layers = $device->layers();
+        print "  Device Talks SNMP but only has layers $layers.  Skipping\n";
+        return -1;
+    }
+
+    $DEBUG and print "  Device Type : $objtype ";
+
+    # Make device obj
+    $device = new $objtype(
+                'DestHost' => $hostname,
+                'Community' => $community,
+                'Version'  => $version,
+                'Retries'  => $retries
+                );
+
+    $device->{_ip} = &getip($hostname);
+    $device->{_dns} = &hostname($device->{_ip});
+
+    # Set the SNMP Debug level
+    $DEBUG and $device->debug($DEBUG);
+
+    return $device;
+}
+
+=item device_root() - Looks to see if the device has a master IP instead of the
+one given.  Checks for root_ip() method, then tries to lookup the reverse entry for sysName.0
+
+=cut
+
+sub device_root {
+    my $device = shift;
+    
+    my $foundip = $device->{_ip};
+
+    # use the device override
+    my $root_ip = $device->root_ip();
+    return $root_ip if (defined $root_ip and length($root_ip));
+
+    # Check the reverse of sysName.0
+    my $name   = $device->name();
+    my $nameip = &getip($name);
+
+    my $ip = (defined $nameip and length($nameip)) ? 
+             $nameip :
+             $foundip ;
+    
+    return $ip;
+}
+
+=item store_device() - Calls all the global methods and sends the results off to the database
+
+=cut
+
+sub store_device {
+    my $device = shift;
+
+    print "  Fetching Device Info           : ";
+
+    # Deal w/ devices with multiple IP address like most routers
+    my $foundip = $device->{_ip};
+    my $devip = device_root($device);
+    $device->{_ip} = $devip;
+
+    if ($devip ne $foundip) {
+        print "  Using $devip instead of $foundip " if $DEBUG;
+
+        # Set device name to root, not alias
+        my $new_dns = &hostname($devip);
+        $device->{_dns} = $new_dns if (defined $new_dns and length($new_dns));
+    }
+
+    my $ip_index   = $device->ip_index();
+    my $interfaces = $device->interfaces();
+    
+    # Remove all alias IP addresses
+    sql_do(qq/DELETE from device_ip where ip = '$devip'/);
+
+    # Store all our IPs
+    foreach my $ip (keys %$ip_index){
+        next if $ip eq $devip;
+
+        next if $ip eq '0.0.0.0';
+        # Local Host
+        next if $ip =~ /^127\.0\.0\./;
+
+        if ($CONFIG{ignore_private_nets} =~ /(true|1|yes)/i) {
+            my $ignore =0;
+            # Class A Private
+            $ignore++ if $ip =~ /^10\./;
+            # Class B Private
+            $ignore++ if $ip =~ /^172\.16\./;
+            # Class C private
+            $ignore++ if $ip =~ /^192\.168\.0\./;
+            print "  Ignoring private address $ip\n" if ($ignore and $DEBUG);
+            next if $ignore;
+        }
+
+        my $iid  = $ip_index->{$ip};
+        my $port = $interfaces->{$iid}; 
+        my $dns  = &hostname($ip);
+
+        insert_or_update('device_ip', {'ip' => $devip,  'alias' => $ip},
+                        {'ip' => $devip , 'alias' => $ip, 'port' => $port,
+                         'dns' => $dns }
+                        );
+        $DEBUG and print "  Adding $ip to device_ip\n";
+        $Aliases->{$ip} = $devip;
+        
+        # Mark alias down
+        $device->{_alias}->{$ip}++;
+    }
+
+    my %store = ();
+
+    $store{ip}          = $device->{_ip};
+    $store{dns}         = $device->{_dns};
+    $store{description} = $device->description();
+    $store{uptime}      = $device->uptime();
+    $store{contact}     = $device->contact();
+    $store{name}        = $device->name();
+    $store{location}    = $device->location();
+    $store{layers}      = $device->layers();
+    $store{ports}       = $device->ports();
+    $store{mac}         = $device->mac();
+    $store{serial}      = $device->serial();
+    $store{model}       = $device->model();
+    $store{ps1_type}    = $device->ps1_type();
+    $store{ps2_type}    = $device->ps2_type();
+    $store{ps1_status}  = $device->ps1_status();
+    $store{ps2_status}  = $device->ps2_status();
+    $store{fan}         = $device->fan();
+    $store{slots}       = $device->slots();
+    $store{vendor}      = $device->vendor();
+    #$store{log}         = $device->log();
+    $store{last_discover} = localtime;
+    
+
+    print ".\n";
+    insert_or_update('device', {'ip' => $device->{_ip} },
+                    \%store);
+}
+
+=item store_interfaces() - Gets all the interface information.  Deletes the old 
+interface entries in device_port and puts in new ones.
+
+=cut
+
+sub store_interfaces { 
+    my $device = shift;
+    
+    print "  Fetching Interface Information : ";
+    my $ip = $device->{_ip};
+
+    # Delete old interface information (for dynamic,vlan...)
+    sql_do(qq/DELETE from device_port where ip = '$ip'/);
+
+    my $interfaces = $device->interfaces();
+    my $i_type     = $device->i_type();
+    my $i_ignore   = $device->i_ignore();
+    my $i_descr    = $device->i_description();
+    my $i_mtu      = $device->i_mtu();
+    my $i_speed    = $device->i_speed();
+    my $i_mac      = $device->i_mac();
+    my $i_up       = $device->i_up();
+    my $i_up_admin = $device->i_up_admin();
+    my $i_name     = $device->i_name();
+    my $i_duplex   = $device->i_duplex();
+    my $i_duplex_admin = $device->i_duplex_admin();
+    my $i_stp_state = $device->i_stp_state();
+
+    foreach my $if (keys %$interfaces) {
+        print '.';
+        my %store = ();
+        my $port = $interfaces->{$if};
+        unless (defined $port and length($port)) {
+            $DEBUG and print "\n  Ignoring $if (no port mapping)\n";
+            next;
+        }
+        $store{type}  = $i_type->{$if};
+        if(exists $i_ignore->{$if}) {
+            $DEBUG and print "\n  Ignoring $if ($store{type})\n";
+            next;
+        }
+        $store{ip}           = $ip;
+        $store{port}         = $port;
+        $store{descr}        = $i_descr->{$if};
+        $store{up}           = $i_up->{$if};
+        $store{up_admin}     = $i_up_admin->{$if};
+        $store{mac}          = $i_mac->{$if};
+        $store{speed}        = $i_speed->{$if};
+        $store{mtu}          = $i_mtu->{$if};
+        $store{name}         = $i_name->{$if};
+        $store{duplex}       = $i_duplex->{$if};
+        $store{duplex_admin} = $i_duplex_admin->{$if};
+        $store{stp}          = $i_stp_state->{$if};
+
+        insert_or_update('device_port', { 'ip' => $ip, 'port' => $store{port} }, 
+                         \%store );        
+
+    }
+    print "\n";
+}
+
+=item find_neighbors() - Finds all the CDP information on the device and stores the results in
+device_node.  Adds to the @Discover_Queue
+
+=cut
+
+sub find_neighbors {
+    my $device = shift;
+   
+    print "  Fetching Neighbor Information  : ";
+
+    my $ip = $device->{_ip};
+    my $c_ip       = $device->c_ip();
+
+    unless ($device->hasCDP() or scalar keys %$c_ip){
+        # Great, catalyst 2926 doesnt give us cdpRun
+        $NoCDP{$ip}++;    
+        print "! CDP not Enabled.\n";
+        return;
+    }
+
+    my $c_if       = $device->c_if();
+    my $c_port     = $device->c_port();
+    my $interfaces = $device->interfaces();
+
+    foreach my $key (keys %$c_ip){
+        print '.';
+        my $iid = $c_if->{$key};
+
+        # Nice of CISCO not to implement cdpCacheIfIndex in most devices ?!!#@$!@#
+        unless (defined $iid) {
+            $iid = $key;
+            ## Truncate off .1 from cdp response
+            $iid =~ s/\.\d+$//;
+        }
+        # Get our port to iid mapping
+        my $port = $interfaces->{$iid};
+
+        my $remote_ip   = $c_ip->{$key};
+        my $remote_port = undef;
+   
+        # Hack for BAY devices where if a BAY device is connected to a
+        # non-bay device, we 'hear' other devices on the other end of this
+        # port, but we don't know who we're talking to.
+        # Therefore, set a loop back to ourselfs as a place marker, but add
+        # our found nodes to the discovery queue.
+        if (ref $remote_ip eq 'ARRAY'){
+            # Discover neighbors
+            foreach my $neighbor (@$remote_ip){
+                unless (defined $Discovered{$neighbor}) {
+                    $DEBUG and print "  Adding $neighbor to discovery queue.\n";
+                    push (@Discover_Queue, $neighbor);
+                }
+            }
+            # Set loopback
+            $remote_ip   = $ip;
+            $remote_port = $port;
+
+        } else {
+            $remote_port = $c_port->{$key};
+
+            if (defined $remote_port) {
+                # get rid of any weird characters
+                $remote_port =~ s/[^\d\/,()\w]+//gi;
+
+                # Swap catalyst remote port as 2/1 to 2.1
+                $remote_port =~ s/\//\./ if ($remote_port =~ /^\d+\/\d+$/);
+            } else {
+                print "  No remote_port found for Port:$port connected to $remote_ip.\n";
+            }
+        }
+
+        next unless (defined $remote_ip and length($remote_ip));
+
+        my %store;
+        $store{'remote_ip'} = $remote_ip;
+        $store{'remote_port'} = $remote_port;
+       
+        insert_or_update('device_port', {'ip' => $ip , 'port' => $port },
+                        \%store);
+
+        unless (defined $Discovered{$remote_ip}) {
+            $DEBUG and print "  Adding $remote_ip to discovery queue.\n";
+            push (@Discover_Queue, $remote_ip);
+        }
+    }
+    print "\n";
+}
+
+=item macwalk() - Grabs all the devices out of the database, then 
+runs macsuck() on it the device has layer2 capabilites.
+
+=cut
+
+sub macwalk {
+    $start_time = time;
+    &batch_mode('logs/mac',1);
+    print "Grabbing Mac Addresses from all Layer 2 Devices (" . localtime() . ")...\n";
+
+    # Get our old devices, IP->Layer mapping
+    &load_old_devices;
+    
+    # Get mac addresses of all the ports 
+    &mac_getportmacs;
+
+    my $timeout = $CONFIG{macsuck_timeout} || 90;
+    foreach my $device (keys %$OldDevices){
+        my $has_2 = has_layer($OldDevices->{$device},2);
+        next unless $has_2;
+        eval {
+            alarm($timeout);
+            macsuck($device);
+            alarm(0);
+        };
+
+        if ($@ =~ /timeout/){
+            $TimedOut{$device}++;
+            print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
+        }
+    }
+
+    &end;
+}
+
+=item mac_getportmacs() - Fills the global %PortMAC with MAC addresses of 
+ports already discovered.  This is to make sure we don't mac-suck existing
+ports, such as VLANs.
+
+=cut
+
+sub mac_getportmacs {
+    $PortMAC = sql_column('device_port',['mac','ip']); 
+}
+
+=item macsuck() - Walks forwarding table for a specific device. 
+    Gets mac addresses that are listed in physical ports that do not 
+    have a neighbor listed.   If the device has VLANs, it will walk each
+    VLAN and get the MAC addresses from there.
+
+=cut
+
+sub macsuck{
+    my $hostname = shift;
+
+    my $ip = getip($hostname);
+    
+    print "macsuck($hostname) : ";
+
+    if (defined $CONFIG{macsuck_no} and defined $CONFIG{macsuck_no}->{$ip}) {
+        print "\n  Excluded from macsucking in config file.\n";
+        return;
+    }
+    # Get the device info and its interfaces
+    my $dev = sql_hash('device',['*'],{'ip'=>$ip});
+    my $ports = sql_rows('device_port',['*'],
+        {'ip'=>$ip});
+
+    unless (defined $dev->{ip}) { 
+        print "\n  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        return;
+    }
+
+    # Move the ports from an array to a hash, indexed on port name
+    my %dbports = ();
+    foreach my $p (@$ports) {
+        my $port = $p->{port};
+        $dbports{$port}=$p;
+    }
+
+    # Make the SNMP connection
+    my $device = get_device($hostname) or return;
+
+    my $interfaces = $device->interfaces();
+
+    walk_fwtable($device,\%dbports,$interfaces);
+
+    # Get our VLAN list (Catalyst 5xxx mainly)
+    my $v_name = $device->v_name();
+
+    my $ver = $device->{_version};
+    my $comm = $device->{_community};
+    # For each VLAN, connect and then macsuck
+    foreach my $vid (keys %$v_name){
+        my $vlan = $vid;
+        # Trim vlan 1.142 to 142
+        $vlan =~ s/^\d+\.//;
+
+        print " VLAN:$v_name->{$vid} ($vlan) : ";
+
+        # feeding all the connect info as a speedup, instead of 
+        #   retrying all the versions and communities
+        my $vlan_device = get_vlan($hostname,$vlan,$comm,$ver)
+            or next;
+
+        walk_fwtable($vlan_device,\%dbports,$interfaces);
+    }
+
+    # Log This
+    my $now = localtime;
+    insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$now});
+}
+
+=item walk_fwtable()  - Walks the Forwarding table from the BRIDGE-MIB
+for the given device, and then adds MAC addresses to the node table.
+
+=cut
+
+sub walk_fwtable {
+    my ($device,$dbports,$interfaces) = @_;
+
+    my $ip = $device->{_ip};
+    my $fw_mac     = $device->fw_mac();
+    my $fw_port    = $device->fw_port();
+    my $bp_index   = $device->bp_index();
+
+    # To map the port in the forwarding table to the 
+    # physical device port we have this triple indirection:
+    #      fw_port -> bp_index -> interfaces
+    
+    foreach my $fw_index (keys %$fw_mac){
+        my $mac    = $fw_mac->{$fw_index};
+        my $bp_id  = $fw_port->{$fw_index};
+
+        $MacTotal++;
+
+        unless (defined $bp_id) {
+            print "  Port $fw_mac->{$fw_index} has no fw_port mapping. Skipping\n"
+                if $DEBUG;
+            next;
+        }
+
+        my $iid    = $bp_index->{$bp_id};
+
+        unless (defined $iid) {
+            print "  Port $bp_id has no bp_index mapping. Skipping\n"
+                if $DEBUG;
+            next;
+        }
+
+        my $port  = $interfaces->{$iid};
+
+        unless (defined $port) {
+            print "  SNMP iid $iid has no physical port matching. Skipping.\n"
+                if $DEBUG;
+            next;
+        }
+
+        unless (defined $dbports->{$port}){
+            print "  Port ($port) is not in database.  Skipped.\n"
+                if $DEBUG;
+            next;
+        }
+
+        # Check to see if the port is connected to another device,
+        #   and if we have that device in the DB.  
+
+        #If we dont see the device in the db, but there is a neighbor, then we capture anyways,
+        #   since we want all the macs at the other end. 
+
+        #If the device is not layer 2 or 3, then we capture anyways.
+        my $remote_ip = $dbports->{$port}->{remote_ip};
+        if (defined $remote_ip and 
+                (defined $OldDevices->{$remote_ip} or defined $Aliases->{$remote_ip})) {
+            my $ip = defined $Aliases->{$remote_ip} ? $Aliases->{$remote_ip} : $remote_ip;
+            my $layers = $OldDevices->{$ip};
+        
+            if (has_layer($layers,2) or has_layer($layers,3)){
+                print "  ($mac) $port has neighbor: $remote_ip. Skipped.\n"
+                    if $DEBUG;
+                next;
+            } else {
+                print "  ($mac) $port has neighbor, but has layers $layers. Included.\n"
+                    if $DEBUG;
+            } 
+        }
+        
+        # Check if MAC is a switch port
+        if (defined $PortMAC->{$mac}) {
+            print "  MAC on $port Matches MAC on device $PortMAC->{$mac}. Included.\n"
+                if $DEBUG;
+            # Removed to help debugging of topology info.  Uplink check should be enough.
+            #next;  
+        }
+
+        # Check for Multicast MACs
+        if ($mac =~ /^([0-9a-f]{2}):/i and ($1 =~ /.(1|3|5|7|9|b|d|f)/i)){
+            print "  $mac:  MULTICAST\n" if $DEBUG;
+            next;
+        }
+
+        next if $mac eq '00:00:00:00:00:00';
+        next if uc($mac) eq 'FF:FF:FF:FF:FF:FF'; 
+
+        if ($DEBUG) { 
+            print "  $mac: $bp_id -> $iid -> $port\n";
+        } else {
+            print ".";
+        }
+        
+        add_node($mac,$ip,$port); 
+        $MacSeen{$mac}++;
+    }
+    print "\n" unless $DEBUG;
+}
+
+=item arpwalk() - Visits every Layer 3 device and trys to get its ARP Cache.  Calls arpnip() for
+each device.  
+
+=cut
+sub arpwalk {
+    $start_time = time;
+    
+    &batch_mode('logs/arp',1);
+    print "Grabbing Arp Cache from all layer 3 devices (". localtime() . ")...\n";
+
+    # Get our old devices, IP->Layer mapping
+    &load_old_devices;
+
+    # Grab existing mac addresses for switch ports
+    &mac_getportmacs;
+
+    foreach my $device (keys %$OldDevices){
+        my $has_3 = has_layer($OldDevices->{$device},3);
+        arpnip($device) if ($has_3);
+    }
+
+    &end;
+}
+
+=item arpnip() - Connects to device and reads its ARP cache. Then adds entries to node_ip table. 
+
+=cut
+sub arpnip {
+    my $hostname = shift;
+
+    my $ip = getip($hostname);
+
+    print "arpnip($hostname)\n";
+
+    my $dev = sql_hash('device',['*'],{'ip'=>$ip});
+
+    unless (defined $dev->{ip}) { 
+        print "  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        return;
+    }
+
+    my $device = get_device($hostname) or return;
+
+    my $at_paddr = $device->at_paddr();
+    my $at_netaddr = $device->at_netaddr();
+
+    my $arp_count =0;
+    foreach my $arp (keys %$at_paddr){
+        my $mac = $at_paddr->{$arp};
+        my $ip = $at_netaddr->{$arp};
+
+        next unless defined $ip;
+        if (defined $PortMAC->{$mac}) {
+            print "  $mac is a port on device $PortMAC->{$mac} ... skipping\n"
+                if $DEBUG;
+            next;
+        }   
+
+        print "  $ip : $mac\n" if $DEBUG;
+        add_arp($mac,$ip);
+        $arp_count++;
+    }
+    print "  Processed $arp_count entries.\n";
+    $ArpTotal += $arp_count;
+    
+}
+
+=item expire_device(device,expire_nodes?)
+
+    Removes device from the database
+    Set second argument to true to remove all the connected nodes and their 
+        IP mappings as well.
+
+=cut
+sub expire_device {
+    my ($devname,$expire_nodes) = @_;
+    my $ip  = getip($devname);
+
+    print "Expire Device $devname ($ip)\n";
+
+    unless (length $ip) {
+        print "  Device $devname doesn't resolve.\n";
+        return;
+    }
+
+    my $dev = sql_hash('device',['*'],{'ip'=>$ip} );
+
+    unless (defined $dev){
+        print "  Device $devname ($ip) not found in database!\n";
+        return;
+    }
+
+    my $dns = $dev->{dns} || '';
+    print "  Removing $dns ($ip)...\n";
+    # Get rid of device info
+    sql_do(qq/DELETE from device where ip = '$ip'/);
+    print "  Removing Aliases of $dns ($ip)...\n";
+    # Get rid of aliases
+    sql_do(qq/DELETE from device_ip where ip = '$ip'/);
+    # Remove Ports
+    sql_do(qq/DELETE from device_port where ip = '$ip'/);
+
+    if (defined $expire_nodes and $expire_nodes){
+      &expire_nodes($ip);  
+    }
+}
+
+=item expire_nodes(device,archive_only)
+
+    Removes entries from node and node_ip for a given device.
+    Set archive_only to 1 to archive the nodes on the device.
+
+=cut
+sub expire_nodes {
+    my ($dev,$archive) = @_;
+    my $ip  = getip($dev);
+
+    print "Expire Nodes($dev)\n";
+    unless (length $ip) {
+        print "  Device $dev doesn't resolve.\n";
+        return;
+    }
+
+    # grab mac's    
+    my $macs = sql_rows('node',['distinct(mac)'],{'switch'=>$ip});
+    
+
+    if (defined $archive and $archive){
+        # De-activate nodes
+        print "  Archiving " . scalar @$macs . " entries for $ip\n";
+        sql_do(qq/UPDATE node SET active=false WHERE switch='$ip'/);
+        # De-activate ip mappings
+        foreach my $mac (@$macs){
+            my $mac_addr = $mac->{mac};
+            #sql_do(qq/UPDATE node_ip SET active=false WHERE mac='$mac_addr'/);
+        }
+    } else {
+        # Delete nodes
+        print "  Deleting " . scalar @$macs . " entries for $ip\n";
+        sql_do(qq/DELETE FROM node WHERE switch='$ip'/);
+        # Delete ip mappings
+        # Why would we do this??? 
+        foreach my $mac (@$macs){
+            my $mac_addr = $mac->{mac};
+            #sql_do(qq/DELETE FROM node_ip WHERE mac='$mac'/);
+        }
+    }
+}
+
+=item change_device_ip(from_ip, to_ip)
+
+=cut
+sub change_device_ip {
+    my ($from_ip,$to_ip) = @_;
+    
+    print "change_device_ip($from_ip,$to_ip)\n";
+
+    return unless (defined $from_ip and defined $to_ip);
+
+    &load_old_devices ;
+
+    print "  Checking for Old Device ($from_ip)\n";
+    unless (defined $OldDevices->{$from_ip}){
+        print "  !$from_ip not found as device.\n";
+    }
+
+    if (defined $Aliases->{$from_ip}) {
+        print "  !$from_ip is an alias. Using $Aliases->{$from_ip}.\n";
+        $from_ip = $Aliases->{$from_ip};
+    }
+    
+    &topo_load_file();
+
+    print "  Adding New Device ($to_ip)\n";
+
+    discover($to_ip); 
+
+    &load_old_devices ;
+
+    unless (defined $OldDevices->{$to_ip}){
+        print "  !Device $to_ip did not discover.  Not moving old entries to this one. Fix and run again.\n";
+        return;
+    } 
+    
+    print "  Removing Old Device its Aliases, and Ports\n";
+    expire_device($from_ip);
+    
+    print "  Moving old Nodes to New Device.\n";
+    sql_do(qq/UPDATE node set switch='$to_ip' where switch='$from_ip'/);
+    
+}
+
+=item db_clean() - Removes all the entries in node_ip that are 
+switch ports. 
+
+=cut
+
+sub db_clean {
+    print "Database Cleanup : \n";
+    # Grab existing mac addresses for switch ports
+    &mac_getportmacs;
+
+    print "  Deleting nodes that are actually device ports...\n";
+    # Delete MAC addresses that are ports on devices
+    foreach my $mac (keys %$PortMAC){
+        sql_do(qq/DELETE from node where mac = '$mac'/);
+        sql_do(qq/DELETE from node_ip where mac = '$mac'/);
+    }
+
+    
+    print "  Checking for Nodes that exist on non-existant ports:\n";
+    my $NodeList = sql_rows('node',['mac','switch','port']);
+    foreach my $row (@$NodeList){
+        my $mac = $row->{mac};  
+        my $ip  = $row->{switch};
+        my $port = $row->{port};
+        
+        my $match = sql_scalar('device_port',['COUNT(*)'],{'ip'=>$ip,'port'=>$port}) ;
+        unless ($match) {
+            print "    $mac \@ $ip/$port has no mapping.  Run -e $ip if appropriate.\n";
+            #sql_do(qq/DELETE from node where mac = '$mac' and switch = '$ip' and port = '$port'/);
+        }
+    }
+
+    print("  Removing nodes that are listed on uplink ports...\n");
+    my $dev_ports = sql_rows('device_port',['ip','port'],{'remote_ip' => 'IS NOT NULL'});
+    &load_old_devices;
+
+    foreach my $dev_port (@$dev_ports){
+        my $ip   = $dev_port->{ip};
+        my $port = $dev_port->{port};
+        $ip      = defined $Aliases->{$ip} ? $Aliases->{$ip} : $ip;
+        my $layers = $OldDevices->{$ip};
+        
+        next unless defined $layers;
+        # If Neighbor is not part of topology, leave it.
+        if (has_layer($layers,2) or has_layer($layers,3)){
+            # To archive or to delete, I just can't decide.
+            #sql_do(qq/UPDATE node SET active=false WHERE switch='$ip' and port='$port'/);
+            sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
+        }
+    }
+    print "Done.\n"; 
+}
+
+=item alias_clean() - Routine to clean out devices that are now listed as aliases of another device. This is
+usually necessary after a device has been merged into another one.
+
+=cut
+sub alias_clean {
+    print "Cleaning out Aliases that showed up as devices :\n";
+    
+    my $aliases = sql_rows('device_ip',['ip','alias','dns']);
+    foreach my $row (@$aliases) {
+        my $ip = $row->{ip};
+        my $alias = $row->{alias};
+        my $dns = $row->{dns};
+        $dns = defined $dns ? $dns : '[No DNS]';
+        print "Deleting alias of $ip = $alias ($dns)\n";
+        sql_do(qq/DELETE from device WHERE ip = '$alias'/);
+        print "Deleting ports\n";
+        sql_do(qq/DELETE from device_port WHERE ip = '$alias'/);
+    }
+
+    print "Cleaning out Aliases of non-existant devices.\n";
+    sql_do(qq/DELETE FROM device_ip WHERE ip NOT IN (SELECT ip FROM device)/);
+}
+
+=item graph() - Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
+
+=cut
+sub graph {
+    &batch_mode('logs/graph');
+    print "Creating Graphs.\n";
+
+    my $G = make_graph();
+
+    my @S = $G->strongly_connected_components;
+
+    # Count number of nodes in each subgraph
+    my %S_count;
+    for (my $i=0;$i< scalar @S;$i++){
+        $S_count{$i} = scalar @{$S[$i]};
+    }
+    
+    foreach my $subgraph (sort { $S_count{$b} <=> $S_count{$a} } keys %S_count){
+        my $SUBG = $G->copy;
+        print "\$S[$subgraph] has $S_count{$subgraph} nodes.\n";
+        
+        # Remove other subgraphs from this one
+        my %S_notme = %S_count;
+        delete $S_notme{$subgraph};
+        foreach my $other (keys %S_notme){ 
+            print "Removing Non-connected nodes: ",join(',',@{$S[$other]}),"\n";
+            $SUBG->delete_vertices(@{$S[$other]})
+        }
+        
+        # Create the subgraph
+        my $timeout = defined $CONFIG{graph_timeout} ? $CONFIG{graph_timeout} : 60;
+
+        eval {
+            alarm($timeout*60);
+            graph_each($SUBG,'');
+            alarm(0);
+        };
+        if ($@ =~ /timeout/i ){
+            print "! Creating Graph timed out!\n";
+        }
+        
+        # Facility to create subgraph for each non-connected network segment.  
+        # Right now, let's just make the biggest one only.
+        last;
+    }
+}
+
+=item graph_each(Graph_obj, name) - Generates subgraph. Called from graph().  Calls graph_node().  Does
+actuall GraphViz calls.
+
+=cut
+sub graph_each  {
+    my ($G,$name) = @_;
+
+    print "Creating new Graph\n";
+
+    my $graph_defs = {
+                     'bgcolor' => $CONFIG{graph_bg},
+                     'color'   => $CONFIG{graph_color},
+                     'overlap' => $CONFIG{graph_overlap},
+                     'fontpath'=> $CONFIG{graph_fontpath},
+                     'ranksep' => $CONFIG{graph_rank},
+                     'splines' => $CONFIG{graph_splines},
+                     'ratio'   => 'compress'
+                     };
+    my $node_defs = { 
+                    'shape'     => $CONFIG{node_shape},
+                    'fillcolor' => $CONFIG{node_fillcolor},
+                    'fontcolor' => $CONFIG{node_fontcolor},
+                    'style'     => $CONFIG{node_style},
+                    'fontname'  => $CONFIG{node_font},
+                    'fontsize'  => $CONFIG{node_fontsize},
+                    'fixedsize' => 'true'
+                    };
+    my $edge_defs = {
+                    'color' => $CONFIG{edge_color}
+                    };
+
+    my $epsilon = undef;
+    if (defined $CONFIG{graph_epsilon}){
+        $epsilon = "0." . '0' x $CONFIG{graph_epsilon} . '1';
+    }
+    
+    my %gv = (
+               directed => 0,
+               layout   => $CONFIG{graph_layout},
+               graph => $graph_defs,
+               node => $node_defs,
+               edge => $edge_defs,
+               width => $CONFIG{graph_x},
+               height => $CONFIG{graph_y},
+               epsilon => $epsilon,
+              );
+
+    my $gv = new GraphViz(%gv);
+
+    my @nodes = $G->vertices;
+    foreach my $dev (@nodes){
+        graph_addnode($gv,$dev);
+    }
+
+    my @edges = $G->edges;
+
+    while (scalar @edges){
+        my $link = shift @edges;
+        my $dest = shift @edges;
+        my $speed = $netdisco::GRAPH_SPEED{$link}->{$dest}->{speed};
+        print "  ! No link speed for $link -> $dest\n" unless defined $speed;
+        #print "$link $dest $speed\n";
+        #my %edge = ( dir => 'none' );
+        my %edge = ();
+        my $val = ''; my $suffix = '';
+        if ($speed =~ /^([\d.]+)\s+([a-z])bps$/i) {
+            $val = $1; $suffix = $2;
+        }
+        #print "\t $val $suffix\n";
+        if ( ($suffix eq 'k') or ($speed =~ m/(t1|ds3)/i) ){
+            $edge{color} = 'green';
+            $edge{style} = 'dotted';
+        }
+        if ($suffix eq 'M'){
+            if ($val < 10.0){
+                $edge{color} = 'green';
+                $edge{style} = 'dotted';
+            } elsif ($val < 100.0){
+                $edge{color} = '#8b7e66'; 
+                $edge{style} = 'normal';
+            } else {
+                $edge{color} = '#ffe7ba';
+                $edge{style} = 'bold';
+            }
+        }
+        if ($suffix eq 'G'){
+            $edge{style} = 'bold';
+            $edge{color} = 'cyan1';
+        }
+
+        $gv->add_edge($link => $dest, %edge );
+    }
+
+
+    print "  Creating raw graph.\n";
+    #$gv->as_canon($CONFIG{graph_raw});
+    print "  Creating graph ...\n";
+    $gv->as_gif($CONFIG{graph});
+    print "  Creating ISMAP ...\n";
+    $gv->as_ismap($CONFIG{graph_map});
+
+}
+
+=item graph_addnode(graphviz_obj,node_ip)  - Checks for mapping settings in config file and 
+adds node to the GraphViz object.
+
+=cut
+sub graph_addnode {
+    my $gv = shift;
+    # non lexical on purpose
+    use vars qw/$ip $label $isdev/;
+    $ip    = shift;
+    $label = $netdisco::GRAPH{$ip}->{dns};
+    $isdev = $netdisco::GRAPH{$ip}->{isdev};
+
+    my %node = ();
+
+    $label = "($ip)" unless defined($label);
+    my $domain = $CONFIG{domain};
+    $label =~ s/\Q$domain\E//;
+    # hack
+    $label =~  s/\.resnet//;
+
+    $node{label} = $label;
+
+    # URL for image maps
+    if ($isdev) {
+        $node{URL} = "device.html?ip=$ip";
+    } else {
+        $node{URL} = "node.html?node=$ip";
+        $node{fillcolor} = $CONFIG{node_problem};
+    }
+
+    # Dereferencing the scalar by name below
+    #   requires that the variable be non-lexical (not my)
+    #   we'll create some local non-lexical versions 
+    #   that will expire at the end of this block
+    # Node Mappings
+    foreach my $map (@{$CONFIG{node_map}}){
+        my ($var,$regex,$attr,$val) = split(':',$map);
+
+        { no strict 'refs';
+           $var =  ${"$var"}; 
+        }
+
+        next unless defined $var;
+
+        if ($var =~ /$regex/) {
+            print "Giving node $ip $attr = $val\n" if $DEBUG;
+            $node{$attr} = $val;
+        }
+    }
+
+    $gv->add_node($ip, %node);
+}
+
+=item backup() - Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
+Calls mac_dump(), arp_dump(), and dev_dump().
+
+=cut
+sub backup {
+    # Log backup
+    &batch_mode('logs/back',1);
+    my $datadir = $CONFIG{datadir};
+
+    die "Can't write to Data Directory.\n" unless -w $datadir;
+    print "Backing up Data to $datadir\n";
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+
+    system("mkdir -m 0775 -p $datadir/mac/$month") unless (-d "$datadir/mac/$month");
+    system("mkdir -m 0775 -p $datadir/arp/$month") unless (-d "$datadir/arp/$month");
+    system("mkdir -m 0775 -p $datadir/dev/$month") unless (-d "$datadir/dev/$month");
+
+    &mac_dump("mac/$month");
+
+    &arp_dump("arp/$month");
+
+    &dev_dump("dev/$month");
+
+    print "Running Database Vacuum...\n";
+    &sql_do("VACUUM ANALYSE;"),"\n";
+
+}
+
+=item mac_dump() - Dumps the node table out to mac_current.txt and 
+                   mac_archive.txt.   Adds a day stamp, no time-stamp.
+                   May need to be changed if $nodes takes
+                   up too much memory.
+=cut
+sub mac_dump {
+    my $dir=shift;
+
+    print "Dumping node table to $dir...\n";
+
+    # Force to batch mode to not output to screen.
+    my $old_batch = $BatchMode;
+    $BatchMode=1;
+
+    # Dump Current
+    my $nodes = sql_rows('node',['mac','switch','port','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                           {'active' => 1}
+                        );
+
+    &batch_mode("$dir/mac_current");
+
+    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+        my $active = $row->{active};
+        next unless $active;
+        my $mac = $row->{mac};  
+        my $ip  = $row->{switch};
+        my $port = $row->{port};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-17s  %-15s  %-25s %-10d %-10d\n",
+            $mac, $ip, $port, $time_first, $time_last);
+    }
+    &batch_mode_end;
+
+    # Dump Archive
+    $nodes = sql_rows('node',['mac','switch','port','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                           {'active' => 0}
+                           );
+
+    &batch_mode("$dir/mac_archive");
+
+    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+        my $active = $row->{active};
+        next if $active;
+        my $mac = $row->{mac};  
+        my $ip  = $row->{switch};
+        my $port = $row->{port};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-17s  %-15s  %-25s %-10d %-10d\n",
+            $mac, $ip, $port, $time_first, $time_last);
+    }
+
+    &batch_mode_end;
+
+    $BatchMode=$old_batch;
+}
+
+=item arp_dump(dir) - Dumps node_ip table to files arp_current and arp_archive.
+
+=cut
+sub arp_dump {
+    my $dir = shift;
+
+    print "Dumping node_ip table to archive files...\n";
+
+
+    # Force to batch mode to not output to screen.
+    my $old_batch = $BatchMode;
+    $BatchMode=1;
+
+    # Dump Current
+    my $nodes = sql_rows('node_ip',['mac','ip as remote_ip','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                          {'active' => 1}
+                         );
+
+    &batch_mode("$dir/arp_current");
+    foreach my $row (sort sort_ip @$nodes){
+        my $active = $row->{active};
+        next unless $active;
+        my $mac = $row->{mac};  
+        my $ip  = $row->{remote_ip};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-15s  %-17s  %-10d %-10d\n",
+            $ip, $mac, $time_first, $time_last);
+    }
+    &batch_mode_end;
+
+    # Dump Archive
+    $nodes = sql_rows('node_ip',['mac','ip as remote_ip','active',
+                                    'extract(epoch from time_first) as time_first', 
+                                    'extract(epoch from time_last) as time_last'],
+                          {'active' => 0}
+                           );
+    &batch_mode("$dir/arp_archive");
+    foreach my $row (sort sort_ip @$nodes){
+        my $active = $row->{active};
+        next if $active;
+        my $mac = $row->{mac};  
+        my $ip  = $row->{remote_ip};
+        my $time_first = $row->{time_first};
+        my $time_last = $row->{time_last};
+        printf("%-15s  %-17s  %-10d %-10d\n",
+            $ip, $mac, $time_first, $time_last);
+    }
+    &batch_mode_end;
+
+    $BatchMode=$old_batch;
+
+}
+
+=item dev_dump() - Dumps out the device,device_ip, and topology info from device_port to
+file 'devices'
+
+=cut
+sub dev_dump {
+    my $dir = shift;
+
+    print "Dumping device and device_port tables to $dir...\n";
+
+    # Force to batch mode to not output to screen.
+    my $old_batch = $BatchMode;
+    $BatchMode=1;
+    
+    &load_old_devices;
+    
+    &batch_mode("$dir/devices");
+
+    # Make alias map
+    my %alias_map;
+    foreach my $alias (keys %$Aliases){
+        my $dev = $Aliases->{$alias};
+
+        push @{$alias_map{$dev}},$alias;
+    }
+
+    foreach my $dev (sort sort_ip keys %$OldDevices){
+        print "$dev\n";
+        if (defined $alias_map{$dev}){
+            foreach my $alias (sort sort_ip @{$alias_map{$dev}}){
+                print "\talias:$alias\n";
+            }
+        }
+
+        # topology
+        my $neighbors = sql_rows('device_port',['remote_ip','remote_port','port'],
+                                {'remote_ip'=>'is not null','ip'=>$dev});
+
+        foreach my $neighbor (sort sort_ip @$neighbors){
+
+            my $port = $neighbor->{port};
+            my $remote_ip = $neighbor->{remote_ip};
+            my $remote_port = $neighbor->{remote_port};
+            print "\tlink:$port,$remote_ip,$remote_port\n";
+        }
+    }
+
+    &batch_mode_end;
+
+    $BatchMode=$old_batch;
+}
+
+=item sort_ip() - Used by sort {} calls to sort by IP octet.  If passed two hashes, 
+will sort on hash_key remote_ip.
+
+=cut
+sub sort_ip {
+    my $aval = ref $a eq 'HASH' ?
+            $a->{remote_ip} :
+            $a;
+    my $bval = ref $b eq 'HASH' ?
+            $b->{remote_ip} :
+            $b;
+    my ($a1,$a2,$a3,$a4) = split(/\./,$aval);
+    my ($b1,$b2,$b3,$b4) = split(/\./,$bval);
+    
+    return 1 if ($a1 > $b1);
+    return -1 if ($a1 < $b1);
+    return 1 if ($a2 > $b2);
+    return -1 if ($a2 < $b2);
+    return 1 if ($a3 > $b3);
+    return -1 if ($a3 < $b3);
+    return 1 if ($a4 > $b4);
+    return -1 if ($a4 < $b4);
+    return 0;
+}
+
+=item topo_load_file(file) - Loads and parses manual topography file. 
+
+=cut
+sub topo_load_file {
+    my $file = shift || $CONFIG{topofile};
+
+    my $dev;    # current config line
+
+    print "Loading topology information from $file\n" if $DEBUG;
+    open (DEVS,"<$file") or die "topo_load_file($file)  $!\n";
+    while (my $line = (<DEVS>)){
+        chomp $line;
+        # comments
+        $line =~ s/#.*//;
+        # White Space
+        $line =~ s/^\s+//g;
+        $line =~ s/\s+$//g;
+        next if $line =~ /^\s*$/;
+        
+        if ($line =~ /^link:(.*)/){
+            my ($from_port,$to,$to_port) = split(/,/,$1);
+
+            #print "    $dev $from_port $to $to_port \n" if $DEBUG;
+
+            my $to_ip = &getip($to);
+            unless (length $to_ip){
+                print "    Can't resolve $to in $line!\n";
+                next;
+            }
+        
+            # Save Link info both directions
+            push (@{$DeviceTopo{$dev}},   {'from' => $dev,  'from_port' => $from_port, 'to' => $to_ip, 'to_port' => $to_port});
+            push (@{$DeviceTopo{$to_ip}}, {'from' => $to_ip,'from_port' => $to_port,   'to' => $dev,   'to_port' => $from_port});
+
+        } elsif ($line =~ /^alias:(.*)/){
+            print "  Alias : $1 found.\n" if $DEBUG;
+            next;
+
+        } else {
+            $dev = &getip($line);
+            unless (defined $dev and length $dev){
+                print "Bad line or device IP not found in $file : $line\n";
+                next;
+            } else {
+                #print "    $line ($dev)\n" if $DEBUG;
+            }
+            $DeviceTopo{$dev} = [];
+        }
+    }
+    close (DEVS);
+
+    print scalar(keys(%DeviceTopo)) . " entries loaded \n" if $DEBUG;
+
+}
+
+=item topo_add_link()
+
+Pass reference to array of hash references holding link: lines from 
+manual topology info.  Adds information to device_port table.
+
+=cut
+sub topo_add_link {
+    my $links = shift;
+
+    foreach my $link (@$links){
+        next unless defined $link;
+
+        unless ( defined $link->{from} and 
+                 defined $link->{from_port} and
+                 defined $link->{to} and
+                 defined $link->{to_port} ) {
+            print "  topo_add_link() - Bad link! ", join(',',each %$link), "\n";
+            next;
+        }
+            
+        # Add link info
+        print "  topo_add_link() $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port}\n" if $DEBUG;
+
+        # Check for existing / conflicting topology info
+        my $link_from = sql_hash('device_port', 
+                            ['remote_ip','remote_port'],
+                            { 'ip' => $link->{from}, 'port' => $link->{from_port} }
+                            );
+        my $link_to = sql_hash('device_port', 
+                            ['remote_ip','remote_port'],
+                            { 'ip' => $link->{to}, 'port' => $link->{to_port}  }
+                            );
+
+        # See if from -> to direction conflicts
+        if ((defined $link_from->{remote_ip} and $link_from->{remote_ip} ne $link->{to})
+          or(defined $link_from->{remote_port} and $link_from->{remote_port} ne $link->{to_port})) {
+            print "! topo_add_link() - $link->{from} / $link->{from_port} has discovered neighbor ",
+                  "$link_from->{remote_ip} / $link_from->{remote_port} which conflicts with ",
+                  "forced info of $link->{to} / $link->{to_port} \n";
+        }
+
+        # See if to -> from direction conflicts
+        if ((defined $link_to->{remote_ip} and $link_to->{remote_ip} ne $link->{from})
+          or(defined $link_to->{remote_port} and $link_to->{remote_port} ne $link->{from_port})) {
+            print "! topo_add_link() - $link->{to} / $link->{to_port} has discovered neighbor ",
+                  "$link_to->{remote_ip} / $link_to->{remote_port} which conflicts with ",
+                  "forced info of $link->{from} / $link->{from_port} \n";
+        }
+
+        my $rv = insert_or_update('device_port', 
+                        {'ip' => $link->{from}, 'port' => $link->{from_port} },
+                        {'remote_ip' => $link->{to}, 'remote_port' => $link->{to_port} }
+                        );
+        print "  topo_add_link() - Failed to add $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n" if $rv;
+    }
+}
+
+=item schlop(file,topo_only_flag) - Used to start a discovery based on topography file.  
+Will then proceed to do an initial mac_suck() and arp_nip() unless the topo_only_flag is set.
+
+=cut
+sub schlop {
+    my ($file,$topo_only) = @_;
+    &batch_mode('discover_file');
+
+    $start_time = time; 
+    print "Discovering devices from file:$file... ";
+
+    &topo_load_file($file);
+    &load_old_devices;
+
+    # Add devices
+    foreach my $dev (keys %DeviceTopo){
+        next if ($New_Only and defined $OldDevices->{$dev});
+        last if defined $topo_only and $topo_only;
+
+        my $timeout = defined $CONFIG{timeout} ? $CONFIG{timeout} : 90;
+
+        eval {
+            alarm($timeout);
+            discover($dev);
+            alarm(0);   # Cancel alarm if we return in time.
+        };
+
+        if ($@ =~ /timeout/){
+            $TimedOut{$dev}++;
+            print "\n  ! Device Timed out ($timeout sec)\n";
+        }
+    }
+    
+    # Deal with topology info
+    foreach my $dev (keys %DeviceTopo){
+        topo_add_link($DeviceTopo{$dev}); 
+    }
+
+    return if (defined $topo_only and $topo_only);
+
+    # ArpNip and Macsuck newly found devices.
+    &load_old_devices;
+    &mac_getportmacs;
+
+    foreach my $dev (keys %DeviceTopo){
+        my $layers = $OldDevices->{$dev};
+        unless (defined $layers and length($layers)){
+            print "  Device $dev not discovered. Skipped.\n";
+            next;
+        }
+
+        macsuck($dev) if (has_layer($layers,2));
+        arpnip($dev)  if (has_layer($layers,3));
+    }
+
+    foreach my $dev (@Discover_Queue){
+        next if (defined $OldDevices->{$dev} or defined $Aliases->{$dev});
+        print "  Found new device: $dev\n";
+    }
+    &end;
+}
+
+=item refresh_all() - Calls discover() for each file already in device table
+
+=cut
+sub refresh_all {
+    $start_time = time;
+
+    &batch_mode('refresh');
+
+    my $now = localtime();
+    print "[Refresh All Devices]  Started at $now. \n";
+    &load_old_devices;
+    &topo_load_file;
+
+    my $timeout = $CONFIG{timeout};
+
+    foreach my $dev (keys %$OldDevices){
+        eval {
+            alarm($timeout);
+            discover($dev);
+            alarm(0); 
+        };
+
+        if ($@ =~ /timeout/){
+            $TimedOut{$dev}++;
+            print "\n  ! Device Timed out ($timeout sec)\n";
+        }
+    }
+
+    #print "Reloading manual topology info...\n";
+    #schlop($CONFIG{topofile},1);
+
+    &end;
+
+}
+
+=item parse_oui - Parses file oui.txt in current directory.  Uses contents to stuff
+oui table.
+
+=cut
+sub parse_oui {
+    print "Schlopping contents of oui.txt to database.\n";
+    my %OUI;
+    open (OUI, "<oui.txt") or die "Can't open OUI. $!\n";
+    while (my $line = <OUI>){
+        chomp $line;
+        if ($line =~ /^(.{2}-.{2}-.{2})\s+\(hex\)\s+(.*)\s*$/i){
+            $OUI{$1}=$2;
+        } 
+    }
+    close (OUI);
+
+    my $oui_count = 0;
+    foreach my $oui (keys %OUI){
+        my $company = $OUI{$oui};
+        # make 00-00-00 into 00:00:00
+        $oui =~ s/-/:/g;
+        print "$oui : $company\n" if $DEBUG;
+        insert_or_update('oui',{'oui' => $oui, 'company' => $company },
+                         {'oui' => $oui, 'company' => $company } );
+        $oui_count++;
+    }
+    print "Found $oui_count entries in oui.txt\n";
+}
+
+sub test {
+
+}
+
+sub header{
+    print "n e t  d i s c o\n";
+    print '-'x70 . "\n";
+}
+
+sub usage{
+    return <<"_end_usage_";
+Network Discovery and Management
+
+netdisco [Options] Command(s)
+
+Options:
+    -b               Batch Mode - Redirect stdout to log files
+    -C (Config File)
+    -D               DEBUG
+    -L               No logging
+    -N               New discovery only.
+    -S               DEBUG - Dump SQL commands
+    
+Commands:
+    -R        - Refresh all device/port information (no discovery)
+    -r device - Discover Network starting from [device]
+    -d device - Discover single device
+    -F  file  - Discover devices from file (set -T for topology only)
+    -T        - Import Topology info only from $CONFIG{topofile} 
+
+    -m        - Mac Suck whole network
+    -M device - Mac Suck single device
+
+    -a        - Arp Nip whole network
+    -A device - Arp Nip single device
+
+    -O        - Import oid.txt into database for node_search
+    -B        - Create backups of all data and put into $CONFIG{datadir}
+    -g        - Create Graph and image-map files.
+
+    -E device - Expire Device (-n to delete nodes too)
+    -e device - Expire Nodes  (-V to archiVe instead of delete)
+    -i from_ip to_ip - Change IP Address of device
+    
+_end_usage_
+}

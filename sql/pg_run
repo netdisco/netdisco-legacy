@@ -1,0 +1,20 @@
+#!/bin/sh
+# run_sql [sql source file]
+#		Will either source a SQL file, or drop you in interactive mode
+# Max Baker <max@warped.org>
+
+
+DB=disc
+
+if [ -r "$1" ]
+then
+	echo -n "This will nuke all the data in the table.  You Sure (y/n)?"
+	read REPLY
+	if [ "$REPLY" = "y" ]; then
+		psql -e -U $DB $DB -f $1
+	else
+		echo "Never Mind"
+	fi
+else 
+	psql -U $DB $DB
+fi
