@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode/;
 
-$VERSION = '0.92-cvs';
+$VERSION = '0.92';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();

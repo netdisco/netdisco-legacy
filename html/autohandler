@@ -17,7 +17,7 @@
     .topbar { background-color:#8b7e66; color:#eed8ae; height:16pt;
               font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; 
-              vertical-align:bottom; font-family:arial,helvetica,serif; font-size:10pt; }
+              vertical-align:bottom; font-family:arial,helvetica,serif; font-size:8pt; }
     .sidebar-bg { background-color:darkblue; border:black; }
     .sidebar-0 { text-align:center; background-color:#eed8ae;}
     .sidebar-1 { text-align:center; background-color:#ffe7ba;}
@@ -55,7 +55,7 @@
 </TR>
 <TR>
     <TD VALIGN=BOTTOM colspan=2 class="botbar" ALIGN=CENTER>
-        Netdisco created for UCSC -&gt; Cats -&gt; NTS by Max Baker.  
+        Netdisco <%$netdisco::VERSION%> 
     </TD>
 </TR>
 </TABLE>

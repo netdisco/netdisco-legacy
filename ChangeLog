@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-0.92beta ()
+0.92beta (08/14/03)
     + Added feature [753750] Export to NMIS style config file
     + Changed from GetOpt::Std to GetOpt::Long (running out of alphabet)
     + Added feature [762010] Expire nodes by subnet
@@ -12,6 +12,10 @@
     * Fixed Bug [ 765422 ] MAC Address of switch port show up under connected devices
     + Added Feature [ 783093 ] Show IP address of connected node under Device View
     + Added Config setting to be able to skip certain VLANs during MacSucks
+    * Changed walk_fwtable() to only call fw_port() and not fw_mac()
+      to improve macsuck time. 
+    * Added known access points to node_search from Kismet project
+
 
 0.91beta (06/10/03)
     + added feature [ 744605 ] Discover device from the admin panel
