@@ -18,15 +18,15 @@ fi
 case $1 in
     start)
         echo -n "Stopping netdisco admin daemon:"
-        su - $USER -c "$NETDISCO/netdisco -p stop"
+        su -l $USER -c "$NETDISCO/netdisco -p stop"
     ;;
     stop)
         echo -n "Stopping netdisco admin daemon:"
-        su - $USER -c "$NETDISCO/netdisco -p start"
+        su -l $USER -c "$NETDISCO/netdisco -p start"
     ;;
     restart)
         echo -n "Restarting netdisco admin daemon:"
-        su - $USER -c "$NETDISCO/netdisco -p restart"
+        su -l $USER -c "$NETDISCO/netdisco -p restart"
     ;;
     status)
         $NETDISCO/netdisco -p status
