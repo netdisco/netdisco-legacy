@@ -3140,14 +3140,6 @@ sub graph_addnode {
 
     $node{label} = $label;
 
-    # URL for image maps
-    if ($isdev) {
-        $node{URL} = "device.html?ip=$ip";
-    } else {
-        $node{URL} = "node.html?node=$ip";
-        $node{fillcolor} = $CONFIG{node_problem};
-    }
-
     # Dereferencing the scalar by name below
     #   requires that the variable be non-lexical (not my)
     #   we'll create some local non-lexical versions 
@@ -3166,6 +3158,15 @@ sub graph_addnode {
             print "Giving node $ip $attr = $val\n" if $DEBUG;
             $node{$attr} = $val;
         }
+    }
+
+    # URL for image maps
+    if ($isdev) {
+        $node{URL} = "device.html?ip=$ip";
+    } else {
+        $node{URL} = "node.html?node=$ip";
+        # Overrides any colors given to nodes above. Bug 1094208
+        $node{fillcolor} = $CONFIG{node_problem};
     }
 
     return $gv->add_node($ip, %node);

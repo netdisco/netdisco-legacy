@@ -2,6 +2,12 @@
 # netdisco.org
 # $Id$
 
+0.95 ()
+
+Bugfixes:
+    * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
+
+
 0.94beta (12/06/04)
 
 New Device Support in SNMP::Info 0.9:
