@@ -1,7 +1,13 @@
-<%perl>
-$m->clear_buffer;
-$r->note_basic_auth_failure;
-$m->abort(401);
-</%perl>
+<h3><%$user%> Logged Out</h3>
+<FORM ACTION="login.html" METHOD=GET>
+<INPUT TYPE="submit" VALUE="Log Back In">
+</FORM>
+<%init>
+my $user = $m->session->{user};
+$m->delete_session;
+</%init>
+<%method title>
+- Logout \
+</%method>
 %# $Id$
 %# vim:syntax=mason
