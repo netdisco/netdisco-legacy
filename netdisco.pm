@@ -200,10 +200,21 @@ Reads the config file and fills the C<%CONFIG> hash.
 sub config {
     my $file = shift;
 
+    # all default to 0
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans
                      /;
+
+    # these will make array refs of their comma separated lists
+    my @array_refs = qw/community community_rw/;
+
+    # these will make a reference to a hash:
+    #      keys :comma separated list entries value : number > 0
+    my @hash_refs  = qw/portcontrol macsuck_no admin web_console_vendors
+                       web_console_models macsuck_no_vlan arpnip_no discover_no
+                       mibdirs
+                      /;
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
     my @configs=(<CONF>);    
@@ -223,15 +234,24 @@ sub config {
         # Fill the %CONFIG hash
 
         my $var = undef;  my $value = undef;
-        if ($config =~ /^([a-zA-z_-]+)\s*=\s*(.*)$/) {
+        if ($config =~ /^([a-zA-Z_-]+)\s*=\s*(.*)$/) {
             $var = $1;  $value = $2;
         } 
-
         unless(defined $var and defined $value){
             print STDERR "Bad Config Line : $config\n";
             next;
         }
 
+        # Config Variable Expansion ($home will become $CONFIG{home})
+        #       ignores \$expression
+        while ($value =~ m/(?<!\\)\$([a-zA-Z_-]+)/g){
+            my $configvar = $1; my $configval = $CONFIG{$configvar};
+            $value =~ s/(?<!\\)\$$configvar/$configval/g if defined $configval;
+        }
+
+        # change \$ to $
+        $value =~ s/\\\$/\$/g;
+            
         # Hacks
         
         # Booleans
@@ -244,7 +264,7 @@ sub config {
         }
 
         # Comma separated lists -> array ref
-        if ($var =~ /^(community|community_rw)$/) {
+        if (grep /^\Q$var\E$/,@array_refs) {
             my @com = split(/\s*(?<!\\),\s*/,$value);
             foreach (@com){
                 $_ =~ s!\\,!,!g;
@@ -252,6 +272,8 @@ sub config {
             $value = \@com;
         }
 
+        # TODO: Make this new category of config directives
+        #       multiple_arrayref
         if ($var eq 'node_map') {
             my $oldvalue = $CONFIG{$var};
             push (@$oldvalue, $value);
@@ -259,7 +281,7 @@ sub config {
         }
 
         # Comma separated lists that map to defined hash keys.
-        if ($var =~ /^(portcontrol|macsuck_no|admin|web_console_vendors|web_console_models|macsuck_no_vlan|arpnip_no|discover_no)$/) {
+        if (grep /^\Q$var\E$/,@hash_refs) {
             my %seen;
             foreach my $key (split(/\s*(?<!\\),\s*/,$value)){
                 $key =~ s/^\s+//;

@@ -17,6 +17,7 @@
       a few years ago).  Also fixed node_search to actually work.
     + Fixed Device Search to be more wildcard friendly
     + Added Feature -  Match scope and sysName fields in device_search
+    + Added Variable Expansion in Config Files (eg. $home will translate to your setting)
     * Fixed MacSuck to only Macsuck vlans that are currently in use
         macsuck_all_vlans config option overrides.
           by Dusty Hall and Walter Gould
