@@ -336,9 +336,9 @@ $m->comp('SELF:port_matches');
     <TH><%$desc%></TH>
 %}
     <TH>Connected<BR>Devices<% $dev_age eq 'on' ? '<BR><font size=-2>(Last Seen)</font>' : ''%></TH>
-% if ($port_control) {
+%# if ($port_control) {
     <TH>Port<BR>Control</TH>
-%}
+%#}
 </TR>
 </%method>
 %#
@@ -475,19 +475,17 @@ foreach my $port (@newports){
 &nbsp;  \
 %    }
 </TD>
-% if ($port_control) {
     <TD> \
 %     if ($port->{logs}){
-<A HREF="portcontrol.html?cmd=log&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Log Entries" BORDER=0></A> \
+        <A HREF="portcontrol.html?cmd=log&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Log Entries" BORDER=0></A> \
 %     } 
-%     unless (defined $remote_ip) {
-%         my $dir = $port->{up_admin} eq 'down' ? 'up' : 'down';
-<A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" BORDER=0></A> \
-%     } elsif (! $port->{logs}){
+% if ($port_control and !defined $remote_ip) {
+%   my $dir = $port->{up_admin} eq 'down' ? 'up' : 'down';
+    <A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" BORDER=0></A> \
+% } elsif (! $port->{logs}){
 &nbsp; \
 %     }
-</TD>
-% } # end control column
+    </TD>
 </TR>
 % }  # end foreach port
 % 
