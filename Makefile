@@ -9,7 +9,8 @@ POD2HTML = /usr/local/bin/pod2html
 SNMPLIBS := $(shell find SNMP -name "*.pm")
 
 all:
-	echo "Available options are docs,snmp,oui"
+    echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."
+	echo "Available targets: docs,snmp,oui"
 
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
