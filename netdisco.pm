@@ -32,7 +32,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
                        sql_hash sql_column sql_rows add_node add_arp dbh
                        all config sort_ip sort_port sql_scalar root_device log
-                       make_graph is_mac user_add user_del mail is_secure 
+                       make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
@@ -244,7 +244,7 @@ sub config {
         }
 
         # Comma separated lists that map to defined hash keys.
-        if ($var =~ /^(portcontrol|macsuck_no|admin|web_console_vendors|web_console_models|macsuck_no_vlan)$/) {
+        if ($var =~ /^(portcontrol|macsuck_no|admin|web_console_vendors|web_console_models|macsuck_no_vlan|arpnip_no|discover_no)$/) {
             my %seen;
             foreach my $key (split(/\s*(?<!\\),\s*/,$value)){
                 $key =~ s/^\s+//;
@@ -321,6 +321,68 @@ sub getip {
         $ip = inet_ntoa($testhost);
     }
     return $ip;
+}
+
+=item in_subnet(subnet,ip)
+
+Returns Boolean.  Checks to see if IP address is in subnet.  Subnet
+is defined as single IP address, or CIDR block.  Partial CIDR format
+(192.168/16) is NOT supported.
+
+ in_subnet('192.168.0.0/24','192.168.0.3') = 1;
+ in_subnet('192.168.0.3','192.168.0.3') = 1;
+
+
+=cut
+sub in_subnet{
+    my ($subnet,$ip) = @_;
+
+    unless (defined $subnet and defined $ip){
+        return undef;        
+    }
+
+    # No / just see if they're equal
+    if ($subnet !~ m!/!) {
+        return ($subnet eq $ip) ? 1 : 0;
+    }
+
+    # Parse Subnet
+    my ($root,$bits);
+    if ($subnet =~ /^([\d\.]+)\/(\d+)$/){
+       $root = $1;  $bits = $2; 
+    } else { return undef; }
+
+    my $root_bin = unpack("N",pack("C4",split(/\./,$root)));
+    my $mask = 2**32 - (2 ** (32 - $bits));
+
+    # Parse IP
+    my $ip_bin = unpack("N",pack("C4",split(/\./,$ip)));
+    
+    # Root matches and Mask Matches
+    return (    ($ip_bin & $mask) == $root_bin
+            and ($ip_bin & ~ $mask)
+           ) ? 1 : 0;
+}
+
+=item in_subnets(ip,config_directive)
+
+Returns Boolean.  Checks a given IP address against all the IPs and subnet
+blocks listed for a config file directive.
+
+ print in_subnets('192.168.0.1','macsuck_no');
+
+=cut
+sub in_subnets {
+    my ($ip,$config) = @_;
+
+    return 0 unless defined $CONFIG{$config};
+    return 0 unless defined $ip;
+
+    foreach my $net (keys %{$CONFIG{$config}}) {
+        return 1 if in_subnet($net,$ip);
+    }
+
+    return 0;
 }
 
 =item is_mac(mac) 
@@ -761,7 +823,7 @@ sub dbh_quote {
     return $dbh->quote($text);
 }
 
-=item hash_diff($hashref_orig, $hashref_new)
+=item hash_diff($hashref_orig,$hashref_new)
 
 Sees if items to change in second hash are different or new compared to first.
 
@@ -1031,7 +1093,7 @@ Creates the SQL:
     SELECT d.ip,d.dns,e.ip,e.dns FROM device d, device e WHERE d.dns = e.dns;
 
 This also leaves a security hole if the where value is coming from the outside
-world because someone could stuff in "'dog';delete from node where true;..."
+world because someone could stuff in C<'dog'>;delete from node where true;...>
 as a value.   If you turn off quoting make sure the program is feeding the where
 value.
 
@@ -1060,7 +1122,7 @@ Select all the devices without reverse dns entries:
 
 Selects all rows within C<device> and C<device_ip> where 
 C<device_ip.alias> or C<device.ip> are C<localhost>
-or C<device_ip.dns> or <device.dns> has C<dog> in it.
+or C<device_ip.dns> or C<device.dns> has C<dog> in it.
 
 Where columns with slashes are split into separate search terms combined with C<OR>:
 
