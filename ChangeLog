@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-0.94beta ()
+0.94beta (12/06/04)
 
 New Device Support in SNMP::Info 0.9:
     - Alteon AD
