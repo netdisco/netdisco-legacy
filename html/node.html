@@ -502,9 +502,7 @@ No results found.
 </TR>
 <%perl>
 my @sorted_matches; $odd=0;
-if      ($arg_sort eq 'mac'){
-    @sorted_matches = sort {$a->{mac} cmp $b->{mac}} @$matches;
-} elsif ($arg_sort eq 'dev'){
+if ($arg_sort eq 'dev'){
     # sort by dns/ip then by port
     @sorted_matches = sort { ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch}) 
                              or &sort_port } @$matches;
@@ -514,6 +512,9 @@ if      ($arg_sort eq 'mac'){
                              ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch})  or
                              &sort_port
                            } @$matches;
+} else {
+    # if sort = 'mac' or other
+    @sorted_matches = sort {$a->{mac} cmp $b->{mac}} @$matches;
 }
 foreach my $match (@sorted_matches) {
     my $active = $match->{active};
