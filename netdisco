@@ -215,13 +215,18 @@ sub run {
 
     print "Network discovery starting from root $root_device at " . localtime() . "\n";
 
+    my $root_dev_ip = &getip($root_device);
+    unless (defined $root_dev_ip){
+        print "Cannot resolve $root_device to an IP address.\n";
+        return;
+    }
 
     # Getting old devices for statistics.
     &load_old_devices;
     topo_load_file();
 
     $start_time = time;
-    push (@Discover_Queue, $root_device);
+    push (@Discover_Queue, $root_dev_ip);
 
     my $timeout = $CONFIG{timeout};
 
@@ -237,7 +242,7 @@ sub run {
         # New Only scan, ignore existing devices
         #   except let us rediscover our target
         next if ( ((defined $OldDevices->{$this_dev} or defined $Aliases->{$this_dev}) and $New_Only)
-                  and ($this_dev ne $root_device)                                               
+                  and ($this_dev ne $root_dev_ip)                                               
                 );
 
         # Set time out 
@@ -252,6 +257,8 @@ sub run {
             print "\n  ! Device Timed out ($timeout sec)\n";
         }
     }
+    
+    print "Network Discovery complete.\n";
     
     my $time1 = time;
     print "Vacuuming device, device_port and device_ip ... ";
@@ -586,7 +593,7 @@ Prints various statistics to stdout or batch_redirect() and calls Netdisco::log(
 
 =cut
 sub end {
-    exit unless $start_time != 0;
+    return unless $start_time != 0;
 
     $end_time = time;
     my $run_time = sprintf("%-.2f",($end_time-$start_time)/60);
@@ -651,7 +658,7 @@ sub end {
         }
     }
     &batch_mode_end;
-    exit;
+    return;
 }
 
 =item load_old_devices()
@@ -1007,8 +1014,14 @@ sub get_device {
     print "  get_device($hostname)\n" if $DEBUG;
 
     # Check to see if device is in database
-    my $ip      = &getip($hostname);
-    my $dev_ip  = &root_device($ip);
+    my $ip       = &getip($hostname);
+    my $dev_ip   = &root_device($ip);
+
+    # Warn if we are using an alias
+    if (defined $dev_ip and $dev_ip ne $ip){
+        print "!  $ip is an alias of $dev_ip.  Using $ip instead.\n";
+        $dev_ip = undef;
+    }
 
     # Call with stored comm/ver unless supplied $ver
     if (defined $dev_ip) { 
@@ -1043,8 +1056,8 @@ sub get_device {
         }
     }
     unless (defined $device) {
-        $UnDiscovered{$hostname}++;
-        print "! Device Not Supported, or can't connect to SNMP.\n";
+        $UnDiscovered{$ip}++ if defined $ip;
+        print "! Device Not Supported or I can't connect to it via SNMP.\n";
         return undef;
     }
     return $device;
@@ -1598,10 +1611,11 @@ sub alias_clean {
         my $alias = $row->{alias};
         my $dns = $row->{dns};
         $dns = defined $dns ? $dns : '[No DNS]';
-        print "Deleting alias of $ip = $alias ($dns)\n";
-        sql_do(qq/DELETE from device WHERE ip = '$alias'/);
-        print "Deleting ports\n";
-        sql_do(qq/DELETE from device_port WHERE ip = '$alias'/);
+# TODO - Does this make sense?
+#        print "Deleting alias of $ip = $alias ($dns)\n";
+#        sql_do(qq/DELETE from device WHERE ip = '$alias'/);
+#        print "Deleting ports\n";
+#        sql_do(qq/DELETE from device_port WHERE ip = '$alias'/);
     }
 
     print "Cleaning out Aliases of non-existant devices.\n";
@@ -2360,7 +2374,7 @@ Resident copy of netdisco to handle requests from the admin panel.
 sub admin_daemon {
     my $pid = undef;
     # Check if we're already running
-    if ($pid=admin_daemon_status){
+    if ($pid = &admin_daemon_status){
         print "Admin Daemon is already running. ($pid)\n";
         return;
     }
@@ -2471,6 +2485,9 @@ sub admin_daemon_job {
     my $old_debug = $DEBUG;
     $DEBUG = $debug;
 
+    # Make sure we don't get our output yanked out from under us
+    $BatchMode = 0;
+
     # Device tasks
     my $job_error = 0;
     if ($cmd eq 'macsuck') {
@@ -2502,6 +2519,21 @@ sub admin_daemon_job {
 
     elsif ($cmd eq 'portcontrol'){
         $job_error = port_switch($job); 
+    }
+
+    # Discover Tasks
+
+    elsif ($cmd eq 'discover'){
+        &discover($subaction);
+    }
+    
+    elsif ($cmd eq 'discover_run'){
+        &run($subaction); 
+    }
+
+    elsif ($cmd eq 'discover_new'){
+        local $New_Only = 1; 
+        &run($subaction);
     }
 
     # Global Tasks
@@ -2536,6 +2568,7 @@ sub admin_daemon_job {
 
     # Clean Up
     $DEBUG = $old_debug;
+    $BatchMode = 1;
     my $output_file = &batch_mode_end('no compress');
     open(OUTFILE, "<$output_file") or die "admin_daemon_job() Can't open $output_file. $!\n";
 
