@@ -41,7 +41,25 @@ $arg_reason = $reason; $arg_log_num = $log_num;
 
 if ($cmd eq 'switch' and (!$reason) ){
     $cmd = 'err';
-    $err .= "You must select a reason for bringing the port $type\n";
+    $err .= "You must select a reason for bringing the port $type <BR>\n";
+}
+
+my $dbport;
+if ($cmd =~ /^(up|down|switch)$/){
+    $dbport = sql_hash('device_port',['*'],{'ip'=>$ip, 'port'=>$port});
+    my $remote_ip   = $dbport->{remote_ip};
+    my $remote_type = $dbport->{remote_type};
+    my $is_uplink   = (defined $remote_ip and (defined $remote_type and $remote_type !~ /ip.phone/i)) ? 1 : 0;
+
+    unless (defined $dbport and scalar(keys %$dbport)){
+        $cmd = 'err';
+        $err .= "That Port doesn't exist!<BR>\n";
+    } 
+
+    if ($is_uplink) {
+        $cmd = 'err';
+        $err .= "You cannot shutoff uplink ports. <BR>\n"; 
+    }
 }
 
 if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
