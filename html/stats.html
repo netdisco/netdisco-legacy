@@ -64,8 +64,10 @@ Statistics took <%$time9 - $time1 %> seconds to process.
     <TD><% join('.',map(ord,split(//,($^V)))) %> (<%$]%>)</TD>
 </TR>
 <TR>
-    <TD><A HREF="http://www.postgresql.org">Postgres</A> Version:</TD>
-    <TD><%$pg_ver%></TD>
+    <TD VALIGN=TOP><A HREF="http://www.postgresql.org">Postgres</A> Version:</TD>
+    <TD><%$pg_ver |h%><BR>
+        DBI <%$DBI::VERSION |h%>  DBD::Pg <%$DBD::Pg::VERSION |h%>
+    </TD>
 </TR>
 <TR>
     <TD><A HREF="http://httpd.apache.org">Apache</A> Info:</TD>
@@ -73,11 +75,13 @@ Statistics took <%$time9 - $time1 %> seconds to process.
 </TR>
 <TR>
     <TD><A HREF="http://perl.apache.org">mod_perl</A> Version:</TD>
-    <TD><%$Apache::VERSION%></TD>
+    <TD><%$mod_perl::VERSION%></TD>
 </TR>
 <TR>
-    <TD><A HREF="http://www.masonhq.com">Mason</A> Version:</TD>
-    <TD><%$HTML::Mason::VERSION%></TD>
+    <TD><A HREF="http://www.masonhq.com">Mason</A>:</TD>
+    <TD>
+        <A HREF="http://www.masonhq.com"><IMG SRC="powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
+        Version <%$HTML::Mason::VERSION%></TD>
 </TR>
 </TABLE>
 </%method>
