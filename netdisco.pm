@@ -33,6 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows add_node add_arp add_nbt dbh sql_match
                        all config sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
+                       dump_subnet
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
@@ -447,6 +448,52 @@ sub in_subnets {
     }
 
     return 0;
+}
+
+=item dump_subnet(cidr style subnet)
+
+Serves you all the possible IP addresses in a subnet.
+
+Returns reference to hash.  Keys are IP addresses
+in dotted decimal that are in the subnet. 
+
+Gateway and Broadcast (.0 .255) addresses are not included.
+
+  %$hash_ref = dump_subnet('192.168.0.0/24');
+  scalar keys %$hash_ref == 254;
+
+Also accepted :
+
+  dump_subnet('14.0/16');
+  dump_subnet('4/24');
+
+=cut
+sub dump_subnet {
+    my $subnet = shift;
+
+    # Parse Subnet
+    my ($root,$bits);
+    if ($subnet =~ /^([\d\.]+)\/(\d+)$/){
+       $root = $1;  $bits = $2; 
+    } else { return;}
+    
+    # parse partial subnets 
+    my @roots = split(/\./,$root);
+    for (my $i=0; scalar(@roots) < 4; $i++){
+        push (@roots,0);
+    }
+    my $root_bin = unpack("N",pack("C4",@roots));
+    my $mask = 2**32 - (2 ** (32 - $bits));
+    
+    my $addrs = {};
+    for (my $ip_bin=$root_bin+1;$ip_bin < 2**32; $ip_bin++){
+        last unless (($ip_bin & $mask) == $root_bin and ($ip_bin & ~ $mask));
+        my $ip = inet_ntoa(pack('N', $ip_bin));
+        next if $ip =~ m/\.(255|0)$/;
+        $addrs->{$ip}++;
+    }
+
+    return $addrs;
 }
 
 =item is_mac(mac) 
