@@ -9,6 +9,7 @@ CREATE TABLE device_port_log (
     port        text,
     log         text, 
     username    text,   -- user is a reserved word
+    userip      inet,
     action      text,
     creation    TIMESTAMP DEFAULT now()
                              );

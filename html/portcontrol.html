@@ -59,18 +59,20 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
 
     # Log attempt 
     insert_or_update('device_port_log', {},
-                    {'ip'=>$ip,'port'=>$port,'log'=>$log,'username'=>$user,'action'=>$type}); 
+                    {'ip'=>$ip,'port'=>$port,'log'=>$log,'userip'=>$userip,
+                     'username'=>$user,'action'=>$type}); 
 }
 
 </%init>
 <%shared>
 # scope
 my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port);
-my $user = $r->connection->user;
+my $user   = $r->connection->user;
+my $userip = $r->connection->remote_ip; 
 my $odd = 1 ;
 </%shared>
 <%method log>
-% my $logs = sql_rows('device_port_log', ['id','log','username','action','extract(epoch from creation) as creation'] , 
+% my $logs = sql_rows('device_port_log', ['id','log','username','userip','action','extract(epoch from creation) as creation'] , 
 %       {'ip'=>$arg_ip, 'port'=>$arg_port} );
 <h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A></h4>
 <TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2>
@@ -82,7 +84,7 @@ my $odd = 1 ;
 </TR>
 % foreach my $entry (sort {$b->{creation} <=> $a->{creation} } @$logs) {
 <TR CLASS="match-<% ++$odd % 2 %>">
-    <TD><%$entry->{username}%></TD>
+    <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
     <TD><%$entry->{action}%></TD>
     <TD><%scalar localtime($entry->{creation})%></TD>
     <TD><FORM><TEXTAREA ROWS=3 COLS=50 WRAP=soft><%$entry->{log}%></TEXTAREA></FORM></TD>
@@ -101,7 +103,7 @@ my $odd = 1 ;
 <TR>
     <TD>Port : <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A>
 <BR>
-Logged: User <U><%$user%></U> at <u><% scalar localtime %></u></TD></TD>
+Logged: User <U><%$user%></U> at <%$userip%> <BR> on <u><% scalar localtime %></u></TD></TD>
 </TR>
 <TR>
     <TD>
