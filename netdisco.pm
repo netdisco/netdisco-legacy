@@ -631,19 +631,30 @@ sub sort_port {
 
     # Equal until proven otherwise
     my $val = 0;
-    while (@a){
-        my $a1 = shift @a;
-        my $b1 = shift @b or last; # If a has more components, stop here
+    while (scalar(@a) or scalar(@b)){
+        my $a1 = shift @a || undef;
+        my $b1 = shift @b || undef;
+
+        # A has more components - wins
+        unless (defined $b1){
+            $val = -1;
+        }
+
+        # A has less components, loses
+        unless (defined $a1) {
+            $val = 1;
+        }
+
+        # carried around from the last find.
+        last if $val != 0;
 
         if ($a1 =~ /$numeric/ and $b1 =~ /$numeric/){
             $val = $a1 <=> $b1;
-            last if $val != 0;
         } elsif ($a1 ne $b1) {
             $val = $a1 cmp $b1;
-            last if $val != 0;
         }
     }
-
+    
     return $val;
 }
 
