@@ -1,7 +1,16 @@
 # Netdisco ChangeLog 
 # netdisco.org
 # $Id$
- 
+
+0.92beta ()
+    + Added feature [753750] Export to NMIS style config file
+    + Changed from GetOpt::Std to GetOpt::Long (running out of alphabet)
+    + Added feature [762010] Expire nodes by subnet
+    + Added Feature [749048] Find old IP addresses
+    * Improved database clean up function to remove old nodes not just warn
+    * Fixed bug where you couldn't Ctrl-C from macwalk/arpwalk
+    * Fixed Bug [ 765422 ] MAC Address of switch port show up under connected devices
+
 0.91beta (06/10/03)
     + added feature [ 744605 ] Discover device from the admin panel
     + Added version info for debugging in [About] (was network stats)
