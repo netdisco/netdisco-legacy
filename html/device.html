@@ -29,7 +29,7 @@ my $odd    = 1;
 # Change which columns are shown in ports by default.
 my %port_cols = (
                  'descr'=>   ['Description',0],
-                 'type' =>   ['Type',1],
+                 'type' =>   ['Type',0],
                  'duplex' => ['Duplex<BR><font size=-2>(Link/Admin)</font>',1],
                  'speed' =>  ['Speed',1],
                  'name'  =>  ['Name',1],
@@ -74,6 +74,7 @@ my $user         = $m->session->{user};
 my $secure       = (defined $r->subprocess_env('https') and $r->subprocess_env('https') eq 'on');
 my $port_ctl     = $m->session->{user_port_ctl};
 my $port_control = ($port_ctl and $secure);
+my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
 </%shared>
 <%init>
 #  Parsing of Arguments
@@ -360,38 +361,8 @@ my $link = $r->uri() . "?ip=$devip";
 <TABLE cellspacing=0 cellpadding=3 border=1>
 <& SELF:port_header &>
 <%perl>
-
-# Sort the ports by portname
-    # having trouble with using sort routine from module netdisco.pm
-    # seems to not be passing all the hash info, just the hash refs
-    # to its context?
-my @newports = sort {  my $aport = $a->{port};
-                       my $bport = $b->{port};
-
-                       my ($aleft,$aright,$bleft,$bright);
-
-                       # sort on 2.1 vs 2.12
-                       if ($aport =~ /^(\d+)\.(\d+)$/) {
-                           $aleft = $1;  $aright = $2;
-                       } elsif ( $aport =~ /\D+/ or $bport =~ /\D+/) {
-                       # sort on alpha
-                             return $aport cmp $bport; 
-                       } else { return $aport <=> $bport; }
-                       # sort numeric
-
-                       if ($bport =~ /^(\d+)\.(\d+)$/) {
-                            $bleft = $1;  $bright = $2;
-                       } else { return $aport cmp $bport; }
-
-                       if ($aleft > $bleft ) { return 1; }
-                       if ($aleft < $bleft ) { return -1; }
-                       if ($aright > $bright) { return 1; }
-                       if ($aright < $bright) { return -1; } 
-                       return 0;
-      } @$ports;
-
 # Display the Ports
-foreach my $port (@newports){
+foreach my $port (sort sort_port @$ports){
     my $remote_ip = $port->{remote_ip};
     my $remote_port = $port->{remote_port};
     my $up_admin = $port->{up_admin};
@@ -468,20 +439,24 @@ foreach my $port (@newports){
             next unless ($active or $dev_arch eq 'on');
             $seen_macs++;
 </%perl>
-        <A HREF="node.html?node=<% $mac |u %>"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR> 
+        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR> 
 %        }
 %    }
 %    unless ($seen_macs or defined $remote_ip) {
 &nbsp;  \
 %    }
 </TD>
+%# Port Control Column
     <TD> \
+% if ($device->{dns} =~ /^hub/i and $port_info) {
+      <A HREF="port_info.html?hub=<%$device->{dns}%>&port=<%$port->{port}%>"><IMG SRC="icon_info.gif" WIDTH=12 HEIGHT=11 BORDER=0 ALT="Pinnacles DB Info" TITLE="Pinnacles DB Info"></A> \
+% }
 %     if ($port->{logs}){
-        <A HREF="portcontrol.html?cmd=log&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Log Entries" BORDER=0></A> \
+        <A HREF="portcontrol.html?cmd=log&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Admin Log Entries" TITLE="<%$port->{logs}%> Admin Log Entries" BORDER=0></A> \
 %     } 
 % if ($port_control and !defined $remote_ip) {
 %   my $dir = $port->{up_admin} eq 'down' ? 'up' : 'down';
-    <A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" BORDER=0></A> \
+    <A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" TITLE="Bring Port <%$dir%>" BORDER=0></A> \
 % } elsif (! $port->{logs}){
 &nbsp; \
 %     }
@@ -490,7 +465,7 @@ foreach my $port (@newports){
 % }  # end foreach port
 % 
 % # Print out the legend again if we have lots of results
-% $m->comp('SELF:port_header') if (scalar @newports > 10);
+% $m->comp('SELF:port_header') if (scalar @$ports > 10);
 % 
 </TABLE>
 <h4>Key</h4>
@@ -511,6 +486,7 @@ foreach my $port (@newports){
     <NOBR> <IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
     <NOBR> <IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
     <NOBR> <IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
+    <NOBR> <IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
     </TD>
 </TR>
 %}
