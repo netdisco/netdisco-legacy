@@ -1,9 +1,12 @@
 #!/bin/sh
+# pg_back - Wrapper for pg_dump to backup netdisco database
+# $Id$
 
 DATE=`date "+%Y%m%d"`
 FILE=db_back-${DATE}.sql
 DB=netdisco
 
+echo "Enter Database Password for Netdisco."
 pg_dump -a -d -D -O -U ${DB} ${DB} | gzip > ${FILE}.gz
 
 chmod go-rwx ${FILE}.gz
