@@ -11,9 +11,9 @@ Max Baker
 Netdisco is an Open Source web-based network management tool.
 
 Designed for moderate to large networks, configuration information and
-connection data for network devices are retrieved by SNMP.  With Netdisco
-you can locate the switch port of an end-user system by IP or MAC address.
-Data is stored using a SQL database for scalability and speed.
+connection data for network devices are retrieved and set by SNMP.  With
+Netdisco you can locate the switch port of an end-user system by IP or MAC
+address.  Data is stored using a SQL database for scalability and speed.
 
 Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP),
 and SynOptics Network Management Protocol (SONMP) optionally provide
@@ -29,7 +29,10 @@ topology information, with SNMP polls and DNS queries.  It does not use CLI
 access and has no need for privilege passwords.  Security features include a
 wire-side Wireless Access Point (AP) locator.  
 
-Netdisco was designed and built at UCSC and is now hosted by Source Forge.
+Netdisco was created at the University of California, Santa Cruz (UCSC),
+Networking and Technology Services (NTS) department.   UCSC continues to
+support the development of Netdisco by providing development servers and
+financial support.  The Netdisco project is hosted by Source Forge.
 
 See L<http://www.netdisco.org>
 
@@ -107,8 +110,6 @@ will also not allow people to switch off uplink ports by accident.
 =item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown
 
 =item * Statistics for number of actual nodes connected to network
-
-=item * Integration with Pinnacle Database
 
 =back
 
@@ -425,7 +426,7 @@ Datbase Node Klean-up. Permanently deletes nodes matching:
 
 =item 1. MAC Addresses that are Switch Port Addresses
 
-=item 2. MAC Addresses that are listed on non-existant ports
+=item 2. MAC Addresses that are listed on non-existent ports
 
 =item 3. MAC Addresses that exist on ports with topology information (uplink ports)
 
@@ -553,9 +554,9 @@ To refresh or discover a device and its ports, use the L<-d> command:
 =item Importing Topology Information
 
 It is not necessary to import the topology information after changing F<netdisco-topology.txt>.  You should
-however restart the admin daemon.  The topology text file is reparsed each time you run netdisco.
+however restart the admin daemon.  The topology text file is re-parsed each time you run netdisco.
 
-As a convience you can use the topology file to quickly seed Netdisco with devices. 
+As a convenience you can use the topology file to quickly seed Netdisco with devices. 
 To import all the topology information at once make sure the topology filename is set in C<netdisco.conf>
 and use the L<-T> command:
 
@@ -848,8 +849,8 @@ both does not speak CDP and is not I<CDP Aware>.
 
 =item 2. Isolated Network Segment
 
-If you have a segment of your network that is not connected directly, or conneted through a non physical
-link like a VPN, then you might fudge an entry to connect that segement of the nework with the main one.
+If you have a segment of your network that is not connected directly, or connected through a non physical
+link like a VPN, then you might fudge an entry to connect that segment of the network with the main one.
 
 =item 3. Attach a non-CDP speaking device
 
@@ -861,15 +862,15 @@ must be added in the manual topology file.
 =head2 Cron Jobs
 
 Netdisco is controlled via cron jobs.  Jobs are run as user C<netdisco>.
-Mulitple jobs can be run at once. 
+Multiple jobs can be run at once. 
 
 The default jobs are :
 
 =over
 
-=item * MacSuck - Every 4 hours MacSuck all the devices in the database.
+=item * MacSuck - Every 2 hours MacSuck all the devices in the database.
 
-=item * ArpNip  - Every 4 hours ArpNip  all the devices in the database. (Offset from Macsuck by 2 hours)
+=item * ArpNip  - Every 2 hours ArpNip  all the devices in the database. (Offset from Macsuck by 1 hours)
 
 =item * Refresh Devices - Once a day refresh device information.
 
@@ -955,7 +956,7 @@ You can put in a CIDR style subnet or a single IP address :
 
     arpnip_no = 192.168.0.0/24,192.168.0.1,192.168.1.0/24
 
-You can NOT use an abbrievated CIDR subnet like C<192/8>.
+You can NOT use an abbreviated CIDR subnet like C<192/8>.
 
 =item compress
 
@@ -972,7 +973,7 @@ PATH. Full or relative path to the directory that backups and logs will be store
 =item discover_no
 
 LIST:IPs and Subnets. Comma Separated list of devices and subnets that will not get hit with 
-an SNMP disovery event.
+an SNMP discovery event.
 
 See L<arpnip_no> for more details.
 
@@ -1057,7 +1058,7 @@ INT. SNMP Port to list in nmis_dump file.  Default C<161>
 =item reverse_sysname
 
 BOOLEAN.  Turn this on to have Netdisco do a reverse lookup of the sysName.0 field to use
-as the managment IP address for a device.  See bug 810939 and device_root() for more info.
+as the management IP address for a device.  See bug 810939 and device_root() for more info.
 Default C<false> 
 
 =item topofile
