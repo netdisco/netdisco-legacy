@@ -251,6 +251,11 @@ F<pg_hba.conf> file to take precedence.
 
 You may have to swap C<md5> for C<crypt>, Actual mileage may vary.
 
+Finally if you would like to have root be able to access all databases,
+try this one :
+
+    local all root trust
+
 =item 2. Restart Postgres
 
 You must now restart Postgres
@@ -349,7 +354,7 @@ This used to be called ucd-snmp.
 
 When you run C<./configure>, make sure you add the switch C<--with-perl-modules>
 
-    ./configure --with-perl-modules
+    ./configure --with-perl-modules --enable-shared
     make 
     make install
 
@@ -744,7 +749,7 @@ Follow the instructions in the F<INSTALL> that comes with C<mod_ssl>
 This step sets up mod_perl for this copy of apache :
 
  cd ../mod_perl-1.x
- /usr/local/bin/perl Makefile.pl \
+ /usr/local/bin/perl Makefile.PL \
         APACHE_SRC=../apache_1.3.x/src \
         EVERYTHING=1 \
         DO_HTTPD=1 \
@@ -852,6 +857,7 @@ and their prerequisites automatically:
         install Apache::Session
         install Apache::Test (for Apache::Request, you may need to do a 'force install')
         install Apache::Request
+        install HTML::Entities
         install HTML::Mason
         install MasonX::Request::WithApacheSession
         install Graph
