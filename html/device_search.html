@@ -77,9 +77,8 @@
 <TR>
     <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
     <TD VALIGN=TOP>Match Scope: </TD>
-    <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Any
-        <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>All
-        &nbsp;&nbsp;criteria.
+    <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
+        <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
         <BR>
         <font size=-1><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</font>
     </TD>
@@ -135,7 +134,6 @@ my $awhere = {};
 my $arg_exact;
 my $winsize = 5;    # max size for select boxes.
 </%shared>
-%#
 <%init>
 my $time1= time;
 
@@ -458,7 +456,6 @@ return $match;
 %    foreach my $col (sort keys %$where){
 %       my $colview = $col;
 %       $colview =~ s/^[^.]+\.//;
-%#       next if $colview =~ /^(ip|dns|port)$/i;
 %       $colview = $colview eq 'count' ? 'Number of Active<BR>Nodes Connected' : $colview;
     <TH><%$colview%></TH>
 %    }
@@ -479,18 +476,16 @@ foreach my $result (@sort_matches){
 </%perl>
     <TR CLASS="match-<% $count % 2%>">
     <TD><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&port=' : ''%><% $port|u %>"><% $dns %></A></TD>
-%#    <TD><% $ip %></TD>
 <%perl>
     foreach my $col (sort keys %$where){
         # Trim off table name for column
         $col =~ s/^[^.]+\.//;
         my $val = $result->{$col};
-#        next if $col =~ /^(ip|dns|port)$/i; 
+
         # Column Specfic stuff
         if ($col eq 'remote_ip') {
             $val = "<A HREF=\"node.html?node=$val\">$val</A>";
         }
-
 </%perl>
    <TD><%$val%></TD>
 %    }
