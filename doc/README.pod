@@ -8,10 +8,122 @@ Max Baker <max@warped.org>
 
 =head1 DESCRIPTION
 
-Netdisco is a network administration tool that will auto-discover the physical (layer 2) topology of 
-a network using the Cisco Discovery Protocol (CDP).  Netdisco uses only SNMP to poll devices and does
-not require enable passwords.  A read-only SNMP community string is all that is required.
+Netdisco is a network administration and security tool.  
 
+Netdisco will auto-discover the physical (layer 2) topology of a network using the Cisco Discovery Protocol (CDP), or work on a supplied topology.  
+
+Netdisco uses only SNMP to poll devices and does not require enable passwords.  
+
+=head1 FEATURES
+
+=over 
+
+=item -> Controllable through Web Interface or Command Line Interface (CLI)
+
+=item -> Database store for scalability and speed (Postgresql)
+
+=item -> Easily extendable to new network devices
+
+=item -> User system to restrict access and features 
+
+=back
+
+=head3 Network Security
+
+=over 
+
+=item * MAC Address to switch port resolution
+
+=item * IP Address to switch port resolution
+
+=item * Logging 
+
+=item * Find Wireless Access Points (APs) from wired-side of network
+
+=item * Find Switch Ports with multiple nodes attached
+
+=item * Find nodes using multiple IP addresses.
+
+=back
+
+=head3 Network Administration
+
+=over
+
+=item * Automatic inventory and search of network hardware
+
+=item * Database backend for speed and scalability
+
+=item * Administratively enable/disable switch ports
+
+=item * Duplex Mismatch Finder
+
+=item * Layer Two traceroute
+
+=back
+
+=head3 Reporting
+
+=over
+
+=item * Statistics for number of actual nodes connected to network
+
+=item * Auto-archiving of data.  History of where a MAC address has shown up,
+and the IP addresses that have been associated with it.
+
+=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
+
+=back
+
+=head3 Searches 
+
+=over
+
+=item * Device Model
+
+=item * Device Vendor
+
+=item * Device OSI Layers Served
+
+=item * sysLocation field
+
+=item * sysDescr field
+
+=item * DNS Name
+
+=item * IP Subnet
+
+=item * OUI (MAC Address Vendor)
+
+=item * Device Ports that are blocking (via Spanning Tree Protocol)
+
+=item * Devices using IP's w/out DNS entries
+
+=back 
+
+Netdisco was custom built for UCSC
+
+=head1 GLOSSARY
+
+=over 4
+
+=item Device
+
+Any device connected to the network that contributes to the physical topology.
+Devices need to be accessible via SNMP.  A device usually has multiple interfaces
+(ports) and can have multiple IP addresses.
+
+=item Node
+
+A node is anything connected to a device.   Nodes are uniquely identified by their
+MAC addresses.  A node may or may not have IP addresses associated with it.
+
+=back
+
+
+=head1 INSTALL AND REQUIREMENTS 
+
+=head2 Components
 
 Netdisco has three components :
 
@@ -35,92 +147,6 @@ The number of people using netdisco can scale with the web server capacity, and 
 on the devices. 
 
 =back
-
-Netdisco was custom built for UCSC
-
-=head1 GLOSSARY
-
-=over 4
-
-=item Device
-
-Any device connected to the network that contributes to the physical topology.
-Devices need to be accessible via SNMP.  A device usually has multiple interfaces
-(ports) and can have multiple IP addresses.
-
-=item Node
-
-A node is anything connected to a device.   Nodes are uniquely identified by their
-MAC addresses.  A node may or may not have IP addresses associated with it.
-
-=back
-
-=head1 FEATURES
-
-=over
-
-=item * Database backend for speed and scalability
-
-=item * MAC Address to switch port resolution
-
-=item * IP Address to switch port resolution
-
-=item * Auto-archiving of data.  History of where a MAC address has shown up,
-and the IP addresses that have been associated with it.
-
-=item * Graphing of network topology.  Clickable image-map of devices.  Link speed shown.
-
-=item * Layer Two traceroute
-
-=item * Automatic inventory and search of network hardware
-
-=item * Administratively enable / disable ports with Read/Write Community String
-
-=item * Statistics for number of actual nodes connected to network
-
-=item * Duplex Mismatch Finder
-
-=item * Logging 
-
-=item * Searches :
-
-=over
-
-=item * Device Model
-
-=item * Device Vendor
-
-=item * Device OSI Layers Served
-
-=item * sysLocation field
-
-=item * sysDescr field
-
-=item * DNS Name
-
-=item * IP Subnet
-
-=item * OUI (MAC Address Vendor)
-
-=item * Device Ports that are blocking (via Spanning Tree Protocol)
-
-=item * Device Ports that are administratively shutdown.
-
-=item * Wireless Access Points (APs) from wired-side of network
-
-=item * Device Ports with multiple Nodes attached
-
-=item * Nodes with multiple IP addresses
-
-=item * Devices using IP's w/out DNS entries
-
-=back 
-
-=back
-
-Netdisco is a I<pure-Perl> product.
-
-=head1 INSTALL AND REQUIREMENTS 
 
 Netdisco Requires:
 
@@ -402,11 +428,15 @@ BOOLEAN. Compress log files?  See L<compress> entry above.
 
 =item datadir
 
-PATH. Full path to the directory that backups and logs will be stored in
+PATH. Full or relative path to the directory that backups and logs will be stored in
 
 =item domain
 
 STRING. Trimmed from all DNS names viewed.  Leave blank to show all domain names.
+
+=item home
+
+PATH.  Full path to where netdisco lives.  Is the root path for all other files and paths.
 
 =item ignore_private_nets
 
@@ -428,6 +458,10 @@ LIST:IPs. Comma Separated list of devices not to use when macsucking.
 
 SECONDS. Timeout for devices when mac sucking.
 
+=item portctl_email
+
+EMAIL.  Address that reports of use of portcontrol.html are sent to.
+
 =item secure_login
 
 BOOLEAN - Require web login to be under https
@@ -444,6 +478,10 @@ SECONDS. Timeout for refreshing or discovering a device
 =item webpath
 
 PATH. URL Path added to the beginning of links on the web front-end
+
+=item websession
+
+MINUTES.  Amount of time a session lasts before someone has to login again.
 
 =back
 
@@ -506,35 +544,14 @@ INT. Settings for 'Retries' field passed to SNMP::Session
 
 =over
 
+=item edge_color
+
+STRING. Default color for link between devices.
+
 =item graph
 
 FILE. Full path and name to the GIF graph of the network.  Path should be the same
 as the netmap.html component.
-
-=item graph_timeout
-
-MINUTES. Time to allow C<neato> to try and solve the graph.  Default 60min.
-
-=item graph_map
-
-FILE. Full path and name to the ISMAP data for the network.  Path should be the 
-same as the netmap.html component.
-
-=item graph_epsilon
-
-INT. Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
-Set to an integer value.  This will improve the mapping and visual quality of
-them graph. Each integer step can mean an exponential time increase in the solving
-of the graph.
-
-=item graph_x, graph_y
-
-STRING. The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
-100 (96 actually).  So 30x30 will give you a graph that is about 3000x3000 pixels wide.
-
-=item graph_fontpath
-
-PATH. Full path to the True Type Font (TTF) used in L<node_font>.
 
 =item graph_bg
 
@@ -544,13 +561,46 @@ STRING. Background color for the graph.
 
 STRING. Text color for the graph
 
+=item graph_epsilon
+
+INT. Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
+Set to an integer value.  This will improve the mapping and visual quality of
+them graph. Each integer step can mean an exponential time increase in the solving
+of the graph.
+
+=item graph_layout
+
+STRING.  Choose program to render graph with.  Valid options are C<neato> and C<twopi>.
+
+=item graph_map
+
+FILE. Set to Full path and name to the ISMAP data for the network.  Path should be the 
+same as the netmap.html component.
+
 =item graph_overlap 
 
 BOOLEAN. Parameter passed to GraphViz for the overlap="" feature.
 
-=item node_shape
+=item graph_ranksep
 
-STRING. Default shape for device
+FLOAT.  Rank Separation of elements in graph. 
+
+=item graph_raw
+
+FILE.  Set to create the raw (.dot) graph file as well.
+
+=item graph_splines
+
+BOOLEAN.  Turn on GraphViz's spline engine? (Is very processor intensive).
+
+=item graph_timeout
+
+MINUTES. Time to allow C<neato> to try and solve the graph.  Default 60min.
+
+=item graph_x, graph_y
+
+FLOAT. The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
+100 (96 actually).  So 30x30 will give you a graph that is about 3000x3000 pixels wide.
 
 =item node_fillcolor
 
@@ -558,29 +608,17 @@ STRING. Default background color for device
 
 =item node_font
 
-FILE. Name of the True Type Font used for label of node.  See L<graph_fontpath> above.
+FILE. Name of the True Type Font used for label of node.
 Exclude .ttf in name.
-
-=item node_fontsize
-
-FLOAT. Size of text in Pixels.  Note that for the graph_overlap=scale option, the font gets scaled down
-and so an oversized font is used.
 
 =item node_fontcolor
 
 STRING. Color of text
 
-=item node_style
+=item node_fontsize
 
-STRING. Default style of device, normally filled.
-
-=item node_problem
-
-STRING. Color to use for devices that are not accessable
-
-=item edge_color
-
-STRING. Default color for link between devices.
+FLOAT. Size of text in Pixels.  Note that for the graph_overlap=scale option, the font gets scaled down
+and so an oversized font is used.
 
 =item node_map
 
@@ -603,6 +641,18 @@ If the label (dns name) matches cat, but not cat-g, make it blue
 
 If the IP address of the device starts with 169.233, then make the border around the 
 device yellow.
+
+=item node_problem
+
+STRING. Color to use for devices that are not accessable
+
+=item node_shape
+
+STRING. Default shape for device
+
+=item node_style
+
+STRING. Default style of device, normally filled.
 
 =back
 
@@ -628,6 +678,8 @@ online and offline storage of network structure and usage.
 
 =item * Highly Configurable.  Extract out all possible options to F<netdisco.conf>
 and avoid site-specific code.
+
+=item * Administration available on both command line and web interfaces.
 
 =back
 
