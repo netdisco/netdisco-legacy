@@ -1,13 +1,14 @@
 <h3>Administration Panel</h3>
-<TABLE WIDTH="100%">
-<TR><TD>
-
-    <h4>Device Control</h4>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<TR>
+<TD>&nbsp;&nbsp;</TD>
+<TD ALIGN=CENTER VALIGN=TOP>
+    <H4><A HREF="admin_dev.html">Device Control</A></H4>
     <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0 ALIGN="middle"></A>
-    [<A HREF="admin_dev.html">Device Control</A>]
-    <h4>User Control</h4>
-    &nbsp;&nbsp;&nbsp;<A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
-    [<A HREF="admin_user.html">User Control</A>]
+    <HR NOSHADE>
+    <H4><A HREF="admin_user.html">User Control</A></H4>
+    <A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
+    <HR NOSHADE>
 
     <h4>Maintenance</h4>
     <FORM ACTION="admin_dev.html" METHOD=POST> 
@@ -25,26 +26,24 @@
     </TR>
     <TR> 
         <TD>
-            &nbsp;<BR>
-            <INPUT TYPE="submit" VALUE="Queue New Job">
-            [<A HREF="<%$r->uri%>">Reset</A>]
             Debug :
             <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
+            <INPUT TYPE="submit" VALUE="Queue New Job">
             </FORM>
-        </TD>
-    </TR>
-    <TR>
-        <TD>
             <FORM ACTION="admin_dev.html" METHOD=GET>
             <INPUT TYPE=SUBMIT VALUE="View Job Queue">
+            [<A HREF="<%$r->uri%>">Reset</A>]
             </FORM>
         </TD>
     </TR>
     </TABLE>
 
-</TD><TD>
+</TD>
+<TD>&nbsp;&nbsp;&nbsp;</TD>
+<TD>
     <H4>Admin Log</H4>
     <& SELF:show_log &>
+    <P>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
         <NOBR>
         <u>Type:</u> <SELECT MULTIPLE NAME="type" SIZE=4>
@@ -61,8 +60,8 @@
 %}
         </SELECT>
         </NOBR>
-        <BR>
-        [<A HREF="<%$r->uri%>">Reset</A>] <INPUT TYPE="submit" VALUE="Refresh">
+        <INPUT TYPE="submit" VALUE="Refresh Log">
+        [<A HREF="<%$r->uri%>">Reset</A>] 
     </FORM>
 </TD></TR>
 </TABLE>
