@@ -267,13 +267,13 @@ Found <%scalar @$age%> devices.
 <TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
 <TR>
     <TH>Location</TH>
-    <TH>Name</TH>
     <TH>IP Address</TH>
+    <TH>sysName</TH>
     <TH>Vendor</TH>
     <TH>Model</TH>
 </TR>
 <%perl>
-my $location_count = sql_rows('device',['location','name','ip','vendor','model'],
+my $location_count = sql_rows('device',['location','dns','name','ip','vendor','model'],
                         undef,undef,undef);
 $count = 0; $odd = 1; my $old_loc = '';
 foreach my $row (sort 
@@ -290,11 +290,13 @@ foreach my $row (sort
         $count += $row->{count};
         $odd++ if $row->{location} ne $old_loc;
         $old_loc = $row->{location};
+        my $dns = $row->{dns} || $row->{ip};
+        $dns =~ s/\Q$domain\E//;
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
     <TD><A><%$row->{location} || '[Not Set]'%></A></TD>
+    <TD><A HREF=device.html?ip=<%$row->{ip}%> TITLE="Click to View Device"><%$dns|h%></A></TD>
     <TD><A HREF=device.html?ip=<%$row->{ip}%> TITLE="Click to View Device"><%$row->{name}|h%></A></TD>
-    <TD><A HREF=device.html?ip=<%$row->{ip}%> TITLE="Click to View Device"><%$row->{ip}|h%></A></TD>
     <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>" TITLE="All devices from this vendor"><%$row->{vendor}|h%></A></TD>
     <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>&models=<%$row->{model}|u%>&boolean=and" TITLE="All devices of this model"><%$row->{model}|h%></A></TD>
 </TR>
