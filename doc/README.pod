@@ -16,7 +16,9 @@ Netdisco uses only SNMP to poll devices and does not require enable passwords.
 
 Netdisco was designed and built at UCSC.
 
-=head1 FEATURES
+Netdisco is hosted by Source Forge and lives at L<http://www.netdisco.org>.
+
+=head1 FEATURES - OVERVIEW
 
 =over 
 
@@ -58,7 +60,7 @@ Netdisco was designed and built at UCSC.
 
 =item * Duplex Mismatch Finder
 
-=item * Layer Two traceroute
+=item * Layer Two Traceroute
 
 =back
 
@@ -103,6 +105,15 @@ and the IP addresses that have been associated with it.
 
 =back 
 
+=head1 SUPPORT
+
+Please use the C<netdisco-users> mailing list for all problems and comments.
+
+L<http://lists.sourceforge.net/lists/listinfo/netdisco-users>
+
+In case of bugs, please use the Bug interface from Source Forge page at :
+
+L<http://sourceforge.net/projects/netdisco>
 
 =head1 GLOSSARY
 
@@ -122,7 +133,11 @@ MAC addresses.  A node may or may not have IP addresses associated with it.
 =back
 
 
-=head1 INSTALL AND REQUIREMENTS 
+=head1 INSTALL
+
+See the INSTALL document for instructions and requirements to install Netdisco.
+
+=head1 USING NETDISCO
 
 =head2 Components
 
@@ -130,52 +145,33 @@ Netdisco has three components :
 
 =over 4
 
-=item 1. Backend 
+=item 1. Back-end 
 
-The backend talks to devices via SNMP.  Contained in the backend is the logic to create the topology,
-collect statistics and generate graphs. 
+The back-end talks to devices via SNMP.  Contained in the back-end is the logic to create the topology,
+collect statistics and generate graphs.  
+
+Most of the back-end is controlled by cron jobs.  
+
+A background daemon is put resident to run maintenance tasks collected from the front-end. This 
+keeps these sometimes memory intensive tasks and code out of the httpd processes. 
 
 =item 2. Database
 
 Netdisco uses PostgreSQL to store all its information.  Careful abstraction of the database calls
-means that Netdisco can be ported to another SQL platform easily.
+means that Netdisco can be ported to another SQL platform easily.  Hooks to use other databases are
+present.
 
-=item 3. Frontend
+=item 3. Front-end
 
-The frontend operates on stored data only.  This abstraction is both for speed and security.
+The front-end operates on stored data only.  This abstraction is both for speed and security.
 
-The number of people using netdisco can scale with the web server capacity, and will create no extra load
+Some front-end administration tasks are put in a queue in the database that a daemon running from
+the back-end picks up and processes.
+
+The number of people using Netdisco can scale with the web server capacity, and will create no extra load
 on the devices. 
 
 =back
-
-Netdisco Requires:
-
-=over 4
-
-=item - Perl              (5.005,5.6.1,5.8.1... something stable)
-
-=item - PostgreSQL        (7 recommended)
-
-=item - Net-SNMP 5        (4 may work)
-
-=item - Mason             (see L<INSTALL|INSTALL> or L<"http://www.masonhq.com">)
-
-=item - Apache/mod_perl   (Version 1 required until mod_perl 2.0 release)
-
-=item - OtherPerl Modules (see L<INSTALL|INSTALL>)
-
-=item - SNMP::Info        (Perl module designed for Netdisco)
-
-=item - Graphviz          (Open Source graphing software for network map)
-
-=item - MIBS              (SNMP MIBs for your devices, part of SNMP::Info)
-
-=back
-
-see L<INSTALL|INSTALL> for full instructions
-
-=head1 USING NETDISCO
 
 =head2 Command-Line Options
 
@@ -320,7 +316,6 @@ Import Topology Data.  Will import manual topology data stored in file specified
 configuration option L<topofile> . Use L<-F> to specify a different file from the
 command line. 
 
-
 =item -u
 
 Add or Change a User.  Supply all four arguments (user pw port_control admin) for 
@@ -331,7 +326,60 @@ shell history file and exported to the process table.
 
 =back
 
-=head2 Tasks
+=head2 Features
+
+=over
+
+=item Admin Daemon
+
+The admin daemon is a copy of C<netdisco> that runs in the background.  From the web C<Admin Panel>,
+jobs are put in a queue in the database.  The daemon picks up these jobs and executes them from the 
+back-end as user C<netdisco>.  The daemon is restarted daily in a cron job, or can be manually started
+as root :
+
+    su - netdisco -c "/usr/local/netdisco -p restart"
+
+=item Port Info / Jack Search
+
+This feature integrates Netdisco with other databases that have port info.
+
+Port Info was designed around data coming out of a Pinnacles database at UCSC, and might
+prove to be site-specific.   However, see C<port_info.html> for a good example of how to access other
+databases using the C<netdisco.pm> SQL routines. 
+
+Enable this feature by setting C<port_info> to true in C<netdisco.conf>
+
+=item Port Control
+
+Port Control allows a user of Netdisco to administratively turn a port on or off.  
+
+To do this the back-end requires a read-write community string for the device in question. 
+The admin daemon must also be enabled.  Netdisco keeps a log for each port holding information 
+about why a port was turned on or off.  
+
+A reason for turning switch the port is chosen from a list to provide future audits of admin activity.  
+The user and IP address of the request are stored.  To change the default reasons, modify the 
+C<%PORT_CONTROL_REASONS> hash in C<netdisco.pm>
+
+Optionally if the C<portctl_email> setting is set in C<netdisco.conf>, an e-mail is sent out with a 
+notification of the switching.  Locally at UCSC that e-mail is sent to an administrative mailing list.
+
+To turn this feature off uncheck the C<Port Control> checkbox from all users in the C<Admin Panel>.
+
+=item Web Console
+
+The Web Console allows netdisco to front-end the web interface of a switch or router.  
+Traffic can then be routed over https, through Netdisco's web server.  An additional security layer is added
+by requiring the user to be logged into Netdisco. The normal security measures used by the 
+device's web server are still active.
+
+The Web console is a reverse proxy that runs on Apache.  You must enable it in C<netdisco_apache.conf> and 
+C<netdisco_apache_dir.conf>.   The add devices and models to the configuration lines C<web_console_vendors> and
+C<web_console_models> in C<netdisco.conf>.
+
+=back
+
+=head2 Netdisco Maintenance
 
 =over
 
@@ -339,41 +387,38 @@ shell history file and exported to the process table.
 
 To refresh the device and its ports, use the L<-d> command:
 
-C<netdisco -d mydevice>
-
-Remember to re-import the topology information (see below) if the device needs 
-manual topology data.
+    netdisco -d mydevice
 
 =item Importing Topology Information
 
-To import topology information, make sure the topology filename is set in netdisco.conf
+To import all the topology information at once make sure the topology filename is set in C<netdisco.conf>
 and use the L<-T> command:
 
-C<netdisco -T>
+    netdisco -T
 
 =item Aborting a job
 
 Hit Ctrl-C if you are running the job, or send the job the INT signal. The job can cleanup after itself,
 write out its stats and log entries. 
 
-C<kill -INT jobpid>
+    kill -INT jobpid
 
 =item Changing the IP Address of a Device
 
 If a device is being replaced with a different device and a different IP, see L<"Deleting a Device">
 below.
 
-C<netdisco -i old-ip-address new-ip-address>
+    netdisco -i old-ip-address new-ip-address
 
 Changing the IP address of a device will:
 
 =over
 
-=item Discover the new device
+=item 1. Discover the new device
 
-=item Remove Old Device Entry, port, and aliases
+=item 2. Remove Old Device Entry, port, and aliases
 
-=item Move the old nodes to the new device.
+=item 3. Move the old nodes to the new device.
 
 =back
 
@@ -390,7 +435,7 @@ Nodes consist of two components -- the switch port to MAC address mapping in the
 and the MAC address to IP mapping in the C<node_ip> table. 
 
 To remove nodes from a switch, use the Admin Panel on the web side and choose either
-C<Delete Nodes>  or C<Archive Nodes>.   Archving nodes will set the archive bit so that the 
+C<Delete Nodes>  or C<Archive Nodes>.   Archiving nodes will set the archive bit so that the 
 data will be available, but not always showing.   You can also delete nodes from the command 
 line using the L<-e> command with or without the L<-V> flag.
 
@@ -403,14 +448,169 @@ This is rather permanent.  Make sure you run L<-B>ackup before you do this.
 =item Adding / Changing Users
 
 The easiest way to add a user is to use the C<Add User> form in the Admin Panel.  After first installing
-netdisco you need to add an admin user by running L<-u>.  
+Netdisco you need to add an admin user by running L<-u>.  
+
+=item Localhost (127.0.0.1) is showing up on CDP Links
+
+See "How the Switch Selects the IP Address To Include in Outbound CDP
+Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
+
+=item Things are getting Really slow
+
+For some reason over here at UCSC, things get real slow in Postgres after a while.
+Even though we are doing frequent VACUUM's on all the data, it seems to be dragging
+down after a while.
+
+In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE>  from C<pg_run>.
+This command locks each table before it does the VACUUM, and therefor can be more through.
+It's a good idea to take netdisco down temporarily while you do this.  I do this about
+once a month, or when I notice it dragging down.  Use C<Netdisco Statistics> as a good metric
+of things slowing down.  This may get fixed with changes in VACUUM in Postgres 7.4 and above.
+
+Procedure for doing a vacuum full :
+
+=over
+
+=item 1. Shutdown the admin daemon   
+
+    su - netdisco -c "/usr/local/netdisco/netdisco -p stop"
+
+=item 2. Clear the cron tab for user netdisco
+
+    su - -c "crontab -u netdisco -r"
+
+=item 3. Comment out the netdisco config file Includes in httpd.conf
+
+=item 4. Restart Apache
+
+    su - -c "/usr/local/apache/bin/apachectl graceful"
+
+=item 5. Run VACUUM FULL ANALYZE VERBOSE in psql
+
+    /usr/local/netdisco/sql/pg_run
+    VACUUM FULL ANALYZE VERBOSE;
+
+=item 6. Restart Postgres (just for fun)
+
+    su - -c "/usr/local/etc/rc.d/010.pgsql restart" 
+
+=item 7. Uncomment lines in httpd.conf
+
+=item 8. Restart Apache
+
+    su - -c "/usr/local/apache/bin/apachectl graceful"
+
+=item Reload crontab for user netdisco
+
+    su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
+
+=item Restart Admin Daemon
+
+    su - netdisco -c "/usr/local/netdisco/netdisco -p start"
+
+=back
+
+=back
+
+=head2 Topology Information
+
+Topology information is crucial to Netdisco's performance.  It allows the application to know
+which ports are uplink ports and which have connected nodes. 
+
+=head3 Manual Topology Information
+
+Netdisco will autodiscover the layer two topology of a network using CDP.  However, many networks 
+have parts of the topology that are not covered by CDP.
+
+Use the manual topology file C<netdisco-topology.txt> to supply the layout of the network
+if your network has devices that don't talk CDP or misreport information.
+
+The manual topology file only requires one side of the data to be entered.  Both directions 
+of a link will be forced to the given data if one side is listed.
+
+B<File Format>
+
+The format of the manual topology consists of four types of lines:
+
+=over
+
+=item #comment
+
+Comments are delimited with a C<#> They can happen on any line.
+
+=item routername
+
+Any line that does not start with C<link:> or C<alias:> is assumed to be a the DNS name or 
+IP address of a network device. 
+
+=item link:
+
+Lines that start with C<link:> connect two devices together.  The format is 
+
+    link:outgoing port,destination device,Destination port
+
+The outgoing port belongs to the device listed above the C<list:> line.
+
+The Destination Device and Port tell Netdisco who is on the other end of this link.
+The device can be a DNS name or an IP Address.
+
+=item alias:
+
+Many network devices like routers have multiple IP addresses assigned to them.  If the device
+cannot or does not supply this information to Netdisco in a standard way, you can add IP
+addresses used here.
+
+=back
+
+White space in the file (except for line breaks) is ignored.  Tabbing over before C<line:> lines
+makes it easier to read, but is not required.
+
+B<File Uses>
+
+Some reasons the manual topology file is used:
+
+=over
+
+=item 1. Man in the Middle
+
+Let's say you have two CDP speaking devices with a non-CDP speaking device in between them
+
+    [Cisco] ---> [Bay] ---> [HP]
+
+The Cisco and HP devices (CDP speakers) find each other and the Bay device never appears. 
+You would then have to add these lines to the topology file:
+
+    ciscoswitch.my.company
+        link:EtherNet0/1,bayswitch.my.company,25
+    bayswitch.my.company
+        link:26,hpswitch.my.company,J3
+
+This tells Netdisco that port C<Ethernet0/1> on C<ciscoswitch> is connected to Port C<25> on C<bayswitch>.
+Then in turn Port 26 on C<bayswitch> is connected to port C<J3> on C<hpswitch>.
+
+A note about devices that are I<CDP Aware> and that implement CDP:   
+
+I<CDP Aware> devices are devices that probably do not speak CDP (probably for legal reasons) but 
+that are smart enough not to forward CDP packets.  Cisco devices that have CDP disabled are usually
+still I<CDP Aware> and will not forward the packets.   Man-in-the-middle situations occur when the device
+both does not speak CDP and is not I<CDP Aware>.
+
+=item 2. Isolated Network Segment
+
+If you have a segment of your network that is not connected directly, or conneted through a non physical
+link like a VPN, then you might fudge an entry to connect that segement of the nework with the main one.
+
+=item 3. Attach a non-CDP speaking device
+
+Anywhere a device that does not supply topology information is connected to the network, an entry
+must be added in the manual topology file.
 
 =back
 
 =head2 Cron Jobs
 
-Netdisco is controlled via cron jobs.  Jobs are run as user ``netdisco''.   Mulitple jobs
-can be run at once. 
+Netdisco is controlled via cron jobs.  Jobs are run as user C<netdisco>.
+Mulitple jobs can be run at once. 
 
 The default jobs are :
 
@@ -428,20 +628,45 @@ The default jobs are :
 
 =item * Walk Network - Once a week (Wed @ 14:00) try and discover new devices.
 
+=item * Restart Admin Daemon - Once a day just for good measure.
+
 =back
 
-=head2 Config File (netdisco.conf)
+=head1 Config File
 
-These settings are used both in the back-end and the front-end for Netdisco.
+The settings in C<netdisco.conf> are used both in the back-end and the front-end.
 
-Multiple config files can be created, and then used by calling netdisco with the
--C option:
+When you make a change in the config file that is used in the web front end, 
+you must reload apache.  The config information is shared between processes for speed
+and memory performance.
 
-    ``netdisco -C myotherfile.conf''
+    su - -c "/usr/local/apache/bin/apachectl restart"
 
-=head3 General Items
+Multiple config files can be used in the back-end by calling Netdisco with the
+C<-C> option:
 
-=over 
+    netdisco -C myotherfile.conf
+
+=head2 General Items
+
+=over
+
+=item domain
+
+STRING. Trimmed from all DNS names viewed.  Leave blank to show all domain names.  Add a dot 
+in front of your value :
+
+    .ucsc.edu
+
+=item home
+
+PATH.  Full path to where netdisco lives.  Is the root path for all other files and paths.
+
+=back
+
+=head2 Back-End Items
+
+=over
 
 =item compress
 
@@ -455,21 +680,13 @@ BOOLEAN. Compress log files?  See L<compress> entry above.
 
 PATH. Full or relative path to the directory that backups and logs will be stored in
 
-=item domain
-
-STRING. Trimmed from all DNS names viewed.  Leave blank to show all domain names.
-
-=item home
-
-PATH.  Full path to where netdisco lives.  Is the root path for all other files and paths.
-
 =item ignore_private_nets
+
+Not fully implemented.
 
 BOOLEAN. Set to true to ignore aliases that are part of private nets:
 
     10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24  
-
-Not fully implemented.
 
 =item logextension
 
@@ -483,18 +700,6 @@ LIST:IPs. Comma Separated list of devices not to use when macsucking.
 
 SECONDS. Timeout for devices when mac sucking.
 
-=item port_info
-
-BOOLEAN.  Turns on the port_info.html features in Sidebar and Device
-
-=item portctl_email
-
-EMAIL.  Address that reports of use of portcontrol.html are sent to.
-
-=item secure_login
-
-BOOLEAN - Require web login to be under https
-
 =item topofile
 
 FILE. Full path of the file that contains manual topology information.  Defaults to
@@ -503,14 +708,6 @@ F<netdisco-topology.txt>
 =item timeout
 
 SECONDS. Timeout for refreshing or discovering a device 
-
-=item webpath
-
-PATH. URL Path added to the beginning of links on the web front-end
-
-=item websession
-
-MINUTES.  Amount of time a session lasts before someone has to login again.
 
 =back
 
@@ -535,19 +732,45 @@ SECONDS. Time to wait to check for new items in the queue.
 
 =head3 Database Settings
 
+The five database settings are C<db> , C<db_user>, C<db_pw>, C<db_opts>, and C<db_env>.
+
+You can run multiple database types in Netdisco.  See C<port_info> for an instance of this. 
+
+For each of the above settings, the database shortcut name (you choose) is inserted after C<db>. 
+
+Postgres is the required first database, and uses the short name C<Pg>.
+
+The following lines must be added :
+
 =over
 
-=item db
+=item db_Pg
 
-STRING. Database name
+STRING. Database connect string to give to DBI.
 
-=item dbuser
+Default : C<dbi:Pg:dbname=netdisco>
+
+=item db_Pg_user
 
 STRING. Database user
 
-=item dbpw
+=item db_Pg_pw
 
 STRING. Database Password
+
+=item db_Pg_opts
+
+HASH.   Options to add to the connect string.  
+
+Default : C<PrintError =E<gt> 1, AutoCommit =E<gt> 1>
+
+=item db_Pg_env
+
+HASH.  Environment variables to be set before running database calls.  
+
+Mainly used for Oracle.
+
+Default : not set.
 
 =back
 
@@ -559,13 +782,59 @@ STRING. Database Password
 
 LIST:STRING. A comma separated list of community strings to try on each device.
 
+=item community_rw
+
+LIST:STRING.  OPTIONAL. A comma separated list of Read-Write community strings.  
+
+This is only necessary if you turn on the C<port_control> command.
+
 =item snmpver
 
-INT. Default version to connect with via SNMP.
+INT. Default version of SNMP protocol to connect with.
 
 =item snmpretries
 
 INT. Settings for 'Retries' field passed to SNMP::Session
+
+=back
+
+=head2 Web Settings
+
+=over
+
+=item port_info
+
+BOOLEAN.  Turns on the C<Port Info> and C<Jack Search> features.
+
+=item portctl_email
+
+EMAIL.  Address that reports of use of C<Port Control> are sent to.
+
+=item portctl_timeout
+
+SECONDS.  Amount of time to wait for a response from the admin daemon.
+
+=item secure_server
+
+BOOLEAN. If a secure server is present. 
+
+Requires web login, password changing and all admin functions to be run in secure space.
+
+=item web_console_models
+
+LIST:STRING.  Comma separated list of models that want to use the Web Console
+
+=item web_console_vendors
+
+LIST:STRING.  Comma separated list of vendors that use the Web Console.
+
+=item webpath
+
+PATH. URL Path added to the beginning of links on the web front-end
+
+=item websession
+
+MINUTES.  Amount of time a session lasts before someone has to login again.
 
 =back
 
@@ -580,7 +849,7 @@ STRING. Default color for link between devices.
 =item graph
 
 FILE. Full path and name to the GIF graph of the network.  Path should be the same
-as the netmap.html component.
+as in the C<netmap.html> component.
 
 =item graph_bg
 
@@ -592,7 +861,7 @@ STRING. Text color for the graph
 
 =item graph_epsilon
 
-INT. Sets the ''epsilon'' attribute in GraphViz used to control the graph solver.
+INT. Sets the C<epsilon> attribute in C<GraphViz> used to control the graph solver.
 Set to an integer value.  This will improve the mapping and visual quality of
 them graph. Each integer step can mean an exponential time increase in the solving
 of the graph.
@@ -604,11 +873,11 @@ STRING.  Choose program to render graph with.  Valid options are C<neato> and C<
 =item graph_map
 
 FILE. Set to Full path and name to the ISMAP data for the network.  Path should be the 
-same as the netmap.html component.
+same as in the C<netmap.html> component.
 
 =item graph_overlap 
 
-BOOLEAN. Parameter passed to GraphViz for the overlap="" feature.
+BOOLEAN. Parameter passed to C<GraphViz> for the C<overlap=""> feature.
 
 =item graph_ranksep
 
@@ -673,7 +942,7 @@ device yellow.
 
 =item node_problem
 
-STRING. Color to use for devices that are not accessable
+STRING. Color to use for devices that are not accessible
 
 =item node_shape
 
@@ -685,21 +954,6 @@ STRING. Default style of device, normally filled.
 
 =back
 
-=head2 Logs
-
-More about logs here later.
-
-=head1 FAQ
-
-=over
-
-=item Localhost (127.0.0.1) is showing up on CDP Links
-
-See "How the Switch Selects the IP Address To Include in Outbound CDP
-Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
-
-=back
-
 =head1 DESIGN
 
 =head2 Design Goals
@@ -708,9 +962,9 @@ Packets" in ftp://ftp.hp.com/pub/networking/software/59692375_e1.pdf
 
 =item * Use of SNMP Leaf Names only; No OIDs
 
-=item * Easily extendable to new devices. No device-specific hacks in logic
+=item * Easily extendible to new devices. No device-specific hacks in logic
 
-=item * Modular backend-database-frontend setup
+=item * Modular back-end database front-end setup
 
 =item * Security.  Front-end abstraction from device manipulation means 
 sensitive network devices are not exposed to a web interface .
@@ -725,14 +979,14 @@ and avoid site-specific code.
 
 =back
 
-=head2 Backend Components
+=head2 Back-End Components
 
 =over 4
 
 =item netdisco.pm
 
 Perl Module that holds all the SQL interaction routines as well as some
-helper routines.  Used by both the backend and frontend. 
+helper routines.  Used by both the back-end and front-end. 
 
 =item SNMP::Info
 
@@ -783,7 +1037,7 @@ Browse the source code or check out netdisco-api for more info.
 =head2 Database
 
 Netdisco uses PostgreSQL as its database store.  Indexing is used heavily to speed up 
-queries and facilitate large data sets.   See the sql/ directory and L<INSTALL|INSTALL>
+queries and facilitate large data sets.   See the C<sql/> directory and INSTALL
 for more information.
 
 =head3 SQL Tables 
@@ -840,7 +1094,7 @@ a current session in the global $m->session hash under mason.
 =item oui
 
 Populated with data from oui.txt  Oui.txt contains the Organizationally Unique Identifiers (OUI) that 
-map a MAC address to a vendor.  The database is controlled by the IEEE.  See L<INSTALL|INSTALL> for more
+map a MAC address to a vendor.  The database is controlled by the IEEE.  See INSTALL for more
 information.
 
 =item users

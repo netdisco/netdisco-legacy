@@ -1,227 +1,169 @@
 =head1 NAME
 
-INSTALL - Instructions for setting up Netdisco
+Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
 =head1 AUTHOR
 
-Max Baker
+Max Baker C<max@warped.org>
+
+=head1 SUPPORT
+
+Netdisco is hosted by Source Forge.
+
+Please use the C<netdisco-users> mailing list for all problems and comments.
+
+L<http://lists.sourceforge.net/lists/listinfo/netdisco-users>
+
+Please use the Bug interface from Source Forge page at :
+
+L<http://sourceforge.net/projects/netdisco>
 
 =head1 REQUIREMENTS
 
 =over
 
-=item * Perl       (5.6.1 and newer advised)
+=item * Perl
 
-=item * Perl Modules (see below)
+5.6.1 and newer advised
 
-=item * Net-SNMP   (5.0.2 and newer advised)
+=item * Perl Modules
 
-=item * PostgreSQL (7.3   and newer advised)
+Listed below
 
-=item * Mason      (1.16 or newer required)
+=item * Net-SNMP
 
-=item * Apache     (1.3.x advised)
+5.0.2 and newer advised
 
-=item * mod_perl   (version to match Apache)
+=item * PostgreSQL
 
-=item * GraphViz   
+Developed under version 7.3
+
+=item * Mason
+
+1.16 or newer required
+
+=item * Apache
+
+1.3.x advised, Version 2.x not supported by mod_perl.
+
+=item * mod_perl   
+
+Version to match Apache
+
+=item * GraphViz
 
 =back
+
+=head2 OS
+
+Netdisco was developed on a BSD system but should work on any
+system that Postgres, Perl, Apache, and Net-SNMP run on.  Linux
+is a sure bet. Windows will take a little bit of massaging but
+should be possible.
 
 =head1 INSTALL
 
-=over
+=head2 1. Download and Un-archive Netdisco
 
-=item 1. Uncompress the netdisco archive 
+Get the newest version from L<http://www.netdisco.org>.
 
-=item 2. Create a directory for netdisco 
+    tar xvfz netdisco-x.xx.tar.gz    
 
-Default F</usr/local/netdisco>
+Create a directory for Netdisco 
 
-=item 3. Create a user and group for netdisco  
+    mkdir /usr/local/netdisco
 
-Default C<netdisco / netdisco>
+Move files to that dir
 
-=item 4. Add Users who will be able to manage netdisco to the group created.
+    mv netdisco-x.xx/* /usr/local/netdisco
 
-=item 5. Modify F<netdisco.conf> to match your site.  
+=head2 2. Create a Unix User/Group for Netdisco  
 
-See F<README> for detailed configuration descriptions.
+Create a user and group named C<netdisco>
 
-=item 6. Follow the Instructions below for each required piece of software
+Give this user permission to the files:
 
-=item 7. Try to discover a device with 
+    chown -R netdisco.netdisco /usr/local/netdisco
 
-C<./netdisco -d devicename>
+=head2 3. Add Unix Administrators to Netdisco Group
 
-=item 8. Once you're sure netdisco is setup correctly, add the CRON jobs by first
-modifying F<netdisco.crontab>  then as root :
+Once Netdisco is up and running most administration
+can be done from the Web interface.  Whoever will be doing
+the back-end administration will need to have write access and will need
+write access on netdisco's files.
 
-C<cron -u netdisco netdisco.crontab>
+Add the unix account names of administrators that will modify the 
+source code or use the command line interface interface to the C<netdisco>
+group in F</etc/groups>.
 
-=back
+=head2 4. Setup PostgreSQL
 
-=head2 PostgreSQL
+Netdisco's settings in PostgreSQL are
 
-The default settings for Postgres are 
+ Database User    : netdisco
+ Database Name    : netdisco
+ Database Password: you choose it
 
-Username: C<netdisco>
-Database Name: C<netdisco>
+
+Follow these steps to setup Netdisco in PostgreSQL.
 
 =over 
 
-=item 1. [Optional] Change database name in F<sql/pg_init>
+=item i. Create Database.
 
-=item 2. [Optional] Change database name in F<sql/pg_run>
-
-=item 3. Create Database.
-
-As root (or the database user F<pgsql>) run C<sql/pg_init> to create 
+As root or the database user F<pgsql> run C<sql/pg_init> to create 
 the database and user for Netdisco.  The password you will be asked
 for twice is the new password for the database user you are creating. 
 This is the same password you will be putting in F<netdisco_apache.conf>
 and in F<netdisco.conf>.
 
-=item 4. Check Settings
+=item ii. Check Settings
 
 Now as a non-privledged user make sure you can get into the database by running 
 C<sql/pg_run>.  Enter the database user password created above. 
 
-=item 5. Create Tables
+=item iii. Create Tables
 
 Once you are sure the database is setup correctly, create the database 
 tables with C<sql/pg_all>.  Type in the database user password once 
 when prompted.
 
-=item 6. [Optional] Permissions
+=item iv. Permissions
 
-If you have just setup postgresql, you may want to change the
-default permissions in F<data/pg_hba.conf> :
+[Optional] If you have just setup Postgres for the first time you may want to change the
+default permissions in F<$PG_DATA/pg_hba.conf> . 
 
-=item 7. [Optional] Optimizations
+TODO: More here Later
 
-If you have freshly installed Postgresql then the default memory usage should
+=item v. Optimizations
+
+[Optional] If you have freshly installed Postgresql then the default memory usage should
 probably be increased for efficiency.  See the PostgreSQL documentation for 
 F<postgresql.conf>.
 
 =back
 
-=head2 Apache
 
-=over
-
-=item 1. Install Apache 1.3.x and mod_perl 1.x
-
-If you haven't installed apache and mod_perl before, below is the method
-I usually use to statically include mod_perl, but leave the rest of the 
-modules as dynamically loadable objects (DSO).
-
-=over
-
-=item Download and unarchive
-
-http://httpd.apache.org and http://perl.apache.org
-
-=item in apache_1.3.x/  
-
- ./configure 
-
-to setup directory scheme
-
-=item in mod_perl-1.2x/
-
- /usr/local/bin/perl Makefile.pl \
-        APACHE_SRC=../apache_1.3.27/src \
-        EVERYTHING=1 \
-        DO_HTTPD=1 \
-        USE_APACI=1 \
-        PREP_HTTPD=1
-
- make
-
-=item in apache_1.3.x/
-
- ./configure \
-        --prefix=/usr/local/apache \
-        --enable-module=most \
-        --enable-shared=max \
-        --activate-module=src/modules/perl/libperl.a \
-        --with-perl=/usr/local/bin/perl
- make
- make install
-
-=item in mod_perl-1.2x/
-
- make install
-
-=back
-
-=item 2. Add in F</your/apache/conf/httpd.conf>
-
-=over
-
-=item In Each VirtualHost (SSL,Main...)
-
-C<Include /usr/local/netdisco/netdisco_apache_dir.conf>
-
-=item In the Global Section
-
-C<Include /usr/local/netdisco/netdisco_apache.conf>
-
-=back
-
-=item 3. Permissions
-
-Assuming C<nobody> is the user that your HTTP process run under,
-run this as C<root> :
-
-C<chown nobody.netdisco /usr/local/netdisco/mason>
-
-=item 4. [Optional] In F<netdisco_apache.conf> and F<netdisco_apache_dir.conf>
-
-=over
-
-=item *  Change the web and physical paths appropriately.
-
-=back
-
-=back
-
-Note: Some Linux distributions such as Redhat 6.x install mod_perl as 
-a Dynamic Shared Object (DSO).  This is known to be unstable, especially
-with Mason.   Compile mod_perl statically into Apache.
-
-=head3 Apache2
-
-Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
-Netdisco will not run under Apache2 until that point.
-
-=head2 Perl and Mason
+=head2 5. Install Perl Modules and Mason
 
 Below is a list of required modules for Netdisco, freely available from
 CPAN (http://www.cpan.org).   Many of these modules have pre-requisite 
-modules.   Use the CPAN module that comes with Perl to install the modules
+modules.   
+
+Use the CPAN module that comes with Perl to install the modules
 and their prerequisites automatically:
 
-C<perl -MCPAN -e shell>
+    perl -MCPAN -e shell
 
 =over 4
 
-=item install SNMP::Info
-
-=item install Time::HiRes
-
 =item install DBI
-
-=item install DBD::Pg
 
 =item install Apache::DBI
 
-=item install Storable
+=item install DBD::Pg
 
 =item install Apache::Session
-
-=item install Apache::Request
 
 =item install HTML::Mason
 
@@ -237,15 +179,49 @@ C<perl -MCPAN -e shell>
 
 Some of these you will probably already have installed.
 
-=head2 SNMP
+=head2 6. Install SNMP
+
+For BSD run :
+
+    cd /usr/ports/net/net-snmp && make install
+
+For Linux and the rest of the world :
 
 =over
 
-=item 1. Download and install net-snmp from http://net-snmp.sourceforge.net
+=item i. Download net-snmp from http://net-snmp.sourceforge.net
 
-=item 2. Install F<SNMP> Perl module that comes inside the distribution.
+This used to be called ucd-snmp.
 
-=item 3. Run C<snmpconf> and set up your MIB directory. 
+=item ii. Install SNMP to include Perl module that comes inside the distribution.
+
+When you run C<./configure>, make sure you add the switch C<--with-perl-modules>
+
+    ./configure --with-perl-modules
+    make 
+    make install
+
+If you already have net-snmp installed, then go to the source directory and 
+in the C<perl> subdirectory and run C<perl Makefile.PL>
+
+    cd /path/to/net-snmp-5.0.x/perl
+    perl Makefile.PL
+    make
+    make install
+
+
+ ********************************************************************
+
+DO NOT INSTALL the SNMP:: modules off of CPAN or the NET::SNMP module off of CPAN.
+
+ ********************************************************************
+
+Reread the above line.
+
+If you have installed the Net-SNMP RPM from Redhat 8, it doesn't include the Perl modules.
+Uninstall it and install a newer version by hand.
+
+=item iii. Run C<snmpconf> and set up your MIB directory. 
 
 (Default F</usr/local/share/snmp/mibs>)
 
@@ -253,62 +229,269 @@ Make sure this new F<snmp.conf> lives in F</usr/local/share/snmp>
 
 =back
 
+=head3 SNMP::Info
+
+This Perl module is an integral part of Netdisco.  It is available
+from L<http://snmp-info.sourceforge.net>.   It requires that you have net-snmp installed
+first.
+
+SNMP::Info holds all the device-specific code to retrieve data from network devices via SNMP.
+A wide variety of Cisco,HP,Bay, and Aironet devices are supported.  You may need to add support
+for other devices if they do not follow a standard interface.  This is not too complex.  See 
+SNMP::Info for more details.
+
+You have three different options in installing SNMP::Info
+
+=over
+
+=item a. CPAN
+
+    perl -MCPAN -e shell
+    install SNMP::Info
+
+=item b. From Source
+
+Download newest version from L<http://snmp-info.sourceforge.net>
+
+    tar xvfz SNMP-Info-0.x.tar.gz 
+    cd SNMP-Info-0.x
+    perl Makefile.PL
+    make install
+
+=item c. From CVS
+
+If you plan to add or change device support in SNMP::Info to customize Netdisco to your devices,
+you should install SNMP::Info this way. 
+
+    make snmp
+
+This will create the SNMP/ directory where SNMP::Info will live.   Periodically you should re-run
+
+    make snmp
+
+To update to the most current CVS version.
+
+=back
+
 =head3 MIBs
 
 MIBs are required for F<SNMP::Info>. 
 
-=over
+Follow the instructions at L<http://snmp-info.sourceforge.net> for 
+what MIBs to install and how to get them.
 
-=item 1.  Get MIBS from:
-
-=over
-
-=item ftp://ftp.cisco.com/pub/mibs/v1/v1.tar.gz
-
-=item ftp://ftp.cisco.com/pub/mibs/v2/v2.tar.gz
-
-=item http://www.hp.com/rnd/software/MIBs.htm
-
-=back
-
-=item 2. Install to F</usr/local/share/snmp/mibs>
-
-=back
-
-=head2 OUI
+=head2 7. Setup OUI Database
 
 The Organizationally Unique Identifier (OUI) database allows Netdisco to 
 identify the manufacture of a network card using the first 24 bits of a
-MAC address.  The database is available from the IEEE.
+MAC address.  
+
+The database of OUIs is needed by Netdisco and is available from the IEEE.
+
+If you have C<lynx> installed you can install the OUI database by:
+
+    cd /usr/local/netdisco
+    make oui
+
+Or do this by hand:
 
 =over
 
-=item 1. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
+=item i. Download F<oui.txt> from http://standards.ieee.org/regauth/oui/
 
-=item 2. Run C<netdisco -O>
+=item ii. Run C<netdisco -O>
 
 =back
 
-=head2 GraphViz (optional)
+=head2 8. Install GraphViz 
 
-GraphViz is used in the creation of the Network Map and is an optional
-feature. Note that if you choose not to install GraphViz, you still
-need to install the F<Graph> module (see Perl above).
+GraphViz is used in the creation of the Network Map.
 
 =over
 
-=item 1. Download and install the newest version from http://www.graphviz.org/pub/graphviz
+=item i. Download 
 
-If you run BSD: C<cd /usr/ports/graphics/graphviz && make install>
+For BSD use ports: C<cd /usr/ports/graphics/graphviz && make install>
 
-=item 2. Copy a True Type Font file (F<.ttf>) into this directory and 
+Else get the newest version from L<http://www.graphviz.org/pub/graphviz>
+
+=item ii. True Type Font
+
+Copy a True Type Font file (F<.ttf>) into the Netdisco directory and 
 change C<node_font> in F<netdisco.conf> to match.
 
-=item 3. Review other graph settings in F<netdisco.conf>
+    cp /path/to/windows/fonts/lucon.ttf /usr/local/netdisco
 
-=item 4. Make sure that neato/twopi is in your path, and/or in the crontab path
+=item iii. Graph Settings
+
+Review other graph settings in F<netdisco.conf>
+
+=item iv. Check Path
+
+Make sure that neato/twopi is in your path, and/or in the crontab path
 that creates the graphs.
 
+    which twopi
+    which neato
+
+=item v. Perl Module GraphViz
+
+Make sure the Graphviz Perl module got installed
+
+    perldoc GraphViz
+
 =back
+
+[Optional] If for some reason you choose not to install GraphViz, you still need to install the F<Graph> module
+(Perl Modules above).  It is used in topology calculations.
+
+=head2 9. Modify F<netdisco.conf> to match your site.  
+
+See F<README> for detailed configuration descriptions.
+
+=head2 10. Add a Web Admin User Inside Netdisco
+
+    /usr/local/netdisco/netdisco -u username
+
+=head2 11. Setup Apache
+
+I<Apache2> -- 
+
+Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
+Netdisco will not run under Apache2 until that point.
+
+=over
+
+=item Install Apache 1.3.x and mod_perl 1.x
+
+Below is my method if you haven't installed apache and mod_perl before.
+I statically compile mod_perl and leave the rest of the 
+modules as dynamically loadable objects (DSO).
+
+=over
+
+=item i. Download and Unarchive
+
+Get Apache from L<http://httpd.apache.org>
+
+Get mod_perl from L<http://perl.apache.org>
+
+=item ii. In apache_1.3.x/  
+
+ ./configure 
+
+Sets up the directory scheme.
+
+=item iii. In mod_perl-1.2x/
+
+ /usr/local/bin/perl Makefile.pl \
+        APACHE_SRC=../apache_1.3.27/src \
+        EVERYTHING=1 \
+        DO_HTTPD=1 \
+        USE_APACI=1 \
+        PREP_HTTPD=1
+
+ make
+
+=item iv. Back in apache_1.3.x/
+
+ ./configure \
+        --prefix=/usr/local/apache \
+        --enable-module=most \
+        --enable-shared=max \
+        --activate-module=src/modules/perl/libperl.a \
+        --with-perl=/usr/local/bin/perl
+ make
+ make install
+
+=item v. Back in mod_perl-1.2x/
+
+ make install
+
+=back
+
+=item httpd.conf
+
+Add the following lines in your C<httpd.conf>. 
+
+Your C<httpd.conf> will live in C</usr/local/apache/conf> if you installed using my method.
+
+=over
+
+=item a. In the Global Section
+
+Add this line in the end of C<httpd.conf> not in a VirtualHost section.
+
+    Include /usr/local/netdisco/netdisco_apache.conf
+
+=item b. In each VirtualHost
+
+If you have Virtual Hosts or are setting up a secure server, put the following
+line in each of them that you want Netdisco turned on for:
+
+If you are not using Virtual Hosts, then add this line under the I<netdisco_apache.conf> line.
+
+    Include /usr/local/netdisco/netdisco_apache_dir.conf
+
+=back
+
+=item Mason Data Directory
+
+Set the mason data directory writable to the apache user that does the 
+requests.
+
+Assuming C<nobody> is the user that apache requests run this as C<root> :
+
+    mkdir /usr/local/netdisco/mason
+    chown nobody.netdisco /usr/local/netdisco/mason
+
+The name of the user is listed in C<httpd.conf> under the C<User> directive. 
+
+=item Start Apache
+
+    /usr/local/apache/apachebin start
+
+Go to the webserver and 
+
+=back
+
+Note: Some Linux distributions such as Redhat 6.x install mod_perl as 
+a Dynamic Shared Object (DSO).  This is known to be unstable, especially
+with Mason.   Compile mod_perl statically using the method listed
+above.
+
+=head2 12. Discover a Device in Netdisco
+
+Pick a device that you can access with the command C<snmpwalk>.  
+Tell Netdisco to discover that device:
+
+    cd /usr/local/netdisco
+    ./netdisco -d devicename
+
+=head2 13. Create Network Topology
+
+See F<README> for a description of I<Topology Information>.  
+
+If your network is CDP aware, pick a device that you consider close to the center of the 
+network and start an autodiscovery from there:
+
+    cd /usr/local/netdisco
+    ./netdisco -r device_name_or_ip_number_here
+
+=head2 14. Add Cron Jobs
+
+Once you're sure Netdisco is setup correctly add the Cron jobs listed in
+F<netdisco.crontab>.
+
+    su - -c "cron -u netdisco /usr/local/netdisco/netdisco.crontab"
+
+You may want to fine-tune these jobs to your network.
+
+=head2 15. Start Admin Daemon
+
+The admin deaemon performs administartion jobs that are requested from the
+web front-end.  See F<README> for a description of the admin daemon.  
+
+    su - netdisco -c "/usr/local/netdisco/netdisco -p start"
 
 =cut

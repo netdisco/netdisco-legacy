@@ -9,17 +9,20 @@ POD2HTML = /usr/local/bin/pod2html
 SNMPLIBS := $(shell find SNMP -name "*.pm")
 
 all:
-	echo "Available options are back,doc,count,snmp,oui"
+	echo "Available options are docs,snmp,oui"
 
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
-doc: $(SNMPLIBS) readme install_doc api_doc
+docs: doc $(SNMPLIBS) readme install_doc api_doc
 	ln -fs README doc/
 	ln -fs README-API-BACKEND doc/
 	ln -fs README-API-SHARED doc/
 	ln -fs INSTALL doc/
 	rm -f pod2htm*
+
+doc:
+	mkdir doc
 
 # Makes documentation for all .pm's 
 $(SNMPLIBS):
@@ -47,13 +50,18 @@ readme:
 	$(POD2TEXT) -l README.pod > README
 	$(POD2HTML) --norecurse --htmlroot=/netdisco/doc README.pod | bin/doc_munge > html/doc/README.html
 
-test:
-	perl -cw netdisco.test
-
 count:
 	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco
 
-snmp:
+snmp: SNMP
+	cd SNMP
+	echo "Updating SNMP::Info"
+	echo "Hit Return at Password Prompt"
+	cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info login
+	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info update
+
+SNMP:
+	echo "Getting newest (cvs) version of SNMP::Info"
 	echo "Hit Return at Password Prompt"
 	cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info login
 	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info co snmp-info
@@ -64,6 +72,6 @@ oui:
 	lynx -source http://standards.ieee.org/regauth/oui/oui.txt > oui.txt
 	./netdisco -O
 
-.PHONY: back doc $(SNMPLIBS) install_doc readme test count snmp oui
+.PHONY: back docs $(SNMPLIBS) install_doc api_doc readme count snmp oui
 
 .SILENT:
