@@ -104,10 +104,7 @@
 <UL type=square>
     <LI>Matches on <u>DNS</u> or <u>IP</u> may be matching aliases <i>inside</i> those devices.
         Check inside the device for the matching entries.
-    <LI>These are all wildcard entries, so if you search on DNS=cat, you will get all
-entries that have "cat" in them.
-    <LI>If you want to find blank entries, search on "is null" or conversely,
-        "is not null"
+    <LI>If you want to find blank entries, search on "is null" or conversely "is not null"
     <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
 </UL>
 <!-- took <%$time2 - $time1%> seconds to load -->
@@ -156,16 +153,18 @@ if ($specific =~ /alias/i){
     # Show these cols
     $where->{location}++;
     $where->{alias}++;
+    $where->{name}++;
     $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
-                        ['d.ip','d.dns','d.location','i.alias'],
+                        ['d.ip','d.dns','d.location','i.alias','d.name'],
                         {'i.dns' => 'is null','i.alias' => 'is not null'});
 
 } elsif ($specific =~ /dns/i){
     $where->{vendor}++;
     $where->{model}++;
     $where->{location}++;
+    $where->{name}++;
     $matches = sql_rows('device',
-                        ['ip','vendor','model','location'],
+                        ['ip','vendor','model','location','name'],
                         {'dns' => 'is null'});
 
 } elsif ($specific =~ /orphan/i){
@@ -193,9 +192,9 @@ if ($specific =~ /alias/i){
     # This should be changed to a single SQL command
 
     while (my $orphan = shift @orphans ){
-        push @$matches,  sql_hash('device',['ip','dns','vendor','model','location'],
+        my $match = sql_hash('device',['ip','dns','vendor','model','location'],
                               {'ip'=>$orphan});
-    
+        push (@$matches,$match) if defined $match;
     }
 } elsif ($specific =~ /multiple/i){
     $where->{port}++;
