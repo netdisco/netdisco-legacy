@@ -102,13 +102,11 @@ if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/){
     unless ($err) {
         $err .= "Device $dev has been queued for $action. <BR>\n";
         $debug_flag = (defined $debug and $debug eq 'yes') ? 1 : 0;
-        $netdisco::SQLCARP=1;
         insert_or_update('admin',{},
             {'device'=>$dev,'action'=>$action, 'status' => 'queued',
              'username' => $user, 'debug' => $debug_flag }
                         );
         
-        $netdisco::SQLCARP=0;
         $action = undef;
         $arg_dev = $dev = undef;
     }
