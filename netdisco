@@ -44,7 +44,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only/;
 
-getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOp:r:SRtTV',\%args);
+getopts('aA:bBC:d:De:E:F:ghi:kKLmM:nNOp:r:SRtTuV',\%args);
 
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
@@ -81,7 +81,7 @@ $MacTotal = 0;
 %DeviceTopo = ();
 
 # Header
-&header if (join('',keys %args) =~ /[aABdeEFgikKmMOprRT]+/);
+&header if (join('',keys %args) =~ /[aABdeEFgikKmMOprRTu]+/);
 
 # Commands
 defined $args{h} and die &usage;
@@ -119,9 +119,10 @@ defined $args{E} and &expire_device($args{E},defined $args{n});
 defined $args{e} and &expire_nodes($args{e},defined $args{V});
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 defined $args{p} and &admin_daemon_ctl($args{p});
+defined $args{u} and &add_user;
 
 # Make sure we ran a command, else spit out the usage
-die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOprRtT]+/);
+die &usage unless (join('',keys %args) =~ /[aABdeEFgikKmMnNOprRtTu]+/);
 exit;
 
 =over
@@ -1390,6 +1391,8 @@ sub graph {
         # Right now, let's just make the biggest one only.
         last;
     }
+
+    &batch_mode_end;
 }
 
 =item graph_each(Graph_obj, name) 
@@ -1489,7 +1492,7 @@ sub graph_each  {
     }
 
 
-    print "  Creating raw graph.\n";
+    #print "  Creating raw graph.\n";
     #$gv->as_canon($CONFIG{graph_raw});
     print "  Creating graph ...\n";
     $gv->as_gif($CONFIG{graph});
@@ -1583,8 +1586,9 @@ sub nightly {
     &db_clean;
 
     print "Running Database Vacuum...\n";
-    &sql_do("VACUUM ANALYSE;"),"\n";
+    &sql_do("VACUUM ANALYSE;");
 
+    &batch_mode_end;
 }
 
 =item mac_dump() 
@@ -2090,8 +2094,7 @@ sub admin_daemon_status {
             print "Admin Daemon is already running. ($pid)\n" if $DEBUG;
             return $pid;
         } elsif ($! == EPERM) {             # changed uid
-            warn "Admin Daemon ($pid) has escaped my control!\n";
-            return $pid;
+            die "Admin Daemon ($pid) has escaped my control!\n";
         } elsif ($! == ESRCH) {
             print "Admin Daemon ($pid) is deceased, starting new one.\n" if $DEBUG;  # or zombied
             return 0;
@@ -2115,6 +2118,10 @@ sub admin_daemon {
         print "Admin Daemon is already running. ($pid)\n";
         return;
     }
+
+    $BatchMode = 1;
+    &batch_mode('daemon',1);
+
     my $end_flag = 0;
 
     local %SIG;
@@ -2209,7 +2216,6 @@ sub admin_daemon_job {
     insert_or_update('admin',{'job'=>$id },{'status'=>'running', 'started' => scalar(localtime)});
 
     # Capture output
-    local $BatchMode = 1;
     &batch_mode("admin/job-$id");
     my $old_debug = $DEBUG;
     $DEBUG = $debug;
@@ -2256,6 +2262,52 @@ sub admin_daemon_job {
     return undef;
 }
 
+
+sub add_user {
+    my ($user, $pw, $port, $admin) = @ARGV;
+
+    my %args;
+    unless (defined $user){
+        print "Enter User Name : ";
+        $user = <STDIN>;
+        chomp $user;
+    }
+
+    unless ($user){
+        print "User Name is required.\n";
+        return;
+    }
+
+    unless (defined $pw){
+        print "Enter new password for $user [no change]: ";
+        $pw = <STDIN>;
+        chomp $pw;
+        $args{pw} = $pw if $pw;
+    }
+    unless (defined $port){
+        print "Give $user Port Control [no change]? ";
+        $port = <STDIN>;
+        chomp $port;
+        $args{port} = $port if $port;
+    }
+    unless (defined $admin){
+        print "Give $user Admin Rights [no change]? ";
+        $admin = <STDIN>;
+        chomp $admin;
+        $args{admin} = $admin if $admin;
+    }
+
+    print "$user $pw $port $admin\n" if $DEBUG;
+
+    my $rv = user_add($user,%args);
+
+    if ($rv) { 
+        print "$rv\n";
+    }  else {
+        print "Added / Changed user $user\n";
+    }
+}
+
 sub test {
 }
 
@@ -2272,35 +2324,35 @@ netdisco [Options] Command(s)
 
 Options:
     -b               Batch Mode - Redirect stdout to log files
-    -C (Config File)
-    -D               DEBUG
-    -L               No logging
-    -N               New discovery only.
+    -C config_file   Use non default config file
+    -L               DEBUG - No logging
+    -D               DEBUG - Copious output
     -S               DEBUG - Dump SQL commands
-    
-Commands:
-    -R        - Refresh all device/port information (no discovery)
-    -r device - Discover Network starting from [device]
-    -d device - Discover single device
-    -F  file  - Discover devices from file (set -T for topology only)
-    -T        - Import Topology info only from $CONFIG{topofile} 
 
-    -m        - Mac Suck whole network
-    -M device - Mac Suck single device
+Network Commands:
+    -r device  - Discover Network starting from device (-N for new only)
+    -F  file   - Discover/Refresh Devices from File    (-N for new only)
+    -T         - Import Topology info from topofile
+    -R         - Refresh all Devices
+    -m         - Mac Suck whole network
+    -a         - Arp Nip whole network
 
-    -a        - Arp Nip whole network
-    -A device - Arp Nip single device
+Device Commands:
+    -d device  - Discover/Refresh single device
+    -M device  - Mac Suck single device
+    -A device  - Arp Nip single device
+    -E device  - Expire/Delete Device                  (-n to delete nodes too)
+    -e device  - Expire/Archive Nodes                  (-V to archiVe)
 
-    -O        - Import oid.txt into database for node_search
-    -B        - Nightly Maintanance, Create backups of all data and put into $CONFIG{datadir}
-    -g        - Create Graph and image-map files.
+Administration:
+    -B         - Maintanance. Backups data to datadir. Database Cleanup.
+    -g         - Create Graph and image-map files.
+    -O         - Import oid.txt into database
+    -p (start stop status restart) - Admin Daemon Control
+    -i old new - Change IP Address of Device and its nodes
+    -u [user] [password] [port_control] [admin] - Add/Change User.
+                                                  No args for Interactive
 
-    -E device - Expire Device (-n to delete nodes too)
-    -e device - Expire Nodes  (-V to archiVe instead of delete)
-    -i from_ip to_ip - Change IP Address of device
-
-    -p [start stop status restart] Control admin daemon
-    
 _end_usage_
 }
 
