@@ -1,14 +1,15 @@
 # Makefile 
 # Must run w/ gmake
+# $Id$
 
-POD2TEXT = pod2text 
-POD2MAN  = pod2man
-POD2HTML = pod2html
+POD2TEXT = /usr/local/bin/pod2text 
+POD2MAN  = /usr/local/bin/pod2man
+POD2HTML = /usr/local/bin/pod2html
 
 LIBS := $(wildcard *.pm) $(shell find SNMP -name "*.pm")
 
 all:
-	echo "Available options are back,doc,count"
+	echo "Available options are back,doc,count,snmp,oui"
 
 .PHONY: back
 back: 
@@ -51,4 +52,9 @@ snmp:
 	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info co snmp-info
 	mv -f snmp-info SNMP
 
+.PHONY: oui
+oui:
+	echo "Downloading oui.txt from ieee.org"
+	lynx -source http://standards.ieee.org/regauth/oui/oui.txt > oui.txt
+	./netdisco -O
 .SILENT:
