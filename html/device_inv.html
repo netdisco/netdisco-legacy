@@ -1,6 +1,7 @@
 <h3>Device Inventory</h3>
 [<A HREF="#age">By Age</a>]
 [<A HREF="#model">By Model</a>]
+[<A HREF="#os">By OS</a>]
 <h4><A NAME="age">By Age</A></h4>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
@@ -35,7 +36,6 @@ Find Devices
     <TH>Model</TH>
     <TH>Count</TH>
 </TR>
-%#<TR><TD COLSPAN=3><HR NOSHADE></TD></TR>
 <%perl>
 my $count = 0; $odd = 1;
 foreach my $row (sort 
@@ -66,6 +66,41 @@ foreach my $row (sort
     <TD><%$count%></TD>
 </TR>
 </TABLE>
+<h4><A NAME="os">By OS</A></H4>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
+<TR>
+    <TH>OS</TH>
+    <TH>Version</TH>
+    <TH>Count</TH>
+</TR>
+<%perl>
+$count = 0;
+foreach my $row (sort 
+    {
+        # Sort by OS then Version
+        return $a->{os} cmp $b->{os} if $a->{os} ne $b->{os};
+        return $a->{os_ver} cmp $b->{os_ver};
+    } @$os_count ) {
+
+
+    if ($old_vendor ne $row->{os}) { 
+        $odd++;
+        $old_vendor = $row->{os};
+    }
+    $count += $row->{count};
+</%perl>
+<TR CLASS="match-<%$odd%2%>">
+    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'%>"><% $row->{os} || 'Unknown' %></A></TD>
+    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'%>&os_ver=<%$row->{os_ver}||'IS NULL'%>&boolean=and"><% $row->{os_ver} || 'Unknown' %></a></TD>
+    <TD><% $row->{count} %></TD>
+</TR>
+% }
+<TR CLASS="match-<%++$odd%2%>">
+    <TD>&nbsp;</TD>
+    <TD>Total:</TD>
+    <TD><%$count%></TD>
+</TR>
+</TABLE>
 <%args>
 $cmd      => undef
 $age_type => 'last'
@@ -82,6 +117,9 @@ my $odd = 1;
 my $old_vendor = '';
 my $model_count = sql_rows('device',['vendor','model','count(*)'],
                            undef,undef,'GROUP by model,vendor');
+
+my $os_count = sql_rows('device',['os','os_ver','count(*)'],
+                        undef,undef,'GROUP by os,os_ver');
 
 if ($cmd eq 'age'){
     my $col = 'last_discover';
