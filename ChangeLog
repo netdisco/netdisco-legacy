@@ -3,6 +3,7 @@
 # $Id$
 
 0.94beta ()
+    + Added Feature - Netbios polling of nodes. (Eric Miller)
     + Added Feature - Device Inventory by SNMP location field.
          from Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ)
     + Added Feature [ 836962 ]  - Admin Log
@@ -15,6 +16,7 @@
     + Added Feature - Real Name and Notes field for users in User Admin
     + Folded Advanced Node Search back into Node Search (it started off there 
       a few years ago).  Also fixed node_search to actually work.
+    + Highlighting and grouping of search results in node
     + Fixed Device Search to be more wildcard friendly
     + Added Feature -  Match scope and sysName fields in device_search
     + Added Variable Expansion in Config Files (eg. $home will translate to your setting)
@@ -28,8 +30,7 @@
             As found by Walter Gould
     * Bug Fixed - DBD::Pg::db unterminated quoted string bug .
       Problem turned out to be Postgres barfing on null terminated strings.
-
-
+    * Topology File now resolves aliases to their root devices (Eric Miller)
 
 0.93beta (6/19/04)
     + Added Feature [ 824527 ] VLAN and VTP Domain membership info
