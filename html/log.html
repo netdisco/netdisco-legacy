@@ -4,7 +4,7 @@
 <TR>
     <TH>Class</TH>
     <TH>Entry</TH>
-    <TH>Log File</TH>
+    <TH>View Log</TH>
     <TH>Time Stamp</TH>
 </TR>
 <%perl>
@@ -37,7 +37,7 @@ foreach my $class (sort keys %log_sort){
 <TR CLASS="match-<%++$odd%2%>">
     <TD><% $l->{class} %></TD>
     <TD><% $entry %></TD>
-    <TD><% $logfile ? "<INPUT TYPE=SUBMIT NAME=\"log\" VALUE=\"$l->{id}\">" : '&nbsp;'%></TD>
+    <TD><% $logfile ? "<INPUT TYPE=CHECKBOX NAME=\"log\" VALUE=\"$l->{id}\">" : '&nbsp;'%></TD>
     <TD><% $time %></TD>
 </TR>
 % if ($details){
@@ -94,7 +94,7 @@ foreach my $l (@log){
     my $db_entry = sql_hash('log',['id','logfile'],{'id'=>$l});
     unless (defined $db_entry){
         $logfiles->{$l} = 'Not found in Database'; 
-        last;
+        next;
     }
     my $file = $db_entry->{logfile};
     
