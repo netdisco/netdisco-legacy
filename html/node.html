@@ -276,7 +276,8 @@ if ($node){
         $node =~ s/\s+/:/g;
     }
     my $is_mac = &is_mac($node);
-    my $is_partial_mac = ($node =~ /^(${hex}{2}:)+(${hex}{2})$/);
+    my $wildhex = "[0-9a-fA-F?]";
+    my $is_partial_mac = ($node =~ /^([?*]+)?(${wildhex}{2}:)+(${wildhex}{2})([?*]+)?$/);
 
     # Search by MAC Address
     if ($is_mac or $is_partial_mac) {
