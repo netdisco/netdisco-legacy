@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION/;
 
-$VERSION = '0.91';
+$VERSION = '0.92-cvs';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -98,12 +98,12 @@ GetOptions(\%args,'a|arpwalk',
                   'V|archive',
                   'expire-nodes-subnet=s',
           );
-$DEBUG      = defined $args{D} ? $args{D} : 0;
-$netdisco::SQLCARP = defined $args{S} ? 1 : 0;
-$configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
-$BatchMode  = defined $args{b};
-$Log        = (!$BatchMode and (defined $args{D} or defined $args{L})) ? 0 : 1;
-$New_Only   = defined $args{N};
+$DEBUG             = $args{D} || 0;
+$netdisco::SQLCARP = $args{S} || 0;
+$configfile        = $args{C} || '/usr/local/netdisco/netdisco.conf';
+$BatchMode         = $args{b} || 0;
+$New_Only          = $args{N} || 0;
+$Log               = (!$BatchMode and ($DEBUG or defined $args{L})) ? 0 : 1;
 
 # Parse Config File
 config($configfile);
@@ -866,8 +866,16 @@ sub create_device {
     my $class   = $objtype || 'SNMP::Info';
     my $autospecify = defined $objtype ? 0 : 1;
    
+    my $print_comm = $community;
+    # If it's vlan, do last letter @ vlan
+    if ($print_comm =~ /\@/){
+        $print_comm =~ s/^.*(.\@\d+)$/$1/;  # VLAN Comm
+    } else {
+        # else do last letter
+        $print_comm = substr($print_comm,-1,1);
+    }
     printf("  create_device(%s,%s,%d,%s,%d)\n",
-           $hostname,substr($community,-1,1),$ver, $objtype || 'undef',$retries)
+           $hostname,$print_comm,$ver, $objtype || 'undef',$retries)
          if $DEBUG;
 
     # Get Device Info
