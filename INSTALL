@@ -229,7 +229,7 @@ INSTALL
 
             /usr/local/etc/rc.d/*pgsql* restart
 
-        If there are problems with this step you will receieve an error that
+        If there are problems with this step you will receive an error that
         mentions something about pg_hba.conf.
 
     3. Create Database.
@@ -524,8 +524,8 @@ INSTALL
    7.2. Mandrake 9.1
 
     Mandrake 9.1 comes with Apache2. It also has the option of installing a
-    version of Apache1/mod_perl on a different port and then reverse
-    proxying it.
+    version of Apache1/mod_perl on a different port and then
+    reverse-proxying it.
 
     mod_ssl with Mandrake to come...
 
@@ -851,7 +851,7 @@ INSTALL
     See README for a description of *Topology Information*.
 
     If your network is CDP aware, pick a device that you consider close to
-    the center of the network and start an autodiscovery from there:
+    the center of the network and start an auto-discovery from there:
 
         cd /usr/local/netdisco
         ./netdisco -r device_name_or_ip_number_here
@@ -868,8 +868,8 @@ INSTALL
         /usr/local/apache/bin/apachectl restart
 
     Point a browser to */netdisco* on the server you have Netdisco installed
-    on. If everything is working you should be able to login with the
-    username and password you added in Step 10. You should also be able to
+    on. If everything is working you should be able to login with the user
+    name and password you added in Step 10. You should also be able to
     access the Admin Panel.
 
     If you have problems, check the error_log of apache for messages.
@@ -908,10 +908,18 @@ SUCCESS
     Now that you have spent ten hours of your life installing this go drink
     a Beer, you deserve it.
 
-    Once you have or have not succeded, come join the Netdisco User's
+    Once you have or have not succeeded, come join the Netdisco User's
     mailing list at <http://netdisco.org> and pass on any hints you may have
     in the INSTALL process.
 
     It's a good place to keep up on new features and releases, and it's the
     place to ask any questions.
+
+  Donations
+
+    Netdisco is developed as a hobby and is not a commercial venture.
+
+    If you find Netdisco useful please consider donating to its developer.
+    Check out <http://netdisco.org> for a Source Forge donation page and
+    Amazon wish list.
 
