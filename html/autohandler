@@ -28,8 +28,8 @@
     .port_block { color:#33ccff; }
     .dead_link { color:white; background-color:red;}
     .tr_head   { text-align:left; font:normal normal 12pt monospace;}
-    .tr_data-0 { text-align:left; font-family:monospace; background-color:#eed8ae; }
-    .tr_data-1 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
+    .tr_data-1 { text-align:left; font-family:monospace; background-color:#eed8ae; }
+    .tr_data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
 
 //-->
 </STYLE>
