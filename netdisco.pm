@@ -168,20 +168,18 @@ sub config {
             $value = \@com;
         }
 
-        if ($var eq 'no_macsuck') {
-            my %no = map { $_ => 1 }  split(',',$value);
-            $value = \%no;
-        }
-
         if ($var eq 'node_map') {
             my $oldvalue = $CONFIG{$var};
             push (@$oldvalue, $value);
             $value = $oldvalue;
         }
 
-        if ($var eq 'portcontrol') {
+        # Hash based config options
+        if ($var =~ /^(portcontrol|no_mapsuck|admin)$/) {
             my %users;
             foreach my $user (split(/,/,$value)){
+                $user =~ s/^\s+//;
+                $user =~ s/\s+$//;
                 $users{$user}++;
             }            
             $value = \%users;
@@ -676,6 +674,15 @@ sub sql_hash {
     as a value.   If you turn off quoting make sure the program is feeding the where
     value.
 
+=item DISABLE AUTOQUOTING AND CONNECTOR
+
+    Pass the where value as a double scalar reference:
+
+    sql_rows('device',['*'], {'age(creation)' => \\"< interval '1 day'"})
+
+    creates the sql:
+       select * from device where age(creation) < interval '1 day';
+ 
 =item  NULL VALUES
 
     $matches = sql_rows('device',['ip','name'],{'dns'=>'IS NULL'});
@@ -748,16 +755,22 @@ sub sql_rows {
 
             foreach my $value (@$val){
                 my $con = ''; my $quote = 1; my $not = 0;
+
+                # Double reference ommits the connector
+                if (ref($value) eq 'REF' and ref($$value) eq 'SCALAR') {
+                    $value = $$$value;
+                    $con = '';
+                    $quote = 0;
                 # passing reference to where value is a column name, no quoting.
                 #   optional ! in front for not
-                if (ref $value eq 'SCALAR'){
-                    $con = '=';
+                } elsif (ref $value eq 'SCALAR'){
+                    $quote = 0;
                     $value = $$value;
+                    $con = '=';
                     if ($value =~ /^!(.*)$/){
                         $value = $1;
                         $con = '!=';
                     } 
-                    $quote = 0;
                 } elsif (ref $value eq 'ARRAY'){
                     $con = 'IN';
                     my $newvalue = "(";
