@@ -178,10 +178,10 @@ sub run {
     }
     
     my $time1 = time;
-    print "Vacuuming device, device_port and device_alias ... ";
+    print "Vacuuming device, device_port and device_ip ... ";
     sql_do(qq/VACUUM ANALYZE device/); 
     sql_do(qq/VACUUM ANALYZE device_port/); 
-    sql_do(qq/VACUUM ANALYZE device_alias/); 
+    sql_do(qq/VACUUM ANALYZE device_ip/); 
     my $time2 = time;
     print $time2-$time1," seconds.\n";
 
@@ -2025,10 +2025,10 @@ sub refresh_all {
     }
 
     my $time1 = time;
-    print "Vacuuming device, device_port and device_alias ... ";
+    print "Vacuuming device, device_port and device_ip ... ";
     sql_do(qq/VACUUM ANALYZE device/); 
     sql_do(qq/VACUUM ANALYZE device_port/); 
-    sql_do(qq/VACUUM ANALYZE device_alias/); 
+    sql_do(qq/VACUUM ANALYZE device_ip/); 
     my $time2 = time;
     print $time2-$time1," seconds.\n";
     &end;
@@ -2343,20 +2343,8 @@ sub add_user {
 }
 
 sub test {
+    mail ('max@warped.org','this is atest','blah blah blah');
 
-    $start_time = time;
-
-    &load_old_devices;
-    &topo_load_file;
-    
-    my $odd = 0 ;
-
-    foreach my $dev (keys %$OldDevices){
-        next if ++$odd %2;
-        $Discovered{$dev}++;
-    }
-
-    &end;
 }
 
 
