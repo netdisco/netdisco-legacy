@@ -52,38 +52,42 @@ my $badmatch = 0;
 my $dates = 0;
 my $archive = 0;
 my $oui = 0;
+my $domain = $netdisco::CONFIG{domain};
 </%shared>
 %#
 <%init>
 # Pass the form argument to the global for <%methods>
 $dates = $showdates;
-$archive = $archives;
+$archive = (defined $archives and $archives == 1) ? 1 : 0;
 $oui = $showoui;
 
 # Search by MAC
 $m->flush_buffer() if defined $node;
 my $is_mac = defined $node ? &is_mac($node) : 0;
 if (defined $node and $is_mac) {
+    my $where = { 'mac' => $node };
+    $where->{'active'} = 1 unless $archive;
    my $ips = sql_rows('node_ip',
                 ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                {'mac'=>$node}
+                $where
                 );
    my $ports = sql_rows('node',
                 ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                {'mac'=>$node}
+                $where
                 );   
    foreach my $node_ip (@$ips){
        $node_ip->{type} = 'ip';
        $node_ip->{host} = hostname($node_ip->{ip});
-       $node_ip->{host} =~ s/\.ucsc\.edu//;
+       $node_ip->{host} =~ s/\Q$domain\E//;
        $node_ip->{oui}  = substr($node_ip->{mac},0,8);
        push (@matches,$node_ip);
    }
 
    foreach my $port (@$ports) {
        $port->{type} = 'port';
+        #TODO - Switch to db call
        $port->{switchname} = &hostname($port->{switch});
-       $port->{switchname} =~ s/\.ucsc\.edu//;
+       $port->{switchname} =~ s/\Q$domain\E//;
        push (@matches,$port);
     }
 }
@@ -91,35 +95,39 @@ if (defined $node and $is_mac) {
 # Search by HOST 
 if (defined $node and !$is_mac) {
     my $hostname = &hostname($node);
+    $hostname =~ s/\Q$domain\E//;
     my $realip = &getip($node);
-    
-    my @foundmacs = ();
-    my $macs = sql_rows('node_ip',
-                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                {'ip'=>$realip}
-                );
-    $hostname =~ s/\.ucsc\.edu//;
-
     my $device = root_device($realip);
 
-    foreach my $mac (@$macs){
-        $mac->{host} = $hostname;
-        $mac->{type} = 'host_ip';
-        $mac->{dev}  = $device;
-        $mac->{oui}  = substr($mac->{mac},0,8);
-        push (@matches,$mac);
-        push (@foundmacs, $mac->{mac});
+    my $where = { 'ip'=>$realip};
+    $where->{'active'} = 1 unless $archive;
+    my $macs = sql_rows('node_ip',
+                ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+                $where
+                       );
+
+    my @foundmacs = ();
+    foreach my $node_ip (@$macs){
+        $node_ip->{host} = $hostname;
+        $node_ip->{type} = 'host_ip';
+        $node_ip->{dev}  = $device;
+        $node_ip->{oui}  = substr($node_ip->{mac},0,8);
+        push (@matches,$node_ip);
+        push (@foundmacs, $node_ip->{mac});
     }
 
     foreach my $mac (@foundmacs){
+        $where = { 'mac' => $mac };
+        $where->{'active'} = 1 unless $archive;
         my $ports = sql_rows('node',
                     ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-                    {'mac'=>$mac}
-                    );   
+                    $where
+                        );   
         foreach my $port (@$ports) {
             $port->{type} = 'port';
+            # TODO - switch this to a db lookup,
             $port->{switchname} = &hostname($port->{switch});
-            $port->{switchname} =~ s/\.ucsc\.edu//;
+            $port->{switchname} =~ s/\Q$domain\E//;
             push(@matches,$port);
         }
     }
