@@ -396,6 +396,8 @@ only import Topology Information.
 
 Graph.  Creates graph -- both GIF and ImageMap.
 
+NOTE: You can safely ignore all warnings about C<size too small for label>.
+
 =item -h || --help
 
 Prints out command line usage.
@@ -738,6 +740,14 @@ Procedure for doing a vacuum full :
     su - netdisco -c "/usr/local/netdisco/netdisco -p start"
 
 =back
+
+=item Clearing the Admin Queue
+
+If your admin queue is just getting too long and you want to clear it
+you can do it by just dropping the table and readding it. 
+
+    cd sql
+    ./pg_run admin.sql
 
 =back
 

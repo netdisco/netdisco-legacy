@@ -593,6 +593,8 @@ make sure the Graphviz Perl module got installed
 
     perldoc GraphViz
 
+NOTE: You can safely ignore all warnings about C<size too small for label>.
+
 =head2 7. Setup Apache
 
 I<Apache2> -- 
