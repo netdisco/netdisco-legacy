@@ -1014,6 +1014,8 @@ sub find_neighbors {
 
     my $c_if       = $device->c_if();
     my $c_port     = $device->c_port();
+    my $c_id       = $device->c_id();
+    my $c_platform = $device->c_platform();
     my $interfaces = $device->interfaces();
 
     foreach my $key (keys %$c_ip){
@@ -1024,6 +1026,8 @@ sub find_neighbors {
 
         my $remote_ip   = $c_ip->{$key};
         my $remote_port = undef;
+        my $remote_type = $c_platform->{$key};
+        my $remote_id   = $c_id->{$key};
    
         # Hack for BAY devices where if a BAY device is connected to a
         # non-bay device, we 'hear' other devices on the other end of this
@@ -1058,15 +1062,22 @@ sub find_neighbors {
 
         next unless (defined $remote_ip and length($remote_ip));
 
-        my $port_exists = sql_scalar('device_port',['1'],{'ip'=>$ip,'port'=>$port});
+        # IP Phone Detection -- Add known phone models in parens.
+        if (defined $remote_type and $remote_type =~ /(mitel.5\d{3})/i) {
+            $remote_type = 'IP Phone - '.$remote_type if $remote_type !~ /ip phone/i; 
+        }
+
+        my $port_exists = sql_scalar('device_port',['true'],{'ip'=>$ip,'port'=>$port});
         unless (defined $port_exists and $port_exists){
             print "  Port $port not in DB -> $remote_ip/$remote_port.\n";
             next;
         }
 
         my %store;
-        $store{'remote_ip'} = $remote_ip;
+        $store{'remote_ip'}   = $remote_ip;
         $store{'remote_port'} = $remote_port;
+        $store{'remote_type'} = $remote_type;
+        $store{'remote_id'}   = $remote_id;
        
         insert_or_update('device_port', {'ip' => $ip , 'port' => $port },
                         \%store);
