@@ -999,6 +999,11 @@ BOOLEAN. Set to true to ignore aliases that are part of private nets:
 
 STRING. The extension to add to log files.
 
+=item macsuck_bleed
+
+BOOLEAN. Set to true will let nodes accumulate on uplink ports without topology information.
+This is a debug option to help you figure out your topology and generally should not be set. 
+
 =item macsuck_no
 
 LIST:IPs and Subnets. Comma Separated list of devices and subnets not to macsuck.
@@ -1153,6 +1158,23 @@ Example :
 =head3 SNMP Settings
 
 =over
+
+=item bulkwalk_no
+
+BOOLEAN.  Set to true to use GETNEXT instead of BULKWALK for every device.  
+This slows things down, but might be necessary for problem devices. 
+
+The final solution should be to add C< sub bulkwalk_no { 1; } > to the device
+class that is misbehaving in SNMP::Info.  This will turn off bulkwalk for a
+class of devices, not all.
+
+Default is on.  SNMP::Info 0.10 or higher required.
+
+=item bulkwalk_repeaters
+
+INT.  Sets MaxRepeaters on BULKWALK operations.  See C<perldoc SNMP> for more info.
+
+Default is 20.  SNMP::Info 0.10 or higher required.
 
 =item community
 
