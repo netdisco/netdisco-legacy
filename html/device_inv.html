@@ -1,0 +1,147 @@
+<h3>Device Inventory</h3>
+[<A HREF="#age">By Age</a>]
+[<A HREF="#model">By Model</a>]
+<h4><A NAME="age">By Age</A></h4>
+% $m->comp('SELF:show_age') if $cmd eq 'age';
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="age">
+Find Devices 
+<SELECT NAME="age_type">
+    <OPTION VALUE="first"<%$age_type eq 'last' ? ' SELECTED' : ''%>>First Discovered
+    <OPTION VALUE="last"<%$age_type eq 'last' ? ' SELECTED' : ''%>>Last Updated
+</SELECT>
+<SELECT NAME="age_bool">
+% for (('in the last','not in')){
+    <OPTION VALUE="<%$_%>"<%$age_bool eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+</SELECT>
+<SELECT NAME="age_val">
+% for (1..12) {
+    <OPTION VALUE="<%$_%>"<%$age_val eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+</SELECT>
+<SELECT NAME="age_mul">
+% for (qw/days months years/) {
+    <OPTION VALUE="<%$_%>"<%$age_mul eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+</SELECT>
+<P>
+<INPUT TYPE="submit" VALUE="Search">
+</FORM>
+<h4><A NAME="model">By Model</A></h4>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
+<TR>
+    <TH>Vendor</TH>
+    <TH>Model</TH>
+    <TH>Count</TH>
+</TR>
+%#<TR><TD COLSPAN=3><HR NOSHADE></TD></TR>
+<%perl>
+my $count = 0; $odd = 1;
+foreach my $row (sort 
+    {
+        # Sort by vendor then model
+        return $a->{vendor} cmp $b->{vendor} if $a->{vendor} ne $b->{vendor};
+        return $a->{model} cmp $b->{model};
+    } @$model_count
+                ) {
+
+        # Change class if we change vendor
+        if ($old_vendor ne $row->{vendor}){
+            $odd++;
+            $old_vendor = $row->{vendor};
+        }
+        $count += $row->{count};
+</%perl>
+<TR CLASS="match-<%$odd%2%>">
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>"><%$row->{vendor}%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>&models=<%$row->{model}|u%>&boolean=and"><%$row->{model}%></A></TD>
+    <TD><%$row->{count}%></TD>
+</TR>
+%                  }
+<TR CLASS="match-<%++$odd%2%>"><TD COLSPAN=3><HR NOSHADE></TD></TR>
+<TR CLASS="match-<%$odd%2%>">
+    <TD>&nbsp;</TD>
+    <TD>Total:</TD>
+    <TD><%$count%></TD>
+</TR>
+</TABLE>
+<%args>
+$cmd      => undef
+$age_type => 'last'
+$age_val  => 2
+$age_mul  => 'months'
+$age_bool => 'not in'
+</%args>
+<%shared>
+my $age = [];
+my $domain = $netdisco::CONFIG{domain};
+my $odd = 1;
+</%shared>
+<%init>
+my $old_vendor = '';
+my $model_count = sql_rows('device',['vendor','model','count(*)'],
+                           undef,undef,'GROUP by model,vendor');
+
+if ($cmd eq 'age'){
+    my $col = 'last_discover';
+    $col = 'creation' if $age_type eq 'first'; 
+    # prevent stuffing
+    $age_val = 3 unless $age_val =~ m/^\d+$/;
+    $age_mul =~ s/[^a-z ]+//g;
+    my $bool = '>=';
+    $bool = '<=' if $age_bool eq 'in the last';
+
+    $age = sql_rows('device',['ip','dns','vendor','model',
+                              'age(creation) as creation_age',
+                              'age(last_discover) as last_discover_age'
+                             ],
+                    {"age($col)" => \\"$bool interval '$age_val $age_mul'"});
+}
+</%init>
+<%method show_age>
+<H4>Results</H4>
+% unless (scalar @$age) {
+No Results Found.
+% return; }
+<TABLE BORDER=0 CLASS="box" CELLSPACING=0 WIDTH="100%">
+<TR>
+    <TH>Device</TH>
+    <TH>IP</TH>
+    <TH>Vendor - Model</TH>
+    <TH>First<BR>Discovered</TH>
+    <TH>Last<BR>Updated</TH>
+</TR>
+<%perl>
+foreach my $dev (sort 
+    {
+        return $a->{dns} cmp $b->{dns} unless (! defined($a->{dns}) or ! defined $b->{dns});
+        return $a->{ip} cmp $b->{ip};
+    } 
+                 @$age) {
+    my $dns = $dev->{dns} || 'No DNS';
+    $dns =~ s/\Q$domain\E//;
+    my $creation_age = $dev->{creation_age};
+    $creation_age =~ s/mon/month/;
+    $creation_age =~ s/ \d{2}:\d{2}.*$//;
+    my $last_discover_age = $dev->{last_discover_age};
+    $last_discover_age =~ s/mon/month/;
+    $last_discover_age =~ s/ \d{2}:\d{2}.*$//;
+</%perl>
+<TR CLASS="match-<%++$odd %2%>">
+    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dns%></A></TD>
+    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dev->{ip}%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$dev->{vendor}|u%>&models=<%$dev->{model}|u%>&boolean=and"><%$dev->{vendor}%> - <%$dev->{model}%></A></TD>
+    <TD><%$creation_age%></TD>
+    <TD><%$last_discover_age%></TD>
+</TR>
+% }
+</TABLE>
+
+Found <%scalar @$age%> devices.
+</%method>
+<%method title>
+- Device Inventory \
+</%method>
+%# $Id$
+%# vim:syntax=mason
