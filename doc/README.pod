@@ -1,6 +1,6 @@
 =head1 NAME
 
-Netdisco 0.93 - README
+Netdisco 0.94 - README
 
 =head1 AUTHOR
 
@@ -1445,6 +1445,7 @@ As well as these people for their donations :
  Richard Silver (East Alabama Medical Center)
  Linda Rosewood (UCSC)
  "6pax4max!"    (???)
+ Dusty Hall     (Auburn University)
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.
