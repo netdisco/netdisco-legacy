@@ -65,7 +65,7 @@ $number => 1
 # Check for stuffing of non-numerics
 $number = 5 unless $number =~ /^\d+$/;
 
-my $db_classes = sql_column('log',['distinct(class)','class']); 
+my $db_classes = sql_column('log',['distinct(class)','true']); 
 
 my $log = [];
 # Get the log entries we want

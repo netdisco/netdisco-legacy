@@ -79,6 +79,7 @@ entries that have "cat" in them.
         "is not null"
     <LI>You can select multiple for Model,Vendor, and Layers by holding down CTRL as you click.
 </UL>
+<!-- took <%$time2 - $time1%> seconds to load -->
 <%args>
 @models   => undef
 @layers   => undef
@@ -102,10 +103,10 @@ my $awhere = {};
 </%shared>
 %#
 <%init>
-$netdisco::SQLCARP = 0 ;
+my $time1= time;
 # Get Form values
-my $models = sql_column('device',['distinct(model)','vendor']); 
-my $vendors = sql_column('device',['distinct(vendor)','vendor']); 
+my $models = sql_column('device',['distinct(model)','true']); 
+my $vendors = sql_column('device',['distinct(vendor)','true']); 
 
 # Specific Searches
 
@@ -275,8 +276,10 @@ if (scalar keys %$where and ! defined $specific and ! length($specific)){
                         ['distinct(d.ip)','d.dns',@cols],
                         $where,
                         $boolean eq 'or');
+
 }
 
+my $time2 = time;
 </%init>
 %#
 %#
