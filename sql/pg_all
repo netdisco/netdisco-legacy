@@ -3,10 +3,13 @@
 # 	run pg_run on all the tables in this dir.
 # $Id$
 
+FILES="admin.sql device.sql device_ip.sql device_port.sql device_port_log.sql \
+       log.sql node.sql node_ip.sql oui.sql sessions.sql user_log.sql users.sql"
+
 rm -f pg_all.input
 touch pg_all.input
 
-for file_name  in *.sql ;
+for file_name in $FILES ;
 do	
 	echo "[ $file_name ]"
     cat $file_name >> pg_all.input
