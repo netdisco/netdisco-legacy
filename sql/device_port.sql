@@ -22,6 +22,7 @@ CREATE TABLE device_port (
     remote_type text,   -- Type of device connected to
     remote_id   text,   -- remote ID string of neighbor
     vlan        text,   -- VLAN port connected to
+    lastchange  bigint, -- Last time the port went up or down
     PRIMARY KEY(port,ip) 
 );
 
