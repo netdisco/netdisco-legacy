@@ -40,7 +40,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION/;
 
-$VERSION = 0.90;
+$VERSION = '0.90';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();
@@ -62,7 +62,7 @@ $MacTotal = 0;
 # --------------------------------------------------------------
 #              Command Line Flags                               
 # --------------------------------------------------------------
-getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuV',\%args);
+getopts('aA:bBC:d:De:E:F:ghIi:kKLmM:nNOP:p:r:SRtTuvV',\%args);
 $DEBUG      = defined $args{D} ? $args{D} : 0;
 $netdisco::SQLCARP = defined $args{S} ? 1 : 0;
 $configfile = defined $args{C} ? $args{C} : '/usr/local/netdisco/netdisco.conf';
@@ -79,6 +79,7 @@ config($configfile);
 #             Run Commands                                      
 # --------------------------------------------------------------
 defined $args{h} and die &usage;
+defined $args{v} and die &version;
 
 #   Discovery
 defined $args{R} and &refresh_all;
@@ -2557,6 +2558,15 @@ sub test {
 sub header{
     print "n e t  d i s c o\n";
     print '-'x50 . "\n";
+}
+
+sub version {
+    &header;
+    print "Perl Version       : $]\n";
+    print "Net-SNMP Version   : $SNMP::VERSION\n";
+    print "SNMP::Info Version : $SNMP::Info::VERSION\n";
+    print "Netdisco Version   : $VERSION\n";
+    return "\n";
 }
 
 sub usage{
