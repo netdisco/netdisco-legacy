@@ -5,7 +5,7 @@
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <TABLE>
 <TR>
-    <TD><INPUT TYPE="submit" VALUE="Update Queue Listing">
+    <TD><INPUT TYPE="submit" VALUE="Refresh Queue Listing">
         Finished Jobs: <SELECT NAME="old_jobs">
 % foreach my $num (qw/1 5 10 20 30 50 100/) {
             <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
@@ -25,10 +25,14 @@
 <& SELF:del_dev &>
 % }
 </FORM>
-<P>
-Each action is entered into a queue for processing. 
+<h4>User Control</h4>
+<FORM ACTION="<% $r->uri %>" METHOD=POST>
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="user">
+
+</FORM>
 <%args>
 $dev     => undef
+$dev_text=> undef
 $cmd     => 'add'
 $debug   => undef
 $action  => undef
@@ -68,6 +72,12 @@ $arg_debug = $debug;
 # Load device list, unless device provided.
 $devices = sql_rows('device',['ip','dns']);
 
+# Check for textual input.
+if ($cmd eq 'add' and $dev_text){
+    $dev=getip($dev_text);
+    $arg_dev = $dev;
+} 
+
 # Load dev from db if given
 $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
 
@@ -75,7 +85,7 @@ $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
 if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/){
     # Verify device exists.
     unless (defined $db_dev->{ip}){
-        $err .= "Device not found in Database.<BR>\n";
+        $err .= "Device ($dev) not found in Database.<BR>\n";
         $action = undef;
         $arg_dev = $dev = undef;
     }
@@ -109,6 +119,8 @@ if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/){
         $action = undef;
         $arg_dev = $dev = undef;
     }
+} elsif ($cmd eq 'add' and $dev){
+    $err .= "Please select an action.<BR>\n";
 }
 
 # Delete
@@ -141,7 +153,7 @@ if ($cmd eq 'add' and defined $action and $action eq 'delete') {
     $cmd = 'del'; # order matters between delete and verify
 }
 
-# Taint check
+# Taint check (head between legs)
 $old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
 
 # Queue
@@ -208,11 +220,12 @@ Delete <A HREF="device.html?ip=<%$arg_dev |u%>"><%$arg_dev%></A>.
 </TR>
 <TR>
     <TD>or Enter Device : </TD>
-    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev"></TD>
+    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text"></TD>
 </TR>
 <TR> 
     <TD COLSPAN=4>
         <INPUT TYPE="submit" VALUE="Queue Action">
+        [<A HREF="<%$r->uri%>">Clear</A>]
         Debug :
         <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
     </TD>
