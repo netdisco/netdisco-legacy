@@ -2,7 +2,7 @@
 % if ($err) {
 <H4><%$err%></H4>
 %}
-<FORM ACTION="<%$r->uri%>" METHOD=POST>
+<FORM ACTION="<%$r->uri%>" METHOD="POST">
 <INPUT TYPE="hidden" NAME="cmd" VALUE="login">
 <INPUT TYPE="hidden" NAME="done" VALUE="<%$done|h%>">
 <TABLE BORDER=0>
@@ -21,10 +21,25 @@
 </FORM>
 <h4>Note</h4>
 <UL>
-    <LI>I'm in the process of implementing the new user authentication system.
-        Please <a href="mailto:max@warped.org">tell me</a> if you see anything amiss.
+    <LI>Something in login is broken, seems to be something in sending the cookies.
+        If you are having problems logging in, try turning on the warning to show you 
+        when cookies are being sent, and see if a cookie IS being sent.   Any help
+        <a href="mailto:max@warped.org">is welcome</a>.  
+        <P>
+        If you're having problems, try deleting any cookie labeled <b>ucsc.edu</B> and then
+        restarting your browser.
+        <UL>
+            <LI>IE: <u>T</u>ools :: Internet <u>O</u>ptions :: Delete Cook<u>i</u>es
+            <LI>Mozilla / NS6 : <u>T</u>ools :: <u>C</u>ookie Manager :: <u>M</u>anage stored cookies
+            <LI>NS4:
+        </ul>
     <LI>Sessions Last for <%$netdisco::CONFIG{websession}%> minutes.
 </UL>
+<!-- 
+<% join("\n",join('=',each(%{$m->session}))) %>
+<% $m->session->{logged_in} %>
+<% $m->session->{user} %>
+-->
 <%args>
 $user => undef
 $cmd  => undef
