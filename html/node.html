@@ -661,7 +661,7 @@ $match
 %} elsif ($type eq 'alias') {
     <A HREF="device.html?ip=<%$match->{dev}|u%>"><%$match->{dev}%> (<% defined $match->{dns} ? $match->{dns} : '[No DNS]' %>)</A>\
 %} elsif ($type eq 'nbname') {
-    \\<%$match->{domain}%>\<A HREF="node.html?node=<% $match->{nbname} |u %>"><%$match->{nbname}%></A>
+    \\<A HREF="ip_search.html?domain=<%$match->{domain}|u%>&cmd=nbt" TITLE="Devices in this Domain"><%$match->{domain}%></A>\<A HREF="node.html?node=<% $match->{nbname} |u %>"><%$match->{nbname}%></A>
     <BR><%$match->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$match->{ip}|u%>"><%$match->{ip}|h%></A>\
 %} else {
     <% $match->{type} %>\

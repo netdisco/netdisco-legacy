@@ -1,4 +1,4 @@
-<h3>IP Search</h3>
+<h3>IP Inventory</h3>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
 <INPUT TYPE="hidden" NAME="cmd" VALUE="age">
@@ -42,6 +42,32 @@
 </TABLE>
 </FORM>
 Finds IP Addresses used by nodes.
+<h3>Netbios Inventory</h3>
+% $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
+<TABLE CLASS="box" BORDER=0>
+<INPUT TYPE="hidden" NAME="cmd" VALUE="nbt">
+<TR>
+    <TD>Domain:</TD>
+    <TD><SELECT NAME="domain" MULTIPLE SIZE=8>
+        <OPTION VALUE="all"<%!scalar(@domain) ? ' SELECTED' : ''%>>[All]
+        <OPTION VALUE="blank" <%grep(/^\Qblank\E$/,@domain)?' SELECTED':''%>>(Blank Domain)
+% foreach my $d (sort keys %$nbt_domains){
+        <OPTION VALUE="<%$d|u%>"<%grep(/^\Q$d\E$/,@domain)?' SELECTED':''%>><%$d|h%>
+% }
+    </TD>
+</TR>
+<TR>
+    <TD>Archive Data:</TD>
+    <TD><INPUT TYPE="checkbox" NAME="archive" VALUE=1<%$archive ? ' CHECKED' : ''%>></TD>
+</TR>
+<TR>
+    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Search">
+        [ <A HREF="<%$r->uri%>">Reset</A> ]
+    </TD>
+</TR>
+</TABLE>
+</FORM>
 <%args>
 $subnet  => ''
 $sort    => 'Age'
@@ -49,14 +75,21 @@ $age_val => 2
 $age_mul => 'months'
 $cmd     => ''
 $max     => 200
+@domain  => ()
+$archive => 0
 </%args>
 <%shared>
 my @sorts = qw/IP Age/;
-my ($ips,$arg_sort,$odd,$arg_max);
+my ($ips,$arg_sort,$odd,$arg_max,$arg_domain);
+my $nodes = [];  my $domain_count = {}; my $nbt_domains={};
 </%shared>
 <%init>
+$arg_sort = $sort; $arg_max = $max; $arg_domain = \@domain;
 
-$arg_sort = $sort; $arg_max = $max;
+# get some form filler
+$nbt_domains = sql_column('node_nbt',['distinct(domain)','true']);
+delete $nbt_domains->{''};
+
 if ($cmd eq 'age'){
     $age_val = 2 unless $age_val =~ m/^\d+$/;
     $age_mul =~ s/[^a-z ]+//g;
@@ -72,7 +105,90 @@ if ($cmd eq 'age'){
                                'extract(epoch from time_last) as time_last','ip','active'],
                     $where);
 }
+
+if ($cmd eq 'nbt'){
+    my $where = {};
+    foreach my $d (@domain) {
+        $d = '' if $d eq 'blank';
+    }
+    if (grep(/^all$/,@domain)){
+        @domain = ();
+    } else {
+        $where = {'domain' => [[@domain]]};
+    }
+    $where->{active} = 1 unless $archive;
+    $nodes = sql_rows('node_nbt',['ip','mac','nbname','domain','server','nbuser','active',
+                                  'extract(epoch from time_first) as time_first','extract(epoch from time_last) as time_last'],
+                                 $where);
+    # count domains
+    foreach my $n (@$nodes){
+        my $d = $n->{domain};
+        $domain_count->{$d}++;
+    }
+}
 </%init>
+%#
+%# show_nbt() - Show results from Netbios Search
+%#
+<%method show_nbt>
+<h4>Results</h4>
+% unless (scalar @$nodes) {
+No Results Found.
+% return; }
+<TABLE BORDER=0 CELLSPACING=0 WIDTH=100%>
+    <TR>
+        <TH>Domain</TH>
+        <TH>Count</TH>
+        <TH>Domain</TH>
+        <TH>Count</TH>
+    </TR>
+% my $cnt = 0;
+% foreach my $d (sort keys %$domain_count){
+% $cnt++;
+% if ($cnt%2){
+<TR CLASS="match-<%++$odd%2%>">
+%}
+    <TD><A HREF="<%$r->uri%>?domain=<%$d||'blank'%>"><%$d || '[Blank]'%></A></TD>
+    <TD><%$domain_count->{$d}%></TD>
+% if (($cnt+1)%2) {
+</TR>
+%}
+%}
+</TABLE>
+<% scalar(keys %$domain_count) %> Domains.
+<P>
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0>
+    <TR>
+        <TH>Domain</TH>
+        <TH>Node</TH>
+        <TH>Name</TH>
+        <TH>User</TH>
+        <TH>First Seen</TH>
+        <TH>Last Seen</TH>
+    </TR>
+% my $last_domain = '';
+% foreach my $n (sort {($a->{domain} cmp $b->{domain}) or 
+%                      (lc($a->{nbname}) cmp lc($b->{nbname}) )} 
+%                @$nodes){
+    <TR CLASS="match-<%++$odd%2%>">
+        <TD><%$last_domain ne $n->{domain} ? $n->{domain} : '&nbsp;'%></TD>
+        <TD><A HREF="node.html?node=<%$n->{mac}|u%>"><%$n->{mac}%></A></TD>
+        <TD><%$n->{domain} ? "\\$n->{domain}\\" : '' %><A HREF="node.html?node=<%$n->{nbname} |u%>"><%$n->{nbname} || '[None]'%></A></TD>
+        <TD><%$n->{nbuser} || '[No User]' %> @
+            <A HREF="node.html?node=<%$n->{ip} |u%>"><%$n->{ip}%></A>
+        </TD>
+        <TD><& 'node.html:format_date', date=>$n->{time_first}&></TD>
+        <TD><& 'node.html:format_date', date=>$n->{time_last}&></TD>
+    </TR>
+%   $last_domain = $n->{domain};
+% }
+</TABLE>
+<% scalar(@$nodes) %> Nodes.
+<P>
+</%method>
+%#
+%# show_age() - Show results from IP age inventory
+%#
 <%method show_age>
 <H4>Results</H4>
 % unless (scalar @$ips) {
@@ -110,7 +226,7 @@ foreach my $row (@rows){
 <% scalar @rows %> IPs Shown.
 </%method>
 <%method title>
-- IP Search \
+- Node Inventory \
 </%method>
 %# $Id$
 %# vim:syntax=mason
