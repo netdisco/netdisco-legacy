@@ -61,17 +61,17 @@ Reported working for versions 7.2, 7.3, 7.4
 
 =item * Apache
 
-1.3.x advised, Version 2.x not supported by mod_perl.
+1.3.x advised, B<Version 2.x not yet supported by mod_perl>
 
 =item * mod_perl   
 
 Version to match Apache - 1.29 or higher recommended. 
 
-Do not install version 1.99.
+B<Do not install version 1.99>.
 
 =item * GraphViz (Optional)
 
-Version 0.12 or higher recommended.
+Version 0.16 or higher recommended.
 
 =back
 
@@ -128,10 +128,11 @@ Modify the following shell scripts :
     sql/pg_run
     sql/pg_init
     sql/pg_back
+    bin/netdisco_daemon
 
 =item netdisco.conf
 
-Double-check the C<home> option in F<netdisco.conf>.
+Set the C<home> option in F<netdisco.conf>.
 
 =item netdisco_apache.conf
 
@@ -180,8 +181,8 @@ Don't forget to logout and login after adding yourself to a group.
 
 =head2 4. PostgreSQL
 
-Netdisco runs Postgres as its database back-end.  A mySQL port 
-is reported to be in development.
+Netdisco runs Postgres as its database back-end.  A mySQL and Oracle port 
+are in development.
 
 =head3 4.1.  Install Postgres
 
@@ -192,7 +193,7 @@ is reported to be in development.
 First install Postgres from ports:
 
     cd /usr/ports/database/postgresql7
-    gmake install
+    make install
 
 Next initialize the database :
 
@@ -286,9 +287,11 @@ try this one :
 
 You must now restart Postgres
 
-Linux :
+Linux : one of these three
 
     /etc/rc.d/init.d/postgresql restart
+    service postgresql restart
+    /etc/rc.d/postgresql restart
 
 FreeBSD :
     
@@ -304,9 +307,10 @@ Make sure your copy of the database is running.
 Next, find out the name of your database user.  The default name for
 some Linux RPM versions is C<postgres> and for some BSD installations C<pgsql>.
 
-Edit the file C<pg_init> to match your database user name in F</usr/local/netdisco/sql/pg_init>
+Edit the files C<pg_init> and C<pg_run> to match your database user name in F</usr/local/netdisco/sql/pg_init>
 
     vi /usr/local/netdisco/sql/pg_init
+    vi /usr/local/netdisco/sql/pg_run
 
 As root run C<sql/pg_init> to create the database and user for Netdisco.
 
@@ -352,7 +356,6 @@ Make sure that Postgres is set to start automatically.
 =over
 
 =item Linux
-
 
     chkconfig postgresql on
 
@@ -411,7 +414,7 @@ When you run C<./configure>, make sure you add the switch C<--with-perl-modules>
 If you already have net-snmp installed, then go to the source directory and 
 in the C<perl> subdirectory and run C<perl Makefile.PL>
 
-    cd /path/to/net-snmp-5.0.x/perl
+    cd /path/to/net-snmp-5.1.x/perl
     perl Makefile.PL
     make
     make install
@@ -455,7 +458,7 @@ For BSD install Net SNMP with ports :
 
 For a recent version of BSD you should get the Perl modules installed automatically.
 
-For a really old version, or for weird and multiple Perl installs do it by hand!
+For a really old version of BSD, or for weird and multiple Perl installs do it by hand!
 
     cd /usr/ports/net/net-snmp
     make
@@ -487,7 +490,7 @@ devices via SNMP.  A wide variety of devices are supported.  You may need to
 add support for other devices if they do not follow a standard interface.  This
 is not too complex.  See SNMP::Info for more details.
 
-You have three different options in installing SNMP::Info
+You have four different options in installing SNMP::Info
 
 =over
 
@@ -519,6 +522,11 @@ This will create the SNMP/ directory where SNMP::Info will live.   Periodically 
 
 To update to the most current CVS version.  For BSD or Solaris systems, use C<gmake> instead
 of C<make>
+
+=item [5.2.4] From ports (BSD)
+
+    cd /usr/ports/net-mgmt/p5-SNMP-Info
+    make install
 
 =back
 
@@ -845,7 +853,6 @@ requests.
 
 Assuming C<nobody> is the user that apache requests run this as C<root> :
 
-    mkdir /usr/local/netdisco/mason
     chown nobody.netdisco /usr/local/netdisco/mason
 
 The name of the user is listed in C<httpd.conf> under the C<User> directive. 
@@ -853,14 +860,14 @@ The name of the user is listed in C<httpd.conf> under the C<User> directive.
 Note: Some Linux distributions such as Redhat 6.x install mod_perl as 
 a Dynamic Shared Object (DSO).  This is known to be unstable, especially
 with Mason.   Compile mod_perl statically using the method listed
-above.
+above.  If you suspect yours is not compiled in, run C<httpd -l> and see if 
+C<mod_perl.c> is listed (it should be).
 
 =head2 8. Perl Modules and Mason
 
 Below is a list of required modules for Netdisco, freely available from
-CPAN (http://www.cpan.org).   Many of these modules have prerequisite 
+CPAN L<http://www.cpan.org>.   Many of these modules have prerequisite 
 modules.   
-
 
 =head3 8.1.  Install required Perl modules from CPAN
 
@@ -888,10 +895,10 @@ and their prerequisites automatically:
 Some of these you will probably already have installed. Others you may need to force 
 with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!
 
-=head3 8.2.  Perl Location header in executables.
+=head3 8.2.  Non-Standard Perl Location
 
-If you have Perl installed in C</usr/bin>, make sure that F<netdisco> and F<bin/doc_munge>
-have the correct location for Perl listed at the very top of the file.
+If you don't have Perl installed in C</usr/bin>, you will need to modify
+the first lines of F<netdisco> and F<bin/doc_munge>.
 
 =head2 9. Netdisco Configuration
 
@@ -914,14 +921,14 @@ Change settings on lines:
 =item [9.3] netdisco.crontab
 
 Change C<!!center_network_device_here!!> to a network device that is well connected to the main
-segment by CDP.
+segment by CDP/FDP/SONMP.
 
 
 =item [9.4] Add a user in Netdisco
 
 This is a user inside the Netdisco database that will be your Web Admin User
 
-    /usr/local/netdisco/netdisco -u username
+    /usr/local/netdisco/netdisco -u joebob
 
 Add more users from the web C<Admin Panel> once Netdisco is up and running.
 
@@ -933,10 +940,13 @@ This step is only necessary if you have installed from CVS.
 
 =item i. Perl Location
 
-Make sure that the C<POD2TEXT>  lines in F<Makefile> point to where your Perl binaries
+Make sure that the C<POD2TEXT> lines in F<Makefile> point to where your Perl binaries
 are installed.
 
 =item ii. Create Docs
+
+You can do this step if you would like the SNMP documentation available from the
+web as well.
 
  cd /usr/local/netdisco && gmake doc
 
@@ -971,7 +981,7 @@ The database of OUIs is needed by Netdisco and is available from the IEEE.
 If you have lynx installed you can install the OUI database by:
 
     cd /usr/local/netdisco
-    make oui
+    gmake oui
 
 (gmake for BSD/Solaris)
 
@@ -979,8 +989,6 @@ Or do this by hand:
 
    1. Download oui.txt from http://standards.ieee.org/regauth/oui/
    2. Run netdisco -O
-
-A note about Make versions. The Makefile is a GNU Make version file. In BSD you may have to type gmake.
 
 =head2 11. Start Apache
 
@@ -1004,8 +1012,7 @@ Check Apache's F<error_log> for possible errors.
 
 =back
 
-Also, make sure that Apache starts on its own
-at reboot.
+Also, double-check that Apache starts on its own at reboot.
 
 =head2 12. Discover a Device in Netdisco
 
@@ -1015,36 +1022,38 @@ Tell Netdisco to discover that device:
     cd /usr/local/netdisco
     ./netdisco -d devicename
 
-Make sure that this step actually works.  This is a good metric that you have 
-now installed Netdisco correctly.  Add the I<-D> flag to get copious debugging info.
+Make sure that this step actually works.  This is a good metric that you have
+now installed Netdisco correctly.  Add the I<-D> flag to get copious debugging
+info.
 
 =head2 13. Create Network Topology
 
 See F<README> for a description of I<Topology Information>.  
 
-If your network is CDP aware, pick a device that you consider close to the center of the 
-network and start an auto-discovery from there:
+If your network is CDP/FDP/SONMP aware, pick a device that you consider close
+to the center of the network and start an auto-discovery from there:
 
     cd /usr/local/netdisco
-    ./netdisco -r device_name_or_ip_number_here
+    ./netdisco -r myrouter
 
-If your network is I<not> CDP friendly, then see F<README> for how to
-use the manual topology file F<netdisco-topology.txt>.
+If your network is I<not> CDP friendly, then see F<README> for how to use the
+manual topology file F<netdisco-topology.txt>.
 
-You MUST supply Netdisco with a working topology or MAC addresses will show
-up on uplink ports instead of end ports.
+You MUST supply Netdisco with a working topology or MAC addresses will show up
+on uplink ports instead of end ports.
 
 =head2 14. Test Web Side
 
 First restart Apache so that netdisco will see the changes that you have made
-in F<netdisco.conf>.  Note that a I<graceful> restart will not re-read the configuration
-file.  A full restart is required.
+in F<netdisco.conf>.  Note that a I<graceful> restart will not re-read the
+configuration file.  A full restart is required.
 
     /usr/local/apache/bin/apachectl restart
 
-Point a browser to I</netdisco> on the server you have Netdisco installed on. 
-If everything is working you should be able to login with the user name and password
-you added in Step 10.  You should also be able to access the Admin Panel.
+Point a browser to I</netdisco> on the server you have Netdisco installed on.
+If everything is working you should be able to login with the user name and
+password you added in Step 10.  You should also be able to access the Admin
+Panel.
 
     http://localhost/netdisco
 
@@ -1060,18 +1069,20 @@ core routers or switches.
 
     vi netdisco.crontab
 
-Now set the crontab to the C<netdisco> user.
+Now set the crontab to the C<netdisco> user (as root).
 
-    su - -c "crontab -u netdisco /usr/local/netdisco/netdisco.crontab"
+    crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
-You may want to fine-tune these jobs to your network.
+You may want to fine-tune these jobs to your network.  If jobs run too frequent
+and overlap, nothing bad will happen, it's just higher load on your network
+devices and Netdisco server.
 
 =head2 16. Start Admin Daemon
 
 The admin deaemon performs administration jobs that are requested from the
 web front-end.  See F<README> for a description of the admin daemon.  
 
-    su - netdisco -c "/usr/local/netdisco/netdisco -p start"
+    /usr/local/netdisco/bin/netdisco_deamon start
 
 The daemon will be respawned daily in the Cron job listed above. 
 
