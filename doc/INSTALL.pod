@@ -174,6 +174,11 @@ Now you have to add C<--media ftpsite>  in each C<urpmi> command like so :
 
 Remember this for the Apache setup too.
 
+=item iii. MAC OS X
+
+See L<http://developer.apple.com/internet/macosx/postgres.html> for detailed instructions
+on installing PostgreSQL with OS X.
+
 =item iv.  All Others
 
 There is probably a binary package all ready for you.  See your distribution's instructions
@@ -471,7 +476,7 @@ Add C<Unsigned32> to the imports after line 19:
         Gauge32,
         Integer32,
         Counter64,
-        Unsigned32,
+        Unsigned32
             FROM SNMPv2-SMI
 
 =back
@@ -551,6 +556,14 @@ I<Apache2> --
 
 Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
 Netdisco will not run under Apache2 until that point.
+
+=head3 MAC OS X
+
+See the following three links in addition to this document :
+
+L<http://www.oreillynet.com/pub/a/mac/2002/11/05/apache_osx.html>
+L<http://www.oreillynet.com/pub/a/mac/2002/12/18/apache_modssl.html>
+L<http://www.oreillynet.com/pub/a/mac/2003/02/07/libapreq_update.html>
 
 =head3 Mandrake 9.1
 

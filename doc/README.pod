@@ -1228,9 +1228,10 @@ contributions to Netdisco :
 
     Mark Boolootian [Netdisco's Architect] (UCSC), Jim Warner (UCSC), 
     Remo Rickli (PSI, Switzerland),  Mike Hunter (UCB), Brian Wilson (NCSU),
-    David Temkin (sig.com), Edson Manners (FSU), 
+    David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
     Jean-Philippe Luiggi (sagem.com), Kismet Developers AP List, 
-    A.L.M Buxey (Loughborough University, UK)
+    A.L.M Buxey (Loughborough University, UK), Kevin Cheek (UMICH), Bradley Baetz (bbaetz),
+    John Bigrow (bnl.gov), George Pavel (llnl.gov)
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.
