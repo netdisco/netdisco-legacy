@@ -17,8 +17,8 @@
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align:center;
               vertical-align:middle; font-family:arial,helvetica,serif; font-size:10pt; border:black; } 
     .sidebar-bg { background-color:darkblue; border:black; }
-    .sidebar-1 { text-align:center; background-color:#eed8ae;}
-    .sidebar-2 { text-align:center; background-color:#ffe7ba;}
+    .sidebar-0 { text-align:center; background-color:#eed8ae;}
+    .sidebar-1 { text-align:center; background-color:#ffe7ba;}
     .match-1 { text-align:center; background-color:#eed8ae;}
     .match-0 { text-align:center; background-color:#ffe7ba;}
     .port_up { color:black;}
