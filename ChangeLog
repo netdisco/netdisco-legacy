@@ -11,6 +11,7 @@
     * Fixed bug where you couldn't Ctrl-C from macwalk/arpwalk
     * Fixed Bug [ 765422 ] MAC Address of switch port show up under connected devices
     + Added Feature [ 783093 ] Show IP address of connected node under Device View
+    + Added Config setting to be able to skip certain VLANs during MacSucks
 
 0.91beta (06/10/03)
     + added feature [ 744605 ] Discover device from the admin panel
