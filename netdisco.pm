@@ -593,37 +593,38 @@ sub sort_port {
     $aval = $aval->{port} if ref($aval) eq 'HASH';
     $bval = $bval->{port} if ref($bval) eq 'HASH';
 
-    my $numeric        = '^(\d+)$';
-    my $dotted_numeric = '^(\d+)\.(\d+)$';
-    my $letter_number  = '^([a-zA-Z]{1})(\d+)$';
-    my $wordcharword   = '^([^:\/.]+)[:\/\.]+([^:\/.]+)$';
-    my $ciscofast      = '^(\D)+(\d+)[:\/\.]+(\d+)(-.*)?$';
+    my $numbers        = qr{^(\d+)$};
+    my $numeric        = qr{^([\d\.]+)$};
+    my $dotted_numeric = qr{^(\d+)\.(\d+)$};
+    my $letter_number  = qr{^([a-zA-Z]+)(\d+)$};
+    my $wordcharword   = qr{^([^:\/.]+)[:\/\.]+([^:\/.]+)$};
+    my $ciscofast      = qr{^(\D)+(\d+)[:\/\.]+([\d\.]+)(-.*)?$};
 
     my @a = (); my @b = ();
     
-    if ($aval =~ /$dotted_numeric/) {
+    if ($aval =~ $dotted_numeric) {
         @a = ($1,$2);
-    } elsif ($aval =~ /$letter_number/) {
+    } elsif ($aval =~ $letter_number) {
         @a = ($1,$2);
-    } elsif ($aval =~ /$numeric/) {
+    } elsif ($aval =~ $numbers) {
         @a = ($1);
-    } elsif ($aval =~ /$wordcharword/) {
+    } elsif ($aval =~ $wordcharword) {
         @a = ($1,$2);
-    } elsif ($aval =~ /$ciscofast/){
+    } elsif ($aval =~ $ciscofast){
         @a = ($1,$2,$3,$4);
     } else { 
         @a = ($aval);
     }
 
-    if ($bval =~ /$dotted_numeric/) {
+    if ($bval =~ $dotted_numeric) {
         @b = ($1,$2);
-    } elsif ($bval =~ /$letter_number/) {
+    } elsif ($bval =~ $letter_number) {
         @b = ($1,$2);
-    } elsif ($bval =~ /$numeric/) {
+    } elsif ($bval =~ $numbers) {
         @b = ($1);
-    } elsif ($bval =~ /$wordcharword/) {
+    } elsif ($bval =~ $wordcharword) {
         @b = ($1,$2);
-    } elsif ($bval =~ /$ciscofast/){
+    } elsif ($bval =~ $ciscofast){
         @b = ($1,$2,$3,$4);
     } else { 
         @b = ($bval);
@@ -632,8 +633,8 @@ sub sort_port {
     # Equal until proven otherwise
     my $val = 0;
     while (scalar(@a) or scalar(@b)){
-        my $a1 = shift @a || undef;
-        my $b1 = shift @b || undef;
+        my $a1 = shift @a;
+        my $b1 = shift @b;
 
         # A has more components - wins
         unless (defined $b1){
@@ -648,7 +649,7 @@ sub sort_port {
         # carried around from the last find.
         last if $val != 0;
 
-        if ($a1 =~ /$numeric/ and $b1 =~ /$numeric/){
+        if ($a1 =~ $numeric and $b1 =~ $numeric){
             $val = $a1 <=> $b1;
         } elsif ($a1 ne $b1) {
             $val = $a1 cmp $b1;
@@ -952,20 +953,20 @@ sub insert_or_update {
 
         carp($sql) if $SQLCARP;
         my $row = $dbh->selectrow_hashref($sql);
-        warn "insert_or_update($sql) ". $dbh->errstr . "\n" if $dbh->err;
+        carp "insert_or_update($sql) ". $dbh->errstr . "\n" if $dbh->err;
 
         my $diff = &hash_diff($row,$values);
 
         # Update
         if (defined $row and $diff) {
-            $sql = sprintf("UPDATE $table SET %s WHERE $wherestr;",
+            $sql = sprintf("UPDATE $table SET %s WHERE $wherestr",
                 join(',',map { sprintf("$_=%s",$dbh->quote($values->{$_})) } keys %$values));
 
             carp($sql) if $SQLCARP;
 
             $dbh->do($sql); 
             if ($dbh->err) { 
-                warn "insert_or_update($sql) ". $dbh->errstr . "\n";
+                carp "insert_or_update($sql) ". $dbh->errstr . "\n";
                 return $dbh->errstr; 
 
             }
@@ -984,12 +985,12 @@ sub insert_or_update {
 
     my $sth = $dbh->prepare($sql);
     if ($dbh->err) { 
-        warn "insert_or_update($sql) ". $dbh->errstr . "\n";
+        carp "insert_or_update($sql) ". $dbh->errstr . "\n";
         return $dbh->errstr; 
     }
     my $rv = $sth->execute;
     if ($dbh->err) { 
-        warn "insert_or_update($sql) ". $dbh->errstr . "\n";
+        carp "insert_or_update($sql) ". $dbh->errstr . "\n";
         return undef;
     }
 
@@ -1099,6 +1100,10 @@ sub sql_hash {
         my @where;
         foreach my $index (keys %$wherehash){
             my $value = $wherehash->{$index};
+            unless (defined $value){
+                carp("sql_hash($table,$column,$index) value for index is undef.\n");
+                next;
+            }
             my $con ;
             if ($value =~  m/^\s*is\s+(not)?\s*null$/i ){
                 $con = '';
