@@ -1425,7 +1425,7 @@ sub graph_each  {
                      'color'   => $CONFIG{graph_color},
                      'overlap' => $CONFIG{graph_overlap},
                      'fontpath'=> $CONFIG{home},
-                     'ranksep' => $CONFIG{graph_rank},
+                     'ranksep' => $CONFIG{graph_ranksep},
                      'splines' => $CONFIG{graph_splines},
                      'ratio'   => 'compress'
                      };
