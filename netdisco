@@ -22,7 +22,7 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use SNMP::Info 0.8;
+use SNMP::Info 0.9;
 use netdisco qw/:all/;  
 use Socket qw/:all/;
 
