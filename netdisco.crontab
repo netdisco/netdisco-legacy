@@ -3,6 +3,8 @@
 #       Output is found in /data/netdisco/logs
 # $Id$
 
+MAILTO=max
+PATH=/bin:/usr/bin:/usr/local/bin
 
 # -- Weekly --
 
@@ -18,7 +20,7 @@
 0 2 * * *       /usr/local/netdisco/netdisco -p restart
 
 # Refresh Graph every day
-0 3 * * *       /usr/local/netdisco/netdisco -b -g 
+0 3 * * *       /usr/local/netdisco/netdisco -b -g 2>&1 
 
 # Refresh Devices at 9:00 every day
 0 9 * * *      /usr/local/netdisco/netdisco -b -R 
@@ -29,5 +31,4 @@
 0 0,4,8,12,16,20 * * *  /usr/local/netdisco/netdisco -b -a 
 
 # Mac Suck every 4 hours (takes up to two hours)
-0 2,6,11,14,18,22 * * * /usr/local/netdisco/netdisco -b -m 
-# 10 -> 11 to give time to finish 9am refresh
+0 2,6,10,14,18,22 * * * /usr/local/netdisco/netdisco -b -m 
