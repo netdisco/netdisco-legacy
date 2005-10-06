@@ -1143,6 +1143,18 @@ sub find_neighbors {
         }
 
         my $remote_ip   = $c_ip->{$key};
+
+        # Skip unreachable - Cisco cluster
+        if ($remote_ip eq '0.0.0.0') {
+            print "find_neighbors($ip) - Skipping unreachable (0.0.0.0) address on port $port.\n";
+            next;
+        }
+        # Skip Local Loopback
+        if ($remote_ip =~ /^127\./) {
+            print "find_neighbors($ip) - Skipping loopback ($remote_ip) address on port $port.\n";
+            next;
+        }
+
         my $remote_port = undef;
         my $remote_type = $c_platform->{$key};
         my $remote_id   = $c_id->{$key};
