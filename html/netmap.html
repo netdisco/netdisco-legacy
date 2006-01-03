@@ -22,30 +22,22 @@ administrative rights.
 % }
 <h4>Key</h4>
 <TABLE BORDER=0>
-<TR>
-    <TD bgcolor="black"><font color="yellow">[</font><font color="white">dev</font><font color="yellow">]</font></TD>
-    <TD>Yellow Border - ResNet</TD>
-    <TD BGCOLOR="black"><font color="green">--------</font></TD>
-    <TD>Green Lines - WAN</TD>
-</TR>
-<TR>
-    <TD bgcolor="black"><font color="blue">[cat]</font></TD>
-    <TD>Blue Box - Catalyst Device</TD>
-    <TD BGCOLOR="black"><font color="#f5deb3">-------</font></TD>
-    <TD>Thin lines - 10Mbps</TD>
-</TR>
-<TR>
-    <TD bgcolor="black"><font color="green">[dev-g]</font></TD>
-    <TD>Green Box - Gateway / Router</TD>
-    <TD BGCOLOR="black"><font color="#f5deb3">=====</font></TD>
-    <TD>Thick Lines - 100Mbps</TD>
-</TR>
-<TR>
-    <TD bgcolor="black"><font color="red">[bad-dev]</font></TD>
-    <TD>Red Box - Device unaccessable</TD>
-    <TD BGCOLOR="black"><font color="cyan">=====</font></TD>
-    <TD>Cyan Lines - 1.0 Gpbs</TD>
-</TR>
+% for(my $i = 0; $i <= $#{$left_key} || $i <= $#{$right_key}; $i++) {
+<tr>
+%  if (defined($left_key->[$i])) {
+    <td bgcolor="black"><%$left_key->[$i]->[0]%></td>
+    <td><%$left_key->[$i]->[1]%></td>
+%  } else {
+    <td colspan="2">&nbsp;</td>
+%  }
+%  if (defined($right_key->[$i])) {
+    <td bgcolor="black"><%$right_key->[$i]->[0]%></td>
+    <td><%$right_key->[$i]->[1]%></td>
+%  } else {
+    <td colspan="2">&nbsp;</td>
+%  }
+</tr>
+% }
 </TABLE>
 <%init>
 my $comp = $m->current_comp;
@@ -65,9 +57,44 @@ if ($ok){
     $secs_per_day = 60*60*24;
     $map_days = sprintf("%-2.2f", $map_age/$secs_per_day);
 }
+
+my $right_key = [
+ [ '<font color="green">--------</font>', 'Green Lines - WAN' ],
+ [ '<font color="#f5deb3">-------</font>', 'Thin lines - 10Mbps' ],
+ [ '<font color="#f5deb3">=======</font>', 'Thick lines - 100Mbps' ],
+ [ '<font color="cyan">=======</font>', 'Cyan lines - 1.0 Gbps' ] ];
+
+my $left_key = [];
+foreach my $map (@{$netdisco::CONFIG{node_map}}) {
+        my ($var,$regex,$attr,$val,$name,$label) = split(':',$map);
+	next unless $name && $label;
+	my ($textcolor) = $netdisco::CONFIG{node_fontcolor} || 'white';
+	my ($bracketcolor) = $netdisco::CONFIG{graph_color} || 'white';
+
+	if ($attr eq 'fillcolor') {
+		$textcolor = $bracketcolor = $val;
+	} elsif ($attr eq 'color') {
+		$bracketcolor = $val;
+	}
+	my($txt) = '<font color="' . $bracketcolor . '">[';
+	if ($textcolor ne $bracketcolor) {
+		$txt .= '</font><font color="' . $textcolor . '">';
+	}
+	$txt .= $name;
+	if ($textcolor ne $bracketcolor) {
+		$txt .= '</font><font color="' . $bracketcolor . '">';
+	}
+	$txt .= ']</font>';
+	push(@{$left_key}, [ $txt, $label ]);
+}
+my $problem = $netdisco::CONFIG{node_problem} || 'red';
+my $colorname = $problem; $colorname =~ s/^./\U$&/;
+push(@{$left_key}, [ '<font color="' . $problem . '">[bad-dev]</font>',
+			$colorname . ' Box - Device unaccessable' ]);
+
 </%init>
 <%method title>
-- Network Map UCSC \
+- Network Map \
 </%method>
 %# $Id$
 %# vim:syntax=mason
