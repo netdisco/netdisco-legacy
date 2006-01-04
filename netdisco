@@ -3201,7 +3201,7 @@ sub graph_addnode {
     } else {
         $node{URL} = "node.html?node=$ip";
         # Overrides any colors given to nodes above. Bug 1094208
-        $node{fillcolor} = $CONFIG{node_problem};
+        $node{fillcolor} = $CONFIG{node_problem} || 'red';
     }
 
     my $rv = $gv->add_node($ip, %node);
