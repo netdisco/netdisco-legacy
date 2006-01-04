@@ -457,7 +457,7 @@ foreach my $port (sort sort_port @$ports){
             # seconds*100 it was, then we subtract that from the current time to
             # see when that was.
             my $diff_sec = ($device->{uptime} - $val) / 100;  
-            $val = scalar localtime(time - $diff_sec);
+            $val = scalar localtime($device->{last_discover} - $diff_sec);
         }
 </%perl>
         <TD CLASS="<%$class%>"><% $val || '' |h %></TD>
