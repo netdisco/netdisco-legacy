@@ -1401,7 +1401,7 @@ and so an oversized font is used.
 STRING. Colon separated list of values.  Multiple node_map entries can exist.
 Entry is in format:
 
-    Variable:Regular Expression:Attribute:Value
+    Variable:Regular Expression:Attribute:Value:Key String:Key Title
 
 Variables that you can use include : label,ip
 
@@ -1409,14 +1409,20 @@ Attributes can be any node attribute usable in GraphViz, such as fillcolor and c
 
 Examples:
 
-    label:cat(?!-g):fillcolor:blue
+    label:cat(?!-g):fillcolor:blue:cat:Blue Box - Catalyst Switch
 
-If the label (dns name) matches cat, but not cat-g, make it blue
+If the label (dns name) matches cat, but not cat-g, make it blue,
+with an entry in the key like C<[cat]  Blue Box - Catalyst Switch>
 
-    ip:^169\.233:color:yellow
+    ip:^169\.233:color:yellow:node:Yellow Border - ResNet
 
 If the IP address of the device starts with 169.233, then make the border around the 
-device yellow.
+device yellow, with an entry in the key like C<[node]  Yellow Border - ResNet>.
+
+You may leave off Key String and Key Title to get no entry in the
+key for this color combination.  This can be useful to get only one
+key entry when using multiple node_map entries with the same
+attribute/value.
 
 =item node_problem
 
