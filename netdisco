@@ -1633,6 +1633,8 @@ sub macwalk {
 =cut
 sub port_control {
     my ($switch,$port,$direction,$job) = @_;
+    my $vlan = $job->{subaction};
+    my $cmd  = $job->{action};
 
     unless (defined $switch and defined $port and defined $direction){
         print "Usage : port_control(switch,port,up/down)\n";
@@ -1666,6 +1668,7 @@ sub port_control {
     my $allow_phones  = (defined $CONFIG{portctl_nophones} and $CONFIG{portctl_nophones}) ? 0 : 1;
     my $allow_uplinks = (defined $CONFIG{portctl_uplinks} and $CONFIG{portctl_uplinks}) ? 1 : 0;
     my $allow_vlans   = (defined $CONFIG{portctl_vlans} and $CONFIG{portctl_vlans}) ? 1 : 0;
+    my $change_vlans  = (defined $CONFIG{vlanctl} and $CONFIG{vlanctl} ) ? 1 : 0;
 
     unless (defined $db_port){
         print "Port : $port not found in database for device $switch\n";
@@ -1680,13 +1683,18 @@ sub port_control {
     
     # Check if Phone
     if ($is_phone and !$allow_phones){
-        print "Port : $port has an IP Phone connected to it.  Netdisco configured to not allow its shutoff.\n";
+        print "Port : $port has an IP Phone connected to it.  Netdisco configured to not allow its change.\n";
         return undef;
     }
 
     # Check if is VLAN
-    if ($is_vlan and !$allow_vlans){
-        print "Port : $port is a VLAN interface.  Netdisco Configured to not allow its shutoff.\n";
+    if ( ($is_vlan and !$allow_vlans) or ($is_vlan and $cmd eq 'vlan') ){
+        print "Port : $port is a VLAN interface.  Netdisco Configured to not allow its change.\n";
+        return undef;
+    }
+
+    if ( $cmd eq 'vlan' and !$change_vlans) { 
+        print "Netdisco configured to not allow the change of VLANs. Set vlanctl=true in netdisco.conf\n";
         return undef;
     }
 
@@ -1704,7 +1712,13 @@ sub port_control {
     my $iid        = $rev_if{$port};
 
     # Switch the port
-    my $rv = $device->set_i_up_admin(lc($direction),$iid);
+    my $rv = undef;
+    if ($cmd eq 'portcontrol') {
+        $rv = $device->set_i_up_admin(lc($direction),$iid);
+    }
+    if ($cmd eq 'vlan') {
+        $rv = $device->set_i_vlan($vlan,$iid);
+    }
     
     unless (defined $rv){
         my $error = $device->error() || '';
@@ -1713,13 +1727,21 @@ sub port_control {
     }
 
     # Mark down change in netdisco
-    insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$direction});
+    if ($cmd eq 'portcontrol') {
+        insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'up_admin'=>$direction});
+        print "Succesfully set Port:$port $direction on $switch\n";
+    }
+    if ($cmd eq 'vlan') {
+        insert_or_update('device_port', {'ip'=>$ip,'port'=>$port} , {'vlan'=>$vlan});
+        print "Succesfully change Port:$port to vlan $vlan on $switch\n";
+    }
 
-    print "Succesfully set Port:$port $direction on $switch\n";
     return 1;
 }
 
 =item port_switch({})
+
+Used to shut ports on and off and to change VLANs.
 
 =cut
 sub port_switch {
@@ -1733,14 +1755,21 @@ sub port_switch {
     my $userip = $job->{userip};
     my $ip     = getip($job->{device});
     my $port   = $job->{port};
-    my ($dir,$reason) = split('-',$job->{subaction});
-    my $long_reason = $netdisco::PORT_CONTROL_REASONS{$reason}->[0];
+    my $cmd    = $job->{action};
+    my $vlan   = $job->{subaction};
+    my ($dir,$reason) = $cmd eq 'portcontrol' ? split('-',$job->{subaction}) :
+                        $cmd eq 'vlan'    ? ( 'vlan', $vlan ) : 
+                        ('','');
+    my $long_reason = '';
+    if (defined $reason) {
+        $long_reason = $netdisco::PORT_CONTROL_REASONS{$reason}->[0];
+    }
     my $log    = $job->{log};
     my $dns    = &hostname($ip);
    
-    print "port_switch() - $user @ $userip.  d:$dir r:$reason i:$ip d:$dns p:$port l:$log\n" if $DEBUG;
+    print "port_switch() - $user @ $userip. c:$cmd d:$dir r:$reason i:$ip d:$dns p:$port l:$log\n" if $DEBUG;
     # Switch the Port
-    my $rv = port_control($ip,$port,$dir); 
+    my $rv = port_control($ip,$port,$dir,$job); 
 
     if (!defined $rv){
         print "\n[FAILED].\n";
@@ -1756,13 +1785,24 @@ sub port_switch {
     my $portctl_email = $CONFIG{portctl_email};
     if (defined $portctl_email){
         print "Sending notification to $portctl_email\n";
-        my $body = <<"end_body";
+        my $body = '';
+        $body = <<"end_portctl" if $cmd eq 'portcontrol';
 ........ n e t d i s c o .........
   Device : $dns ($ip) 
   Port   : $port
   Action : $action
   User   : $user \@ $userip 
   Reason : [$reason] - $long_reason
+  Log    : $log
+
+end_portctl
+        $body = <<"end_body" if $cmd eq 'vlan';
+........ n e t d i s c o .........
+  Device : $dns ($ip) 
+  Port   : $port
+  Action : Switch VLAN
+  User   : $user \@ $userip 
+  VLAN   : $vlan
   Log    : $log
 
 end_body
@@ -1777,6 +1817,7 @@ end_body
 
     return 0;
 }
+
 
 =item store_device() 
 
@@ -2096,6 +2137,11 @@ sub nbtstat {
     
     print "nbtstat($host) : ";
 
+	unless (defined $ip) {
+		print "No IP match.\n";
+		return 0;
+	}
+
     my $ns = $nb->node_status($ip);
 
     # Check for NetBIOS Info
@@ -2110,20 +2156,24 @@ sub nbtstat {
     my $nbuser = '';
 
     for my $rr ($ns->names) {
-        if ($rr->suffix == 0 && $rr->G eq "GROUP") {
-            $domain = $rr->name;
+		my $suffix = defined $rr->suffix ? $rr->suffix : -1;
+		my $G      = defined $rr->G ? $rr->G : '';
+		my $name   = defined $rr->name ? $rr->name : '';
+
+        if ($suffix == 0 and $G eq "GROUP") {
+            $domain = $name;
         }
-        if ($rr->suffix == 3 && $rr->G eq "UNIQUE") {
-            $nbuser = $rr->name;
+        if ($suffix == 3 and $G eq "UNIQUE") {
+            $nbuser = $name;
         }
-        if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
-            $nbname = $rr->name unless $rr->name =~ /^IS~/;
+        if ($suffix == 0 and $G eq "UNIQUE") {
+            $nbname = $name unless $name =~ /^IS~/;
         }
-        if ($rr->suffix == 32 && $rr->G eq "UNIQUE") {
+        if ($suffix == 32 and $G eq "UNIQUE") {
             $server = 1;
         }
     }
-    my $mac = $ns->mac_address;
+    my $mac = $ns->mac_address || '';
     $mac =~ s/-/:/g;
 
     unless ($nbname){
@@ -3439,7 +3489,7 @@ sub admin_daemon_job {
         &expire_nodes($dev, $subcmd eq 'arc' ? 1 : 0, $port);
     }
 
-    elsif ($cmd eq 'portcontrol'){
+    elsif ($cmd eq 'portcontrol' or $cmd eq 'vlan'){
         $job_error = port_switch($job); 
     }
 
