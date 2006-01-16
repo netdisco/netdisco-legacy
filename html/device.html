@@ -55,10 +55,12 @@ my %device_info = (
 # These are switches that we want a link to their web interface.
 my $web_vendors  = $netdisco::CONFIG{web_console_vendors} || {};
 my $web_models   = $netdisco::CONFIG{web_console_models} || {};
+my $vlanctl      = $netdisco::CONFIG{vlanctl};
 my $user         = $m->session->{user};
 my $secure       = &is_secure;
 my $port_ctl     = $m->session->{user_port_ctl};
 my $port_control = ($port_ctl and $secure);
+my $vlan_ctl     = ($port_ctl and $secure and $vlanctl);
 my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
 my $admin        = defined $m->session->{user_admin} and $m->session->{user_admin} ? 1 : 0;
 </%shared>
@@ -569,6 +571,9 @@ foreach my $port (sort sort_port @$ports){
 % if ($port_control and !$is_uplink) {
 %   my $dir = $port->{up_admin} eq 'down' ? 'up' : 'down';
     <A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" TITLE="Bring Port <%$dir%>" BORDER=0></A> \
+%   if ($vlan_ctl) {
+    <A HREF="portcontrol.html?cmd=vlan&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_v.gif" ALT="Change VLANs" TITLE="Change VLANs" BORDER=0></A> \
+%   }
 % } elsif (! $port->{logs}){
 &nbsp; \
 %     }
@@ -603,6 +608,7 @@ foreach my $port (sort sort_port @$ports){
     <NOBR><IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
     <NOBR><IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
     <NOBR><IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
+    <NOBR><IMG SRC="icon_v.gif" BORDER=0> VLAN</NOBR> 
     <NOBR><IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
     </TD>
 </TR>
