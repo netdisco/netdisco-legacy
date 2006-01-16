@@ -232,7 +232,7 @@ sub config {
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
-                      bulkwalk_off
+                      bulkwalk_off vlanctl
                      /;
 
     # these will make array refs of their comma separated lists
@@ -244,6 +244,14 @@ sub config {
     my @hash_refs  = qw/portcontrol admin web_console_vendors
                        web_console_models macsuck_no_vlan
                       /;
+
+    # Multiple arrays
+    my @array_refs_mult = qw/node_map/;
+
+    # Clear out config values where can build up
+    foreach my $a (sort @array_refs_mult) {
+        $CONFIG{$a} = [];
+    }
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
     my @configs=(<CONF>);    
@@ -334,9 +342,9 @@ sub config {
             $value = \@com;
         }
 
-        # TODO: Make this new category of config directives
-        #       multiple_arrayref
-        if ($var eq 'node_map') {
+
+        # Multiple array refs
+        if (grep /^\Q$var\E$/,@array_refs_mult) {
             my $oldvalue = $CONFIG{$var};
             push (@$oldvalue, $value);
             $value = $oldvalue;
@@ -902,6 +910,7 @@ Nodes without topology information are not included.
 =cut
 sub make_graph {
     my $G = new Graph::Undirected;
+    print 'my $G = new Graph::Undirected;' if $::DEBUG;
 
     my $devs_raw = sql_rows('device',['ip','dns']);
     my $aliases = sql_column('device_ip',['alias','ip']);
@@ -970,6 +979,7 @@ sub make_graph {
                 $dns = defined $dns ? $dns : "($link)";
 
                 $G->add_vertex($link);
+                print "\$G->add_vertex('$link');\n" if $::DEBUG;
                 $GRAPH{$link}->{dns} = $dns;
                 $GRAPH{$link}->{isdev} = $is_dev;
                 $GRAPH{$link}->{seen}++;
@@ -986,12 +996,14 @@ sub make_graph {
                 $dns = defined $dns ? $dns : "($dest)";
 
                 $G->add_vertex($dest);
+                print "\$G->add_vertex('$dest');\n" if $::DEBUG;
                 $GRAPH{$dest}->{dns} = $dns;
                 $GRAPH{$dest}->{isdev} = $is_dev;
                 $GRAPH{$dest}->{seen}++;
             }
 
             $G->add_edge($link,$dest);
+            print "\$G->add_edge('$link','$dest');\n" if $::DEBUG;
         }
     }
     return $G;
