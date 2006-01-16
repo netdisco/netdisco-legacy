@@ -14,6 +14,7 @@ Features:
     + [969117]  Automatically reloads config file in web front end when it changes.
     + [1392968] The map key is now automatically derived from configuration
                 (i.e., entries in node_map)
+    + [1107578] Port Control via VLANs
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
