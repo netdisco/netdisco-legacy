@@ -11,7 +11,7 @@ CREATE TABLE admin (
     finished    TIMESTAMP,
     device      inet,
     port        text,
-    action      text, -- delete, delete+nodes, macsuck, arpnip, refresh
+    action      text, -- delete, delete+nodes, macsuck, arpnip, refresh, vlan
     subaction   text, -- free field to be used for each action
     status      text, -- queued, running, done, error, del
     username    text,
