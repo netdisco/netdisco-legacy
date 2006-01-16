@@ -2,7 +2,8 @@
 % $m->comp('SELF:switch') if $cmd =~ /^(up|down)$/;
 % $m->comp('SELF:log') if $cmd eq 'log';
 % $m->comp('SELF:err') if $cmd eq 'err';
-% $m->comp('SELF:reasons') unless $cmd eq 'err';
+% $m->comp('SELF:vlan') if $cmd eq 'vlan';
+% $m->comp('SELF:reasons') unless $cmd eq 'err' or $cmd eq 'vlan';
 <%args>
 $debug => 0
 $cmd  => undef
@@ -12,10 +13,11 @@ $port => undef
 $log  => undef
 $log_num => 5
 $reason => ''
+$vlan => undef
 </%args>
 <%shared>
 # scope
-my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num);
+my ($arg_ip,$arg_port,$log,$arg_cmd,$port,$err,$db_port,$arg_reason,$arg_log_num,$arg_vlan);
 my $user      = $m->session->{user};
 my $userip    = $r->connection->remote_ip; 
 my $port_ctl  = $m->session->{user_port_ctl};
@@ -27,25 +29,26 @@ my %Reasons = ( ''            => ['Select a Reason',''],
 </%shared>
 <%init>
 # Check Authorization - User in portcontrol list in config file, and connected via https
-if ($cmd =~ /^(up|down|switch)$/ and !$secure) {
+if ($cmd =~ /^(up|down|switch|vlan)$/ and !$secure) {
     my $url = url_secure($r->uri);
     $m->redirect($url);
 }
-if ($cmd =~ /^(up|down|switch)$/ and !$port_ctl) {
+if ($cmd =~ /^(up|down|switch|vlan)$/ and !$port_ctl) {
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
 
 $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port; 
 $arg_reason = $reason; $arg_log_num = $log_num;
+$arg_vlan = $vlan;
 
-if ($cmd eq 'switch' and (!$reason) ){
+if ($cmd eq 'switch' and !$reason and $type ne 'vlan' ){
     $cmd = 'err';
     $err .= "You must select a reason for bringing the port $type <BR>\n";
 }
 
 my $dbport;
-if ($cmd =~ /^(up|down|switch)$/){
+if ($cmd =~ /^(up|down|switch|vlan)$/){
     $dbport = sql_hash('device_port',['*'],{'ip'=>$ip, 'port'=>$port});
     my $remote_ip   = $dbport->{remote_ip};
     my $remote_type = $dbport->{remote_type};
@@ -62,15 +65,25 @@ if ($cmd =~ /^(up|down|switch)$/){
     }
 }
 
-if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
+if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     my $dir = $type;
     $dir = 'enable' if $type eq 'up';
     $dir = 'disable' if $type eq 'down';
+
+    my ($action,$subaction);
+    if ($type =~ /(up|down)/) {
+        $action = 'portcontrol';
+        $subaction = "$type-$reason";
+    }
+    if ($type eq 'vlan') {
+        $action = 'vlan';
+        $subaction = $vlan;
+    }
     
     # Add to admin queue
     my $oid = insert_or_update('admin',{},
-                               {'device'=>$ip,'action'=>'portcontrol','status'=>'queued','port'=>$port,
-                                'username' => $user, 'userip', $userip, 'debug' => $debug, 'subaction' => "$type-$reason",
+                               {'device'=>$ip,'action'=>$action,'status'=>'queued','port'=>$port,
+                                'username' => $user, 'userip', $userip, 'debug' => $debug, 'subaction' => $subaction,
                                 'log' => $log}
                               ); 
 
@@ -141,7 +154,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
     <TH>User</TH>
     <TH>Action</TH>
     <TH>Date</TH>
-    <TH>Reason</TH>
+    <TH>Reason / VLAN</TH>
     <TH>Log</TH>
 </TR>
 % foreach my $entry (sort {$b->{creation} <=> $a->{creation} } @$logs) {
@@ -149,7 +162,11 @@ if ($cmd eq 'switch' and $type =~ /^(up|down)$/) {
     <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
     <TD><%$entry->{action}%></TD>
     <TD><%scalar localtime($entry->{creation})%></TD>
+%   if ( $entry->{action} eq 'vlan' ) {
+    <TD><%$entry->{reason}%></TD>
+%   } else {
     <TD><A HREF="#<%$entry->{reason}%>"><%$Reasons{$entry->{reason}}->[0]%></A></TD>
+%   }
     <TD><TEXTAREA ROWS=3 COLS=30 WRAP=soft><%$entry->{log}%></TEXTAREA>
     </TD>
 </TR>
@@ -166,6 +183,9 @@ Log Entires to Show : <SELECT NAME="log_num">
 <INPUT TYPE="SUBMIT" VALUE="Refresh">
 </FORM>
 </%method>
+%#
+%# switch()
+%#
 <%method switch>
 <FORM ACTION="<%$r->uri%>" METHOD="post">
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="switch">
@@ -214,6 +234,50 @@ Log Entires to Show : <SELECT NAME="log_num">
 </FORM>
 <& SELF:back &>    
 </%method>
+%#
+%# vlan()
+%#
+<%method vlan>
+<FORM ACTION="<%$r->uri%>" METHOD="post">
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="switch">
+<INPUT TYPE="HIDDEN" NAME="type" VALUE="vlan">
+<INPUT TYPE="HIDDEN" NAME="port" VALUE="<%$arg_port |h%>">
+<INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box">
+<TR CLASS="match-1">
+    <TD>Port :</TD>
+    <TD CLASS="tr-data-1"><A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><% $arg_ip %>[<% $arg_port %>]</A></TD>
+</TR>
+<TR CLASS="match-0">
+    <TD>User :</TD>
+    <TD CLASS="tr-data-0"><U><%$user%></U> at <%$userip%> <BR><u><% scalar localtime %></u>
+    </TD>
+</TR>
+<TR CLASS="match-1">
+    <TD>Log:</TD>
+    <TD CLASS="tr-data-0"><TEXTAREA NAME="log" ROWS=3 COLS=40 WRAP=soft></TEXTAREA>
+    <BR>Enter a useful description why the VLAN is being changed.
+    </TD>
+</TR>
+<TR CLASS="match-0">
+    <TD>VLAN:</TD>
+%# TODO - need to list VLANs
+    <TD CLASS="tr-data-0"><INPUT NAME="vlan" SIZE=5 MAXLENGTH=5> Enter new VLAN </TD>
+</TR>
+<TR CLASS="match-1">
+    <TD COLSPAN=2 CLASS="tr-data-1">
+        <INPUT TYPE="submit" VALUE="Change VLAN">
+        Debug: <INPUT TYPE="checkbox" NAME="debug" VALUE="1">
+        <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
+    </TD>
+</TR>
+</TABLE>
+</FORM>
+<& SELF:back &>    
+</%method>
+%#
+%# reasons()
+%#
 <%method reasons>
 <h4>Reason Descriptions</h4>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3>
@@ -236,6 +300,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 </TABLE>
 </%method>
 <%method err>
+% $err =~ s/\n/<BR>\n/g;
 <% $err %>
     <& SELF:back &>
 </%method>
@@ -246,6 +311,9 @@ Log Entires to Show : <SELECT NAME="log_num">
 <INPUT TYPE="submit" VALUE="Back to Device View">
 </FORM>
 </%method>
+%#
+%# title()
+%#
 <%method title>
 - Port Control \
 </%method>
