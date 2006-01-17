@@ -230,7 +230,7 @@ sub config {
 
     # all default to 0
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
-                      port_info secure_server graph_splines portctl_uplinks
+                      port_info secure_server graph_clusters graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
                       bulkwalk_off vlanctl
                      /;
@@ -912,15 +912,17 @@ sub make_graph {
     my $G = new Graph::Undirected;
     print 'my $G = new Graph::Undirected;' if $::DEBUG;
 
-    my $devs_raw = sql_rows('device',['ip','dns']);
+    my $devs_raw = sql_rows('device',['ip','dns','location']);
     my $aliases = sql_column('device_ip',['alias','ip']);
     my $links = sql_rows('device_port',['ip','remote_ip','speed','remote_type'],{'remote_ip' => 'IS NOT NULL'});
 
     my %devs;
+    my %locs;
     foreach my $dev (@$devs_raw){
         my $ip = $dev->{ip};
         my $dns = $dev->{dns};
         $devs{$ip} = $dns;
+        $locs{$ip} = $dev->{location};
     }
 
     # Check for no topology info
@@ -983,6 +985,7 @@ sub make_graph {
                 $GRAPH{$link}->{dns} = $dns;
                 $GRAPH{$link}->{isdev} = $is_dev;
                 $GRAPH{$link}->{seen}++;
+                $GRAPH{$link}->{location} = $locs{$link};
             }
 
             # Check for dest existance :
@@ -1000,6 +1003,7 @@ sub make_graph {
                 $GRAPH{$dest}->{dns} = $dns;
                 $GRAPH{$dest}->{isdev} = $is_dev;
                 $GRAPH{$dest}->{seen}++;
+                $GRAPH{$dest}->{location} = $locs{$dest};
             }
 
             $G->add_edge($link,$dest);

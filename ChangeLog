@@ -16,6 +16,8 @@ Features:
                 (i.e., entries in node_map)
     + [1107578] Port Control via VLANs
     + IP Inventory feature improved to dump whole subnets
+    + [1107579] The map can be clustered by device Location fields.
+                Thanks to Bjorn Isaksson for the patch.
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.

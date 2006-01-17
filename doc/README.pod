@@ -1340,9 +1340,15 @@ Set to an integer value.  This will improve the mapping and visual quality of
 them graph. Each integer step can mean an exponential time increase in the solving
 of the graph.
 
+=item graph_cluster
+
+BOOLEAN.  Creates clusters of nodes based on their location field.
+Best with L<graph_layout> C<fdp>.  Only use if all or most
+devices in a given location have the same location string.
+
 =item graph_layout
 
-STRING.  Choose program to render graph with.  Valid options are C<neato> and C<twopi>.
+STRING.  Choose program to render graph with.  Valid options are C<neato>, C<twopi>, C<circo> and C<fdp>.
 
 =item graph_map
 

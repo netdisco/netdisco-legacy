@@ -3092,6 +3092,9 @@ sub graph_each  {
                      'nodesep' => $CONFIG{graph_nodesep}   || 2,
                      'ratio'   => $CONFIG{graph_ratio}     || 'compress',
                      'splines' => $CONFIG{graph_splines} ? 'true' : 'false',
+                     'fontcolor' => $CONFIG{node_fontcolor} || 'white',
+                     'fontname'  => $CONFIG{node_font}      || 'lucon',
+                     'fontsize'  => $CONFIG{node_fontsize}  || 12,
                      };
     my $node_defs = { 
                     'shape'     => $CONFIG{node_shape}     || 'box',
@@ -3210,10 +3213,11 @@ Checks for mapping settings in config file and adds node to the GraphViz object.
 sub graph_addnode {
     my $gv = shift;
     # non lexical on purpose
-    use vars qw/$ip $label $isdev/;
+    use vars qw/$ip $label $isdev $devloc/;
     $ip    = shift;
     $label = $netdisco::GRAPH{$ip}->{dns};
     $isdev = $netdisco::GRAPH{$ip}->{isdev};
+    $devloc = $netdisco::GRAPH{$ip}->{location};
 
     my %node = ();
 
@@ -3252,6 +3256,27 @@ sub graph_addnode {
         $node{URL} = "node.html?node=$ip";
         # Overrides any colors given to nodes above. Bug 1094208
         $node{fillcolor} = $CONFIG{node_problem} || 'red';
+    }
+
+    if ($CONFIG{graph_clusters} && $devloc) {
+        # This odd construct works around a bug in GraphViz.pm's
+        # quoting of cluster names.  If it has a name with spaces,
+        # it'll just quote it, resulting in creating a subgraph name
+        # of cluster_"location with spaces".  This is an illegal name
+        # according to the dot grammar, so if the name matches the
+        # problematic regexp we make GraphViz.pm generate an internal
+        # name by using a leading space in the name.
+        #
+        # This is bug ID 16912 at rt.cpan.org -
+        # http://rt.cpan.org/NoAuth/Bug.html?id=16912
+        #
+        # Another bug, ID 11514, prevents us from using a combination
+        # of name and label attributes to hide the extra space from
+        # the user.  However, since it's just a space, hopefully it
+        # won't be too noticable.
+        my($loc) = $devloc;
+        $loc = " " . $loc if ($loc =~ /^[a-zA-Z](\w| )*$/);
+        $node{cluster} = { name => $loc };
     }
 
     my $rv = $gv->add_node($ip, %node);
