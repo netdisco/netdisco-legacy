@@ -54,7 +54,8 @@ README: doc/README.pod
 	$(POD2HTML) doc/README.pod > doc/README.html
 
 count:
-	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco
+	#wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` sql/*.sql netdisco
+	wc html/*.html html/auto* html/doc/auto* `find . -name "*.pm"` netdisco
 
 snmp: SNMP
 	echo "Updating SNMP::Info"
@@ -69,7 +70,7 @@ SNMP:
 
 oui:
 	echo "Downloading oui.txt from ieee.org"
-	lynx -source http://standards.ieee.org/regauth/oui/oui.txt > oui.txt
+	wget http://standards.ieee.org/regauth/oui/oui.txt
 	./netdisco -O
 
 .PHONY: back docs $(SNMPLIBS) api_doc count snmp oui
