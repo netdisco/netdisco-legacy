@@ -15,6 +15,7 @@ Features:
     + [1392968] The map key is now automatically derived from configuration
                 (i.e., entries in node_map)
     + [1107578] Port Control via VLANs
+    + IP Inventory feature improved to dump whole subnets
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
@@ -25,6 +26,7 @@ Bugfixes:
     * [1242746] The port lastchange time was incorrectly calculated and
                 could be off by the time between the device discovery and
                 the web page view (up to a day, with the default crontab).
+    * [1407942] IP Inventory needs to cross-reference device and device_ip
 
 
 0.94beta (12/06/04)
