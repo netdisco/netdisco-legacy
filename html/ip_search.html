@@ -5,8 +5,10 @@
 <INPUT TYPE="hidden" NAME="cmd" VALUE="age">
 <TABLE CLASS="box" BORDER=0>
 <TR>
-    <TD>IPs not used in :</TD>
-    <TD>
+    <TD>Show :</TD>
+    <TD><INPUT TYPE="radio" name="type" value="all" <%$type eq 'all' ? ' CHECKED' : ''%>>All Entries</TD>
+    <TD> <INPUT TYPE="radio" name="type" value="age" <%$type eq 'age' ? ' CHECKED' : ''%>>Search by Age </TD>
+    <TD>IPs not used in
         <SELECT NAME="age_val">
 % for (1..12) {
             <OPTION VALUE="<%$_%>"<%$age_val eq $_ ? ' SELECTED' : ''%>><%$_%>
@@ -17,12 +19,18 @@
             <OPTION VALUE="<%$_%>"<%$age_mul eq $_ ? ' SELECTED' : ''%>><%$_%>
 % }
         </SELECT>
+    </TD>
+</TR>
+<TR> <TD COLSPAN=4><HR NOSHADE></TD> </TR>
+<TR>
     <TD>Sort By :</TD>
     <TD><SELECT NAME="sort" SIZE=1>
 %       foreach my $s (sort @sorts){
             <OPTION VALUE="<%$s%>" <% $sort eq $s ? 'SELECTED' : ''%>><%$s%>
 %       } 
     </TD>
+    <TD>&nbsp;</TD>
+    <TD>&nbsp;</TD>
 </TR>
 <TR>
     <TD>Subnet :</TD>
@@ -90,6 +98,7 @@ $max     => 200
 $archive => 0
 $never   => 0
 $dns     => 1
+$type    => 'all'
 </%args>
 <%shared>
 my @sorts = qw/IP Age/;
@@ -110,55 +119,76 @@ if ($cmd eq 'age' and !$subnet){
 }
 
 if ($cmd eq 'age'){
-    $age_val = 2 unless $age_val =~ m/^\d+$/;
-    $age_mul =~ s/[^a-z ]+//g;
-    my $where =  {'age(now(),time_last)' => \\">= interval '$age_val $age_mul'"};
+
+    # Make new column in sql results 'is_old' that is boolean and
+    #   tells if we match the aging characteristic.  Default to all
+    #   matching for type eq 'all'.
+    my @col = ('true as is_old');
+
+    if ($type eq 'age') {
+        $age_val = 2 unless $age_val =~ m/^\d+$/;
+        $age_mul =~ s/[^a-z ]+//g;
+        @col = ("(age(now(),time_last) >= interval '$age_val $age_mul') as is_old");
+    }
 
     $subnet .= '/24' unless $subnet =~ /\//;
     my $safenet = dbh_quote($subnet);
-    $where->{ip} = \\"<< inet $safenet";
-    $where->{active} = \'true'; 
-    # Grab all active node_ip rows in this subnet that are x old
-    $ips = sql_rows('node_ip',['age(now(),time_last) as age','extract(epoch from time_first) as time_first',
+
+    # Grab all node_ip entries in subnet
+    my $nodes = sql_rows('node_ip',[@col, 'age(now(),time_last) as age','extract(epoch from time_first) as time_first',
                                'extract(epoch from time_last) as time_last','ip','active'],
-                    $where
+                    { 'ip' => \\"<< inet $safenet" }
                    ); 
 
 
-    # Find all active IPs
-    my $active_ips = sql_rows('node_ip',['distinct(ip)'],{'ip' => \\"<< inet $safenet",
-                              'active' => \'true'});
-    my @active_ips = map { $_->{ip} } @$active_ips;
+    # Add all the device / aliases in subnet
+    $col[0] =~ s/time_last/last_discover/;
+    my $devs_seen = sql_rows('device', ['age(now(),last_discover) as age',
+                                        'extract(epoch from creation) as time_first','true as active',
+                                        'extract(epoch from last_discover) as time_last','ip', @col],
+                            { 'ip' => \\"<< inet $safenet"});
+    $col[0] =~ s/last_discover/d.last_discover/;
+    my $aliases = sql_rows('device_ip a left join device d on a.ip=d.ip', ['age(now(),d.last_discover) as age',
+                                        'extract(epoch from a.creation) as time_first','true as active',
+                                        'extract(epoch from d.last_discover) as time_last','a.alias as ip',@col],
+                            { 'a.alias' => \\"<< inet $safenet"});
 
-    # Find IPs that are not active but still in subnet
-    if (scalar @active_ips){
-        $active_ips[0] = "!$active_ips[0]";
-        # Question: Is there any limit to IN (LIST) with DBD::Pg / Postgres?
-        $where = {'ip' => [\\"<< inet $safenet",[@active_ips]], active => \'false' };
-    } else {
-        $where = {'ip' => \\"<< inet $safenet", active => \'false' };
-    }
-    my $archive_ips = sql_rows('node_ip',['age(now(),time_last) as age','extract(epoch from time_first) as time_first',
-                               'extract(epoch from time_last) as time_last','ip','active'],
-                    $where
-                   ); 
-
-    # Find the newest archived data
+    # Loop through to find newest entries
     my %seen; my %results;
-    foreach my $r (@$archive_ips){
+    foreach my $r (@$devs_seen,@$aliases,@$nodes){
         my $ip = $r->{ip};
+        my $is_old = $r->{is_old};
+
+        my $am_newest = 0;
+
         # First entry
-        unless (defined $results{$ip} ){
-            $results{$ip}=$r;
-            $seen{$ip}=$r->{time_last};
-            next;
+        unless (defined $seen{$ip} ){
+           $am_newest++;
+        } 
+    
+        # Active entries, but dont overwrite device entries
+        #   note that devs and aliases come first
+        elsif ($r->{active} and !$seen{$ip}->{active}) {
+           $am_newest++;
         }
-        next unless $r->{time_last} > $seen{$ip};
+
+        # newest archived data 
+        elsif ( $r->{time_last} > $seen{$ip}->{time_last} ) {
+           $am_newest++;
+        }
+
+        next unless $am_newest;
+        # Mark down IP as the most relevant and seen
+        $seen{$ip}=$r;
+
+        next unless $is_old;
+        # Mark down the IP as a match
         $results{$ip}=$r;
-        $seen{$ip}=$r->{time_last};
+
     }
 
     push (@$ips,values %results);
+
 
     # Look for holes in our IP Space and report on that.
     if ($never){
@@ -166,23 +196,10 @@ if ($cmd eq 'age'){
         $addrs = dump_subnet($subnet) || {};
 
         # Remove all the nodes seen in the subnet
-        my $nodes_seen = sql_rows('node_ip',['distinct(ip)'], { 'ip' => \\"<< inet $safenet"});
-
-        foreach my $row (@$nodes_seen){
-            my $ip = $row->{ip};
+        foreach my $ip (keys %seen) {
             delete $addrs->{$ip};
         }
 
-        # Remove all the device / aliases seen
-        my $devs_seen = sql_rows('device', ['distinct(ip)'], { 'ip' => \\"<< inet $safenet"});
-        my $aliases = sql_rows('device_ip', ['distinct(alias)'], { 'alias' => \\"<< inet $safenet"});
-        push(@$devs_seen,@$aliases);
-
-        foreach my $row (@$devs_seen){
-            my $ip = $row->{alias} || $row->{ip};
-            delete $addrs->{$ip};
-        }
-        
         # Add our missing IPs to the results from above.
         foreach my $ip (keys %$addrs){
             push @$ips, { 'age' => 'Never', 'time_first' => 'Never',
@@ -314,7 +331,7 @@ foreach my $row (@rows){
     my $dns = $row->{dns} || '&nbsp;';
     $dns =~ s/\Q$domain\E//;
     my $age = $m->comp('device_inv.html:.trim_age', age => $row->{age});
-    my $time_first = scalar(localtime($row->{time_first}));
+    my $time_first = $row->{time_first} eq 'Never' ? '&nbsp;' : scalar(localtime($row->{time_first}));
     my $active = $row->{active};
 </%perl>
 <TR CLASS="match-<%++$odd%2%>">
