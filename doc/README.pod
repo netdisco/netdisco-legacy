@@ -587,7 +587,7 @@ signal and it will terminate after its current job has completed.
 
 =item Changing the IP Address of a Device
 
-If a device is being replaced with a different device and a different IP, see L<"Deleting a Device">
+If a device is being replaced with a different device and a different IP, see L</Deleting a Device>
 below.
 
     netdisco -i old-ip-address new-ip-address
