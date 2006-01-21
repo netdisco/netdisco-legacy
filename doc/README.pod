@@ -223,7 +223,7 @@ Having topology information is crucial for Netdisco to function.  So.
 if you network does not support one of the above Layer2 discover protocols,
 you B<must> put the information in the F<netdisco-topology.txt> file. 
 
-See L<Toplogy Information> in this file.
+See L<Topology Information> in this file.
 
 From Douglas McKeown :
 
@@ -307,11 +307,11 @@ Delete Nodes.  Used with --expiredevice only.
 
 =item -N || --newonly
 
-New Only.  On a network discovery L</"-r">, only discover found devices that aren't in the database. 
+New Only.  On a network discovery L<-r|/item__2dr__7c_7c__2d_2ddiscoverall_root_device>, only discover found devices that aren't in the database. 
 
 =item -P || --port port
 
-Port.  Specify Port for removal of nodes L<-e>.
+Port.  Specify Port for removal of nodes L<-e|/item__2de__7c_7c__2d_2dexpirenodes_device>.
 
 =item -S || --dumpsql
 
@@ -319,7 +319,7 @@ Debug.  carp() SQL commands.  Sets $netdisco::SQLCARP to 1.
 
 =item -V || --archive
 
-archiVe nodes.  Used with L<-e> only.
+archiVe nodes.  Used with L<-e|/item__2de__7c_7c__2d_2dexpirenodes_device> only.
 
 =back
 
@@ -354,7 +354,7 @@ Archive data files for L<node|"item_node">,L<node_ip|"item_node_ip">,L<device|"i
 
 =item Calls
 
-Database cleanup routines (L<-K>) as well. 
+Database cleanup routines (L<-K|/item__2dk__7c_7c__2d_2dcleannodes>) as well. 
 
 =item Exports 
 
@@ -375,8 +375,8 @@ entry below.
 
 =item -e || --expirenodes device
 
-Expire Nodes for given device. Use L<-V> to archiVe instead of delete.  Specify a 
-port with L<-P> to delete or archive nodes on a per port basis.
+Expire Nodes for given device. Use L<-V|/item__2dv__7c_7c__2d_2darchive> to archiVe instead of delete.  Specify a 
+port with L<-P|/item__2dp__7c_7c__2d_2dport_port> to delete or archive nodes on a per port basis.
 
 =item --expire-nodes-subnet subnet
 
@@ -390,12 +390,12 @@ Subnet is specified in CIDR format :
 
 =item -E || --expiredevice device
 
-Delete a device. Use L<-n> to delete nodes as well.
+Delete a device. Use L<-n|/item__2dn__7c_7c__2d_2dnodestoo> to delete nodes as well.
 
 =item -F || --discoverfile file
 
-Discover Device from given File.   Used to restore backed up info from L<-B>, and to 
-discover devices that are not available through topology information.  Use L<-T> to 
+Discover Device from given File.   Used to restore backed up info from L<-B|/item__2db__7c_7c__2d_2dbackup>, and to 
+discover devices that are not available through topology information.  Use L<-T|/item__2dt__7c_7c__2d_2dtopofile> to 
 only import Topology Information.
 
 =item -g || --graph
@@ -431,7 +431,7 @@ IP address that is found as an alias in the F<alias> table.
 
 =item -K || --cleannodes
 
-Datbase Node Klean-up. Permanently deletes nodes matching: 
+Database Node Klean-up. Permanently deletes nodes matching: 
 
 =over 
 
@@ -464,17 +464,17 @@ Control the Admin Daemon.  Takes arguments (start,stop,status,restart).
 
 =item  -r || --discoverall root_device
 
-Walk the network with the given root.  Use L<-N> to discover new devices only.  Given root device
+Walk the network with the given root.  Use L<-N|/item__2dn__7c_7c__2d_2dnewonly> to discover new devices only.  Given root device
 will always be discovered.
 
 =item -R || --refresh
 
-Refresh devices.  Will run a discover (L<-d>) for each device in the database.
+Refresh devices.  Will run a discover (L<-d|/item__2dd__7c_7c__2d_2ddiscover_device>) for each device in the database.
 
 =item -T || --topofile
 
 Import Topology Data.  Will import manual topology data stored in file specified by 
-configuration option L<topofile> . Use L<-F> to specify a different file from the
+configuration option L<topofile> . Use L<-F|/item__2df__7c_7c__2d_2ddiscoverfile_file> to specify a different file from the
 command line. 
 
 It is not necessary to do this after every change.  This is only a convenience switch.
@@ -560,7 +560,7 @@ C<web_console_models> in C<netdisco.conf>.
 
 =item Refreshing a device
 
-To refresh or discover a device and its ports, use the L<-d> command:
+To refresh or discover a device and its ports, use the L<-d|/item__2dd__7c_7c__2d_2ddiscover_device> command:
 
     netdisco -d mydevice
 
@@ -571,7 +571,7 @@ however restart the admin daemon.  The topology text file is re-parsed each time
 
 As a convenience you can use the topology file to quickly seed Netdisco with devices. 
 To import all the topology information at once make sure the topology filename is set in C<netdisco.conf>
-and use the L<-T> command:
+and use the L<-T|/item__2dt__7c_7c__2d_2dtopofile> command:
 
     netdisco -T
 
@@ -622,15 +622,15 @@ auto-prune stuff from the database :
 
 See each item's entry in the L<Config File> Section below for more details. 
 
-The expire data routines are called from the L<-B>/Backup routine, which should
+The expire data routines are called from the L<-B|/item__2db__7c_7c__2d_2dbackup>/Backup routine, which should
 be running nightly via cron.
 
 =item Deleting a Device
 
-To delete a device use the L<-E> command followed by the device name or IP.  Set L<-n> to 
+To delete a device use the L<-E|/item__2de__7c_7c__2d_2dexpiredevice_device> command followed by the device name or IP.  Set L<-n|/item__2dn__7c_7c__2d_2dnodestoo> to 
 delete all the nodes seen on that device as well 
 
-This is rather permanent.  Make sure you run L<-B>ackup before you do this.
+This is rather permanent.  Make sure you run L<-B|/item__2db__7c_7c__2d_2dbackup>ackup before you do this.
 
 =item Deleting Nodes
 
@@ -640,18 +640,18 @@ and the MAC address to IP mapping in the C<node_ip> table.
 To remove nodes from a switch, use the Admin Panel on the web side and choose either
 C<Delete Nodes>  or C<Archive Nodes>.   Archiving nodes will set the archive bit so that the 
 data will be available, but not always showing.   You can also delete nodes from the command 
-line using the L<-e> command with or without the L<-V> flag.
+line using the L<-e|/item__2de__7c_7c__2d_2dexpirenodes_device> command with or without the L<-V|/item__2dv__7c_7c__2d_2darchive> flag.
 
-Database Cleanup L<-K> will delete nodes that seem to be extraneous.  See L<-K> for more details.
+Database Cleanup L<-K|/item__2dk__7c_7c__2d_2dcleannodes> will delete nodes that seem to be extraneous.  See L<-K|/item__2dk__7c_7c__2d_2dcleannodes> for more details.
 
-Once you have cleared out nodes from a switch, then run L<-I> to remove unused node to IP mappings.
+Once you have cleared out nodes from a switch, then run L<-I|/item__2di__7c_7c__2d_2dexpireips> to remove unused node to IP mappings.
 
-This is rather permanent.  Make sure you run L<-B>ackup before you do this.
+This is rather permanent.  Make sure you run L<-B|/item__2db__7c_7c__2d_2dbackup>ackup before you do this.
 
 =item Adding / Changing Users
 
 The easiest way to add a user is to use the C<Add User> form in the Admin Panel.  After first installing
-Netdisco you need to add an admin user by running L<-u>.  
+Netdisco you need to add an admin user by running L<-u|/item__2du__7c_7c__2d_2duser__5buser_5d__5bpassword_5d__>.  
 
 =item Migrating the Users table to a new host
 
@@ -681,11 +681,11 @@ Even though we are doing frequent VACUUM's on all the data, it seems to be dragg
 down after a while.
 
 This turns out to be an INDEX bloat problem on Postgres versions less than 7.4. 
-Recently doing this on a Postgres 7.3 install changed the amount of space that i
+Recently doing this on a Postgres 7.3 install changed the amount of space that
 Netdisco's database was using from 16G to 400M !!!
 
 In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE> and C<REINDEX> from C<pg_run>.
-This command locks each table before it does the VACUUM, and therefor can be more through.
+This command locks each table before it does the VACUUM, and therefore can be more thorough.
 It's a good idea to take netdisco down temporarily while you do this.  I do this about
 once a month, or when I notice it dragging down.  Use C<Netdisco Statistics> as a good metric
 of things slowing down.  This may get fixed with changes in VACUUM in Postgres 7.4 and above.
@@ -1198,14 +1198,14 @@ Simply put the device's name or IP address in the list.
 
 =item model:regex
 
-Add an entire model type for exclusing from bulkwalking.
+Add an entire model type for excluding from bulkwalking.
 
 This can be a simple string like C<6500> or it could be a regular expression like
 C<(2512|65\d\d)>.  The regex must match the whole string (it's anchored).
 
 =item vendor:regex
 
-Add an entire vendor type for exclusing form bulkwalking.
+Add an entire vendor type for excluding form bulkwalking.
 
 This can be a simple string like C<hp> or it could be a regular expression like
 C<(cisco|hp)>. The regex must match the whole string (it's anchored).
