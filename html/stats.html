@@ -80,10 +80,13 @@ Statistics took <%$time9 - $time1 %> seconds to process.
 <TR>
     <TD><A HREF="http://www.masonhq.com">Mason</A>:</TD>
     <TD>
-        <A HREF="http://www.masonhq.com"><IMG SRC="powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
+        <A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 BORDER=0 ALT="Powered by Mason"></A>
         Version <%$HTML::Mason::VERSION%></TD>
 </TR>
 </TABLE>
+<%init>
+my $path   = $netdisco::CONFIG{webpath};
+</%init>
 </%method>
 <%method title>
 - About Netdisco \
