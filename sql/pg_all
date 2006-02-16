@@ -4,8 +4,8 @@
 # $Id$
 
 FILES="admin.sql device.sql device_ip.sql device_port.sql device_port_log.sql \
-       log.sql node.sql node_ip.sql oui.sql sessions.sql user_log.sql users.sql \
-       node_nbt.sql"
+       log.sql node.sql node_ip.sql node_nbt.sql oui.sql sessions.sql \
+       subnets.sql user_log.sql users.sql"
 
 rm -f pg_all.input
 touch pg_all.input
