@@ -357,6 +357,9 @@ settings.  After you have Netdisco running on a large installation it would be
 of great benefit to get a Postgres guru in there to tune things for you.  See
 F<README> for more info about how to speed things up now and again.
 
+See L<http://www.postgresql.org/docs/current/static/kernel-resources.html> for 
+kernel settings related to postgres that you I<should> check.
+
 =item [4.2.7] Postgres Startup
 
 Make sure that Postgres is set to start automatically.
