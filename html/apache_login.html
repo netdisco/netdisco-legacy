@@ -1,0 +1,24 @@
+<h3>Apache authentication configuration error</h3>
+<h4><% $err %></h4>
+In a properly configured installation with Apache authentication,
+you will never see this page.  Check that you've configured
+netdisco_apache_dir.conf with the proper authentication
+requirements for apache_login.html, and that you've enabled
+apache_auth in netdisco.conf .
+<%args>
+$done => undef
+</%args>
+<%init>
+my $err = '';
+
+if ($netdisco::CONFIG{apache_auth}) {
+    if ($r->connection->user()) {
+	$err = $m->comp('login.html:login', user => $r->connection->user(),
+		how => 'http_login', done => $done);
+    } else {
+	$err = "Apache didn't pass me a username, did you set up netdisco_apache_dir.conf properly?";
+    }
+} else {
+    $err = "Apache authentication is not configured in netdisco.conf; add apache_auth: true";
+}
+</%init>

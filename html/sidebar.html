@@ -88,9 +88,18 @@
 
 % if ($user) {
     User <TT><%$user%></TT> [<A HREF="<%$path%>/logout.html">Logout</A>]
+%   if ($useuserdb) {
     <BR>[<A HREF="<%$path%>/change_pw.html">Change Password</A>]
+%   } else {
+    <BR>[<A HREF="<%$path%>/login.html">Netdisco Login</A>]
+%   }
 % } else {
+%   if ($netdisco::CONFIG{apache_auth}) {
+    [<A HREF="<%$path%>/apache_login.html">Login</A>]
+    <BR>[<A HREF="<%$path%>/login.html">Netdisco Login</A>]
+%   } else {
     [<A HREF="<%$path%>/login.html">Login</A>]
+%   }
 %}
     </TD>
 </TR>
@@ -103,6 +112,7 @@ my $path   = $netdisco::CONFIG{webpath};
 my $user   = $m->session->{user};
 my $secure = &is_secure;
 my $admin  = $m->session->{user_admin};
+my $useuserdb = $m->session->{useuserdb};
 my $port_info = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /^(1|t|y)/i) ? 1 : 0;
 my $url    = $r->uri;
 my $args   = $r->args;

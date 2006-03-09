@@ -44,6 +44,85 @@ $done => undef
 <%shared>
 my $userip    = $r->connection->remote_ip; 
 </%shared>
+<%method login>
+<%args>
+$user => undef
+$pw   => undef
+$how  => 'login'
+$done => undef
+</%args>
+<%perl>
+my $err = '';
+my $useuserdb = 0;
+
+$user = lc($user);
+my $db_user = sql_hash('users',['*'],{'username' => $user});
+
+if ($how eq 'login') {
+    unless (defined $db_user->{username}){
+	$err .= "User Not Found.\n";
+    }
+
+    my $md5_pw = Digest::MD5::md5_hex($pw);    
+
+    unless ($err or $md5_pw eq $db_user->{password}){
+	$err .= "Bad Login.\n";
+    }
+    $useuserdb = 1;
+} else {
+    unless ($db_user) {
+	# Synthesized user with no privileges.
+	$db_user->{username} = $user;
+	$db_user->{port_control} = 0;
+	$db_user->{admin} = 0;
+    }
+}
+
+if ($err) {
+    $m->session->{_logged_in} = 0;
+
+    # Log Failed Attempt
+    insert_or_update('user_log',{},
+	    {'username'=>$user,'event'=>'login_failure',
+	     'userip'=>$userip,'details'=>$err});
+
+    delete $m->session->{user};
+    delete $m->session->{user_port_ctl};
+    delete $m->session->{user_admin};
+    delete $m->session->{start};
+    delete $m->session->{useuserdb};
+
+    return $err;
+} else {
+    $m->session->{_logged_in} = 1;
+    $m->session->{user} = $db_user->{username};
+    $m->session->{user_port_ctl} = $db_user->{port_control};
+    $m->session->{user_admin}    = $db_user->{admin};
+    $m->session->{start} = time;
+    $m->session->{useuserdb} = $useuserdb;
+    $r->connection->user($db_user->{username});
+
+    # Update record
+    insert_or_update('users',{'username' => $m->session->{user}},
+		     {'last_on' => scalar(localtime)}
+		    );
+
+    # Log Login
+    insert_or_update('user_log',{},
+	    {'username'=>$m->session->{user},'event'=>$how,
+	     'userip'=>$userip,'details'=>$done});
+
+    # Redirect
+    if (defined $done and length($done)) {
+	$m->redirect("$done");
+    } else {
+	$m->redirect('.'); 
+    }   
+
+    return undef;
+}
+</%perl>
+</%method>
 <%init>
 
 my $err = '';
@@ -62,56 +141,7 @@ if (!$secure){
 
 if ($cmd eq 'login'){
 
-    $user = lc($user);
-    my $db_user = sql_hash('users',['*'],{'username' => $user});
-
-    unless (defined $db_user->{username}){
-        $err .= "User Not Found.\n";
-    }
-
-    my $md5_pw = Digest::MD5::md5_hex($pw);    
-    
-    unless ($err or $md5_pw eq $db_user->{password}){
-        $err .= "Bad Login.\n";
-    }
-
-    if ($err) {
-        $m->session->{_logged_in} = 0;
-
-        # Log Failed Attempt
-        insert_or_update('user_log',{},
-                {'username'=>$user,'event'=>'login_failure',
-                 'userip'=>$userip,'details'=>$err});
-
-        delete $m->session->{user};
-        delete $m->session->{user_port_ctl};
-        delete $m->session->{user_admin};
-        delete $m->session->{start};
-    } else {
-        $m->session->{_logged_in} = 1;
-        $m->session->{user} = $db_user->{username};
-        $m->session->{user_port_ctl} = $db_user->{port_control};
-        $m->session->{user_admin}    = $db_user->{admin};
-        $m->session->{start} = time;
-        $r->connection->user($db_user->{username});
-
-        # Update record
-        insert_or_update('users',{'username' => $m->session->{user}},
-                         {'last_on' => scalar(localtime)}
-                        );
-
-        # Log Login
-        insert_or_update('user_log',{},
-                {'username'=>$m->session->{user},'event'=>'login',
-                 'userip'=>$userip,'details'=>$done});
-
-        # Redirect
-        if (defined $done and length($done)) {
-            $m->redirect("$done");
-        } else {
-            $m->redirect('.'); 
-        }   
-    }
+   $err = $m->comp('SELF:login', %ARGS);
     
 }
 </%init>

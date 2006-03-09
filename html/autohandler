@@ -82,13 +82,14 @@ if (defined $m->session->{_logged_in} and $m->session->{_logged_in} ){
 # Redirect to Login page unless we're ok
 my $path   = $netdisco::CONFIG{webpath};
 my $target = $m->fetch_next->name;
-unless ($ok or $target eq 'login.html') {
+unless ($ok or $target =~ /(apache_)?login.html/) {
     my $target_uri = $r->uri;
     my $target_args = $r->args;
     my $url = $target_uri;
     $url .= "?$target_args" if (defined $target_args and length($target_args));
     HTML::Mason::Escapes::url_escape(\$url);
-    $m->redirect("$path/login.html?done=$url");
+    my $page = $netdisco::CONFIG{apache_auth} ? "apache_login" : "login";
+    $m->redirect("$path/$page.html?done=$url");
 } 
 
 # For Logging, tell apache what user is in:

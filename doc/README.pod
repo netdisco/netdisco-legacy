@@ -1310,6 +1310,15 @@ PATH. URL Path added to the beginning of links on the web front-end
 
 MINUTES.  Amount of time a session lasts before someone has to login again.
 
+=item apache_auth
+
+BOOLEAN. Whether to use Apache-based authentication.  If this is configured
+both here and in netdisco_apache_dir.conf, then logins will trust the
+REMOTE_USER set by Apache.  If the user is found in the user database,
+then the appropriate privileges are applied; if the user is not found then
+they have access but no port control or admin access.  There is another link
+on the sidebar, "Netdisco Login" to log in using the netdisco user database.
+
 =back
 
 =head3 Graph Settings

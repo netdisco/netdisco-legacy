@@ -26,6 +26,11 @@ unless ($user){
     $cmd = undef;
 }
 
+unless ($m->session->{useuserdb}) {
+    $err = "You can't change your apache password this way.";
+    $cmd = undef;
+}
+
 if ($cmd eq 'change'){
     unless ($pw1 eq $pw2){
         $err = "Passwords do not match.<BR>";
