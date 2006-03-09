@@ -19,6 +19,7 @@ Features:
     + [1107579] The map can be clustered by device Location fields.
                 Thanks to Bjorn Isaksson for the patch.
     + Apache-based HTTP authentication added.
+    + Apache2 + mod_perl2 support from Manuel Bouyer
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
