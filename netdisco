@@ -1541,8 +1541,8 @@ sub macsuck{
 
     # Log This
     my $entries2 = $MacTotal;
-    my $now = localtime;  my $time2 = time;
-    insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$now});
+    my $started = localtime($time1);  my $time2 = time;
+    insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$started});
     print " Saw : ",$entries2-$entries1, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
 
 }
