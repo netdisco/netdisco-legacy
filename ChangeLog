@@ -20,6 +20,8 @@ Features:
                 Thanks to Bjorn Isaksson for the patch.
     + Apache-based HTTP authentication added.
     + Apache2 + mod_perl2 support from Manuel Bouyer
+    + [1393653] Modules for optional features (e.g., NBT) are now loaded when
+                needed, not at startup.
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.

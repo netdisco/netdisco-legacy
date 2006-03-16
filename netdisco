@@ -22,9 +22,8 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
-use SNMP::Info 1.0;
 use netdisco qw/:all/;  
-use Net::NBName;
+tryuse('SNMP::Info', ver => '1.0', die => 1);
 
 $| = 1;
 
@@ -2131,6 +2130,7 @@ Returns whether a node is answering netbios calls or not.
 =cut
 
 sub nbtstat {
+    tryuse('Net::NBName', die => 1);
     my $host = shift;
     my $ip = getip($host);
     my $nb = Net::NBName->new;
@@ -3014,15 +3014,7 @@ sub graph {
     &batch_mode("logs/$month/graph") unless $no_batch;
     print "graph() - Creating Graphs.\n";
 
-    eval "use GraphViz 2.02;";
-    if ($@) {
-        my $err = $@;
-        $err =~ s/\n/ /g;
-        print "  GraphViz module not installed or needs to be updated to version 2.02 or newer.\n See INSTALL.\n";
-        print "  Error Reported : $err\n";
-        print "\n\nGraphn not created.\n";
-        return;
-    }
+    tryuse('GraphViz', ver => '2.02', die => 1);
 
     my $G = make_graph();
 

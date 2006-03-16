@@ -23,7 +23,6 @@ use strict;
 use Carp;
 use Exporter;
 use Socket;
-use Graph 0.50;
 use DBI;
 use Digest::MD5;
 
@@ -34,7 +33,8 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        dump_subnet in_device
-                       url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum/;
+                       url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum
+		       tryuse/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -909,6 +909,7 @@ Nodes without topology information are not included.
 
 =cut
 sub make_graph {
+    tryuse('Graph', ver => 0.50, die => 1);
     my $G = new Graph::Undirected;
     print 'my $G = new Graph::Undirected;' if $::DEBUG;
 
@@ -1698,6 +1699,51 @@ sub dump_globals {
         print  "\t$glob : " . $self->$glob() . "\n";
     }
 
+}
+
+=item tryuse(module,%opts)
+
+Try to use the given module.
+
+Returns two values: success / failure, and the error message if failure.
+Caches values if it's non fatal.
+
+Options:
+
+    ver => version of module required
+    die => 1 if you want to die instead of recover yourself
+
+=cut
+my %tryuseok;
+sub tryuse($%) {
+    my $mod = shift;
+    my %args = @_;
+    my $ok = 1;
+    my $msg = undef;
+
+    if (defined($tryuseok{$mod})) {
+	($ok, $msg) = @{$tryuseok{$mod}};
+    } else {
+	if (defined($args{ver})) {
+	    eval "use $mod $args{ver}";
+	} else {
+	    eval "use $mod";
+	}
+	if ($@) {
+	    $msg = "You need the $mod perl module";
+	    if ($args{ver}) {
+		$msg .= ", version $args{ver} or newer";
+	    }
+	    $msg .= ".\nPlease install it and try again.\n\n" . $@;
+	    $ok = 0;
+	}
+    }
+    if ($ok == 0 && $args{die}) {
+	die $msg;
+    }
+    my $rv = [ $ok, $msg ];
+    $tryuseok{$mod} = $rv;
+    return $rv;
 }
 
 1;
