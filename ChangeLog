@@ -22,6 +22,10 @@ Features:
     + Apache2 + mod_perl2 support from Manuel Bouyer
     + [1393653] Modules for optional features (e.g., NBT) are now loaded when
                 needed, not at startup.
+    + [1116552] The devices in the "Choose Device" box on the Admin Panel
+                are now listed in numerical order by IP address, to make
+                it easier to find the one you're looking for.
+    + [1116547] Contact field is now searched in the device search.
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.

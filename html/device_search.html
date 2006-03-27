@@ -156,8 +156,9 @@ if ($specific =~ /alias/i){
     $where->{location}++;
     $where->{alias}++;
     $where->{name}++;
+    $where->{contact}++;
     $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
-                        ['d.ip','d.dns','d.location','i.alias','d.name'],
+                        ['d.ip','d.dns','d.location','i.alias','d.name','d.contact'],
                         {'i.dns' => 'is null','i.alias' => 'is not null'});
 
 } elsif ($specific =~ /DNS entries/){
@@ -166,8 +167,9 @@ if ($specific =~ /alias/i){
     $where->{model}++;
     $where->{location}++;
     $where->{name}++;
+    $where->{contact}++;
     $matches = sql_rows('device',
-                        ['ip','vendor','model','location','name'],
+                        ['ip','vendor','model','location','name','contact'],
                         {'dns' => 'is null'});
 
 } elsif ($specific =~ /orphan/i){
@@ -176,6 +178,7 @@ if ($specific =~ /alias/i){
     $where->{vendor}++;
     $where->{model}++;
     $where->{location}++;
+    $where->{contact}++;
 
     my $G = make_graph();
     my @S = $G->connected_components;
@@ -196,7 +199,7 @@ if ($specific =~ /alias/i){
     # This should be changed to a single SQL command
 
     while (my $orphan = shift @orphans ){
-        my $match = sql_hash('device',['ip','dns','vendor','model','location'],
+        my $match = sql_hash('device',['ip','dns','vendor','model','location','contact'],
                               {'ip'=>$orphan});
         push (@$matches,$match) if defined $match;
     }
@@ -291,6 +294,7 @@ if (length($text)) {
     push(@{$where->{'d.description'}}, $match);
     push(@{$where->{'d.location'}}, $match);
     push(@{$where->{'d.serial'}}, $match);
+    push(@{$where->{'d.contact'}}, $match);
     $boolean = 'or';
 }
 

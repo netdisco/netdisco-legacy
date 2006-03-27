@@ -216,7 +216,7 @@ if ($commit) {
 # job queue is after device control in case we just added to it.
 
 # Load device list, unless device provided.
-$devices = sql_rows('device',['ip','dns']);
+$devices = sql_rows('device',['ip','dns'], undef, undef,'order by ip asc');
 
 # Taint check (head between legs)
 $old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
@@ -317,7 +317,7 @@ Debug Output
     <TD><% $arg_dev ? '&nbsp;' : $m->comp('SELF:list_dev')%></TD>
     <TD ROWSPAN=2>Action : </TD>
     <TD ROWSPAN=2>
-        <SELECT NAME="action" SIZE=3>
+        <SELECT NAME="action" SIZE=4>
 % foreach my $c (sort keys %actions){
 %   next unless $c;
 %   next unless $actions{$c}->[2];
@@ -377,7 +377,7 @@ Use this box to add new devices to the network, or to re-add devices after delet
 %# list_dev() - Create <SELECT> list for devices 
 %#
 <%method list_dev>
-<SELECT NAME="dev" SIZE=4>
+<SELECT NAME="dev" SIZE=8>
 % foreach my $dev (sort {$a->{dns} cmp $b->{dns}} @$devices){
 %   my $view = defined $dev->{dns} ? $dev->{dns} : $dev->{ip};
 %   $view =~ s/\Q$domain\E//; 
