@@ -1188,6 +1188,14 @@ LIST:STRING.   A comma separated list of devices to not bulkwalk
 
 This list can take four different inputs
 
+=item nonincreasing
+
+BOOLEAN.  Setting this to true will allow the bulkwalk of devices that have
+tables with  non-increasing OIDs.  The default is to not allow this behavior to
+prevent problem devices from looping indefinitely.   Requires Net-SNMP 5.3 or higher.
+
+See patch # 1364650 in Net-SNMP or bug # 1176130.
+
 =over
 
 =item Hostname or IP

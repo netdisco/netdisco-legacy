@@ -1004,6 +1004,7 @@ sub create_device {
     $args{BulkWalk}      = 0                           if     defined $CONFIG{bulkwalk_off} and $CONFIG{bulkwalk_off};
     $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
     $args{AutoSpecify}   = defined $args{Class} ? 0 : 1;
+    $args{NonIncreasing} = defined $CONFIG{nonincreasing} ? $CONFIG{nonincreasing} : 1; # remove loops in bulkwalks
 
     my $class            = $args{Class}   || 'SNMP::Info';
     delete $args{Class} if exists $args{Class};

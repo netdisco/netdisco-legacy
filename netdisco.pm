@@ -232,7 +232,7 @@ sub config {
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
                       port_info secure_server graph_clusters graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
-                      bulkwalk_off vlanctl apache_auth
+                      bulkwalk_off vlanctl apache_auth nonincreasing
                      /;
 
     # these will make array refs of their comma separated lists
