@@ -4,16 +4,18 @@ Netdisco INSTALL -- Instructions for setting up Netdisco application.
 
 =head1 VERSION
 
-Netdisco 0.94
+Netdisco 0.95
 
 B<PLEASE> check the latest version of this document at 
 L<http://netdisco.org/install.html> in case of bugs.
 
 =head1 AUTHOR
 
-Created by Max Baker.
+Developed by team of Open Source authors headed by Eric Miller and
+Bill Fenner.
 
-See list at the end of README of all the contributors.
+Orginally created by Max Baker.  See list at the end of README of all the
+contributors.
 
 Netdisco was created at the University of California, Santa Cruz (UCSC),
 Networking and Technology Services (NTS) department.   UCSC continues to
@@ -57,27 +59,28 @@ Listed below
 
 =item * PostgreSQL
 
-Version 7.4 B<strongly> recommended.  
+Version 7.4 or higher required.    Version 8.x suggested.
 
-Reported working for versions 7.2, 7.3, 7.4
+Reported working for versions 7.2, 7.3, 7.4, 8.0
 
 =item * Mason
 
-1.16 or newer required.  1.26 or newer advised.
+1.26 or newer required.  1.31 or newer advised.
 
 =item * Apache
 
-1.3.x advised, B<Version 2.x not yet supported by mod_perl>
+1.3.x advised,  2.x supported.
 
 =item * mod_perl   
 
 Version to match Apache - 1.29 or higher recommended. 
 
-B<Do not install version 1.99>.
+B<Do not install version 1.99>.  For apache2 support
+make sure you have mod_perl 2.02 or later.
 
 =item * GraphViz (Optional)
 
-Version 0.16 or higher recommended.
+Version 2.8 or higher recommended.
 
 =back
 
@@ -88,12 +91,14 @@ See I<INSTALL> below for details on how to retrieve and install each one.
 Netdisco was developed on a FreeBSD system but should work on any
 system that Postgres, Perl, Apache, and Net-SNMP run on. 
 
+
 Linux is a sure bet.  Netdisco has been tested with Mandake 9.1 
 and includes specific notes to install with it.  Successful installs
-have been reported under Redhat, Mandrake, Gentoo and Debian.
+have been reported under Redhat, Mandrivia, Gentoo and Debian.
+A beta RPM is available for Mandrivia.
 
 One user has reported getting Netdisco running on OS X.  Solaris has been
-sucessful for 8 and 10.  See
+successful for 8 and 10.  See
 L<http://www.saintmarys.edu/~dmckeown/netdisco_solaris10.htm>.
 
 Windows will take a lot of massaging but should be possible under
@@ -110,7 +115,7 @@ version 1.0.
 
 Get the newest version from L<http://www.netdisco.org>.
 
-    tar xvfz netdisco-x.xx.tar.gz    
+    tar xvfz netdisco-x.xx_with_mibs.tar.gz    
 
 Create a directory for Netdisco 
 
@@ -131,7 +136,8 @@ change a couple files.  Otherwise Skip down to Number 2.
 =item SQL Shell Scripts
 
 
-Modify the following shell scripts :
+Modify the following shell scripts to point to your non-standard
+netdisco directory:
 
     sql/pg_run
     sql/pg_init
@@ -200,7 +206,7 @@ are in development.
 
 First install Postgres from ports:
 
-    cd /usr/ports/database/postgresql7
+    cd /usr/ports/database/postgresql81-server
     make install
 
 Next initialize the database :
