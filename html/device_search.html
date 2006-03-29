@@ -195,14 +195,16 @@ if ($specific =~ /alias/i){
         next if $j == $biggest;
         push (@orphans,@{$S[$j]}); 
     }
-    
-    # This should be changed to a single SQL command
 
-    while (my $orphan = shift @orphans ){
-        my $match = sql_hash('device',['ip','dns','vendor','model','location','contact'],
-                              {'ip'=>$orphan});
-        push (@$matches,$match) if defined $match;
+    # Add in devices with no topology info at all.
+    # make_graph() ignores these but this search shouldn't.
+    my $qlist = [\\'not in (select distinct ip from device_port where remote_port is not null)'];
+    # Also add in orphans if there were any.
+    if (@orphans) {
+	$qlist->[1] = \@orphans;
     }
+    $matches = sql_rows('device',['ip','dns','vendor','model','location','contact'],
+			{'ip'=>$qlist},1);
 
 } elsif ($specific =~ /multiple/i){
     $title = 'Device ports with multiple nodes attached';
