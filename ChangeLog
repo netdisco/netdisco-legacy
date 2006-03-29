@@ -15,7 +15,7 @@ Features:
     + [1392968] The map key is now automatically derived from configuration
                 (i.e., entries in node_map)
     + [1107578] Port Control via VLANs
-    + IP Inventory feature improved to dump whole subnets
+    + [ 744598 ] Inventory by subnet - IP Inventory feature improved to dump whole subnets
     + [1107579] The map can be clustered by device Location fields.
                 Thanks to Bjorn Isaksson for the patch.
     + Apache-based HTTP authentication added.
