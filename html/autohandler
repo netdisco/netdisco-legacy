@@ -93,7 +93,7 @@ unless ($ok or $target =~ /(apache_)?login.html/) {
 } 
 
 # For Logging, tell apache what user is in:
-$r->connection->user($m->session->{user}) if defined($m->session->{user});
+$r->connection->user($m->session->{user}) if ($ok && defined($m->session->{user}));
 </%init>
 <%method html_head>
 \
