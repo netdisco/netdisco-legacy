@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 # doc_munge
 #   Grab everything between the BODY tags and add Mason <%text> tags.
+#   Munge URLs into our form.
 # $Id$
 
 local $/ = undef;
@@ -10,6 +11,16 @@ my $contents = <STDIN>;
 $contents =~ s/^.*<BODY[^>]*>//is;
 $contents =~ s!</BODY.*!!is;
 
+$contents =~ s!href="/([^"]*)"!fixref($1)!ge;
+
 $contents = '<%text>' . $contents . '</%text>';
 
 print $contents;
+
+sub fixref {
+    my $file = shift;
+
+    $file =~ s!/!-!g;
+
+    return 'href="' . $file . '"';
+}
