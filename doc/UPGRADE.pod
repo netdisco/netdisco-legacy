@@ -33,7 +33,9 @@ of course made a backup by now.
 
 =item v.0.94 -> 0.95
 
-=head2 New and Updated Perl Modules
+=over
+
+=item New and Updated Perl Modules
 
 This version of Netdisco is based around the new API for the Graph module, so you need 
 to have version 0.50 or greater and GraphViz 2.02 or greater.  
@@ -45,6 +47,8 @@ and this module must be installed.
         install Net::NBName
         install Graph
         install GraphViz
+
+=back
 
 =item v0.93 -> 0.94
 
@@ -285,7 +289,7 @@ will use the newly installed version of F<netdisco.pm>.
 You need to restart the admin daemon to run on the new copy of Netdisco.
 
     su - netdisco -c "/usr/local/netdisco -p restart"
-    
+
 =item Reload Crontab
 
 Review F<netdisco.crontab> and reload it for the C<netdisco> user.
