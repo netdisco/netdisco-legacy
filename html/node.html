@@ -334,6 +334,13 @@ if ($node){
             push (@$matches,$sp);
         }
 
+	# If there are no matches, at least return the vendor info.
+	if (!@$matches) {
+	    my $oui = uc(substr($node, 0, 8));
+	    unless ( defined $ouis->{$oui} ){
+		$ouis->{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
+	    }
+	}
     }
 
     my $realip = &getip($node);
@@ -553,6 +560,11 @@ foreach my $match (@$matches){
 <& SELF:oui_matches &>
 %unless (scalar @$matches){
 No results found.  Try checking Archived Data.
+% foreach my $oui (keys %$ouis) {
+%  if ($ouis->{$oui}) {
+(By the way, OUI <%$oui%> is allocated to <%$ouis->{$oui}%>)
+%  }
+% }
 % return; }
 <TABLE cellspacing=0 cellpadding=4 border=0 width=100%>
 <TR>
