@@ -137,6 +137,15 @@ foreach my $row (sort
 <INPUT TYPE="SUBMIT" VALUE="Inventory by Location">
 </FORM>
 % }
+<h4><A NAME="location">Wireless SSID Inventory</A></h4>
+% if ($show_ssid) {
+<& SELF:show_ssid &>
+% } else {
+<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<INPUT TYPE="hidden" NAME="show_ssid" VALUE=1>
+<INPUT TYPE="SUBMIT" VALUE="Wireless SSID Inventory">
+</FORM>
+% }
 <%args>
 $cmd      => undef
 $age_type => 'last'
@@ -144,6 +153,7 @@ $age_val  => 2
 $age_mul  => 'months'
 $age_bool => 'not in'
 $show_loc => 0
+$show_ssid => 0
 </%args>
 <%shared>
 my $age = [];
@@ -189,7 +199,7 @@ if ($cmd eq 'age'){
         $val = "$bool $interval"
     }
 
-    $age = sql_rows('device',['ip','name','vendor','model','uptime',
+    $age = sql_rows('device',['ip','dns','name','vendor','model','uptime',
                               'age(now(),creation) as creation_age',
                               'age(now(),last_discover) as last_discover_age'
                              ],
@@ -259,6 +269,32 @@ Found <%scalar @$age%> devices.
         }
         return $age;
     </%perl>
+</%method>
+%#
+%# show_ssid() - Inventory based on SSID
+%#
+<%method show_ssid>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
+<TR>
+    <TH>SSID</TH>
+    <TH>Broadcast?</TH>
+    <TH>Count</TH>
+</TR>
+<%perl>
+my $ssid_count = sql_rows('device_port_ssid',['ssid','broadcast','count(ssid)'],
+                        undef,undef,'group by ssid,broadcast');
+$count = 0; $odd = 1; my $old_loc = '';
+foreach my $row (sort
+    { $b->{count} <=> $a->{count} } @$ssid_count) {
+</%perl>
+<TR CLASS="match-<%$odd%2%>">
+    <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;ssidbcast=<%$row->{broadcast}%>" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
+    <TD><%$row->{broadcast} ? "Broadcast" : "Stealth"%></TD>
+    <TD><%$row->{count}%></TD>
+</TR>
+<%perl>
+}
+</%perl>
 </%method>
 %#
 %# show_loc() - Sorts and shows by location

@@ -174,12 +174,17 @@ sub add_node {
     my $oui = substr($mac,0,8);
     # Set the active flag to false to archive all other instances
     #   of this mac address
-    sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac'/);
+    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND switch != '$ip'/);
 
     # Add this entry to node table. 
     my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port );
-    insert_or_update('node', \%hash,
-        { 'time_last' => scalar(localtime), 'active' => 1, 'oui' => $oui, %hash });
+    my %set = ('time_last' => scalar(localtime), 'active' => 1, 'oui' => $oui);
+    # if there was another node, set time_recent too.
+    # NOTE: $other might be "0E0", so be careful how you test it.
+    if ($other != 0) {
+	$set{time_recent} = scalar(localtime);
+    }
+    insert_or_update('node', \%hash, { %set, %hash });
 }
 
 =item add_nbt(ip,mac,nbname,domain,server,nbuser)
@@ -236,8 +241,9 @@ sub config {
                      /;
 
     # these will make array refs of their comma separated lists
-    my @array_refs = qw/community community_rw mibdirs bulkwalk_no macsuck_no 
-                        arpnip_no discover_no/;
+    my @array_refs = qw/community community_rw mibdirs bulkwalk_no
+                        macsuck_no arpnip_no discover_no
+                        macsuck_only arpnip_only discover_only/;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
@@ -928,7 +934,7 @@ sub make_graph {
 
     # Check for no topology info
     unless (scalar @$links){
-        print "make_graph() - No Topology information." if $::DEBUG; 
+        print "make_graph() - No Topology information.\n" if $::DEBUG; 
         return undef;
     }
 

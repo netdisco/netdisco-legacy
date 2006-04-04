@@ -99,6 +99,16 @@
     <DD><INPUT TYPE="submit" name="specific" VALUE="Ports Administratively disabled">
 </DL>
 </FORM>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<DL>
+<DT>
+<DD><INPUT TYPE="submit" name="specific" VALUE="SSID Search">
+<B>SSID:</B><INPUT TYPE="text" size=30 maxlength=60 NAME="ssid" VALUE="<%$ssid%>">
+<INPUT TYPE="radio" <% $ssidbcast || !defined($ssidbcast) ? 'CHECKED' : ''%> NAME="ssidbcast" value="1"> Broadcast
+<INPUT TYPE="radio" <% defined($ssidbcast) && $ssidbcast == 0 ? 'CHECKED' : ''%> NAME="ssidbcast" value="0"> Stealth
+<INPUT TYPE="radio" NAME="ssidbcast" value=""> Either
+</DL>
+</FORM>
 
 <h4>Hints</h4>
 <UL type=square>
@@ -123,6 +133,8 @@ $boolean  => 'and'
 $exact    => 0
 $loc      => ''
 $specific => undef
+$ssid     => undef
+$ssidbcast => undef
 </%args>
 <%shared>
 my $matches = undef;
@@ -284,6 +296,32 @@ if ($specific =~ /alias/i){
     $where->{remote_ip}++;
     $where->{remote_id}++;
     $where->{remote_type}++;
+} elsif ($ssid) {
+    $specific = "SSID";
+    $title = 'SSID Port Search - ' . $ssid;
+    my %xtrawhere = ();
+    if (!defined($ssidbcast) || ($ssidbcast cmp '') == 0) {
+        $where->{broadcast}++;
+    } else {
+	$title .= " " . ($ssidbcast ? 'Broadcast' : 'Stealth');
+	$xtrawhere{'broadcast'} = $ssidbcast;
+    }
+    $matches = sql_rows('device_port_ssid p, device d',
+			['d.ip','d.dns','d.vendor','d.model','d.location','d.contact','p.port','p.broadcast'],
+			{'d.ip' => \'p.ip',
+			 'p.ssid' => $ssid,
+			 %xtrawhere
+			}
+			);
+    if ($where->{broadcast}) {
+        foreach my $row (@$matches) {
+	    $row->{broadcast} = $row->{broadcast} ? 'Broadcast' : 'Stealth';
+	}
+    }
+    $where->{vendor}++;
+    $where->{model}++;
+    $where->{location}++;
+    $where->{contact}++;
 }
 
 my @show_cols = ();

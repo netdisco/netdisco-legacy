@@ -335,8 +335,10 @@ Arp Walk.  ArpNip each device that has Layer 3 capabilities.
 
 ArpNip.  ArpNip's a single device.  See L<ArpNipper> in Design.
 
-Devices listed in C<arpnip_no> in the config file are excluded.  See the 
-entry below.
+Devices listed in C<arpnip_no> in the config file are excluded.
+If there is a C<arpnip_only> entry in the config file, devices
+not listed are excluded.
+See the entry below.
 
 =item -B || --backup
 
@@ -370,8 +372,11 @@ For a full backup run F<sql/pg_back> to backup the whole database.
 
 Discover Device.   
 
-Devices listed in C<discover_no> in the config file are excluded.  See the 
-entry below.
+IP addresses and subnets listed in C<discover_no> in the config file
+are excluded.
+If there is a C<discover_only> entry in the config file, IP addresses
+and subnets not listed are excluded.
+See the entry below.
 
 =item -e || --expirenodes device
 
@@ -451,8 +456,10 @@ Mac Suck each device in the database that has Layer 2 capabilities.
 
 Mac Suck given device only.
 
-Devices listed in C<macsuck_no> in the config file are excluded.  See the 
-entry below.
+Devices listed in C<macsuck_no> in the config file are excluded.
+If there is a C<macsuck_only> entry in the config file, devices
+not listed are excluded.
+See the entry below.
 
 =item -O || --oui
 
@@ -981,7 +988,15 @@ of days will be removed.
 
 =item arpnip_no
 
-LIST:string.  See C<bulkwalk_no> for syntax.
+LIST:string.  Devices that won't be arpnipped.  See C<bulkwalk_no> for syntax.
+If you have any layer-3 devices that have been discovered by netdisco
+but are using proxy-ARP as a way to get to other devices, place them here.
+Alternately, if you have many proxy-ARP clients but one (or a handful of)
+central device with all of the proper ARP info, put that in C<arpnip_only>.
+
+=item arpnip_only
+
+LIST:string.  If present, only arpnip these devices.  See C<bulkwalk_no> for syntax.
 
 =item compress
 
@@ -997,7 +1012,17 @@ PATH. Full or relative path to the directory that backups and logs will be store
 
 =item discover_no
 
-LIST:string.  See L<bulkwalk_no> for syntax.
+LIST:string.  IP addresses in this list will not be visited during discovery.
+See L<bulkwalk_no> for syntax, except that only hostnames, IP addresses
+and subnets are valid.
+
+=item discover_only
+
+LIST:string.  If present, discovery will be limited to only IP addresses
+in this list.  If you have a management VLAN, put that subnet here
+to avoid discovering user devices.
+See L<bulkwalk_no> for syntax, except that only hostnames, IP addresses
+and subnets are valid.
 
 =item ignore_private_nets
 
@@ -1018,7 +1043,11 @@ This is a debug option to help you figure out your topology and generally should
 
 =item macsuck_no
 
-LIST:string.  See C<bulkwalk_no> for syntax.
+LIST:string.  Don't macsuck these devices.  See C<bulkwalk_no> for syntax.
+
+=item macsuck_only
+
+LIST:string.  If present, only macsuck these devices.  See C<bulkwalk_no> for syntax.
 
 =item macsuck_no_vlan
 
@@ -1188,14 +1217,6 @@ LIST:STRING.   A comma separated list of devices to not bulkwalk
 
 This list can take four different inputs
 
-=item nonincreasing
-
-BOOLEAN.  Setting this to true will allow the bulkwalk of devices that have
-tables with  non-increasing OIDs.  The default is to not allow this behavior to
-prevent problem devices from looping indefinitely.   Requires Net-SNMP 5.3 or higher.
-
-See patch # 1364650 in Net-SNMP or bug # 1176130.
-
 =over
 
 =item Hostname or IP
@@ -1241,6 +1262,14 @@ LIST:STRING. A comma separated list of community strings to try on each device.
 LIST:STRING.  OPTIONAL. A comma separated list of Read-Write community strings.  
 
 This is only necessary if you turn on the C<port_control> command.
+
+=item nonincreasing
+
+BOOLEAN.  Setting this to true will allow the bulkwalk of devices that have
+tables with  non-increasing OIDs.  The default is to not allow this behavior to
+prevent problem devices from looping indefinitely.   Requires Net-SNMP 5.3 or higher.
+
+See patch # 1364650 in Net-SNMP or bug # 1176130.
 
 =item snmpver
 

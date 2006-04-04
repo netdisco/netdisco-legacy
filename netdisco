@@ -191,7 +191,8 @@ sub discover{
     print "Discover($hostname) : ";
 
     my $ip = getip($hostname);
-    if (in_device($ip,$CONFIG{discover_no})) {
+    if (in_device($ip,$CONFIG{discover_no}) ||
+        ($CONFIG{discover_only} && !in_device($ip,$CONFIG{discover_only}))) {
         print " Excluded from discovery in config file.\n";
         return;
     }
@@ -702,7 +703,7 @@ sub end {
 
     if (defined $NbtTotal){
         my $nodes = scalar(keys(%$OldNodes));
-        my $pct   = sprintf("%2.2f",($NbtTotal/$nodes)*100);
+        my $pct   = $nodes ? sprintf("%2.2f",($NbtTotal/$nodes)*100) : 0;
         print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
         log('netbios',"$NbtTotal/$nodes ($pct\%) nodes w/ NetBIOS. $run_time minutes.",$LogFile[-1]) if $Log;
     }
@@ -881,7 +882,8 @@ sub arpnip {
         return;
     }
 
-    if (in_device($dev,$CONFIG{arpnip_no})) {
+    if (in_device($dev,$CONFIG{arpnip_no}) ||
+        ($CONFIG{arpnip_only} && !in_device($dev,$CONFIG{arpnip_only}))) {
         print " Excluded from arpnipping in config file.\n";
         return;
     }
@@ -1447,7 +1449,8 @@ sub macsuck{
         return;
     }
 
-    if (in_device($dev,$CONFIG{macsuck_no})) {
+    if (in_device($dev,$CONFIG{macsuck_no}) ||
+        ($CONFIG{macsuck_only} && !in_device($dev,$CONFIG{macsuck_only}))) {
         print " Excluded from macsucking in config file.\n";
         return;
     }
@@ -1987,6 +1990,32 @@ sub store_interfaces {
                          \%store );        
 
     }
+
+    # Get SSIDs for wireless interfaces
+    my $ssidlist = $device->i_ssidlist();
+    my $ssidbcast = $device->i_ssidbcast();
+    my $channel = $device->i_80211channel();
+
+    sql_do(qq/DELETE from device_port_ssid where ip = '$ip'/);
+
+    foreach my $ssididx (keys %$ssidlist) {
+        my $if = $ssididx;
+        $if =~ s/\.\d+$//;
+        my %store = ();
+        my $port = $interfaces->{$if};
+        unless (defined $port and length($port)) {
+            $DEBUG and print "\n  Ignoring $if (no port mapping)\n";
+            next;
+        }
+        $store{ip}           = $ip;
+        $store{port}         = $port;
+        $store{ssid}         = $ssidlist->{$ssididx};
+        $store{broadcast}    = $ssidbcast->{$ssididx};
+        $store{channel}      = $channel->{$if};
+        insert_or_update('device_port_ssid', { 'ip' => $ip, 'port' => $store{port}, 'ssid' => $store{ssid} }, 
+                         \%store );
+    }
+
     print "\n";
 }
 

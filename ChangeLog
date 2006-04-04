@@ -8,14 +8,17 @@ New Device Support in SNMP::Info 1.0:
     + Foundry EdgeIron
 
 Features:
-    + [1107564] Disable BULKWALK on a per device or per device type basis : bulkwalk_no
-                arpnip_no, macsuck_no, discover_no use same syntax, see README
+    + [1107564] Disable BULKWALK on a per device or per device type basis:
+                bulkwalk_no, arpnip_no, macsuck_no, discover_no use same
+                syntax, see README
     + [1111654] Allow wrap in config file with \ char
-    + [969117]  Automatically reloads config file in web front end when it changes.
+    + [969117]  Automatically reloads config file in web front end when it
+                changes.
     + [1392968] The map key is now automatically derived from configuration
                 (i.e., entries in node_map)
     + [1107578] Port Control via VLANs
-    + [ 744598 ] Inventory by subnet - IP Inventory feature improved to dump whole subnets
+    + [744598]  Inventory by subnet - IP Inventory feature improved to dump
+                whole subnets
     + [1107579] The map can be clustered by device Location fields.
                 Thanks to Bjorn Isaksson for the patch.
     + Apache-based HTTP authentication added.
@@ -26,6 +29,12 @@ Features:
                 are now listed in numerical order by IP address, to make
                 it easier to find the one you're looking for.
     + [1116547] Contact field is now searched in the device search.
+    + New backend database field time_recent in node database, for
+      nodes that move around a lot, it's the last time this node moved
+      *back* to this device (time_first is the first time ever).
+    + Add macsuck_only, arpnip_only, discover_only limits
+    + Get SSIDs and channel from wireless base station ports, and display
+      SSID in device port, add SSID inventory and SSID search
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
@@ -37,6 +46,8 @@ Bugfixes:
                 could be off by the time between the device discovery and
                 the web page view (up to a day, with the default crontab).
     * [1407942] IP Inventory needs to cross-reference device and device_ip
+    * nbtwalk would crash at the end if there are no nodes to visit.
+    * Device Inventory by Age wouldn't show the DNS name
 
 
 0.94beta (12/06/04)

@@ -152,6 +152,10 @@ if ($ip) {
             {'switch' => $switch, 'port' => $port } );
         $portreq->{macs} = (defined $nodes and scalar @$nodes) ? $nodes : undef;
 
+        # Get SSIDs
+        my $ssids = sql_rows('device_port_ssid',['*'],{'ip'=>$switch,'port'=>$port});
+        $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
+
         # Save MAC addresses for IP lookup
         foreach my $node (@$nodes){
             my $mac = $node->{mac};
@@ -514,7 +518,18 @@ foreach my $port (sort sort_port @$ports){
             <A HREF="<%$link%>"><%$name%></A> \
 <%perl>
     } 
-    $m->out("<BR>\n") if (defined $remote_ip and defined $port->{macs});
+
+    # Show SSIDs
+    my $portssids = $port->{ssids} || [];
+    foreach my $ssid (@$portssids) {
+        my $id = $ssid->{ssid};
+        my $bcast = $ssid->{broadcast} ? "(B)" : "";
+</%perl>
+        <BR>SSID: <%$id%> <%$bcast%>
+<%perl>
+    }
+
+    $m->out("<BR>\n") if ((defined $remote_ip or defined $port->{ssids}) and defined $port->{macs});
 
     # Show connected nodes
     my $seen_macs=0;
