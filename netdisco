@@ -2044,7 +2044,7 @@ sub walk_fwtable {
         $MacTotal++;
 
         unless (defined $bp_id) {
-            print " Port $fw_mac->($fw_index)has no fw_port mapping.  Skipping\n"
+            print "  $mac: $fw_index has no fw_port mapping.  Skipping\n"
                 if $DEBUG;
             next;
         }
@@ -2052,7 +2052,7 @@ sub walk_fwtable {
         my $iid    = $bp_index->{$bp_id};
 
         unless (defined $iid) {
-            print "  Port $bp_id has no bp_index mapping. Skipping\n"
+            print "   $mac: Port $bp_id has no bp_index mapping. Skipping\n"
                 if $DEBUG;
             next;
         }
@@ -2060,13 +2060,13 @@ sub walk_fwtable {
         my $port  = $interfaces->{$iid};
 
         unless (defined $port) {
-            print "  SNMP iid $iid has no physical port matching. Skipping.\n"
+            print "  $mac: SNMP iid $iid has no physical port matching. Skipping.\n"
                 if $DEBUG;
             next;
         }
 
         unless (defined $dbports->{$port}){
-            print "  Port ($port) is not in database.  Skipped.\n"
+            print "  $mac: Port ($port) is not in database.  Skipped.\n"
                 if $DEBUG;
             next;
         }
