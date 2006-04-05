@@ -1229,11 +1229,4 @@ L<http://netdisco.org> and pass on any hints you may have in the INSTALL process
 It's a good place to keep up on new features and releases, and it's B<the>
 place to ask any questions. 
 
-=head2 Credits and Donations
-
-
-If you find Netdisco useful please consider donating to its developer.  Check
-out L<http://netdisco.org> for a SourceForge donation page and Amazon
-wish list.
-
 =cut
