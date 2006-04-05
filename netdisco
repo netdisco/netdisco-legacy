@@ -2052,7 +2052,7 @@ sub walk_fwtable {
         my $iid    = $bp_index->{$bp_id};
 
         unless (defined $iid) {
-            print "   $mac: Port $bp_id has no bp_index mapping. Skipping\n"
+            print "  $mac: Port $bp_id has no bp_index mapping. Skipping\n"
                 if $DEBUG;
             next;
         }
