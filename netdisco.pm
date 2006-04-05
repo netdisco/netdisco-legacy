@@ -18,6 +18,7 @@ Max Baker
 =head1 SYNOPSIS
 
 =cut
+
 package netdisco;
 use strict;
 use Carp;
@@ -53,6 +54,7 @@ Holds Database Handles, key is db name as set in config file.
 Index of current Database Handle.  Default C<'Pg'>;
 
 =cut
+
 $DB = 'Pg';
 
 =item %netdisco::CONFIG
@@ -72,6 +74,7 @@ Holds vertex information for C<make_graph()>
 Full path to sendmail executable
 
 =cut
+
 $SENDMAIL = '/usr/sbin/sendmail';
 
 =item $netdisco::SQLCARP - Carps SQL!
@@ -87,6 +90,7 @@ back to 0 via mason when you're done, unless you like watching Apache's
 error_log grow.
 
 =cut
+
 $SQLCARP=0;
 
 =item %PORT_CONTROL_REASONS
@@ -94,6 +98,7 @@ $SQLCARP=0;
 Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =cut
+
 %PORT_CONTROL_REASONS = ( 
                 'address'     => ['Address Allocation Abuse',
                                   'A system which does not obtain and/or use its address in a legitimate
@@ -124,6 +129,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 =item $VERSION - Sync'ed with Netdisco releases
 
 =cut
+
 $VERSION = '0.95-cvs';
 
 =back
@@ -167,6 +173,7 @@ Expires old entries matching given arguments.
 Adds a new entry or time stamps matching old entry.
 
 =cut
+
 sub add_node {
     my ($mac,$ip,$port) = @_;
     my $dbh = &dbh;
@@ -220,6 +227,7 @@ Takes a CIDR style network mask in number of bits (/24) and returns the older st
 bitmask.
 
 =cut
+
 sub bits_to_mask {
     my $bits = shift;
     return join(".",unpack("C4",pack("N", 2**32 - (2 ** (32-$bits)))));
@@ -230,6 +238,7 @@ sub bits_to_mask {
 Reads the config file and fills the C<%CONFIG> hash.
 
 =cut
+
 sub config {
     my $file = shift;
 
@@ -422,6 +431,7 @@ layer being true.  Most significant bit first.
     has_layer(00000100,3) = true
 
 =cut
+
 sub has_layer {
     my ($layers,$check_for) = @_;
     return  substr($layers,8-$check_for, 1);
@@ -433,6 +443,7 @@ sub has_layer {
 Returns the DNS server entry for the given ip or hostname.
 
 =cut
+
 sub hostname {
     my $ip = shift;
 
@@ -449,6 +460,7 @@ given argument appears to be in dotted octet notation, it
 does no DNS hits and just returns it.
 
 =cut
+
 sub getip {
     my $hostname = shift;
 
@@ -474,6 +486,7 @@ First argument can either be:
 Second argument is an array ref as returned from config, eg. C<bulkwalk_no>.
 
 =cut
+
 sub in_device {
     my $device = shift;
     my $to_match = shift;
@@ -533,6 +546,7 @@ is defined as single IP address, or CIDR block.  Partial CIDR format
 
 
 =cut
+
 sub in_subnet{
     my ($subnet,$ip) = @_;
 
@@ -571,6 +585,7 @@ blocks listed for a config file directive.
  print in_subnets('192.168.0.1','macsuck_no');
 
 =cut
+
 sub in_subnets {
     my ($ip,$config) = @_;
 
@@ -602,6 +617,7 @@ Also accepted :
   dump_subnet('4/24');
 
 =cut
+
 sub dump_subnet {
     my $subnet = shift;
 
@@ -644,6 +660,7 @@ Checks for types :
 
 
 =cut
+
 sub is_mac{
     my $mac = shift;
     my $hex = "[0-9a-fA-F]";
@@ -665,6 +682,7 @@ Inserts an entry in the C<log> table.
     log('error',"this is an error");
 
 =cut
+
 sub log {
     my ($class,$entry,$file) = @_;
 
@@ -677,6 +695,7 @@ sub log {
 Sends an E-Mail as Netdisco
 
 =cut
+
 sub mail {
     my ($to,$subject,$body) = @_;
     my $domain = $CONFIG{domain} || 'localhost';
@@ -696,6 +715,7 @@ Takes a netmask and returns the CIDR integer number of bits.
     mask_to_bits('255.255.0.0') = 16
 
 =cut
+
 sub mask_to_bits{
     my $mask = shift;
     
@@ -719,6 +739,7 @@ Returns true if the server want's to be secure and is, or true if the server doe
 Returns false if the server is not secure but wants to be.
 
 =cut
+
 sub is_secure {
 
     my $secure = $CONFIG{secure_server};
@@ -742,6 +763,7 @@ sub is_secure {
 =item url_secure(url)
 
 =cut
+
 sub url_secure {
     my $path = shift;
     
@@ -783,6 +805,7 @@ Used by C<sort {}> calls to sort by IP octet.
 If passed two hashes, will sort on the key C<ip> or C<remote_ip>.
 
 =cut
+
 sub sort_ip {
     my $aval = shift || $::a || $HTML::Mason::Commands::a || $a;
     my $bval = shift || $::b || $HTML::Mason::Commands::b || $b;
@@ -818,6 +841,7 @@ Works on hashes if a key named port exists.
 Cheers to Bradley Baetz (bbaetz) for improvements in this sub.
 
 =cut
+
 sub sort_port {
     my $aval = shift || $::a || $HTML::Mason::Commands::a || $a || '';
     my $bval = shift || $::b || $HTML::Mason::Commands::b || $b || '';
@@ -914,6 +938,7 @@ entries is added as a vertex.
 Nodes without topology information are not included.
 
 =cut
+
 sub make_graph {
     tryuse('Graph', ver => 0.50, die => 1);
     my $G = new Graph::Undirected;
@@ -1028,6 +1053,7 @@ If the given IP Address matches an alias of a device, returns
 the IP of the device the alias belongs to.
 
 =cut
+
 sub root_device {
     my $ip = shift;
     my $dbh = &dbh;
@@ -1057,6 +1083,7 @@ C<%args> can have key values of { pw, admin, port }
 Returns error message if problem.
 
 =cut
+
 sub user_add {
     my ($user, %args) = @_;
 
@@ -1103,6 +1130,7 @@ Returns result from C<DBI-E<gt>do()>
 Integer for number of rows deleted, or undef if error.
 
 =cut
+
 sub user_del{
     my $user = shift;
     my $dbh = &dbh;
@@ -1124,6 +1152,7 @@ returns the cached copy.
 Select database handle in use by localizing C<$netdisco::DB>
 
 =cut
+
 sub dbh {
     unless ($DBH{$DB} && $DBH{$DB}->ping) {
         my $connect = $CONFIG{"db_$DB"}        or die "dbh() - db_$DB not found in config info.\n";
@@ -1151,6 +1180,7 @@ sub dbh {
 Runs DBI::dbh->quote() on the text and returns it.
 
 =cut
+
 sub dbh_quote {
     my $text = shift;
 
@@ -1164,6 +1194,7 @@ sub dbh_quote {
 Sees if items to change in second hash are different or new compared to first.
 
 =cut
+
 sub hash_diff {
     my ($orig,$change) = @_;
 
@@ -1201,6 +1232,7 @@ On inserts in PostgreSQL, returns the OID of the row inserted.
 Or returns value from C<DBD::St::execute()>
 
 =cut
+
 sub insert_or_update {
     my ($table, $indexes, $values) = @_;
 
@@ -1293,6 +1325,7 @@ Supports
 Creates the hash %$OldDevices where the key is the IP address and the Value is the Layers
 
 =cut
+
 sub sql_column {
     my $dbh = &dbh;
 
@@ -1342,6 +1375,7 @@ Simple wrapper to C<$dbh-E<gt>do()>
 No quoting.
 
 =cut
+
 sub sql_do {
     my $sql = shift;
     my $dbh = &dbh;    
@@ -1360,6 +1394,7 @@ Internally calls sql_rows() -- See for Usage.
     my $hashref = sql_hash('device',['ip','ports'], {'ip'=>'127.0.0.1'});
 
 =cut
+
 sub sql_hash {
     my $results = sql_rows(@_);
     return undef unless defined $results;
@@ -1377,6 +1412,7 @@ search or to do a *text*.
 Default is non_exact.
 
 =cut
+
 sub sql_match{
     my $text = shift;
     my $exact_flag = shift || 0;
@@ -1513,6 +1549,7 @@ Will find all devices that are neither cisco or hp.
 =back
 
 =cut
+
 sub sql_rows {
     my $dbh = &dbh;
 
@@ -1628,6 +1665,7 @@ All arguments are passed directly to C<sql_hash()>
     my $count_ip = sql_scalar('device',['COUNT(ip)'],{'name' => 'dog'});
 
 =cut
+
 sub sql_scalar {
 
     my $row = sql_hash(@_) or return;
@@ -1652,6 +1690,7 @@ Options:
     full    => 1
 
 =cut
+
 sub sql_vacuum{
     my $table = shift;
     my %opts  = @_;
@@ -1720,6 +1759,7 @@ Options:
     die => 1 if you want to die instead of recover yourself
 
 =cut
+
 my %tryuseok;
 sub tryuse($%) {
     my $mod = shift;

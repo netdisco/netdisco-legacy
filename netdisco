@@ -185,6 +185,7 @@ exit;
 Discovers one device, stores its info, interfaces, and neighbors, and returns.
 
 =cut
+
 sub discover{
     my $hostname = shift;
 
@@ -227,6 +228,7 @@ sub discover{
 Calls discover() for each file already in device table.
 
 =cut
+
 sub refresh_all {
     $start_time = time;
 
@@ -266,6 +268,7 @@ sub refresh_all {
 Event loop that calls discover() as long as the @Discover_Queue has something in it.
 
 =cut
+
 sub run {
     my $root_device = shift;
     
@@ -333,6 +336,7 @@ sub run {
 Used to start a discovery based on topography file.  Will then proceed to do an initial mac_suck() and arp_nip() unless the topo_only_flag is set.
 
 =cut
+
 sub schlop {
     my ($file,$topo_only) = @_;
     &batch_mode('discover_file');
@@ -397,6 +401,7 @@ Pass reference to array of hash references holding link: lines from
 manual topology info.  Adds information to device_port table.
 
 =cut
+
 sub topo_add_link {
     my $links = shift;
 
@@ -464,6 +469,7 @@ sub topo_add_link {
 Loads and parses manual topography file. 
 
 =cut
+
 sub topo_load_file {
     my $file = shift;
 
@@ -543,6 +549,7 @@ Takes 4 optional arguments from @ARGV = (user,pw,port,admin)
 If all 4 are not there, then interactive mode is entered and prompts are given.
 
 =cut
+
 sub add_user {
     my ($user, $pw, $port, $admin) = @ARGV;
 
@@ -595,6 +602,7 @@ Redirects STDOUT to a log file with timestamp.
 Can be called recursively.  call batch_mode_end() to return to previous Output.
 
 =cut
+
 sub batch_mode{
     return unless $BatchMode;
 
@@ -652,6 +660,7 @@ Function returns file name of closed output file.
 Pass something as first parameter to force no compression.
 
 =cut
+
 sub batch_mode_end {
     my $no_compress = shift;
     return unless $BatchMode;
@@ -675,6 +684,7 @@ sub batch_mode_end {
 =item end_int_handler 
 
 =cut
+
 sub end_int_handler {
     &end;
     &batch_mode_end;
@@ -688,6 +698,7 @@ Cleanup routine that is called upon interrupt (ctrl-c) or end of routines.
 Prints various statistics to stdout or batch_redirect() and calls Netdisco::log().
 
 =cut
+
 sub end {
     return unless $start_time != 0;
 
@@ -772,6 +783,7 @@ sub end {
 Populates %Old_Devices with which devices are in the database.
 
 =cut
+
 sub load_old_devices {
     print "load_old_devices()\n" if $DEBUG;
     $OldDevices = sql_column('device',['ip','layers']);
@@ -785,6 +797,7 @@ Populates %Old_Nodes with which nodes are in the database.
 Nodes will have to have been seen in the last DAYS days.
 
 =cut
+
 sub load_old_nodes {
     my $days = shift;
     print "load_old_nodes()\n" if $DEBUG;
@@ -806,6 +819,7 @@ Parses file oui.txt in current directory.  Uses contents to stuff
 table "oui".
 
 =cut
+
 sub parse_oui {
     print "parse_oui()\n";
     my $oui_file = "$CONFIG{home}/oui.txt";
@@ -844,6 +858,7 @@ sub parse_oui {
 Signal handler for SIGALARM
 
 =cut
+
 sub timeout {
     die "timeout";
 }
@@ -861,6 +876,7 @@ Connects to device and reads its ARP cache. Then adds entries to C<node_ip> tabl
 Cheers to Jim Warner for the original arpnip.
 
 =cut
+
 sub arpnip {
     my $hostname = shift;
 
@@ -951,6 +967,7 @@ Visits every Layer 3 device and trys to get its ARP Cache.
 Calls arpnip() for each device.  
 
 =cut
+
 sub arpwalk {
     $start_time = time;
     
@@ -994,6 +1011,7 @@ If an optional version and subclass are given, no device type discovery is done.
 If a more specific device type is not found  (is probably not a network device) then -1 is returned.
 
 =cut
+
 sub create_device {
     my %args = @_;
     return undef unless defined $args{DestHost} and defined $args{Community};
@@ -1083,6 +1101,7 @@ Looks to see if the device has a master IP instead of the one given.
 Checks for root_ip() method, then tries to lookup the reverse entry for sysName.0
 
 =cut
+
 sub device_root {
     my $device = shift;
     
@@ -1112,6 +1131,7 @@ Finds all the CDP information on the device and stores the results in device_nod
 Adds to the @Discover_Queue
 
 =cut
+
 sub find_neighbors {
     my $device = shift;
    
@@ -1234,6 +1254,7 @@ If no cached values are available, or if they fail, then the values from the con
 tried.
 
 =cut
+
 sub get_device {
     my $hostname = shift;
     my $device   = undef;
@@ -1317,6 +1338,7 @@ Strings in the config file.
 Returns undef or -1 on error.
 
 =cut
+
 sub get_device_rw {
     my ($host,$ver) = @_;
     my $device;
@@ -1343,6 +1365,7 @@ Grab netmask and ip from device interfaces.  Determine device subnets
 mathematically based upon the interface information. 
 
 =cut
+
 sub get_subnets {
     my $device = shift;
 
@@ -1398,6 +1421,7 @@ Fills the global %PortMAC with MAC addresses of ports already discovered.
 This is to make sure we don't mac-suck existing ports, such as VLANs.
 
 =cut
+
 sub mac_getportmacs {
     print "mac_getportmacs() ..." if $DEBUG;
     
@@ -1427,6 +1451,7 @@ have a neighbor listed.   If the device has VLANs, it will walk each
 VLAN and get the MAC addresses from there.
 
 =cut
+
 sub macsuck{
     my $hostname = shift;
 
@@ -1560,6 +1585,7 @@ Does two things  :
 2. Stores the found forwarding table entries to the database.
 
 =cut
+
 sub mac_savecache {
     my $fw_cache = shift;
     my $dbports  = shift;
@@ -1598,6 +1624,7 @@ Grabs all the devices out of the database.
 Runs macsuck() on each device that has layer2 capabilites.
 
 =cut
+
 sub macwalk {
     $start_time = time;
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
@@ -1634,6 +1661,7 @@ sub macwalk {
 =item port_control(switch,port,direction)
 
 =cut
+
 sub port_control {
     my ($switch,$port,$direction,$job) = @_;
     my $vlan = $job->{subaction};
@@ -1747,6 +1775,7 @@ sub port_control {
 Used to shut ports on and off and to change VLANs.
 
 =cut
+
 sub port_switch {
     my $job = shift;
 
@@ -1827,6 +1856,7 @@ end_body
 Calls all the global methods and sends the results off to the database
 
 =cut
+
 sub store_device {
     my $device = shift;
 
@@ -1933,6 +1963,7 @@ Gets all the interface information using Table Methods in SNMP::Info.
 Deletes the old interface entries in device_port and puts in new ones.
 
 =cut
+
 sub store_interfaces { 
     my $device = shift;
     
@@ -2025,6 +2056,7 @@ Walks the Forwarding table from the C<BRIDGE-MIB>
 for the given device, and then adds MAC addresses to the C<node> table.
 
 =cut
+
 sub walk_fwtable {
     my ($device,$dbports,$interfaces,$fw_cache) = @_;
 
@@ -2272,6 +2304,7 @@ Routine to clean out devices that are now listed as aliases of another device. T
 usually necessary after a device has been merged into another one.
 
 =cut
+
 sub alias_clean {
     print "Cleaning out Aliases that showed up as devices :\n";
     
@@ -2296,6 +2329,7 @@ sub alias_clean {
 Dumps node_ip table to files arp_current and arp_archive.
 
 =cut
+
 sub arp_dump {
     my $dir = shift;
 
@@ -2356,6 +2390,7 @@ to a new IP address.  First tries to discover new device, then
 proceeds to move over old information.  
 
 =cut
+
 sub change_device_ip {
     my ($from_ip,$to_ip) = @_;
     
@@ -2410,6 +2445,7 @@ Checks for nodes on non existant ports and prints a warning
 Removes nodes that are on uplink ports.
 
 =cut
+
 sub db_clean {
     print "Database Cleanup : \n";
 
@@ -2487,6 +2523,7 @@ sub db_clean {
 Dumps out the device,device_ip, and topology info from device_port to file 'devices'.
 
 =cut
+
 sub dev_dump {
     my $dir = shift;
 
@@ -2550,6 +2587,7 @@ in the config file.
 Cheers to Brian Wilson for his patch for the start of this feature.
 
 =cut
+
 sub expire_data {
     my ($type, $days, $archive_only) = @_;
     $archive_only ||=0;
@@ -2613,6 +2651,7 @@ Set second argument to true to remove all the connected nodes and their
 IP mappings as well.
 
 =cut
+
 sub expire_device {
     my ($devname,$expire_nodes) = @_;
     my $ip  = getip($devname);
@@ -2656,6 +2695,7 @@ Set port to limit the expiration to a specific port.
 Set archive_only to 1 to archive the nodes on the device.
 
 =cut
+
 sub expire_nodes {
     my ($dev,$archive,$port) = @_;
     my $ip  = getip($dev);
@@ -2695,6 +2735,7 @@ Subnet is in CIDR format, or any other format that Postgres likes.
 Runs expire_ips afterwards to cleanup.
 
 =cut
+
 sub expire_nodes_subnet {
     my $subnet  = shift;
     my $confirm = shift;
@@ -2755,6 +2796,7 @@ Expires IPs not in use in node or device_port
  group by i.mac;
 
 =cut
+
 sub expire_ips {
     print "expire_ips()\n";
     my $sql = 'DELETE FROM node_ip WHERE mac IN ';
@@ -2780,6 +2822,7 @@ Adds a day stamp, no time-stamp.
 May need to be changed if $nodes takes up too much memory.
 
 =cut
+
 sub mac_dump {
     my $dir=shift;
 
@@ -2845,6 +2888,7 @@ Adds a day stamp, no time-stamp.
 May need to be changed if $nodes takes up too much memory.
 
 =cut
+
 sub netbios_dump {
     my $dir=shift;
 
@@ -2913,6 +2957,7 @@ Nightly maintance routine that creates backups of the device,node, and node_ip t
 Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
 
 =cut
+
 sub nightly {
     my $no_batch = shift || 0;
     print "nightly() - Starting nightly cleanup and backup routines\n";
@@ -2977,6 +3022,7 @@ sub nightly {
 Dumps the device table out to NMIS (http://www.sins.com.au/nmis/) style config file.
 
 =cut
+
 sub nmis_dump {
     
     my $dump_file = $CONFIG{nmis_dump};
@@ -3036,6 +3082,7 @@ end_print
 Creates netmap of network.  Calls Netdisco::make_graph() and graph_each()
 
 =cut
+
 sub graph {
     my $no_batch = shift || 0;
 
@@ -3100,6 +3147,7 @@ Generates subgraph. Called from graph().  Calls graph_node().
 Does actual GraphViz calls.
 
 =cut
+
 sub graph_each  {
     my ($G,$name) = @_;
 
@@ -3232,6 +3280,7 @@ sub graph_each  {
 Checks for mapping settings in config file and adds node to the GraphViz object.
 
 =cut
+
 sub graph_addnode {
     my $gv = shift;
     # non lexical on purpose
@@ -3316,6 +3365,7 @@ sub graph_addnode {
 start,stop,restart,status
 
 =cut
+
 sub admin_daemon_ctl {
     my $cmd = shift;
 
@@ -3361,6 +3411,7 @@ Returns 0 if daemon is not running or returns pid number if running.
 pid argument is optional, used in stop function
 
 =cut
+
 sub admin_daemon_status {
     my $pid = shift || &admin_daemon_pid;
 
@@ -3387,6 +3438,7 @@ sub admin_daemon_status {
 Resident copy of netdisco to handle requests from the admin panel.
 
 =cut
+
 sub admin_daemon {
     my $pid = undef;
     # Check if we're already running
@@ -3460,6 +3512,7 @@ If not supplied arguments, Reads pid of daemon pid from F<netdisco_daemon.pid>
 If supplied arguments, writes the pid out to that file.
 
 =cut
+
 sub admin_daemon_pid {
     my $pid = shift;
     my $pid_file = $CONFIG{daemon_pid} || 'netdisco_daemon.pid';
@@ -3486,6 +3539,7 @@ Runs each job. Redirects output to data/admin/job-num-date.log
 job_obj is the sql hash object for each job.
 
 =cut
+
 sub admin_daemon_job {
     my $job = shift;
     my $id     = $job->{job};
