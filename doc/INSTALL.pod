@@ -71,7 +71,7 @@ Reported working for versions 7.2, 7.3, 7.4, 8.0
 
 1.3.x advised,  2.x supported.
 
-=item * mod_perl   
+=item * mod_perl
 
 Version to match Apache - 1.29 or higher recommended. 
 
@@ -84,7 +84,7 @@ Version 2.8 or higher recommended.
 
 =back
 
-See I<INSTALL> below for details on how to retrieve and install each one.
+See L<INSTALL|install> below for details on how to retrieve and install each one.
 
 =head2 OS
 
@@ -189,14 +189,14 @@ write access on Netdisco's files.
 
 Add the unix account names of administrators that will modify the 
 source code or use the command line interface interface to the C<netdisco>
-group in F</etc/groups>.
+group in F</etc/group>.
 
 Don't forget to logout and login after adding yourself to a group.
 
 =head2 4. PostgreSQL
 
-Netdisco runs Postgres as its database back-end.  A mySQL and Oracle port 
-are in development.
+Netdisco runs Postgres as its database back-end.  mySQL and Oracle
+ports have been rumored but have not yet surfaced.
 
 =head3 4.1.  Install Postgres
 
@@ -206,13 +206,23 @@ are in development.
 
 First install Postgres from ports:
 
-    cd /usr/ports/database/postgresql81-server
+    cd /usr/ports/databases/postgresql81-server
     make install
 
-Next initialize the database :
+Make sure postgresql is configured to start at system startup time by
+putting
 
-    more /usr/local/pgsql/post-install-notes
-    su -l pgsql -c initdb 
+    postgresql_enable="YES"
+
+in F</etc/rc.conf>.
+
+Next initialize the database:
+
+    /usr/local/etc/rc.d/010.pgsql.sh initdb
+
+And start the database server:
+
+    /usr/local/etc/rc.d/010.pgsql.sh start
 
 =item [4.1.2] Mandrake Linux
 
@@ -343,6 +353,18 @@ C<sql/pg_run>.  Enter the database user password given above.
     cd /usr/local/netdisco/sql
     ./pg_run
 
+You should see output similar to the below:
+
+    Welcome to psql 8.0.6, the PostgreSQL interactive terminal.
+
+    Type:  \copyright for distribution terms
+	   \h for help with SQL commands
+	   \? for help with psql commands
+	   \g or terminate with semicolon to execute query
+	   \q to quit
+
+    netdisco=> 
+
 =item [4.2.5] Create Tables
 
 Once you are sure the database is setup correctly, create the database 
@@ -378,7 +400,12 @@ Make sure that Postgres is set to start automatically.
 
 =item BSD
 
-Make sure that the file in C</usr/local/etc/rc.d> is alright.
+Make sure that the file in C</usr/local/etc/rc.d> is alright and
+you have added
+
+    postgresql_enable="YES"
+
+to F</etc/rc.conf>.
 
 =back
 
@@ -386,6 +413,7 @@ Make sure that the file in C</usr/local/etc/rc.d> is alright.
 
 Read the section in F<README> about Database Maintenance... every once in a
 while you may have to run a C<VACUUM> and C<REINDEX> by hand if things get too slow.
+This appears to be less necessary in postgresql 8.0 and up.
 
 =item [4.2.9] Remote Database (Optional)
 
@@ -406,7 +434,7 @@ Don't forget to restart Postgres after changing the F<pg_hba.conf> file.
 
 =head2 5. SNMP
 
-There are three components to setup for SNMP
+There are three components to set up for SNMP:
 
 =head3 5.1.  Net-SNMP
 
@@ -418,7 +446,8 @@ See OS-specific notes below.
 
 =item [5.1.1] Download Net-SNMP from http://net-snmp.sourceforge.net
 
-This used to be called ucd-snmp.
+This used to be called ucd-snmp.  However, don't download ucd-snmp; it
+is too old.
 
 =item [5.1.2] Install Net-SNMP to include Perl module that comes inside the distribution.
 
@@ -557,7 +586,7 @@ They are also available as a separate download on source forge.
 
 GraphViz is used to create the Network Map.
 
-It lives at L<http://www.research.att.com/sw/tools/graphviz/>.
+It lives at L<http://www.graphviz.org/>.
 
 =over
 
@@ -644,8 +673,9 @@ NOTE: You can safely ignore all warnings about C<size too small for label>.
 
 I<Apache2> -- 
 
-Until mod_perl 2.0 is released as stable, Mason will not run under Apache2.  
-Netdisco will not run under Apache2 until that point. 
+Using recent versions of Mason and mod_perl, netdisco runs fine under
+Apache2.  One reported success uses mod_perl 2.0.2 and Mason 1.32.
+See configuration details under [7.4.4].
 
 =head3 7.1.  MAC OS X
 
@@ -712,7 +742,7 @@ In the file F<commonhttpd.conf> add the Alias line :
 
 =back
 
-=head3 7.3.  Apache From Scratch
+=head3 7.3.  Apache 1.3.x From Scratch
 
 Install Apache 1.3.x and mod_perl 1.x and mod_ssl
 
@@ -865,6 +895,22 @@ If you are not using Virtual Hosts, then add this line under the I<netdisco_apac
 
 Make sure you have this include line for the secure server virtual host 
 B<*:443> at the bottom of F<http.conf>. 
+
+=item [7.4.4] Apache2 additions
+
+Make sure that something similar to the following LoadModule
+commands are in your httpd.conf:
+
+    LoadModule perl_module  libexec/apache2/mod_perl.so
+    LoadModule apreq_module libexec/apache2/mod_apreq2.so
+
+(Note that these should have been done as part of installing mod_perl
+and libapreq2, but not all installations do this).
+
+Add the following two lines in your httpd.conf:
+
+    PerlModule Apache2::compat
+    PerlModule Apache2::Request
 
 =back
 
@@ -1030,15 +1076,28 @@ Check Apache's F<error_log> for possible errors.
 
     /usr/local/apache/bin/apachectl start
 
-=item [11.2] Used the Apache installed by Mandrake
+=item [11.2] Use the Apache installed by Mandrake
 
 
     /etc/rc.d/init.d/httpd restart
 
+=item [11.3] Use the Apache installed by BSD Ports
+
+    /usr/local/etc/rc.d/apache2.sh start
+
+or
+
+    /usr/local/etc/rc.d/apache.sh start
+
 
 =back
 
-Also, double-check that Apache starts on its own at reboot.
+Also, double-check that Apache starts on its own at reboot.  On BSD,
+make sure that you've added
+
+    apache2_enable="YES"
+
+(or similar) to F</etc/rc.conf>.
 
 =head2 12. Discover a Device in Netdisco
 
@@ -1149,7 +1208,7 @@ Now you should be able to use this command:
 
 =item FreeBSD
 
-    ln -s /usr/local/netdisco/bin/netdisco_daemon /usr/local/etc/rc.d
+    ln -s /usr/local/netdisco/bin/netdisco_daemon /usr/local/etc/rc.d/netdisco.sh
 
 =item Other
 
@@ -1174,7 +1233,7 @@ place to ask any questions.
 
 
 If you find Netdisco useful please consider donating to its developer.  Check
-out L<http://netdisco.org> for a Source Forge donation page and Amazon
+out L<http://netdisco.org> for a SourceForge donation page and Amazon
 wish list.
 
 =cut
