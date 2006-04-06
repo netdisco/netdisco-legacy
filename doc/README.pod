@@ -1275,6 +1275,11 @@ See patch # 1364650 in Net-SNMP or bug # 1176130.
 
 INT. Default version of SNMP protocol to connect with.
 
+=item snmptimeout
+
+INT. Settings for 'Timeout' field passed to SNMP::Session.  Micro-seconds before
+retry, Default 1000000 micro-seconds = 1 second.
+
 =item snmpretries
 
 INT. Settings for 'Retries' field passed to SNMP::Session

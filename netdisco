@@ -1020,6 +1020,7 @@ sub create_device {
     $args{Debug}         = $DEBUG;
     $args{Version}       = $args{Version} || $CONFIG{snmpver} || 2;
     $args{Retries}       = $CONFIG{snmpretries} || 2   unless defined $args{Retries};
+    $args{Timeout}       = $CONFIG{snmptimeout} || 1000000 unless defined $args{Timeout};
     $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
     $args{BulkWalk}      = 0                           if     defined $CONFIG{bulkwalk_off} and $CONFIG{bulkwalk_off};
     $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
