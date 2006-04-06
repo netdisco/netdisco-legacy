@@ -6,6 +6,14 @@
 
 New Device Support in SNMP::Info 1.0:
     + Foundry EdgeIron
+    + Nortel Passport/Accelar 1100 and 1200 series
+    + Nortel Passport/Accelar 8100 series
+    + Nortel Ethernet Routing Switch/Passport 1600 series
+    + Extreme Alpine and Summit switches
+    + Aruba wireless switches
+    + Nortel 2700 series (Airespace) wireless switches
+    + Nortel/Bay/Synoptics System 3000 and 281X hubs
+    + Juniper
 
 Features:
     + [1107564] Disable BULKWALK on a per device or per device type basis:
@@ -35,6 +43,7 @@ Features:
     + Add macsuck_only, arpnip_only, discover_only limits
     + Get SSIDs and channel from wireless base station ports, and display
       SSID in device port, add SSID inventory and SSID search
+    + [1462199] Add SNMP timeout parameter to create_device()
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.
