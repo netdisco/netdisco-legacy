@@ -57,6 +57,8 @@ Bugfixes:
     * [1407942] IP Inventory needs to cross-reference device and device_ip
     * nbtwalk would crash at the end if there are no nodes to visit.
     * Device Inventory by Age wouldn't show the DNS name
+    * [1085591] Loading the "Search on Vendor or OUI" list could take
+                a long time if your database was full of bogus nodes
 
 
 0.94beta (12/06/04)

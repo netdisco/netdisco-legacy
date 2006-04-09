@@ -50,3 +50,7 @@ CREATE TABLE device_port_ssid (
 );
 
 CREATE INDEX idx_device_port_ssid_ip_port ON device_port_ssid(ip,port);
+
+--
+-- The OUI field in the oui database is now lowercase.
+UPDATE oui SET oui=lower(oui);

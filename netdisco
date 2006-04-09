@@ -845,6 +845,7 @@ sub parse_oui {
         my $company = $OUI{$oui};
         # make 00-00-00 into 00:00:00
         $oui =~ s/-/:/g;
+        $oui = lc($oui);
         print "$oui : $company\n" if $DEBUG;
         insert_or_update('oui',{},{'oui' => $oui, 'company' => $company } );
         $oui_count++;
