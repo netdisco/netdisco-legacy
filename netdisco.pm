@@ -115,7 +115,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
                                   'The system has been compromised and poses a high risk to campus
                                    resources. If other behavior is observed, such as involvement in a DoS attack, that reason code should be used in place of this one.'],
                 'copyright'   => ['Copyright Violation',
-                                  "Following the takedown provision of the DMCA to limit the University's copyright liability."],
+                                  "Following the takedown provision of the DMCA to limit the organization's copyright liability."],
                 'exploit'     => ['Remote Exploit Possible',
                                   'A remotely exploitable vulnerability posing high risk exists on the system.'],
                 'polling'     => ['Excessive Polling of DNS/DHCP/SNMP',
