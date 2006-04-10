@@ -624,7 +624,9 @@ foreach my $port (sort sort_port @$ports){
     <NOBR><IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
     <NOBR><IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
     <NOBR><IMG SRC="icon_v.gif" BORDER=0> VLAN</NOBR> 
+% if ($port_info) {
     <NOBR><IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
+% }
     </TD>
 </TR>
 %}
