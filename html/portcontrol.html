@@ -132,7 +132,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     } elsif (!$err and $status eq 'error'){
         $cmd = 'err';
         $err = "[Failed] <P>$job->{log}<BR>\n";
-    } else {
+    } elsif (!$err) {
         $cmd = 'err';
         $err = "[Failed] I don't know what happened to the job.  Status: $job->{status}. <P>Log: $job->{log}<BR>.\n";
     }
