@@ -103,9 +103,11 @@ if ($err) {
     $r->connection->user($db_user->{username});
 
     # Update record
-    insert_or_update('users',{'username' => $m->session->{user}},
+    if ($useuserdb) {
+        insert_or_update('users',{'username' => $m->session->{user}},
 		     {'last_on' => scalar(localtime)}
 		    );
+    }
 
     # Log Login
     insert_or_update('user_log',{},
