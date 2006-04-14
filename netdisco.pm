@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
-                       dump_subnet in_device
+                       active_subnets dump_subnet in_device
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum
 		       tryuse/;
 
@@ -597,6 +597,28 @@ sub in_subnets {
     }
 
     return 0;
+}
+
+=item active_subnets()
+
+Returns array ref containing all rows from the subnets table that
+have a node or device in them.
+
+=cut
+
+sub active_subnets {
+    my $subnets = sql_rows('subnets',['net'],undef,undef,'order by net');
+    my $active = [];
+
+    foreach my $row (@$subnets) {
+	my $net = $row->{net};
+	my $found = 0;
+	$found ||= sql_scalar('node_ip',['1 as yup'],{'ip' => \\"<< '$net'"});
+	$found ||= sql_scalar('device',['1 as yup'],{'ip' => \\"<< '$net'"});
+	$found ||= sql_scalar('device_ip',['1 as yup'],{'alias' => \\"<< '$net'"});
+	push(@$active, $net) if $found;
+    }
+    return $active;
 }
 
 =item dump_subnet(cidr style subnet)
