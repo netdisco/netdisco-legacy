@@ -59,6 +59,10 @@ Bugfixes:
     * Device Inventory by Age wouldn't show the DNS name
     * [1085591] Loading the "Search on Vendor or OUI" list could take
                 a long time if your database was full of bogus nodes
+    * Nightly backup would crash with a million archived values in node_ip
+    * Database clean (-K or part of -B) would delete nodes on ports
+      that appeared to be uplink ports except the neighbor wasn't in
+      netdisco.
 
 
 0.94beta (12/06/04)

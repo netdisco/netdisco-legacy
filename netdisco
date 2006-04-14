@@ -2343,14 +2343,14 @@ sub arp_dump {
     $BatchMode=1;
 
     # Dump Current
-    my $nodes = sql_rows('node_ip',['mac','ip as remote_ip','active',
+    my $sth = sql_query('node_ip',['mac','ip as remote_ip','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                          {'active' => 1}
+                          {'active' => 1}, undef, 'order by remote_ip'
                         );
 
     &batch_mode("$dir/arp_current");
-    foreach my $row (sort {sort_ip} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next unless $active;
         my $mac = $row->{mac};  
@@ -2363,13 +2363,13 @@ sub arp_dump {
     &batch_mode_end;
 
     # Dump Archive
-    $nodes = sql_rows('node_ip',['mac','ip as remote_ip','active',
+    $sth = sql_query('node_ip',['mac','ip as remote_ip','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                          {'active' => 0}
+                          {'active' => 0}, undef, 'order by remote_ip'
                            );
     &batch_mode("$dir/arp_archive");
-    foreach my $row (sort {sort_ip} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next if $active;
         my $mac = $row->{mac};  
@@ -2453,19 +2453,22 @@ sub db_clean {
 
     # See what devices exist
     &load_old_devices ;
-    # Grab existing mac addresses for switch ports
-    &mac_getportmacs;
 
     print "  Deleting nodes that are actually device ports...\n";
-    # Delete MAC addresses that are ports on devices
-    foreach my $mac (keys %$PortMAC){
-        sql_do(qq/DELETE from node where mac = '$mac'/);
-        sql_do(qq/DELETE from node_ip where mac = '$mac'/);
-    }
+    my $num = sql_do(q/DELETE FROM node WHERE mac IN (select mac from device_port)
+                                 OR mac IN (select mac from device)/);
+    print "    $num MAC entries deleted\n";
+    $num = sql_do(q/DELETE FROM node_ip WHERE mac IN (select mac from device_port)
+                                 OR mac IN (select mac from device)/);
+    print "    $num ARP entries deleted\n";
     
-    print "  Checking for Nodes that exist on non-existant ports:\n";
-    my $NodeList = sql_rows('node',['mac','switch','port']);
-    foreach my $row (@$NodeList){
+    print "  Checking for Nodes that exist on nonexistent ports:\n";
+    # This query returns only rows from node that refer to a port
+    #  that's not in device_port.
+    my $sth = sql_query('node LEFT JOIN device_port ON device_port.ip=node.switch AND device_port.port=node.port',
+			['node.mac','node.switch','node.port'],
+			{'device_port.ip' => 'IS NULL'});
+    while (my $row = $sth->fetchrow_hashref()) {
         my $mac  = $row->{mac};  
         my $ip   = $row->{switch};
         my $port = $row->{port};
@@ -2477,16 +2480,13 @@ sub db_clean {
         # If the deviec exists and doesn't have ports, do not delete it.  Probably a refresh() error.
         my $nuke = 0;
         if ($have_device){
-            my $have_port = sql_scalar('device_port',['1'],{'ip'=>$ip,'port'=>$port}) || 0;
-            unless ($have_port){
-                my $ports = sql_scalar('device_port',['count(*)'],{ip=>$ip});
-                if (defined $ports and $ports){
-                    print "    $mac \@ $ip/$port. Port no longer exists. Removed.\n";
-                    $nuke++;
-                } else {
-                    print "    $mac \@ $ip/$port. Device has no ports.  Run -e $ip if appropriate.\n";
-                }
-            }
+	    my $ports = sql_scalar('device_port',['count(*)'],{ip=>$ip});
+	    if (defined $ports and $ports){
+		print "    $mac \@ $ip/$port. Port no longer exists. Removed.\n";
+		$nuke++;
+	    } else {
+		print "    $mac \@ $ip/$port. Device has no ports.  Run -e $ip if appropriate.\n";
+	    }
         } else  {
             print "    $mac \@ $ip/$port. Device no longer exists. Removed.\n";
             $nuke++;
@@ -2498,20 +2498,31 @@ sub db_clean {
         }
     }
 
-    &load_old_devices;
     print("  Removing nodes that are listed on uplink ports...\n");
-    my $dev_ports = sql_rows('device_port',['ip','port'],{'remote_ip' => 'IS NOT NULL'});
+    # This query returns only the possible uplink ports
+    #  that have nodes on them.
+    my $dev_ports = sql_rows('device_port, node',
+                ['distinct ip','device_port.port','remote_ip'],
+                {'remote_ip' => 'IS NOT NULL',
+                 'device_port.ip'=>\'node.switch',
+                 'device_port.port'=>\'node.port'});
 
     foreach my $dev_port (@$dev_ports){
-        my $ip   = $dev_port->{ip};
-        my $port = $dev_port->{port};
-        $ip      = defined $Aliases->{$ip} ? $Aliases->{$ip} : $ip;
-        my $layers = $OldDevices->{$ip};
-        
+        my $ip        = $dev_port->{ip};
+        my $port      = $dev_port->{port};
+        my $remote_ip = $dev_port->{remote_ip};
+        $remote_ip    = defined $Aliases->{$remote_ip} ? $Aliases->{$remote_ip} : $remote_ip;
+        my $layers    = $OldDevices->{$remote_ip};
+
+        print "$ip / $port -> $remote_ip " .
+                    (defined($layers) ? "with layers $layers - deleting nodes"
+                                      : "(not deleting, not discovered)") . "\n" if $DEBUG;
         next unless defined $layers;
         # If Neighbor is not part of topology, leave it.
         if (has_layer($layers,2) or has_layer($layers,3)){
-            sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
+            my $deleted;
+            $deleted = sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
+            print "    $deleted nodes deleted from $ip / $port\n";
         }
     }
     print "Done.\n"; 
@@ -2787,30 +2798,18 @@ sub expire_nodes_subnet {
 
 =item expire_ips()
 
-Expires IPs not in use in node or device_port
+Expires IPs not in use in node.
 
- select i.mac from node_ip i where 
-    not exists 
-        (select 1 from node n where n.mac = i.mac limit 1 ) 
-    and 
-    not exists 
-        (select 1 from device_port p where p.mac = i.mac limit 1) 
- group by i.mac;
+ delete from node_ip where 
+    mac not in
+        (select mac from node) 
 
 =cut
 
 sub expire_ips {
     print "expire_ips()\n";
-    my $sql = 'DELETE FROM node_ip WHERE mac IN ';
-    $sql   .= '(SELECT i.mac FROM node_ip i WHERE';
-    $sql   .= ' NOT EXISTS (SELECT 1 FROM node n WHERE n.mac = i.mac LIMIT 1)';
-    $sql   .= ' AND';
-    $sql   .= ' NOT EXISTS (SELECT 1 FROM device_port p WHERE p.mac = i.mac LIMIT 1)';
-    $sql   .= ')';
             
-    $DEBUG and print "\n\n  $sql\n";
-    my $rows;
-    $rows = sql_do($sql);
+    my $rows = sql_do("DELETE FROM node_ip WHERE mac NOT IN (SELECT mac FROM node)");
     $rows = $rows || 0;
     print "Deleted $rows rows.\n";
     sql_vacuum('node_ip','print'=>1);
@@ -2820,8 +2819,6 @@ sub expire_ips {
 
 Dumps the node table out to mac_current.txt and mac_archive.txt.
 Adds a day stamp, no time-stamp.
-
-May need to be changed if $nodes takes up too much memory.
 
 =cut
 
@@ -2835,15 +2832,15 @@ sub mac_dump {
     $BatchMode=1;
 
     # Dump Current
-    my $nodes = sql_rows('node',['mac','switch','port','active',
+    my $sth = sql_query('node',['mac','switch','port','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                           {'active' => 1}
+                           {'active' => 1}, undef, 'order by mac'
                         );
 
     &batch_mode("$dir/mac_current");
 
-    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next unless $active;
         my $mac = $row->{mac};  
@@ -2857,15 +2854,15 @@ sub mac_dump {
     &batch_mode_end;
 
     # Dump Archive
-    $nodes = sql_rows('node',['mac','switch','port','active',
+    $sth = sql_query('node',['mac','switch','port','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                           {'active' => 0}
+                           {'active' => 0}, undef, 'order by mac'
                            );
 
     &batch_mode("$dir/mac_archive");
 
-    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next if $active;
         my $mac = $row->{mac};  
@@ -2887,8 +2884,6 @@ sub mac_dump {
 Dumps the node_nbt table out to netbios_current.txt and netbios_archive.txt.
 Adds a day stamp, no time-stamp.
 
-May need to be changed if $nodes takes up too much memory.
-
 =cut
 
 sub netbios_dump {
@@ -2901,15 +2896,15 @@ sub netbios_dump {
     $BatchMode=1;
 
     # Dump Current
-    my $nodes = sql_rows('node_nbt',['mac','nbname','domain','server','nbuser','active',
+    my $sth = sql_query('node_nbt',['mac','nbname','domain','server','nbuser','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                           {'active' => 1}
+                           {'active' => 1}, undef, 'order by mac'
                         );
 
     &batch_mode("$dir/netbios_current");
 
-    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next unless $active;
         my $mac    = $row->{mac};  
@@ -2925,15 +2920,15 @@ sub netbios_dump {
     &batch_mode_end;
 
     # Dump Archive
-    $nodes = sql_rows('node_nbt',['mac','nbname','domain','server','nbuser','active',
+    $sth = sql_query('node_nbt',['mac','nbname','domain','server','nbuser','active',
                                     'extract(epoch from time_first) as time_first', 
                                     'extract(epoch from time_last) as time_last'],
-                           {'active' => 0}
+                           {'active' => 0}, undef, 'order by mac'
                            );
 
     &batch_mode("$dir/netbios_archive");
 
-    foreach my $row (sort {$a->{mac} cmp $b->{mac}} @$nodes){
+    while (my $row = $sth->fetchrow_hashref()) {
         my $active = $row->{active};
         next if $active;
         my $mac    = $row->{mac};  
@@ -2956,7 +2951,9 @@ sub netbios_dump {
 
 Nightly maintance routine that creates backups of the device,node, and node_ip tables. 
 
-Calls mac_dump(), arp_dump(), and dev_dump(), db_clean() and VACUUM ANALYZE
+Calls expire_data(), nmis_dump(),
+mac_dump(), arp_dump(), dev_dump(), netbios_dump(),
+db_clean() and VACUUM ANALYZE
 
 =cut
 
