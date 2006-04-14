@@ -30,7 +30,7 @@ use Digest::MD5;
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
-                       sql_hash sql_column sql_rows add_node add_arp add_nbt dbh sql_match
+                       sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        dump_subnet in_device
@@ -1551,6 +1551,39 @@ Will find all devices that are neither cisco or hp.
 =cut
 
 sub sql_rows {
+    my $sth = sql_query(@_);
+    # If the query failed, return undef.
+    return undef if (!defined($sth));
+    # calling fetchall_ with {} forces it to return hashes
+    return $sth->fetchall_arrayref({});
+}
+
+=item sql_query(table, [columns] , {where} ,OR, orderbystring)
+
+Returns a DBI state handle on which the SQL query has been prepare()d and
+execute()d.  This function is good for large queries instead of
+sql_rows(), as the whole result set does not need to be read into
+memory.
+
+Code such as
+
+    my $nodes = sql_rows(...);
+    foreach my $row (@$nodes) {
+        ...
+    }
+
+can be replaced by
+
+    my $sth = sql_query(...);
+    while (my $row = $sth->fetchrow_hashref()) {
+        ...
+    }
+
+The arguments are exactly the same as sql_rows().
+
+=cut
+
+sub sql_query {
     my $dbh = &dbh;
 
     my ($table,$column,$wherehash,$boolean,$orderby) = @_;
@@ -1645,13 +1678,12 @@ sub sql_rows {
 
     my $sth = $dbh->prepare($sql);
     if (!defined $sth) {
-        carp("sql_rows($sql) - $DBI::errstr\n");
+        carp("sql_query($sql) - $DBI::errstr\n");
         return undef;
     }
     $sth->execute;
 
-    # calling fetchall_ with {} forces it to return hashes
-    return  $sth->fetchall_arrayref({});
+    return $sth;
 }
 
 =item sql_scalar(table,[column],{where}) 
