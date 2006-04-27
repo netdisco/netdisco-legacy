@@ -835,7 +835,8 @@ This step sets up mod_perl for this copy of apache :
         EVERYTHING=1 \
         DO_HTTPD=1 \
         USE_APACI=1 \
-        PREP_HTTPD=1
+        PREP_HTTPD=1 \
+        PERL_SECTIONS=1
 
  make
 
