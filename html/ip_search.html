@@ -28,6 +28,7 @@
 %       foreach my $s (sort @sorts){
             <OPTION VALUE="<%$s%>" <% $sort eq $s ? 'SELECTED' : ''%>><%$s%>
 %       } 
+        </SELECT>
     </TD>
     <TD>&nbsp;</TD>
     <TD>&nbsp;</TD>
@@ -41,7 +42,9 @@
 %  foreach (@$subnets) {
         <OPTION VALUE="<%$_|h%>"<%$subnet eq $_ ? ' SELECTED' : ''%>><%$_%>
 %  }
-        </SELECT><BR>
+        </SELECT>
+        <!-- <%$s2 - $s1%> seconds -->
+        <BR>
 % }
         <INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
         <BR><font size=-2>(CIDR Format : <tt>192.168.0.0/24</tt>)</font>
@@ -58,6 +61,7 @@
 % for (qw/16 48 96 256 512 1024 4096 100000/){
         <OPTION VALUE="<%$_%>"<%$max eq $_ ? ' SELECTED' : ''%>><%$_%>
 %}
+        </SELECT>
     </TD>
 </TR>
 <TR>
@@ -83,6 +87,8 @@ Finds IP Addresses used by nodes.
 % foreach my $d (sort keys %$nbt_domains){
         <OPTION VALUE="<%$d|u%>"<%grep(/^\Q$d\E$/,@domain)?' SELECTED':''%>><%$d|h%>
 % }
+        </SELECT>
+        <!-- (<% $n2 - $n1 %> seconds.) -->
     </TD>
 </TR>
 <TR>
@@ -130,12 +136,16 @@ if (%ARGS == 0) {
 }
 
 # get some form filler
+my $n1 = time;
 $nbt_domains = sql_column('node_nbt',['distinct(domain)','true']);
+my $n2 = time;
 delete $nbt_domains->{''};
 
 # Get the rows from the subnets table that have
 #  node or device addresses.
+my $s1 = time;
 $subnets = active_subnets();
+my $s2 = time;
 
 $subnet = $subnet_select if ($subnet_select ne '');
 if ($cmd eq 'age' and !$subnet){
@@ -369,7 +379,7 @@ foreach my $row (@rows){
     my $age = $m->comp('device_inv.html:.trim_age', age => $row->{age});
     my $time_first = $row->{time_first} eq 'Never' ? '&nbsp;' : scalar(localtime($row->{time_first}));
     my $active = $row->{active};
-    my $domain = $row->{domain};
+    my $d = $row->{domain};
     my $nbname = $row->{nbname};
     my $nbtactive = $row->{nbtactive};
 </%perl>
@@ -387,7 +397,7 @@ foreach my $row (@rows){
 % if ($have_nbt_names) {
     <TD>
 %  if ($nbname) {
-\\<%$domain%>\<%$nbname%><%!$nbtactive ? '*' : ''%>
+\\<%$d%>\<%$nbname%><%!$nbtactive ? '*' : ''%>
 %  } else {
 &nbsp;
 %  }
