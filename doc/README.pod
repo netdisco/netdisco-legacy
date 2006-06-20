@@ -1,10 +1,11 @@
 =head1 NAME
 
-Netdisco 0.94 - README
+Netdisco 0.95 - README
 
 =head1 AUTHOR
 
-Max Baker
+Netdisco is maintained by a team of Open Source developers headed by Eric
+Miller, Bill Fenner and Max Baker.
 
 =head1 DESCRIPTION
 
