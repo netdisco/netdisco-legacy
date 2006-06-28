@@ -3,6 +3,7 @@
 [<A HREF="#model">By Model</a>]
 [<A HREF="#os">By OS</a>]
 [<A HREF="#location">By Location</a>]
+[<A HREF="#ssid">Wireless SSID</a>]
 <h4><A NAME="age">By Age</A></h4>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <TABLE BORDER=0>
@@ -137,7 +138,7 @@ foreach my $row (sort
 <INPUT TYPE="SUBMIT" VALUE="Inventory by Location">
 </FORM>
 % }
-<h4><A NAME="location">Wireless SSID Inventory</A></h4>
+<h4><A NAME="ssid">Wireless SSID Inventory</A></h4>
 % if ($show_ssid) {
 <& SELF:show_ssid &>
 % } else {
@@ -284,8 +285,7 @@ Found <%scalar @$age%> devices.
 my $ssid_count = sql_rows('device_port_ssid',['ssid','broadcast','count(ssid)'],
                         undef,undef,'group by ssid,broadcast');
 $count = 0; $odd = 1; my $old_loc = '';
-foreach my $row (sort
-    { $b->{count} <=> $a->{count} } @$ssid_count) {
+foreach my $row (sort { $b->{count} <=> $a->{count} } @$ssid_count) {
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
     <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;ssidbcast=<%$row->{broadcast}%>" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
@@ -295,6 +295,8 @@ foreach my $row (sort
 <%perl>
 }
 </%perl>
+</TABLE>
+[<A HREF="<%$r->uri%>">Hide</A>]
 </%method>
 %#
 %# show_loc() - Sorts and shows by location
