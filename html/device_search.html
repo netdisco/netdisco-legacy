@@ -101,12 +101,12 @@
 </FORM>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
-<DT>
-<DD><INPUT TYPE="submit" name="specific" VALUE="SSID Search">
-<B>SSID:</B><INPUT TYPE="text" size=30 maxlength=60 NAME="ssid" VALUE="<%$ssid%>">
-<INPUT TYPE="radio" <% $ssidbcast || !defined($ssidbcast) ? 'CHECKED' : ''%> NAME="ssidbcast" value="1"> Broadcast
-<INPUT TYPE="radio" <% defined($ssidbcast) && $ssidbcast == 0 ? 'CHECKED' : ''%> NAME="ssidbcast" value="0"> Stealth
-<INPUT TYPE="radio" NAME="ssidbcast" value=""> Either
+    <DT>
+    <DD><INPUT TYPE="submit" name="specific" VALUE="SSID Search">
+        <B>SSID:</B><INPUT TYPE="text" size=30 maxlength=60 NAME="ssid" VALUE="<%$ssid%>">
+        <INPUT TYPE="radio" NAME="ssidbcast" value="1" <% defined $ssidbcast && $ssidbcast  ? ' CHECKED' : ''%>>Broadcast
+        <INPUT TYPE="radio" NAME="ssidbcast" value="0" <% defined $ssidbcast && !$ssidbcast ? ' CHECKED' : ''%>>Stealth
+        <INPUT TYPE="radio" NAME="ssidbcast" value="" <% !defined $ssidbcast ? ' CHECKED' : ''%>>Either
 </DL>
 </FORM>
 
@@ -213,10 +213,10 @@ if ($specific =~ /alias/i){
     my $qlist = [\\'not in (select distinct ip from device_port where remote_port is not null)'];
     # Also add in orphans if there were any.
     if (@orphans) {
-	$qlist->[1] = \@orphans;
+    $qlist->[1] = \@orphans;
     }
     $matches = sql_rows('device',['ip','dns','vendor','model','location','contact'],
-			{'ip'=>$qlist},1);
+            {'ip'=>$qlist},1);
 
 } elsif ($specific =~ /multiple/i){
     $title = 'Device ports with multiple nodes attached';
@@ -296,32 +296,33 @@ if ($specific =~ /alias/i){
     $where->{remote_ip}++;
     $where->{remote_id}++;
     $where->{remote_type}++;
-} elsif ($ssid) {
+} elsif ($specific =~ /SSID/) {
     $specific = "SSID";
     $title = 'SSID Port Search - ' . $ssid;
     my %xtrawhere = ();
     if (!defined($ssidbcast) || ($ssidbcast cmp '') == 0) {
         $where->{broadcast}++;
     } else {
-	$title .= " " . ($ssidbcast ? 'Broadcast' : 'Stealth');
-	$xtrawhere{'broadcast'} = $ssidbcast;
+        $title .= " " . ($ssidbcast ? 'Broadcast' : 'Stealth');
+        $xtrawhere{'broadcast'} = $ssidbcast;
     }
     $matches = sql_rows('device_port_ssid p, device d',
-			['d.ip','d.dns','d.vendor','d.model','d.location','d.contact','p.port','p.broadcast'],
-			{'d.ip' => \'p.ip',
-			 'p.ssid' => $ssid,
-			 %xtrawhere
-			}
-			);
+            ['d.ip','d.dns','d.vendor','d.model','d.location','d.contact','p.port','p.broadcast','p.ssid'],
+            {'d.ip' => \'p.ip',
+             'p.ssid' => sql_match($ssid,0),
+             %xtrawhere
+            }
+            );
     if ($where->{broadcast}) {
         foreach my $row (@$matches) {
-	    $row->{broadcast} = $row->{broadcast} ? 'Broadcast' : 'Stealth';
-	}
+            $row->{broadcast} = $row->{broadcast} ? 'Broadcast' : 'Stealth';
+        }
     }
     $where->{vendor}++;
     $where->{model}++;
     $where->{location}++;
     $where->{contact}++;
+    $where->{ssid}++;
 }
 
 my @show_cols = ();
