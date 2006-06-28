@@ -118,6 +118,8 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
                                   "Following the takedown provision of the DMCA to limit the organization's copyright liability."],
                 'exploit'     => ['Remote Exploit Possible',
                                   'A remotely exploitable vulnerability posing high risk exists on the system.'],
+                'noserv'     => ['Not in service',
+                                 'Port is not in service. The port may not be phsyically connected to a jack, or it may be that no one is paying for service on the associated jack.'],
                 'polling'     => ['Excessive Polling of DNS/DHCP/SNMP',
                                   'Distinct from DoS attacks, excessive polling is often due to
                                    misconfigured systems or malfunctioning protocol stacks.  An example of
@@ -252,7 +254,8 @@ sub config {
     # these will make array refs of their comma separated lists
     my @array_refs = qw/community community_rw mibdirs bulkwalk_no
                         macsuck_no arpnip_no discover_no
-                        macsuck_only arpnip_only discover_only/;
+                        macsuck_only arpnip_only discover_only
+                        snmpforce_v1 snmpforce_v2 snmpforce_v3/;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
@@ -319,7 +322,7 @@ sub config {
 
         # Fill the %CONFIG hash
         my $var = undef;  my $value = undef;
-        if ($config =~ /^([a-zA-Z_-]+)\s*=\s*(.*)$/) {
+        if ($config =~ /^([a-zA-Z_\-0-9]+)\s*=\s*(.*)$/) {
             $var = $1;  $value = $2;
         } 
         unless(defined $var and defined $value){
@@ -525,6 +528,9 @@ sub in_device {
                 return 1 if $vendor =~ /^$match$/;
             }
             
+        # Blanket wildcard
+        } elsif ($term eq '*') {
+            return 1; 
         # Consider this a subnet / host
         } else {
             #print "checking $term against $ip\n";
@@ -1671,7 +1677,12 @@ sub sql_query {
                     # Change the column to cast to text
                     @indicies = map { "${_}::text" } @indicies;
                 } else {
-                    $con = $not ? '!=' : '=';
+                    if ($value =~ /^!(.*)$/){
+                        $value = $1;
+                        $con = '!=';
+                    } elsif ($con eq '') {
+                        $con = '=';
+                    }
                     $value = $dbh->quote($value) if $quote;
                 }
 
