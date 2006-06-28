@@ -30,7 +30,8 @@
     <TD>
     <INPUT TYPE="radio" NAME="dir" VALUE="enable"<%$dir eq 'enable' ? ' CHECKED' : ''%>>Port Enable
     <INPUT TYPE="radio" NAME="dir" VALUE="disable"<%$dir eq 'disable' ? ' CHECKED' : ''%>>Port Disable
-    <INPUT TYPE="radio" NAME="dir" VALUE=""<%$dir eq '' ? ' CHECKED' : ''%>>Both
+    <INPUT TYPE="radio" NAME="dir" VALUE="vlan"<%$dir eq 'vlan' ? ' CHECKED' : ''%>>VLAN Switch
+    <INPUT TYPE="radio" NAME="dir" VALUE=""<%$dir eq '' ? ' CHECKED' : ''%>>All
     </TD>
 </TR>
 <TR CLASS="match-0">
@@ -126,7 +127,10 @@ $argtype = $type;
 # Grab the reasons and people out of the port log
 # todo: sql_column has no way of doing a 'group by', so this kludge
 my $db_reasons = {};
-my $db_temp = sql_rows('device_port_log',['distinct(reason) as reason','count(reason) as count'],undef,0,'group by reason');
+my $db_temp = sql_rows('device_port_log',
+                ['distinct(reason) as reason','count(reason) as count'],
+                {'action' => "!vlan"},
+                0,'group by reason');
 foreach my $row (@$db_temp){
     $db_reasons->{$row->{reason}}=$row->{count};
 }
