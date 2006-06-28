@@ -288,7 +288,7 @@ $count = 0; $odd = 1; my $old_loc = '';
 foreach my $row (sort { $b->{count} <=> $a->{count} } @$ssid_count) {
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
-    <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;ssidbcast=<%$row->{broadcast}%>" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
+    <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;specific=SSID" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
     <TD><%$row->{broadcast} ? "Broadcast" : "Stealth"%></TD>
     <TD><%$row->{count}%></TD>
 </TR>
