@@ -34,8 +34,11 @@
     <TD>&nbsp;</TD>
 </TR>
 <TR>
-    <TD>Subnet :</TD>
+    <TD VALIGN=TOP>Subnet :</TD>
     <TD>
+        <INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
+        <BR><font size=-2>(CIDR Format : <tt>192.168.0.0/24</tt>)</font>
+        <BR>
 % if (@$subnets) {
         <SELECT NAME="subnet_select">
         <OPTION VALUE="">[Use text field]
@@ -45,9 +48,10 @@
         </SELECT>
         <!-- <%$s2 - $s1%> seconds -->
         <BR>
+% } else {
+    [<A HREF="<%$r->uri|h%>?subnet_show=1">Show Subnets</A>]
+    (this can take a *long* time)
 % }
-        <INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
-        <BR><font size=-2>(CIDR Format : <tt>192.168.0.0/24</tt>)</font>
     </TD>
     <TD>List IPs<BR>Never Discovered :</TD>
     <TD><INPUT TYPE="checkbox" NAME="never" VALUE=1<%$never ? ' CHECKED' : ''%>></TD>
@@ -85,7 +89,7 @@ Finds IP Addresses used by nodes.
         <OPTION VALUE="all"<%!scalar(@domain) ? ' SELECTED' : ''%>>[All]
         <OPTION VALUE="blank" <%grep(/^\Qblank\E$/,@domain)?' SELECTED':''%>>(Blank Domain)
 % foreach my $d (sort keys %$nbt_domains){
-        <OPTION VALUE="<%$d|u%>"<%grep(/^\Q$d\E$/,@domain)?' SELECTED':''%>><%$d|h%>
+        <OPTION VALUE="<%$d|u%>"<%grep(/^\Q$d\E$/,@domain)?' SELECTED':''%>><%$d|h%> (<%$nbt_domains->{$d} |h%>)
 % }
         </SELECT>
         <!-- (<% $n2 - $n1 %> seconds.) -->
@@ -105,6 +109,7 @@ Finds IP Addresses used by nodes.
 <%args>
 $subnet  => ''
 $subnet_select => ''
+$subnet_show => 0
 $sort    => 'IP'
 $age_val => 2
 $age_mul => 'months'
@@ -137,14 +142,18 @@ if (%ARGS == 0) {
 
 # get some form filler
 my $n1 = time;
-$nbt_domains = sql_column('node_nbt',['distinct(domain)','true']);
+# I admit, this 'group by' is an ugly kludge :) -m
+$nbt_domains = sql_column('node_nbt group by domain',['distinct(domain)','count(*)']);
 my $n2 = time;
 delete $nbt_domains->{''};
 
 # Get the rows from the subnets table that have
 #  node or device addresses.
 my $s1 = time;
-$subnets = active_subnets();
+if ($subnet_show) {
+    #BROKEN ON NEWNOC maxb 4/27 -- takes too long at 96 seconds
+    $subnets = active_subnets();  
+}
 my $s2 = time;
 
 $subnet = $subnet_select if ($subnet_select ne '');
