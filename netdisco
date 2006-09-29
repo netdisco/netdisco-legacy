@@ -167,7 +167,7 @@ defined $args{e} and &expire_nodes($args{e},defined $args{V},$args{P});
 defined $args{I} and &expire_ips;
 defined $args{i} and &change_device_ip($args{i},shift @ARGV);
 defined $args{p} and &admin_daemon_ctl($args{p});
-defined $args{u} and &add_user;
+defined $args{u} and &add_user(@ARGV);
 defined $args{'expire-nodes-subnet'} and &expire_nodes_subnet($args{'expire-nodes-subnet'});
 
 # Make sure we ran a command, else spit out the usage
@@ -551,7 +551,7 @@ If all 4 are not there, then interactive mode is entered and prompts are given.
 =cut
 
 sub add_user {
-    my ($user, $pw, $port, $admin) = @ARGV;
+    my ($user, $pw, $port, $admin) = @_;
 
     my %args;
     unless (defined $user){
@@ -569,27 +569,24 @@ sub add_user {
         print "Enter new password for $user [no change]: ";
         $pw = <STDIN>;
         chomp $pw;
-        $args{pw} = $pw if $pw;
     }
     unless (defined $port){
         print "Give $user Port Control [no change]? ";
         $port = <STDIN>;
         chomp $port;
-        $args{port} = $port if $port;
     }
     unless (defined $admin){
         print "Give $user Admin Rights [no change]? ";
         $admin = <STDIN>;
         chomp $admin;
-        $args{admin} = $admin if $admin;
     }
 
     print "$user $pw $port $admin\n" if $DEBUG;
 
-    my $rv = user_add($user,%args);
+    my $rv = user_add($user, admin => $admin, port => $port, pw => $pw);
 
     if ($rv) { 
-        print "$rv\n";
+        print "Added user $user. ($rv)\n";
     }  else {
         print "Added / Changed user $user\n";
     }
