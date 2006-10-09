@@ -56,6 +56,12 @@ Listed below
 =item * Net-SNMP
 
 5.1.x and newer advised.  Reported working on 5.0.x.
+There are two known bad versions: 5.2.3 and 5.3.1.
+Please use 5.2.2 or 5.3.0, or (when they come out)
+5.2.4 or 5.3.2.  The symptom of the failure is getting
+an error "Not an ARRAY reference at SNMP/Info.pm line xxx".
+A workaround if you must use a buggy Net-SNMP version is
+to use SNMPv1 or turn off bulkwalk with bulkwalk_off: yes.
 
 =item * PostgreSQL
 
