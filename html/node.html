@@ -327,6 +327,7 @@ if ($node){
 
         foreach my $sp (@$switch_ports){
             $sp->{type} = 'swport';
+            $sp->{switch} = $sp->{ip};
             $sp->{active} = 1;
             $sp->{oui}  = substr($sp->{mac},0,8);
             $sp->{switchname} = sql_scalar('device',['dns'],{'ip' => $sp->{ip}});
