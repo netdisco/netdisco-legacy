@@ -1216,7 +1216,7 @@ Default is on.  SNMP::Info 1.0 or higher required.
 
 LIST:STRING.   A comma separated list of devices to not bulkwalk
 
-This list can take four different inputs
+This list can take five different inputs:
 
 =over
 
@@ -1246,6 +1246,11 @@ You can exclude a whole subnet of devices from bulkwalking.  Use CIDR notation.
 
  128.1.0.0/16
 
+=item Blanket Wildcard
+
+You can use a single asterix C<*> to specify that all devices not 
+be bulkwalked.
+
 =back
 
 =item bulkwalk_repeaters
@@ -1271,6 +1276,28 @@ tables with  non-increasing OIDs.  The default is to not allow this behavior to
 prevent problem devices from looping indefinitely.   Requires Net-SNMP 5.3 or higher.
 
 See patch # 1364650 in Net-SNMP or bug # 1176130.
+
+=item snmpforce_v1
+
+LIST:STRING.   A comma separated list of devices.  Forces matching
+devices to use SNMPv1
+
+See L<bulkwalk_no> for syntax.
+
+=item snmpforce_v2
+
+LIST:STRING.   A comma separated list of devices.  Forces matching
+devices to use SNMPv2c
+
+See L<bulkwalk_no> for syntax.
+
+=item snmpforce_v3
+
+LIST:STRING.   A comma separated list of devices.  Forces matching
+devices to use SNMPv3.  SNMPv3 is not fully supported yet but
+could probably be made to work.
+
+See L<bulkwalk_no> for syntax.
 
 =item snmpver
 
