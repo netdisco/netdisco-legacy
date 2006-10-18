@@ -342,7 +342,7 @@ sub schlop {
     &batch_mode('discover_file');
 
     $start_time = time; 
-    print "Discovering devices from file:$file... ";
+    print "Discovering devices from file:$file...\n";
 
     &topo_load_file($file);
     &load_old_devices;
@@ -495,13 +495,19 @@ sub topo_load_file {
                 print "Skipping $line. No dev defined.\n" if $DEBUG;
                 next;
             }
-            #print "    $dev $from_port $to $to_port \n" if $DEBUG;
 
             my $to_ip = &getip($to);
-            $to_ip = &root_device($to_ip);
             unless (defined $to_ip and length $to_ip){
                 print "    Can't resolve $to in $line!\n";
                 next;
+            }
+            #print "$to_ip    $dev $from_port $to $to_port \n" if $DEBUG;
+            my $store_to_ip = $to_ip; 
+            $to_ip = &root_device($to_ip);
+            unless (defined $to_ip and length $to_ip){
+                #print "    Can't get root_device for $to in $line!\n";
+                #next;
+                discover($store_to_ip);
             }
         
             # Save Link info both directions
@@ -904,7 +910,8 @@ sub arpnip {
 
     print "\n";
 
-    my $device = get_device($hostname) or return;
+    my $device = get_device($hostname);
+    return unless defined $device;
 
     # Fetch ARP Cache
     my $at_paddr = $device->at_paddr();
@@ -996,17 +1003,21 @@ All %args are passed straight through to SNMP::Info except 'Class' which when se
 turns off C<AutoSpecify>.
 
  my $dev = create_device(
-            'DestHost'  => host,
-            'Community' => public,
-            'Version'   => 2,
-            'Retries'   => 2,
-            'Class'     => 'SNMP::Info::Layer2',
+            'DestHost'     => host,
+            'Community'    => public,
+            'Version'      => 2,
+            'Retries'      => 2,
+            'Class'        => 'SNMP::Info::Layer2',
+            'VersionForce' => 1,
 
 Connect to a device via SNMP::Info with a given host and community string.
 
-If an optional version and subclass are given, no device type discovery is done.
+If optional C<Version> and C<Class> are given, no device type discovery is done.
 
-If a more specific device type is not found  (is probably not a network device) then -1 is returned.
+If a more specific device type is not found C<-1> is returned.
+The target device is probably not a network device.
+
+If C<VersionForce> is true, no fallback to snmpv1 will happen.
 
 =cut
 
@@ -1016,7 +1027,7 @@ sub create_device {
 
     # Default Values
     $args{Debug}         = $DEBUG;
-    $args{Version}       = $args{Version} || $CONFIG{snmpver} || 2;
+    $args{Version}       = $args{Version}       || $CONFIG{snmpver} || 2;
     $args{Retries}       = $CONFIG{snmpretries} || 2   unless defined $args{Retries};
     $args{Timeout}       = $CONFIG{snmptimeout} || 1000000 unless defined $args{Timeout};
     $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
@@ -1024,9 +1035,12 @@ sub create_device {
     $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
     $args{AutoSpecify}   = defined $args{Class} ? 0 : 1;
     $args{NonIncreasing} = defined $CONFIG{nonincreasing} ? $CONFIG{nonincreasing} : 1; # remove loops in bulkwalks
-
     my $class            = $args{Class}   || 'SNMP::Info';
-    delete $args{Class} if exists $args{Class};
+    my $version_force    = $args{VersionForce}  || 0;
+
+    # Arguments internal to this sub, not passed to SNMP::Info
+    delete $args{Class}        if exists $args{Class};
+    delete $args{VersionForce} if exists $args{VersionForce};
    
     my $print_comm = $args{Community};
     # If it's vlan, do last letter @ vlan
@@ -1036,8 +1050,8 @@ sub create_device {
         # else do last letter
         $print_comm = substr($print_comm,-1,1);
     }
-    printf("  create_device(%s,%s,%d,%s,bw:%s)\n",
-           $args{DestHost},$print_comm,$args{Version}, 
+    printf("  create_device(%s,%s,%s,%s,bw:%s)\n",
+           $args{DestHost},$print_comm, $version_force ? "$args{Version}*" : $args{Version}, 
            $args{AutoSpecify} ? 'AutoSpecify' : $class,
            defined $args{BulkWalk} ? $args{BulkWalk} : 'default',
           )
@@ -1052,7 +1066,9 @@ sub create_device {
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
-    if (!defined $device or !defined $layers and $args{Version} != 1){
+    #   Don't try V1 if we're forcing a specific version
+    if ( (!defined $device or !defined $layers) and 
+         $args{Version} != 1 and !$version_force ){
         
         print " [Trying SNMP Version 1] ";
         printf("create_device(%s,%s,1)\n",$args{DestHost},$print_comm) if $DEBUG;
@@ -1288,6 +1304,23 @@ sub get_device {
         # Check for bulkwalk disabling
         $args{BulkWalk} = 0 if in_device($row,$CONFIG{bulkwalk_no});
 
+        # Check for forced SNMP Verison
+        if (in_device($row,$CONFIG{snmpforce_v1}) ) {
+            print "  Forcing SNMPv1 by config file.\n";
+            $args{Version}      = 1;
+            $args{VersionForce} = 1;
+        }
+        if (in_device($row,$CONFIG{snmpforce_v2}) ) {
+            print "  Forcing SNMPv2c by config file.\n";
+            $args{Version}      = 2;
+            $args{VersionForce} = 1;
+        }
+        if (in_device($row,$CONFIG{snmpforce_v3}) ) {
+            print "  Forcing SNMPv3 by config file.\n";
+            $args{Version}      = 3;
+            $args{VersionForce} = 1;
+        }
+
         $device = create_device(%args);
                                
         print "!  Could not connect to $dev_ip with SNMP community and version info in database.\n"
@@ -1297,8 +1330,28 @@ sub get_device {
     # Stored community not available, or didn't work. 
     if (!defined $device){
 
+        my %args = ('DestHost'  => $hostname);
+
         # Check for bulkwalk disabling
         my $no_bw = in_device($hostname,$CONFIG{bulkwalk_no});
+        $args{BulkWalk} = 0 if $no_bw;
+
+        # Check for forced SNMP Verison
+        if (in_device($hostname,$CONFIG{snmpforce_v1}) ) {
+            print "  Forcing SNMPv1 by config file.\n" if $DEBUG;
+            $args{Version}      = 1;
+            $args{VersionForce} = 1;
+        }
+        if (in_device($hostname,$CONFIG{snmpforce_v2}) ) {
+            print "  Forcing SNMPv2c by config file.\n" if $DEBUG;
+            $args{Version}      = 2;
+            $args{VersionForce} = 1;
+        }
+        if (in_device($hostname,$CONFIG{snmpforce_v3}) ) {
+            print "  Forcing SNMPv3 by config file.\n" if $DEBUG;
+            $args{Version}      = 3;
+            $args{VersionForce} = 1;
+        }
 
         # Try each community string
         foreach my $config_comm (@{$CONFIG{community}}) {
@@ -1306,10 +1359,7 @@ sub get_device {
             # Don't bother retrying the failed one.
             next if (defined $comm and ($config_comm eq $comm));
 
-            my %args = ('DestHost'  => $hostname,
-                        'Community' => $config_comm,
-                       );
-            $args{BulkWalk} = 0 if $no_bw;
+            $args{Community} = $config_comm;
 
             $device = create_device(%args);
 
