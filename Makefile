@@ -6,7 +6,7 @@ POD2TEXT = /usr/bin/pod2text
 POD2MAN  = /usr/bin/pod2man
 POD2HTML = /usr/bin/pod2html
 
-SNMPLIBS := $(shell find SNMP -name "*.pm")
+SNMPLIBS := $(shell find SNMP -name "*.pm" | grep -v blib)
 
 all:
 	echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."
@@ -15,8 +15,9 @@ all:
 back: 
 	tar cvfz $(HOME)/netdisco.tar.gz *
 
-doc: $(SNMPLIBS) INSTALL README api_doc UPGRADE
+doc: $(SNMPLIBS) INSTALL README api_doc UPGRADE ChangeLog
 	cd doc && ln -fs ../README* ../INSTALL .
+	cd html/doc && ln -fs ../../ChangeLog ChangeLog.txt
 	rm -f pod2htm*
 
 # Makes documentation for all .pm's 
