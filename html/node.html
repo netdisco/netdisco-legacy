@@ -248,6 +248,7 @@ my %MatchMAP = ('ip'      => 'MAC -> IP',
                 'port'    => 'Switch Port',
                 'host_ip' => 'IP -> MAC',
                 'dev'     => 'IP -> Device',
+                'devmac'  => 'MAC -> Device',
                 'swport'  => 'Switch Port',
                 'alias'   => 'Device IP w/out MAC',
                 'nbname'  => 'NetBIOS',
@@ -334,6 +335,23 @@ if ($node){
             $sp->{switchname} =~ s/\Q$domain\E//;
             push (@$matches,$sp);
         }
+
+	if (@$switch_ports == 0) {
+	    # It could also be a device's base address
+	    my $device = sql_rows('device',
+		    ['ip','mac','dns','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
+		    {'mac' => $node});
+
+	    foreach my $dev (@$device) {
+		$dev->{type}   = 'devmac';
+		$dev->{active} = 1;
+		$dev->{oui}    = substr($dev->{mac},0,8);
+		$dev->{dev}    = $dev->{ip};
+		$dev->{host}   = $dev->{dns};
+		$dev->{host}   =~ s/\Q$domain\E//;
+		push (@$matches,$dev);
+	    }
+	}
 
 	# If there are no matches, at least return the vendor info.
 	if (!@$matches) {
@@ -668,7 +686,7 @@ $match
 %} elsif ($type eq 'host_ip') {
     <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>\
     (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)\
-%} elsif ($type eq 'dev') {
+%} elsif ($type eq 'dev' or $type eq 'devmac') {
     <A HREF="device.html?ip=<% $match->{dev} |u %>"><% $match->{ip} %></A>\
     (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)\
 %} elsif ($type eq 'alias') {
