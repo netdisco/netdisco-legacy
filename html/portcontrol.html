@@ -104,8 +104,8 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
                         {'job'=>$job_id}
                        );
 
-        if (! defined $job){
-            $err = "Problem entering job into admin queue.<BR>\n";
+        if (! defined $job || !defined($job->{job})){
+            $err = "Problem entering job $job_id ($oid) into admin queue.<BR>\n";
             last;
         }   
 
@@ -142,9 +142,34 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
 <%method log>
 % my $logs = sql_rows('device_port_log', ['id','log','reason','username','userip','action','extract(epoch from creation) as creation'] , 
 %       {'ip'=>$arg_ip, 'port'=>$arg_port} );
+% my $queue = sql_rows('admin', ['extract(epoch from entered) as entered','extract(epoch from started) as started','action','subaction','username','userip'],
+%       {'device'=>$arg_ip, 'port'=>$arg_port, 'status'=>'queued'} );
 % my $count = 0;
+% if ($err) {
+<h4><%$err%></h4>
+% }
 <h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A>
 <& SELF:back &></h4>
+% if (@$queue) {
+<h4>Queued Actions for <%$arg_ip%>/<%$arg_port%>
+(Check admin daemon status)</h4>
+<TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2 BORDER=0>
+<TR>
+    <TH>User</TH>
+    <TH>Action</TH>
+    <TH>Queued</TH>
+    <TH>Started</TH>
+</TR>
+%   foreach my $entry (@$queue) {
+<TR>
+    <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
+    <TD><%$entry->{action}%> <%$entry->{subaction}%></TD>
+    <TD><%scalar localtime($entry->{entered})%></TD>
+    <TD><%$entry->{started} ? scalar localtime($entry->{started}) : "No"%></TD>
+</TR>
+%   }
+</TABLE>
+% }
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="log">
 <INPUT TYPE="HIDDEN" NAME="ip" VALUE="<%$arg_ip |h%>">
