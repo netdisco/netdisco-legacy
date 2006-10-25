@@ -50,27 +50,14 @@ Statistics took <%$time9 - $time1 %> seconds to process.
     my $time9 = time;
 </%init>
 <%method about_box>
-<%init>
-# Load SNMP::Info and Net-SNMP to get their version numbers.
-use SNMP;
-use SNMP::Info;
-my $pg_ver = sql_scalar('device',['version()']);
-</%init>
+% my $pg_ver = sql_scalar('device',['version()']);
 <h3>About Netdisco</h3>
 <TABLE BORDER=0 CLASS="box">
 <TR>
-    <TD ROWSPAN=8>&nbsp;</TD>
+    <TD ROWSPAN=6>&nbsp;</TD>
     <TD><B><A HREF="http://netdisco.org">Netdisco</A> Version</B>:</TD>
     <TD><B><%$netdisco::VERSION%></B></TD>
-    <TD ROWSPAN=8>&nbsp;</TD>
-</TR>
-<TR>
-    <TD><A HREF="http://snmp-info.sourceforge.net">SNMP::Info</A> Version:</TD>
-    <TD><% $SNMP::Info::VERSION %></TD>
-</TR>
-<TR>
-    <TD><A HREF="http://net-snmp.sourceforge.net">Net-SNMP</A> Version:</TD>
-    <TD><% $SNMP::VERSION %></TD>
+    <TD ROWSPAN=6>&nbsp;</TD>
 </TR>
 <TR>
     <TD><A HREF="http://www.perl.org">Perl</A> Version:</TD>
