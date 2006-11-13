@@ -1,0 +1,189 @@
+#!/usr/bin/perl -w
+#
+# Postgresql wrapper script
+# 
+# (c)2006 Max Baker
+# See LICENSE in netdisco script
+#
+# $Id$
+
+use FindBin;
+
+$|=1;
+$EXIT=0;
+
+BEGIN {
+    # Use this begin block to allow dynamic lib directory
+    #   to be specified as an argument.
+    use Getopt::Long;
+    GetOptions(\%ARGS,'c|configfile=s',
+                      'b|batch',
+                      'u|dbuser=s',
+                      'd|homedir=s',
+                      'p|psql=s',
+		      'i|init',
+                      'h|help',
+              );
+
+    $Dir        = $ARGS{d} || '/usr/local/netdisco';
+    $ConfigFile = $ARGS{c} || "$Dir/netdisco.conf";
+    $Psql       = $ARGS{p} || 'psql';
+    eval "use lib '$Dir';";
+}
+
+# TODO, move this list into netdisco.conf and use for 
+#   this function and for nightly vacuum
+@ALL = qw/ admin.sql device.sql device_ip.sql device_port.sql
+           device_port_log.sql device_port_ssid.sql log.sql node.sql
+           node_ip.sql node_nbt.sql oui.sql sessions.sql subnets.sql
+           user_log.sql users.sql /;
+
+die &usage if defined $ARGS{h};
+
+print "$0 - Netdisco Postgres Wrapper.\n";
+
+# Load netdisco library
+eval "use netdisco;";
+if ($@) {
+    die "Could not find netdisco.pm.  Please set option -d to point to your netdisco directory.\n";
+}
+
+# Load Config File
+unless (-r $ConfigFile) { 
+    die "The netdisco config file specified, $ConfigFile, does not exist or is not readable.\n";
+}
+netdisco::config($ConfigFile);
+
+# Get Database Configuration
+$DB='netdisco';
+$DB_USER = $CONFIG{db_Pg_user};
+$DB_PW   = $CONFIG{db_Pg_pw};
+
+unless (defined $DB_USER) { die "Please set a database user in netdisco.conf under db_Pg_user.\n"; }
+unless (defined $DB_PW)   { die "Please set a database password in netdisco.conf under db_Pg_pw.\n"; }
+
+# Init all tables, run a command, or launch the shell
+$File = shift @ARGV || '';
+
+if ($ARGS{i}) {
+    init();
+} elsif (-r $File) {
+    run($File);
+} else {
+    interactive();
+}
+
+exit($EXIT);
+
+sub run {
+    my $file = shift;
+
+    print "Loading $file into $Psql\n";
+
+    # Prompt for destructoness
+    unless ($file =~ /^upgrade/ or defined $ARGS{b}) {
+        print "This will nuke all the data in the table in $file.  You Sure (y/n)?";
+        my $reply = <STDIN>;
+        chomp($reply);
+        unless ($reply =~ /^y/i) {
+            print "Never Mind.\n";
+            exit(1);
+        }
+    }
+    print "If prompted enter '$DB_PW' as password.\n";
+    psql("-e -f $file -U $DB $DB");
+
+}
+
+sub interactive {
+    print "If prompted enter '$DB_PW' as password.\n";
+    psql("-e -U $DB $DB");
+}
+
+sub init {
+    $CREATEUSER = "psql -a template1 --command \\\"CREATE USER $DB PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\\\"";
+    $CREATEDB   = "createdb $DB";
+
+    open (ALL,">pg_all.input") or die "Can't create pg_all.input for output. $!\n";
+
+    # Cat all tables into one big file
+    foreach my $f (@ALL) {
+        print "[ $f ]\n";
+        open (F, "<$f") or die "Can't read $f. $!\n";
+        while (<F>) {
+            print ALL;
+        }
+        close F;
+    }
+
+    close ALL or die "Can't write pg_all.input. $!\n";
+
+    # Check if Root
+    unless ($> == 0){ warn "You probably should be running this as root.\n"; }
+    print "\n";
+
+    # Determine the System Database User
+    $SYS_DB_USER=$ARGS{u};
+    open (PASSWD, "< /etc/passwd") or die "Can't open /etc/passwd to figure out db user. $!\n";
+    while (<PASSWD>){
+        if ($_ =~ /^(postgres|pgsql):/){
+            $SYS_DB_USER=$1;
+            last;
+        }
+    }
+    close(PASSWD);
+
+    # Wrap calls in 'su' if we have sys db user
+    if (defined $SYS_DB_USER){
+        print "Running database commands as $SYS_DB_USER user.\n";
+        $CREATEUSER = "su $SYS_DB_USER -c \"$CREATEUSER\"";
+        $CREATEDB   = "su $SYS_DB_USER -c \"$CREATEDB\"";
+    } else {
+        print "Could not determine which user Postgresql is running under. Will try as current user.\n";
+        print "Use option -u to specify the unix user the database runs under.\n";
+    }
+
+    print "Creating User $DB_USER.\n";
+    system($CREATEUSER) and bug("createuser did not return success.\n"); 
+
+    print "Creating Database $DB.\n";
+    system($CREATEDB) and bug("createdb did not return success.\n"); 
+
+    print "Creating tables and indicies.\n";
+    print "If prompted enter '$DB_PW' as password.\n";
+
+    psql("-e -f pg_all.input -U $DB $DB");
+}
+
+sub psql {
+    my $cmd = shift;
+    $EXIT = system("$Psql $cmd");
+}
+
+
+sub bug {
+    my $b = shift;
+    print $b if defined $b;
+    $EXIT++;
+}
+
+sub usage {
+    return <<"end_usage";
+pg - Netdisco Postgres shell
+
+USAGE
+    $0 [options] [file.sql]
+
+Specify a SQL file to be run batch mode, or 
+Don't give any arguments to launch the psql shell
+
+OPTIONS
+   -b                        -- Batch mode, no override protection
+   -d /usr/local/netdisco    -- Path to netdisco.pm
+   -c /path/to/netdisco.conf -- Netdisco Config file to use
+   -u pgsql                  -- Database UNIX user
+   -i  init all tables (Will delete all existing data!)
+   -p /path/to/psql          -- psql cli executable
+
+end_usage
+}
