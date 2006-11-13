@@ -1032,6 +1032,14 @@ sub create_device {
     $args{Timeout}       = $CONFIG{snmptimeout} || 1000000 unless defined $args{Timeout};
     $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
     $args{BulkWalk}      = 0                           if     defined $CONFIG{bulkwalk_off} and $CONFIG{bulkwalk_off};
+    # Turn off bulkwalk if we're using Net-SNMP 5.2.3 or 5.3.1.
+    #  Even though the version numbers are now floats, previous
+    #  versions reported as strings so we can't use "==".
+    if ((!defined($args{BulkWalk}) || ($args{BulkWalk} == 1)) &&
+	($SNMP::VERSION eq '5.0203' || $SNMP::VERSION eq '5.0301')) {
+	print "! Turning off bulkwalk due to buggy Net-SNMP $SNMP::VERSION\n";
+	$args{BulkWalk} = 0;
+    }
     $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
     $args{AutoSpecify}   = defined $args{Class} ? 0 : 1;
     $args{NonIncreasing} = defined $CONFIG{nonincreasing} ? $CONFIG{nonincreasing} : 1; # remove loops in bulkwalks

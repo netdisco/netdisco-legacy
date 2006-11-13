@@ -67,6 +67,8 @@ Bugfixes:
       that appeared to be uplink ports except the neighbor wasn't in
       netdisco.
     * Devices discovered from topo file were required to be in database
+    * [1580283] Workaround for buggy Net-SNMP perl connectors: turn off
+                bulkwalk if a buggy version is detected.
 
 
 0.94beta (12/06/04)
