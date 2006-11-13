@@ -601,7 +601,8 @@ NOTE: You can safely ignore all warnings about C<size too small for label>.
 =item [7.1] Apache2
 
 Using recent versions of Mason and mod_perl, netdisco runs fine under
-Apache2.  One reported success uses mod_perl 2.0.2 and Mason 1.32.
+Apache2.   Uncomment the lines at the top of F<netdisco_apache.conf> that
+are related to Apache2.
 
 =item [7.2] Apache1
 
@@ -733,7 +734,7 @@ B<*:443> at the bottom of F<http.conf>.
 =item [7.3.4] Apache2 additions
 
 Make sure that something similar to the following LoadModule
-commands are in your httpd.conf:
+commands are in your httpd.conf or netdisco_apache.conf:
 
     LoadModule perl_module  libexec/apache2/mod_perl.so
     LoadModule apreq_module libexec/apache2/mod_apreq2.so
@@ -741,8 +742,8 @@ commands are in your httpd.conf:
 (Note that these should have been done as part of installing mod_perl
 and libapreq2, but not all installations do this).
 
-Add the following two lines in your httpd.conf before the includes from
-step 7.3.3:
+Make sure the following two lines are included in the top of
+F<netdisco_apache.conf>.
 
     PerlModule Apache2::compat
     PerlModule Apache2::Request
@@ -788,8 +789,6 @@ TODO: IS this list is different for apache2 and apache1?
         install DBD::Pg
         install DB_File      (for Apache::Session)
         install Apache::Session
-        install Apache::Test (for Apache::Request, you may need to do a 'force install')
-        install Apache::Request
         install HTML::Entities
         install HTML::Mason
         install MasonX::Request::WithApacheSession
@@ -797,6 +796,16 @@ TODO: IS this list is different for apache2 and apache1?
         install GraphViz     ( > 2.02 )
         install Compress::Zlib (probably already have this one)
         install Net::NBName
+
+
+For Apache1 install these modules:
+
+        install Apache::Test (for Apache::Request, you may need to do a 'force install')
+        install Apache::Request
+
+For Apache2 install these modules:
+
+        install libapreq2
 
 Some of these you will probably already have installed. Others you may need to force
 with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!
@@ -1118,6 +1127,25 @@ make sure that you've added
     apache2_enable="YES"
 
 to F</etc/rc.conf>.
+
+=item * Perl Modules
+
+You can install these Perl modules from Ports
+
+    www/p5-HTML-Mason
+    database/p5-DBI
+    database/p5-DBD-Pg
+    www/p5-Apache-DBI
+    www/p5-Apache-Session
+    www/p5-MasonX-Request-WithApacheSession
+
+=item * Apache2
+
+Install these ports
+
+    www/apache22
+    www/mod_perl2
+    www/p5-libapreq2
 
 =item * Apache1
 
