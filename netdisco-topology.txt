@@ -25,7 +25,7 @@
 #   know where it goes, set it to iteself.
 #
 #   router1
-#       link:1.2,roter1,1.2
+#       link:1.2,router1,1.2
 #
 # Notes:
 #   1. Only one side is needed, both sides are forced to this info
