@@ -342,7 +342,10 @@ sub schlop {
     &batch_mode('discover_file');
 
     $start_time = time; 
-    print "Discovering devices from file:$file...\n";
+    my $function = "Discovering devices";
+    $function = "Discovering only new devices" if ($New_Only);
+    $function = "Loading Topology" if ($topo_only);
+    print "$function from file: $file...\n";
 
     &topo_load_file($file);
     &load_old_devices;
@@ -419,28 +422,40 @@ sub topo_add_link {
         # Add link info
         print "  topo_add_link() $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port}\n" if $DEBUG;
 
+        my $from = root_device($link->{from});
+        if (!defined($from)) {
+            print "  topo_add_link() - can't resolve $link->{from} into device - discover with -F?\n";
+            next;
+        }
+        my $to = root_device($link->{to});
+        if (!defined($to)) {
+            print "  topo_add_link() - can't resolve $link->{to} into device - discover with -F?\n";
+            next;
+        }
+
         # Check for existing / conflicting topology info
         my $link_from = sql_hash('device_port', 
                             ['remote_ip','remote_port'],
-                            { 'ip' => $link->{from}, 'port' => $link->{from_port} }
+                            { 'ip' => $from, 'port' => $link->{from_port} }
                             );
         my $link_to = sql_hash('device_port', 
                             ['remote_ip','remote_port'],
-                            { 'ip' => $link->{to}, 'port' => $link->{to_port}  }
+                            { 'ip' => $to, 'port' => $link->{to_port}  }
                             );
 
         # Check for destinations
         unless (defined $link_from) {
-            print "    !topo_add_link() -  Topology file error! Source Port Doesn't exist in this link : $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n";
+            print "    !topo_add_link() -  Topology file error! Source Port Doesn't exist in this link : $from / $link->{from_port} --> $to / $link->{to_port} \n";
             next;
         }
         # Check for destinations
         unless (defined $link_to) {
-            print "    !topo_add_link() -  Topology file error! Destination Port Doesn't exist in this link : $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n";
+            print "    !topo_add_link() -  Topology file error! Destination Port Doesn't exist in this link : $from / $link->{from_port} --> $to / $link->{to_port} \n";
             next;
         }
 
         # See if from -> to direction conflicts
+        # (Note: using addresses in topo file, not root device)
         if ((defined $link_from->{remote_ip} and $link_from->{remote_ip} ne $link->{to})
           or(defined $link_from->{remote_port} and $link_from->{remote_port} ne $link->{to_port})) {
             print "    !topo_add_link() - $link->{from} / $link->{from_port} has discovered neighbor ",
@@ -449,6 +464,7 @@ sub topo_add_link {
         }
 
         # See if to -> from direction conflicts
+        # (Note: using addresses in topo file, not root device)
         if ((defined $link_to->{remote_ip} and $link_to->{remote_ip} ne $link->{from})
           or(defined $link_to->{remote_port} and $link_to->{remote_port} ne $link->{from_port})) {
             print "    !topo_add_link() - $link->{to} / $link->{to_port} has discovered neighbor ",
@@ -456,11 +472,11 @@ sub topo_add_link {
                   "forced info of $link->{from} / $link->{from_port} \n";
         }
 
-        my $rv = insert_or_update('device_port', 
-                        {'ip' => $link->{from}, 'port' => $link->{from_port} },
-                        {'remote_ip' => $link->{to}, 'remote_port' => $link->{to_port} }
+        my $rv = insert_or_update('device_port',
+                        {'ip' => $from, 'port' => $link->{from_port} },
+                        {'remote_ip' => $to, 'remote_port' => $link->{to_port} }
                         );
-        print "    topo_add_link() - Failed to add $link->{from} / $link->{from_port} --> $link->{to} / $link->{to_port} \n" if $rv;
+        print "    topo_add_link() - Failed to add $from / $link->{from_port} --> $to / $link->{to_port} \n" if $rv;
     }
 }
 
@@ -501,14 +517,6 @@ sub topo_load_file {
                 print "    Can't resolve $to in $line!\n";
                 next;
             }
-            #print "$to_ip    $dev $from_port $to $to_port \n" if $DEBUG;
-            my $store_to_ip = $to_ip; 
-            $to_ip = &root_device($to_ip);
-            unless (defined $to_ip and length $to_ip){
-                #print "    Can't get root_device for $to in $line!\n";
-                #next;
-                discover($store_to_ip);
-            }
         
             # Save Link info both directions
             push (@{$DeviceTopo{$dev}},   {'from' => $dev,  'from_port' => $from_port, 'to' => $to_ip, 'to_port' => $to_port});
@@ -524,13 +532,10 @@ sub topo_load_file {
 
         } else {
             $dev = &getip($line);
-            $dev = &root_device($dev);
             unless (defined $dev and length $dev){
                 print "Bad line or device IP not found in $file : $line\n";
                 next;
-        }
-
-            else {
+            } else {
                 #print "    $line ($dev)\n" if $DEBUG;
             }
             $DeviceTopo{$dev} = [] unless defined $DeviceTopo{$dev};
