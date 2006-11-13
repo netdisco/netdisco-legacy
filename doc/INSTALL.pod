@@ -9,7 +9,7 @@ Netdisco 0.95
 =head1 AUTHOR
 
 Developed by team of Open Source authors headed by Eric Miller and Bill Fenner.
-Orginally created by Max Baker.  See list at the end of README of all the
+Originally created by Max Baker.  See list at the end of README of all the
 contributors.
 
 Netdisco was created at the University of California, Santa Cruz (UCSC),
@@ -1272,10 +1272,37 @@ used in this version of OpenSSL:
 Please try the great install script for Fedora from Walter Gould at
 L<http://www.auburn.edu/~gouldwp/netdisco>. 
 
-=head2 CentOS
+=head2 CentOS / Redhat
 
 Please try the great install script for CentOS from Walter Gould at
-L<http://www.auburn.edu/~gouldwp/netdisco>. 
+L<http://www.auburn.edu/~gouldwp/netdisco>.  Note that if you choose not to
+install/update the RPMs using C<yum>, you will have to do it yourself by hand.
+This script was reported working for AS 4. 
+
+In the case of Redhat Enterprise Linux (RHEL) AS as well as any of its clones,
+such as CentOS or Whitebox linux, most of the prerequisites are already
+included.  However, there are two main caveats:
+
+=over
+
+=item 1) Packages
+
+Some of the packages are not installed by default - you need to check them off
+in the installation process when customizing the packages to be installed.  If
+you choose all the packages to be installed, you'll only need to install a
+couple of Perl modules and Netdisco itself.  Alternatively, you could use C<yum> or
+C<up2date> to install the packages or download and install the packages manually. 
+
+RHEL version ES and WS do not have all the packages that AS has.  Some of these
+may be prerequisites for Netdisco, in which case you'll need to install the
+packages from a different RPM repository or install from source.
+
+=item 2) mod_perl
+
+You need to remove the C<mod_perl> RPM if it is installed, as it will conflict
+with the C<mod_perl2> package.
+
+=back
 
 =head2 Mandrivia Linux
 
