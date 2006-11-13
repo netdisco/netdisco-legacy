@@ -381,8 +381,9 @@ sub schlop {
     &mac_getportmacs;
 
     foreach my $dev (keys %DeviceTopo){
+        $dev = root_device($dev);
         my $layers = $OldDevices->{$dev};
-        unless (defined $layers and length($layers)){
+        unless (defined $dev and defined $layers and length($layers)){
             print "  Device $dev not discovered. Skipped.\n";
             next;
         }
