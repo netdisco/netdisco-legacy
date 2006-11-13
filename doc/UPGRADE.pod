@@ -48,6 +48,21 @@ and this module must be installed.
         install Graph
         install GraphViz
 
+=item SNMP::Info
+
+Please make sure you have the newest verison of SNMP::Info available, version
+1.04 minimum.
+
+ perl -MCPAN -e shell
+        install SNMP::Info
+
+=item New SQL script
+
+The F<pg_all>, F<pg_init>, F<pg_back>, and F<pg_run> commands have been
+rolled into one new command : C<sql/pg>.  This new command will read the
+command line for arguments and then parse F<netdisco.conf> for the database
+user and password.  Run C<sql/pg --help> for more options.
+
 =back
 
 =item v0.93 -> 0.94
@@ -226,7 +241,7 @@ For any version you will want to make backup copies of all your
 data first.  
 
     cd /usr/local/netdisco/sql
-    ./pg_back
+    ./pg --back
     scp db_back*.gz somesafehost:
 
 =item Backup Configuration Files

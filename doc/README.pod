@@ -367,7 +367,7 @@ NMIS config file if L<nmis_dump> is set.
 
 This routine should be run nightly.
 
-For a full backup run F<sql/pg_back> to backup the whole database.
+For a full backup run F<sql/pg --back> to backup the whole database.
 
 =item -d || --discover device
 
@@ -670,7 +670,7 @@ you want to keep your users table, here is the process :
     source$ scp user_dump.sql dest:
 
     dest$ cd /usr/local/netdisco/sql
-    dest$ ./pg_run /path/to/user_dump.sql
+    dest$ ./pg /path/to/user_dump.sql
 
 =item Localhost (127.0.0.1) is showing up on CDP Links
 
@@ -692,7 +692,7 @@ This turns out to be an INDEX bloat problem on Postgres versions less than 7.4.
 Recently doing this on a Postgres 7.3 install changed the amount of space that
 Netdisco's database was using from 16G to 400M !!!
 
-In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE> and C<REINDEX> from C<pg_run>.
+In order to fix this we do a C<VACUUM FULL ANALYZE VERBOSE> and C<REINDEX> from C<pg>.
 This command locks each table before it does the VACUUM, and therefore can be more thorough.
 It's a good idea to take netdisco down temporarily while you do this.  I do this about
 once a month, or when I notice it dragging down.  Use C<Netdisco Statistics> as a good metric
@@ -726,7 +726,7 @@ Procedure for doing a vacuum full (as root):
 Before:
 
     df -h
-    /usr/local/netdisco/sql/pg_run
+    /usr/local/netdisco/sql/pg
         # before comparison :
         select relname, relpages from pg_class order by relpages desc;
 
@@ -779,7 +779,7 @@ If your admin queue is just getting too long and you want to clear it
 you can do it by just dropping the table and readding it. 
 
     cd sql
-    ./pg_run admin.sql
+    ./pg admin.sql
 
 =back
 

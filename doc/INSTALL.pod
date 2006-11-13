@@ -158,14 +158,12 @@ you must change a couple files.  Otherwise Skip down to Number 2.
 
 =over
 
-=item [1.3.1] SQL Shell Scripts
+=item [1.3.1] Shell Scripts
 
-Modify the following shell scripts to point to your non-standard
-netdisco directory:
+The following shell scripts require you specify the netdisco directory
+if it is not in the default location:
 
-    sql/pg_run
-    sql/pg_init
-    sql/pg_back
+    sql/pg -d /path/to/netdisco
     bin/netdisco_daemon
 
 =item [1.3.2]  netdisco.conf
@@ -316,34 +314,37 @@ about F<pg_hba.conf>.
 
 Make sure Postgres is up and running.
 
-The C<pg_init> and C<pg_run> commands use F<netdisco.conf> to find the database
+The C<pg> command use F<netdisco.conf> to find the database
 user name and password.  Make sure that the database user name and password are
 set.
 
-As root, run C<sql/pg_init> to create the database and user for Netdisco.
+As root, run C<sql/pg --init> to create the database and user for Netdisco.
 
 When you are prompted for a password, enter the new password for the database
 user you are creating.  This is the same password you set in
-F<netdisco_apache.conf> and in F<netdisco.conf>.
+F<netdisco_apache.conf> and in F<netdisco.conf>.  The C<pg> command has additional
+options showin in C<pg --help>
+
 
     cd /usr/local/netdisco/sql
-    ./pg_init
+    ./pg --help
+    ./pg --init
 
 
 If you get permissions errors, find out the name of your database user.  This
 is the C<unix> user that the Postgres database is running as.  The default name
 for some Linux RPM versions is C<postgres> and for some BSD installations
-C<pgsql>.  If yours is different, please change it appropriately in
-F<sql/pg_init>.
+C<pgsql>.  If yours is different, please specify it with the C<-u> option to 
+F<sql/pg>.
 
 =item [4.6] Check Settings
 
 Now as a non-privileged user (root) make sure you can get into the database by
-running C<sql/pg_run>.  The database user password given above will be
+running C<sql/pg>.  The database user password given above will be
 retrieved from F<netdisco.conf>.
 
     cd /usr/local/netdisco/sql
-    ./pg_run
+    ./pg
 
 You should see output similar to the below:
 
@@ -358,15 +359,7 @@ You should see output similar to the below:
     netdisco=>
     netdisco=> \q
 
-=item [4.7] Create Tables
-
-Once you are sure the database is setup correctly, create the database
-tables with C<sql/pg_all>.
-
-    cd /usr/local/netdisco/sql
-    ./pg_all
-
-=item [4.8] Optimizations
+=item [4.7] Optimizations
 
 If you have freshly installed Postgresql then the default memory usage B<NEEDS> to
 be increased for efficiency.  See the PostgreSQL documentation for
@@ -381,7 +374,7 @@ F<README> for more info about how to speed things up now and again.
 See L<http://www.postgresql.org/docs/current/static/kernel-resources.html> for
 kernel settings related to postgres that you I<should> check.
 
-=item [4.9] Postgres Startup
+=item [4.8] Postgres Startup
 
 Make sure that Postgres is set to start on reboot of the server.
 
@@ -402,13 +395,13 @@ to F</etc/rc.conf>.
 
 =back
 
-=item [4.10] Postgres Maintenance
+=item [4.9] Postgres Maintenance
 
 Read the section in F<README> about Database Maintenance... every once in a
 while you may have to run a C<VACUUM> and C<REINDEX> by hand if things get too slow.
 This appears to be less necessary in postgresql 8.0 and up.
 
-=item [4.11] Remote Database (Optional)
+=item [4.10] Remote Database (Optional)
 
 If you have postgres installed in a remote location then all you have
 to do is add that host information to the C<db_Pg> line in F<netdisco.conf>.
