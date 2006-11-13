@@ -21,7 +21,8 @@ BEGIN {
                       'u|dbuser=s',
                       'd|homedir=s',
                       'p|psql=s',
-		      'i|init',
+                      'i|init',
+                      'back',
                       'h|help',
               );
 
@@ -67,6 +68,8 @@ $File = shift @ARGV || '';
 
 if ($ARGS{i}) {
     init();
+} elsif ($ARGS{back}) {
+    back();
 } elsif (-r $File) {
     run($File);
 } else {
@@ -155,6 +158,17 @@ sub init {
     psql("-e -f pg_all.input -U $DB $DB");
 }
 
+sub back {
+    # TODO - Change this to pureperl
+    my $DATE=`date "+%Y%m%d"`;
+    chomp($DATE);
+    my $FILE="db_back-${DATE}.sql";
+    
+    print "Backing up $DB to $FILE\n";
+    $EXIT=system("pg_dump -a -d -D -O -U ${DB_USER} ${DB} | gzip > ${FILE}.gz");
+    system("chmod go-rwx ${FILE}.gz");
+}
+
 sub psql {
     my $cmd = shift;
     $EXIT = system("$Psql $cmd");
@@ -182,8 +196,10 @@ OPTIONS
    -d /usr/local/netdisco    -- Path to netdisco.pm
    -c /path/to/netdisco.conf -- Netdisco Config file to use
    -u pgsql                  -- Database UNIX user
-   -i  init all tables (Will delete all existing data!)
    -p /path/to/psql          -- psql cli executable
+
+   -i                        -- Init all tables (Will delete all existing data!)
+   --back                    -- Create Backup of database
 
 end_usage
 }
