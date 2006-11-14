@@ -2579,12 +2579,9 @@ sub db_clean {
                     (defined($layers) ? "with layers $layers - deleting nodes"
                                       : "(not deleting, not discovered)") . "\n" if $DEBUG;
         next unless defined $layers;
-        # If Neighbor is not part of topology, leave it.
-        if (has_layer($layers,2) or has_layer($layers,3)){
-            my $deleted;
-            $deleted = sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
-            print "    $deleted nodes deleted from $ip / $port\n";
-        }
+        my $deleted;
+        $deleted = sql_do(qq/DELETE FROM node WHERE switch='$ip' and port='$port'/);
+        print "    $deleted nodes deleted from $ip / $port\n";
     }
     print "Done.\n"; 
 
@@ -3020,11 +3017,11 @@ db_clean() and VACUUM ANALYZE
 
 sub nightly {
     my $no_batch = shift || 0;
-    print "nightly() - Starting nightly cleanup and backup routines\n";
     # Log backup
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     my $month = sprintf("%d%02d",$year+1900,$mon+1);
     &batch_mode("logs/$month/nightly",1) unless (defined $no_batch and $no_batch);
+    print "nightly() - Starting nightly cleanup and backup routines\n";
 
     print "  Cleaning and clearing data...\n";
 
