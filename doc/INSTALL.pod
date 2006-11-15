@@ -49,6 +49,15 @@ If you would like to help develop Netdisco, or have code to contribute,
 please submit your code to the C<patches> tracker on the Source Forge Page and
 join us on the C<netdisco-devel> mailing list.
 
+=item To register your install of Netdisco
+
+The developers are now maintaining a registry of Netdisco installs.  This is
+mainly for morale boosting purposes, but also helps us direct feature requests
+to our target audience.  One drawback of the Source Forge system is that we
+have no idea how many people are using the software compared to the number of
+downloads.  So after you have Netdisco up and running please spend a minute to
+let us know you're using it at L<http://netdisco.org/register.html>.
+
 =back
 
 =head1 REQUIREMENTS
@@ -1438,10 +1447,16 @@ make sure you have
 Now that you have spent ten hours of your life installing this go drink a Beer,
 you deserve it.
 
-Once you have or have not succeeded, come join the Netdisco User's mailing list at
-L<http://netdisco.org> and pass on any hints you may have in the INSTALL process.
+Once you have or have not succeeded, come join the Netdisco User's mailing list
+at L<http://netdisco.org> and pass on any hints you may have in the INSTALL
+process.  It's a good place to keep up on new features and releases, and it's
+B<the> place to ask any questions.
 
-It's a good place to keep up on new features and releases, and it's B<the>
-place to ask any questions.
+The developers are now maintaining a registry of Netdisco installs.  This is
+mainly for morale boosting purposes, but also helps us direct feature requests
+to our target audience.  One drawback of the Source Forge system is that we
+have no idea how many people are using the software compared to the number of
+downloads.  So after you have Netdisco up and running please spend a minute to
+let us know you're using it at L<http://netdisco.org/register.html>.
 
 =cut
