@@ -56,7 +56,10 @@ Netdisco is an Open Source web-based network management tool.
           SSIDs and channel from wireless base station ports, and display SSID in device
           port, add SSID inventory and SSID search
 [1462199] Add SNMP timeout parameter to create_device()
-[1492791] Added options snmp_force_v*</TEXTAREA>
+[1492791] Added options snmp_force_v*
+[]        pg_all, pg_run, pg_init, pg_back unified into single sql/pg script
+          This script parses netdisco.conf for database settings.
+</TEXTAREA>
         <BR>New Devices Supported:<BR>
         <TEXTAREA COLS=50 ROWS=3 WRAP=OFF>
 Foundry EdgeIron
@@ -86,7 +89,9 @@ Juniper</TEXTAREA>
 []        Database clean (-K or part of -B) would delete nodes on ports
           that appeared to be uplink ports except the neighbor wasn't in
           netdisco.
-[]        Devices discovered from topo file were required to be in database</TEXTAREA>
+[]        Devices discovered from topo file were required to be in database
+[1580283] Workaround for buggy Net-SNMP perl connectors: turn off
+          bulkwalk if a buggy version is detected.</TEXTAREA>
     <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
     </FORM>    
         </TD>
@@ -100,15 +105,27 @@ If you have problems with Netdisco you should :
     <LI>Talk to your Network Administrator who installed Netdisco
     <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A>
     <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&atid=558508">Check for Bugs</A>
-    <LI><A HREF="http://sourceforge.net/mailarchive/forum.php?forum_id=33321">Read the Mailing List Archives</A>
+    <LI><A HREF="http://sourceforge.net/search/?group_id=80033&type_of_search=mlists">Search the Mailing List Archives</A>
     <LI><A HREF="http://lists.sourceforge.net/lists/listinfo/netdisco-users">Ask a Question on the Mailing List</A>
 </OL>
 <P>
+<h3>Register</h3>
+The developers are now maintaining a registry of Netdisco installs.  This is
+mainly for morale boosting purposes, but also helps us direct feature requests
+to our target audience.  One drawback of the Source Forge system is that we
+have no idea how many people are using the software compared to the number of
+downloads.  
+<P>
+Please spend a minute to let us know you're using Netdisco at 
+<A HREF="http://netdisco.org/register.html" TARGET="_new">http://netdisco.org/register.html</A>.
+
+<P>
+<hr noshade width=50% ALIGN=left>
 <A HREF="http://netdisco.org">Netdisco</a> is an Open Source project 
 headed up by developers Eric Miller, Bill Fenner and Max Baker.
 <BR>
-Originally created at <a href="http://its.ucsc.edu/services/network">UCSC</a>,
-it is now hosted at <A HREF="http://sourceforge.net/projects/netdisco">Source Forge</A>.
+Originally created at <a href="http://its.ucsc.edu/services/network">UCSC</a>
+and now hosted by <A HREF="http://sourceforge.net/projects/netdisco">Source Forge</A>.
 
 %# TODO - Autoparse the changelog
 %# $Id$
