@@ -1568,7 +1568,7 @@ sub macsuck{
     #   Notably the Catalyst 5k, 6k, and 3500 series
     my $cisco_comm_indexing = $device->cisco_comm_indexing() || 0;
     if ($cisco_comm_indexing){
-        print " Device supports Cisco commuinty string indexing. Connecting to each VLAN:\n";
+        print " Device supports Cisco community string indexing. Connecting to each VLAN:\n";
         my $v_name   = $device->v_name() || {};
         my $i_vlan   = $device->i_vlan() || {};
         my $ver      = $device->snmp_ver();
