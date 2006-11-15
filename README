@@ -1,10 +1,11 @@
 NAME
 
-    Netdisco 0.94 - README
+    Netdisco 0.95-RC1 - README
 
 AUTHOR
 
-    Max Baker
+    Netdisco is maintained by a team of Open Source developers headed by
+    Eric Miller, Bill Fenner and Max Baker.
 
 DESCRIPTION
 
@@ -191,7 +192,7 @@ GLOSSARY
         protocols, you must put the information in the netdisco-topology.txt
         file.
 
-        See "Toplogy Information" in this file.
+        See "Topology Information" in this file.
 
         From Douglas McKeown :
 
@@ -264,7 +265,7 @@ USING NETDISCO
         Delete Nodes. Used with --expiredevice only.
 
     -N || --newonly
-        New Only. On a network discovery "-r", only discover found devices
+        New Only. On a network discovery -r, only discover found devices
         that aren't in the database.
 
     -P || --port port
@@ -284,8 +285,9 @@ USING NETDISCO
     -A || --arpnip device
         ArpNip. ArpNip's a single device. See ArpNipper in Design.
 
-        Devices listed in "arpnip_no" in the config file are excluded. See
-        the entry below.
+        Devices listed in "arpnip_no" in the config file are excluded. If
+        there is a "arpnip_only" entry in the config file, devices not
+        listed are excluded. See the entry below.
 
     -B || --backup
         Backup and Nightly Maintenance.
@@ -306,13 +308,15 @@ USING NETDISCO
 
         This routine should be run nightly.
 
-        For a full backup run sql/pg_back to backup the whole database.
+        For a full backup run sql/pg --back to backup the whole database.
 
     -d || --discover device
         Discover Device.
 
-        Devices listed in "discover_no" in the config file are excluded. See
-        the entry below.
+        IP addresses and subnets listed in "discover_no" in the config file
+        are excluded. If there is a "discover_only" entry in the config
+        file, IP addresses and subnets not listed are excluded. See the
+        entry below.
 
     -e || --expirenodes device
         Expire Nodes for given device. Use -V to archiVe instead of delete.
@@ -364,7 +368,7 @@ USING NETDISCO
         address that is found as an alias in the alias table.
 
     -K || --cleannodes
-        Datbase Node Klean-up. Permanently deletes nodes matching:
+        Database Node Klean-up. Permanently deletes nodes matching:
 
         1. MAC Addresses that are Switch Port Addresses
         2. MAC Addresses that are listed on non-existent ports
@@ -377,8 +381,9 @@ USING NETDISCO
     -M || --macsuck device
         Mac Suck given device only.
 
-        Devices listed in "macsuck_no" in the config file are excluded. See
-        the entry below.
+        Devices listed in "macsuck_no" in the config file are excluded. If
+        there is a "macsuck_only" entry in the config file, devices not
+        listed are excluded. See the entry below.
 
     -O || --oui
         Import OUI information from oui.txt
@@ -578,7 +583,7 @@ USING NETDISCO
             source$ scp user_dump.sql dest:
 
             dest$ cd /usr/local/netdisco/sql
-            dest$ ./pg_run /path/to/user_dump.sql
+            dest$ ./pg /path/to/user_dump.sql
 
     Localhost (127.0.0.1) is showing up on CDP Links
         See "How the Switch Selects the IP Address To Include in Outbound
@@ -597,13 +602,13 @@ USING NETDISCO
 
         This turns out to be an INDEX bloat problem on Postgres versions
         less than 7.4. Recently doing this on a Postgres 7.3 install changed
-        the amount of space that i Netdisco's database was using from 16G to
+        the amount of space that Netdisco's database was using from 16G to
         400M !!!
 
         In order to fix this we do a "VACUUM FULL ANALYZE VERBOSE" and
-        "REINDEX" from "pg_run". This command locks each table before it
-        does the VACUUM, and therefor can be more through. It's a good idea
-        to take netdisco down temporarily while you do this. I do this about
+        "REINDEX" from "pg". This command locks each table before it does
+        the VACUUM, and therefore can be more thorough. It's a good idea to
+        take netdisco down temporarily while you do this. I do this about
         once a month, or when I notice it dragging down. Use "Netdisco
         Statistics" as a good metric of things slowing down. This may get
         fixed with changes in VACUUM in Postgres 7.4 and above.
@@ -629,7 +634,7 @@ USING NETDISCO
             Before:
 
                 df -h
-                /usr/local/netdisco/sql/pg_run
+                /usr/local/netdisco/sql/pg
                     # before comparison :
                     select relname, relpages from pg_class order by relpages desc;
 
@@ -674,7 +679,7 @@ USING NETDISCO
         it you can do it by just dropping the table and readding it.
 
             cd sql
-            ./pg_run admin.sql
+            ./pg admin.sql
 
   Topology Information
 
@@ -859,14 +864,16 @@ Config File
   Back-End Items
 
     arpnip_no
-        LIST:IPs and Subnets. Comma Separated list of devices and subnets
-        not to include in arpnipping.
+        LIST:string. Devices that won't be arpnipped. See "bulkwalk_no" for
+        syntax. If you have any layer-3 devices that have been discovered by
+        netdisco but are using proxy-ARP as a way to get to other devices,
+        place them here. Alternately, if you have many proxy-ARP clients but
+        one (or a handful of) central device with all of the proper ARP
+        info, put that in "arpnip_only".
 
-        You can put in a CIDR style subnet or a single IP address :
-
-            arpnip_no = 192.168.0.0/24,192.168.0.1,192.168.1.0/24
-
-        You can NOT use an abbreviated CIDR subnet like "192/8".
+    arpnip_only
+        LIST:string. If present, only arpnip these devices. See
+        "bulkwalk_no" for syntax.
 
     compress
         EXECUTABLE. Full path and command line arguments to the compression
@@ -880,10 +887,16 @@ Config File
         will be stored in
 
     discover_no
-        LIST:IPs and Subnets. Comma Separated list of devices and subnets
-        that will not get hit with an SNMP discovery event.
+        LIST:string. IP addresses in this list will not be visited during
+        discovery. See bulkwalk_no for syntax, except that only hostnames,
+        IP addresses and subnets are valid.
 
-        See arpnip_no for more details.
+    discover_only
+        LIST:string. If present, discovery will be limited to only IP
+        addresses in this list. If you have a management VLAN, put that
+        subnet here to avoid discovering user devices. See bulkwalk_no for
+        syntax, except that only hostnames, IP addresses and subnets are
+        valid.
 
     ignore_private_nets
         Not fully implemented.
@@ -902,10 +915,12 @@ Config File
         figure out your topology and generally should not be set.
 
     macsuck_no
-        LIST:IPs and Subnets. Comma Separated list of devices and subnets
-        not to macsuck.
+        LIST:string. Don't macsuck these devices. See "bulkwalk_no" for
+        syntax.
 
-        See arpnip_no for more details.
+    macsuck_only
+        LIST:string. If present, only macsuck these devices. See
+        "bulkwalk_no" for syntax.
 
     macsuck_no_vlan
         LIST:Strings. Comma separated list of VLAN names not to visit when
@@ -1029,22 +1044,59 @@ Config File
 
    SNMP Settings
 
-    bulkwalk_no
+    bulkwalk_off
         BOOLEAN. Set to true to use GETNEXT instead of BULKWALK for every
         device. This slows things down, but might be necessary for problem
         devices.
 
-        The final solution should be to add " sub bulkwalk_no { 1; } " to
-        the device class that is misbehaving in SNMP::Info. This will turn
-        off bulkwalk for a class of devices, not all.
+        Other solutions include addding " sub bulkwalk_off { 1; } " to the
+        device class that is misbehaving in SNMP::Info. This will turn off
+        bulkwalk for a class of devices, not all.
 
-        Default is on. SNMP::Info 0.10 or higher required.
+        Also see bulkwalk_no to turn BULKWALK off on a per-device or device
+        class level.
+
+        Default is on. SNMP::Info 1.0 or higher required.
+
+    bulkwalk_no
+        LIST:STRING. A comma separated list of devices to not bulkwalk
+
+        This list can take five different inputs:
+
+        Hostname or IP
+            Simply put the device's name or IP address in the list.
+
+                switch1, switch2, switch3
+
+        model:regex
+            Add an entire model type for excluding from bulkwalking.
+
+            This can be a simple string like 6500 or it could be a regular
+            expression like "(2512|65\d\d)". The regex must match the whole
+            string (it's anchored).
+
+        vendor:regex
+            Add an entire vendor type for excluding form bulkwalking.
+
+            This can be a simple string like "hp" or it could be a regular
+            expression like "(cisco|hp)". The regex must match the whole
+            string (it's anchored).
+
+        Subnet
+            You can exclude a whole subnet of devices from bulkwalking. Use
+            CIDR notation.
+
+             128.1.0.0/16
+
+        Blanket Wildcard
+            You can use a single asterix "*" to specify that all devices not
+            be bulkwalked.
 
     bulkwalk_repeaters
         INT. Sets MaxRepeaters on BULKWALK operations. See "perldoc SNMP"
         for more info.
 
-        Default is 20. SNMP::Info 0.10 or higher required.
+        Default is 20. SNMP::Info 1.0 or higher required.
 
     community
         LIST:STRING. A comma separated list of community strings to try on
@@ -1056,8 +1108,40 @@ Config File
 
         This is only necessary if you turn on the "port_control" command.
 
+    nonincreasing
+        BOOLEAN. Setting this to true will allow the bulkwalk of devices
+        that have tables with non-increasing OIDs. The default is to not
+        allow this behavior to prevent problem devices from looping
+        indefinitely. Requires Net-SNMP 5.3 or higher.
+
+        See patch # 1364650 in Net-SNMP or bug # 1176130.
+
+    snmpforce_v1
+        LIST:STRING. A comma separated list of devices. Forces matching
+        devices to use SNMPv1
+
+        See bulkwalk_no for syntax.
+
+    snmpforce_v2
+        LIST:STRING. A comma separated list of devices. Forces matching
+        devices to use SNMPv2c
+
+        See bulkwalk_no for syntax.
+
+    snmpforce_v3
+        LIST:STRING. A comma separated list of devices. Forces matching
+        devices to use SNMPv3. SNMPv3 is not fully supported yet but could
+        probably be made to work.
+
+        See bulkwalk_no for syntax.
+
     snmpver
         INT. Default version of SNMP protocol to connect with.
+
+    snmptimeout
+        INT. Settings for 'Timeout' field passed to SNMP::Session.
+        Micro-seconds before retry, Default 1000000 micro-seconds = 1
+        second.
 
     snmpretries
         INT. Settings for 'Retries' field passed to SNMP::Session
@@ -1119,6 +1203,15 @@ Config File
         MINUTES. Amount of time a session lasts before someone has to login
         again.
 
+    apache_auth
+        BOOLEAN. Whether to use Apache-based authentication. If this is
+        configured both here and in netdisco_apache_dir.conf, then logins
+        will trust the REMOTE_USER set by Apache. If the user is found in
+        the user database, then the appropriate privileges are applied; if
+        the user is not found then they have access but no port control or
+        admin access. There is another link on the sidebar, "Netdisco Login"
+        to log in using the netdisco user database.
+
    Graph Settings
 
     edge_color
@@ -1140,9 +1233,14 @@ Config File
         and visual quality of them graph. Each integer step can mean an
         exponential time increase in the solving of the graph.
 
+    graph_cluster
+        BOOLEAN. Creates clusters of nodes based on their location field.
+        Best with graph_layout "fdp". Only use if all or most devices in a
+        given location have the same location string.
+
     graph_layout
         STRING. Choose program to render graph with. Valid options are
-        "neato" and "twopi".
+        "neato", "twopi", "circo" and "fdp".
 
     graph_map
         FILE. Set to Full path and name to the ISMAP data for the network.
@@ -1205,18 +1303,18 @@ Config File
             label:cat(?!-g):fillcolor:blue:cat:Blue Box - Catalyst Switch
 
         If the label (dns name) matches cat, but not cat-g, make it blue,
-        with an entry in the key like "[cat]  Blue Box - Catalyst Switch"
+        with an entry in the key like "[cat] Blue Box - Catalyst Switch"
 
             ip:^169\.233:color:yellow:node:Yellow Border - ResNet
 
         If the IP address of the device starts with 169.233, then make the
         border around the device yellow, with an entry in the key like
-        "[node]  Yellow Border - ResNet".
+        "[node] Yellow Border - ResNet".
 
-        You may leave off Key String and Key Title to get no entry in
-        the key for this color combination.  This can be useful to get
-        only one key entry when using multiple node_map entries with the
-        same attribute/value.
+        You may leave off Key String and Key Title to get no entry in the
+        key for this color combination. This can be useful to get only one
+        key entry when using multiple node_map entries with the same
+        attribute/value.
 
     node_problem
         STRING. Color to use for devices that are not accessible

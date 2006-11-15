@@ -4,7 +4,7 @@ Netdisco INSTALL -- Instructions for setting up the Netdisco application.
 
 =head1 VERSION
 
-Netdisco 0.95
+Netdisco 0.95-RC1
 
 =head1 AUTHOR
 
