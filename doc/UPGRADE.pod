@@ -65,6 +65,16 @@ rolled into one new command : C<sql/pg>.  This new command will read the
 command line for arguments and then parse F<netdisco.conf> for the database
 user and password.  Run C<sql/pg --help> for more options.
 
+=item Security Warning
+
+B<WARNING>!  A security hole is opened by Netdisco as it tries to auto-discover
+network equipment.  If a malicious host were to implement CDP and Netdisco were
+to discover that host, Netdisco would send all read-only community strings to
+that device in an attempt to add it to the topology.  
+
+Therefore B<YOU MUST> disable CDP and similar discovery protocols from your
+end-ports!  Leave CDP/LLDP support enabled on all your uplink ports.
+
 =back
 
 =item v0.93 -> 0.94

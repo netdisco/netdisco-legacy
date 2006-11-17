@@ -239,6 +239,16 @@ network."
 Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported, and anywhere
 you see CDP you can assume we mean FDP and SSOMP too.
 
+B<WARNING>!  A security hole is opened by Netdisco as it tries to auto-discover
+network equipment.  If a malicious host were to implement CDP and Netdisco were
+to discover that host, Netdisco would send all read-only community strings to
+that device in an attempt to add it to the topology.  
+
+Therefore B<YOU MUST> disable CDP and similar discovery protocols from your
+end-ports!  Leave CDP/LLDP support enabled on all your uplink ports.
+
+  TODO: Sample IOS code to do the above here.
+
 =back
 
 =head1 INSTALL
