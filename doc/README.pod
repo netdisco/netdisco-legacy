@@ -247,7 +247,10 @@ that device in an attempt to add it to the topology.
 Therefore B<YOU MUST> disable CDP and similar discovery protocols from your
 end-ports!  Leave CDP/LLDP support enabled on all your uplink ports.
 
-  TODO: Sample IOS code to do the above here.
+Sample C<IOS> Code for above :
+
+ interface range fastethernet1/1-32
+ no cdp enable
 
 =back
 
