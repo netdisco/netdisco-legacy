@@ -65,6 +65,25 @@ rolled into one new command : C<sql/pg>.  This new command will read the
 command line for arguments and then parse F<netdisco.conf> for the database
 user and password.  Run C<sql/pg --help> for more options.
 
+=item Database Upgrades
+
+Now would be a great time to upgrade to Postgres 8.x if you haven't already.
+There are some major speed, memory, and storage benefits, and there is no INDEX
+bloat problem.  Upgrading from 7.x does require a data base dump/restore.  See
+Postgres documentation and the C<sql/pg_dump> command that you already used to
+make a backup.  Follow the instructions in INSTALL and re-install the database
+related Perl modules after changing versions.
+
+You will have to run the following command to add new tables and modify existing
+ones.
+
+ cd /usr/local/netdisco/sql
+ ./pg upgrade-0.94-to-0.95.sql
+
+Note that it is safe to run the upgrade.sql scripts more than once (in case you are
+running a CVS or RC version). Also note that if you are upgrading from 0.93 or older,
+you must run C<upgrade-0.93-to-0.94.sql> first.
+
 =item Security Warning
 
 B<WARNING>!  A security hole is opened by Netdisco as it tries to auto-discover
