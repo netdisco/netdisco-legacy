@@ -138,7 +138,7 @@ defined $args{d} and &topo_load_file;
 defined $args{d} and &discover($args{d});
 defined $args{r} and &run($args{r});
 if (defined $args{F} or defined $args{T}) {
-    &schlop( defined $args{F} ? $args{F} : "$CONFIG{home}/$CONFIG{topofile}", 
+    &schlop( defined $args{F} ? $args{F} : homepath('topofile'), 
              defined $args{T}
            );
 }
@@ -490,7 +490,7 @@ Loads and parses manual topography file.
 sub topo_load_file {
     my $file = shift;
 
-    $file = "$CONFIG{home}/$CONFIG{topofile}" unless $file;
+    $file = homepath('topofile') unless $file;
 
     my $dev;    # current config line
 
@@ -617,9 +617,7 @@ sub batch_mode{
 
     my ($file_name,$want_time,$no_header) = @_;
 
-    my $file_path = $CONFIG{datadir} || 'data';
-    my $home      = $CONFIG{home} || '/usr/local/netdisco';
-    $file_path    = "$home/$file_path";
+    my $file_path = homepath('datadir','data');
 
     my $extension = defined $CONFIG{logextension} ? $CONFIG{logextension} : 'log';
     
@@ -3052,8 +3050,7 @@ sub nightly {
     # This will clean all node entries on unused ports and uplinks etc. Also runs expire_ips()
     &db_clean;
 
-    my $datadir = $CONFIG{datadir} || 'data';
-    $datadir = "$CONFIG{home}/$datadir";
+    my $datadir = homepath('datadir', 'data');
     print "  Backing up Data to $datadir\n";
 
     die "Can't write to Data Directory.\n" unless -w $datadir;
@@ -3214,7 +3211,7 @@ sub graph_each  {
                      'bgcolor' => $CONFIG{graph_bg}        || 'black',
                      'color'   => $CONFIG{graph_color}     || 'white',
                      'overlap' => $CONFIG{graph_overlap}   || 'scale',
-                     'fontpath'=> $CONFIG{graph_fontpath}  || $CONFIG{home},
+                     'fontpath'=> homepath('graph_fontpath',''),
                      'ranksep' => $CONFIG{graph_ranksep}   || 0.3,
                      'nodesep' => $CONFIG{graph_nodesep}   || 2,
                      'ratio'   => $CONFIG{graph_ratio}     || 'compress',
@@ -3310,23 +3307,23 @@ sub graph_each  {
     print "Ignore all warnings about node size.\n";
 
     if (defined $CONFIG{graph_raw} and $CONFIG{graph_raw}){
-        my $graph_raw = "$CONFIG{home}/$CONFIG{graph_raw}";
+        my $graph_raw = homepath('graph_raw');
         print "  Creating raw graph: $graph_raw\n";
         $gv->as_canon($graph_raw);
     }
     if (defined $CONFIG{graph} and $CONFIG{graph}){
-        my $graph_gif = "$CONFIG{home}/$CONFIG{graph}";
+        my $graph_gif = homepath('graph');
         print "  Creating graph: $graph_gif \n";
         $gv->as_gif($graph_gif);
     }
     if (defined $CONFIG{graph_map} and $CONFIG{graph_map}){
-        my $graph_map = "$CONFIG{home}/$CONFIG{graph_map}";
+        my $graph_map = homepath('graph_map');
         print "  Creating CMAP : $graph_map\n";
         $gv->as_cmap($graph_map);
     }
 
     if (defined $CONFIG{graph_svg} and $CONFIG{graph_svg}){
-        my $graph_svg = "$CONFIG{home}/$CONFIG{graph_svg}";
+        my $graph_svg = homepath('graph_svg');
         print "  Creating SVG : $graph_svg\n";
         $gv->as_svg($graph_svg);
     }
@@ -3572,8 +3569,7 @@ If supplied arguments, writes the pid out to that file.
 
 sub admin_daemon_pid {
     my $pid = shift;
-    my $pid_file = $CONFIG{daemon_pid} || 'netdisco_daemon.pid';
-    $pid_file = "$CONFIG{home}/$pid_file";
+    my $pid_file = homepath('daemon_pid', 'netdisco_daemon.pid');
 
     if (defined $pid) {
         print "Writing pid:$pid to $pid_file\n" if $DEBUG;

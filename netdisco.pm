@@ -35,7 +35,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        active_subnets dump_subnet in_device
                        url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum
-		       tryuse/;
+                       tryuse homepath/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -1809,6 +1809,29 @@ sub dump_globals {
         print  "\t$glob : " . $self->$glob() . "\n";
     }
 
+}
+
+=item homepath(config,[default])
+
+Return the full path of the given file as specified
+in the config file by prepending $CONFIG{home} to it, if
+it doesn't already start with a slash.  If no value is specified
+in the config file, the default is used.
+
+=cut
+
+sub homepath($;$) {
+    my $cfgitem = shift;
+    my $default = shift;
+    my $item = $CONFIG{$cfgitem} || $default;
+    my $home = $CONFIG{home} || '/usr/local/netdisco';
+    return undef unless defined($item);
+    if ($item =~ m,^/,) {
+        return $item;
+    } else {
+        $home =~ s,/*$,,;
+        return $home . "/" . $item;
+    }
 }
 
 =item tryuse(module,%opts)
