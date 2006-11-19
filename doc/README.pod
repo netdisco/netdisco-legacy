@@ -1088,6 +1088,11 @@ Setting this would revert macsuck to the same behavior as 0.93 and before.
 
 Does not override L<macsuck_no_vlan>.
 
+=item nbt_days
+
+DAYS.  The maximum age of a node for it to be checked for NetBIOS
+information.  Default 7.
+
 =item nmis_dump
 
 FILENAME.  Set this option to have nightly() (-B) dump an NMIS L<http://www.sins.com.au/nmis> 
@@ -1282,6 +1287,10 @@ LIST:STRING.  OPTIONAL. A comma separated list of Read-Write community strings.
 
 This is only necessary if you turn on the C<port_control> command.
 
+=item mibdirs
+
+LIST:STRING.  A comma separated list of directories to search for MIB files.
+
 =item nonincreasing
 
 BOOLEAN.  Setting this to true will allow the bulkwalk of devices that have
@@ -1361,6 +1370,10 @@ Default False.
 B<EXTREMELY VERY DANGEROUS> - Turning off a VLAN could take out most of your 
 network.
 
+=item vlanctl
+
+BOOLEAN. Set to True to allow Netdisco to be able to change the default VLAN on an interface.
+
 =back
 
 =head2 Web Settings
@@ -1432,7 +1445,7 @@ Set to an integer value.  This will improve the mapping and visual quality of
 them graph. Each integer step can mean an exponential time increase in the solving
 of the graph.
 
-=item graph_cluster
+=item graph_clusters
 
 BOOLEAN.  Creates clusters of nodes based on their location field.
 Best with L<graph_layout> C<fdp>.  Only use if all or most
@@ -1691,6 +1704,10 @@ exists with information about the port status.
 
 Contains log entries for port_control, tool used for administratively enabling and disabling 
 ports.
+
+=item device_port_ssid
+
+Holds SSID and channel information for wireless access points.
 
 =item log
 
