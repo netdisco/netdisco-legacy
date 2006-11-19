@@ -1442,10 +1442,18 @@ devices in a given location have the same location string.
 
 STRING.  Choose program to render graph with.  Valid options are C<neato>, C<twopi>, C<circo> and C<fdp>.
 
+=item graph_fontpath
+
+STRING.  Path for graphviz to find font files to be used for L<node_font>.  Defaults to L<home>.
+
 =item graph_map
 
 FILE. Set to Full path and name to the ISMAP data for the network.  Path should be the 
 same as in the C<netmap.html> component.
+
+=item graph_nodesep
+
+FLOAT.  Node Separation (in inches) of nodes in graph. 
 
 =item graph_overlap 
 
@@ -1454,6 +1462,11 @@ BOOLEAN. Parameter passed to C<GraphViz> for the C<overlap=""> feature.
 =item graph_ranksep
 
 FLOAT.  Rank Separation of elements in graph. 
+
+=item graph_ratio
+
+FLOAT or STRING. Graph's aspect ratio, may be a floating point number, or one of
+the keywords fill, compress, or auto.
 
 =item graph_raw
 
@@ -1474,11 +1487,16 @@ MINUTES. Time to allow C<neato> to try and solve the graph.  Default 60min.
 =item graph_x, graph_y
 
 FLOAT. The X and Y dimensions of the graph in inches.   To convert to pixels, times by 
-100 (96 actually).  So 30x30 will give you a graph that is about 3000x3000 pixels wide.
+100 (96 actually).  So the default values of 30x30 will give you a graph that is about 3000x3000 pixels wide.
 
 =item node_fillcolor
 
 STRING. Default background color for device
+
+=item node_fixedsize
+
+BOOLEAN. True keeps the box size small and fixed (for huge graphs); false allows the
+box to be sized to fit the text inside.  Default TRUE.
 
 =item node_font
 
@@ -1528,11 +1546,15 @@ STRING. Color to use for devices that are not accessible
 
 =item node_shape
 
-STRING. Default shape for device
+STRING. Default shape for device, normally box.
 
 =item node_style
 
 STRING. Default style of device, normally filled.
+
+=item root_device
+
+STRING. IP address of a device to be used as the "center" of the graph.
 
 =back
 
