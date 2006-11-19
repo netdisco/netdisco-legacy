@@ -266,14 +266,14 @@ sub config {
     # Multiple arrays
     my @array_refs_mult = qw/node_map/;
 
+    open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
+    my @configs=(<CONF>);    
+    close(CONF);
+
     # Clear out config values where can build up
     foreach my $a (sort @array_refs_mult) {
         $CONFIG{$a} = [];
     }
-
-    open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
-    my @configs=(<CONF>);    
-    close(CONF);
 
     while(my $config = shift @configs){
         chomp $config;
@@ -410,6 +410,9 @@ reset - i.e., if there was an item in the config file before,
 and it is missing when we reread it, it keeps its old value
 and doesn't get set to the default.)
 
+Uses eval to run config, so that we can keep running with the old
+config if there's a problem with the config file.
+
 =cut
 
 sub updateconfig {
@@ -421,7 +424,10 @@ sub updateconfig {
 		}
 	}
 	if ($needupdate) {
-		config($CONFIG{'@file'});
+		eval { config($CONFIG{'@file'}); };
+		if ($@) {
+			carp($@);
+		}
 	}
 	$needupdate;
 }
