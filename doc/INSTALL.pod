@@ -979,7 +979,7 @@ on.
     http://localhost/netdisco
 
 If everything is working you should be able to login with the user name and
-password you added in Step 10.  You should also be able to access the Admin
+password you added in Step 9.4.  You should also be able to access the Admin
 Panel.
 
 If you have problems, check the F<error_log> of apache for messages.
