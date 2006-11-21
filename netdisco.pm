@@ -642,7 +642,7 @@ in dotted decimal that are in the subnet.
 
 Gateway and Broadcast (.0 .255) addresses are not included.
 
-  %$hash_ref = dump_subnet('192.168.0.0/24');
+  $hash_ref = dump_subnet('192.168.0.0/24');
   scalar keys %$hash_ref == 254;
 
 Also accepted :
@@ -976,7 +976,7 @@ Nodes without topology information are not included.
 sub make_graph {
     tryuse('Graph', ver => 0.50, die => 1);
     my $G = new Graph::Undirected;
-    print 'my $G = new Graph::Undirected;' if $::DEBUG;
+    print "my \$G = new Graph::Undirected;\n" if $::DEBUG;
 
     my $devs_raw = sql_rows('device',['ip','dns','location']);
     my $aliases = sql_column('device_ip',['alias','ip']);
@@ -1676,6 +1676,10 @@ sub sql_query {
                 } elsif ($value =~  m/^\s*is\s+(not)?\s*null$/i ){
                     $con = '';
                 } elsif ($value =~ m/\%/ ) {
+                    if ($value =~ /^!(.*)$/){
+                        $value = $1;
+                        $not = 1;
+                    }
                     # Regex matching
                     $con = $not ? 'not ilike' : 'ilike';
                     $value = $dbh->quote($value) if $quote;
