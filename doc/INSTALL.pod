@@ -437,13 +437,28 @@ Net-SNMP lives at L<http://net-snmp.sourceforge.net>.
 
 B<There are two known bad versions: 5.2.3 and 5.3.1 !>
 
-Please use 5.2.2 or 5.3.0.1, or 5.2.4 or 5.3.2.
+Please use the older working versions 5.2.2 or 5.3.0.1, or try the
+newer 5.2.4, 5.3.2 or 5.4 when they're available.  See
+L<http://www.net-snmp.org/dev/schedule.html> for release schedule
+plans.  You can also use a nightly version from the appropriate
+patch branch, from L<http://www.net-snmp.org/nightly/tarballs/>.
 
 The symptom of the failure is getting an error C<Not an ARRAY reference at SNMP/Info.pm line xxx>.  
 
 A workaround if you must use a buggy Net-SNMP version is to use SNMPv1 or turn
 off bulkwalk with C<bulkwalk_off: yes> -- but the best thing to do is change your
 Net-SNMP version.
+
+You can update the perl SNMP module seperately from the libraries and
+binaries, using CPAN.  As of this writing, the current module on CPAN is 5.0301002
+which does not have this bug.  Only try to use this module with a matching
+Net-SNMP version - i.e., if you get a warning like this when you try to install:
+
+	ERROR:
+	Net-SNMP installed version: 5.2.3 => 5.0203
+	Perl Module Version:        5.0301
+
+then please try a different method.
 
 =over
 
