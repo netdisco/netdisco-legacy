@@ -3316,6 +3316,11 @@ sub graph_each  {
         print "  Creating graph: $graph_gif \n";
         $gv->as_gif($graph_gif);
     }
+    if (defined $CONFIG{graph_png} and $CONFIG{graph_png}){
+        my $graph_png = homepath('graph_png');
+        print "  Creating png graph: $graph_png\n";
+        $gv->as_png($graph_png);
+    }
     if (defined $CONFIG{graph_map} and $CONFIG{graph_map}){
         my $graph_map = homepath('graph_map');
         print "  Creating CMAP : $graph_map\n";

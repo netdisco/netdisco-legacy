@@ -47,6 +47,7 @@ Features:
     + [1492791] Added options snmp_force_v*
     + []        pg_all, pg_run, pg_init, pg_back unified into single sql/pg script
                 This script parses netdisco.conf for database settings.
+    + []        Add graph_png option to use png output from graphviz
 
 Bugfixes:
     * [1094208] "problemnode" attribute on network map was being overriden by default color settings.

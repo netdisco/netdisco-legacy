@@ -3,7 +3,7 @@
 
 Have you run <B><TT>netdisco -g</TT></B> yet?
 <P>
-netmap.gif : <% $have_gif ? "OK" : "unaccessible" %>.<BR>
+<% $mapfile %> : <% $have_image ? "OK" : "unaccessible" %>.<BR>
 netmap.map : <% $have_map ? "OK" : $! %>.
 <P>
 You can also do this from the <A HREF="admin.html">Admin Panel</A> if you have
@@ -17,7 +17,7 @@ administrative rights.
     <%$line%>
 % }
 </MAP>
-<IMG SRC="netmap.gif" ISMAP USEMAP="#netmap" BORDER=0>
+<IMG SRC="<% $mapfile %>" ISMAP USEMAP="#netmap" BORDER=0>
 <BR>Map Data is <%$map_days%> days old.
 % }
 <h4>Key</h4>
@@ -45,14 +45,18 @@ my $dir  = $comp->source_dir;
 my $have_map = open (MAP, "< $dir/netmap.map");
 my (@map, $map_age, $secs_per_day, $map_days);
 
-my $have_gif = -r "$dir/netmap.gif";
+my $mapfile = 'netmap.gif';
+if (defined $netdisco::CONFIG{graph_png} and $netdisco::CONFIG{graph_png}){
+    $mapfile = 'netmap.png';
+}
+my $have_image = -r "$dir/$mapfile";
 
-my $ok = ($have_map && $have_gif);
+my $ok = ($have_map && $have_image);
 
 if ($ok){ 
     @map = (<MAP>);
     close (MAP);
-    $map_age = (stat("$dir/netmap.gif"))[9];
+    $map_age = (stat("$dir/$mapfile"))[9];
     $map_age = time - $map_age;
     $secs_per_day = 60*60*24;
     $map_days = sprintf("%-2.2f", $map_age/$secs_per_day);

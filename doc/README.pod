@@ -1472,6 +1472,13 @@ FLOAT.  Node Separation (in inches) of nodes in graph.
 
 BOOLEAN. Parameter passed to C<GraphViz> for the C<overlap=""> feature.
 
+=item graph_png
+
+FILE. Full path and name to the PNG graph of the network.  Path should be the same
+as in the C<netmap.html> component.  Use this if you prefer not to use GIF, or if
+your graphviz binary doesn't support GIF, reporting an error similar to
+C<Renderer type: "gif" not recognized. Use one of: [...png...]>.
+
 =item graph_ranksep
 
 FLOAT.  Rank Separation of elements in graph. 
