@@ -70,6 +70,8 @@ Bugfixes:
     * Devices discovered from topo file were required to be in database
     * [1580283] Workaround for buggy Net-SNMP perl connectors: turn off
                 bulkwalk if a buggy version is detected.
+    * []        Don't work with undefined values if no link speed defined.
+    * []	Print errors that would have been absorbed by eval.
 
 
 0.94beta (12/06/04)

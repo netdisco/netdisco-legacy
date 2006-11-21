@@ -250,9 +250,13 @@ sub refresh_all {
             alarm(0); 
         };
 
-        if ($@ =~ /timeout/){
-            $TimedOut{$dev}++;
-            print "\n  ! Device Timed out ($timeout sec)\n";
+        if ($@) {
+            if ($@ =~ /timeout/){
+                $TimedOut{$dev}++;
+                print "\n  ! Device Timed out ($timeout sec)\n";
+            } else {
+                print "\n$@\n";
+            }
         }
     }
 
@@ -315,9 +319,13 @@ sub run {
             alarm(0);   # Cancel alarm if we return in time.
         };
 
-        if ($@ =~ /timeout/){
-            $TimedOut{$this_dev}++;
-            print "\n  ! Device Timed out ($timeout sec)\n";
+        if ($@) {
+            if ($@ =~ /timeout/){
+                $TimedOut{$this_dev}++;
+                print "\n  ! Device Timed out ($timeout sec)\n";
+            } else {
+                print "\n$@\n";
+            }
         }
     }
     
@@ -363,9 +371,13 @@ sub schlop {
             alarm(0);   # Cancel alarm if we return in time.
         };
 
-        if ($@ =~ /timeout/){
-            $TimedOut{$dev}++;
-            print "\n  ! Device Timed out ($timeout sec)\n";
+        if ($@) {
+            if ($@ =~ /timeout/){
+                $TimedOut{$dev}++;
+                print "\n  ! Device Timed out ($timeout sec)\n";
+            } else {
+                print "\n$@\n";
+            }
         }
     }
     
@@ -1709,9 +1721,13 @@ sub macwalk {
             alarm(0);
         };
 
-        if ($@ =~ /timeout/){
-            $TimedOut{$device}++;
-            print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
+        if ($@) {
+            if ($@ =~ /timeout/){
+                $TimedOut{$device}++;
+                print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
+            } else {
+                print "\n$@\n";
+            }
         }
     }
     sql_vacuum('node','print'=>1);
@@ -3182,8 +3198,12 @@ sub graph {
             graph_each($SUBG,'');
             alarm(0);
         };
-        if ($@ =~ /timeout/i ){
-            print "! Creating Graph timed out!\n";
+        if ($@) {
+            if ($@ =~ /timeout/){
+                print "! Creating Graph timed out!\n";
+            } else {
+                print "\n$@\n";
+            }
         }
         
         # Facility to create subgraph for each non-connected network segment.  
@@ -3272,7 +3292,10 @@ sub graph_each  {
         my $link = $e->[0];
         my $dest = $e->[1];
         my $speed = $netdisco::GRAPH_SPEED{$link}->{$dest}->{speed};
-        print "  ! No link speed for $link -> $dest\n" unless defined $speed;
+        if (!defined($speed)) {
+            print "  ! No link speed for $link -> $dest\n";
+            $speed = 0;
+        }
         my %edge = ();
         my $val = ''; my $suffix = '';
         if ($speed =~ /^([\d.]+)\s+([a-z])bps$/i) {
