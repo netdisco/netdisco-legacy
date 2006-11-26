@@ -787,6 +787,7 @@ requests.
 Assuming C<nobody> is the user that the apache web server runs under,
 run this command as C<root> :
 
+    mkdir /usr/local/netdisco/mason
     chown nobody.netdisco /usr/local/netdisco/mason
 
 The name of the user is listed in C<httpd.conf> under the C<User> directive.
@@ -830,9 +831,9 @@ For Apache1 install these modules:
         install Apache::Test (for Apache::Request, you may need to do a 'force install')
         install Apache::Request
 
-For Apache2 install these modules:
+For Apache2 install this module:
 
-        install libapreq2
+        install Apache2::Request
 
 Some of these you will probably already have installed. Others you may need to force
 with C<force install ModuleName>.  B<Do Not> include the comments in (parens)!
