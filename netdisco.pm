@@ -243,6 +243,7 @@ Reads the config file and fills the C<%CONFIG> hash.
 
 sub config {
     my $file = shift;
+    my %args = @_;
 
     # all default to 0
     my @booleans = qw/compresslogs ignore_private_nets reverse_sysname daemon_bg
@@ -265,6 +266,11 @@ sub config {
 
     # Multiple arrays
     my @array_refs_mult = qw/node_map/;
+
+    # Add custom types from caller outside netdisco
+    foreach my $type qw(booleans array_refs hash_refs array_refs_mult) {
+	eval "push(\@$type, \@{\$args{config}{\$type}});";
+    }
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
     my @configs=(<CONF>);    
