@@ -30,6 +30,7 @@ BEGIN {
     $ConfigFile = $ARGS{c} || "$Dir/netdisco.conf";
     $Psql       = $ARGS{p} || 'psql';
     eval "use lib '$Dir';";
+    die "use lib '$Dir': $@." if ($@);
 }
 
 # TODO, move this list into netdisco.conf and use for 
@@ -46,7 +47,13 @@ print "$0 - Netdisco Postgres Wrapper.\n";
 # Load netdisco library
 eval "use netdisco;";
 if ($@) {
-    die "Could not find netdisco.pm.  Please set option -d to point to your netdisco directory.\n";
+    if (-d $Dir && ! -x _) {
+        warn "$Dir exists but is not readable by you.\n";
+    }
+    if (-f $Dir . "/netdisco.pm" && ! -r _) {
+        warn "$Dir/netdisco.pm exists but is not readable by you.\n";
+    }
+    die "Could not find netdisco.pm: $@.  Please set option -d to point to your netdisco directory.\n";
 }
 
 # Load Config File
