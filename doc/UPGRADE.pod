@@ -8,7 +8,7 @@ Max Baker
 
 =head1 SUPPORT
 
-See INSTALL or README or L<http://netdisco.org>
+See L<INSTALL> or L<README> or L<http://netdisco.org>
 
 =head1 UPGRADING
 
@@ -26,6 +26,10 @@ check it against the new one to see what config file directives have been added 
 
 You B<DO NOT> wipe the database contents for an upgrade.  But just in case, you will have
 of course made a backup by now. 
+
+Make sure to read the section(s) relevant to your version update in
+L<VERSION SPECIFIC NOTES>, then read the L<APPLICATION NOTES> and L<General Upgrade Procedures>
+sections.
 
 =head1 VERSION SPECIFIC NOTES
 
@@ -86,13 +90,16 @@ you must run C<upgrade-0.93-to-0.94.sql> first.
 
 =item Security Warning
 
-B<WARNING>!  A security hole is opened by Netdisco as it tries to auto-discover
+B<WARNING>!  There is a potential community string exposure when Netdisco is auto-discovering
 network equipment.  If a malicious host were to implement CDP and Netdisco were
 to discover that host, Netdisco would send all read-only community strings to
-that device in an attempt to add it to the topology.  
+that device in an attempt to add it to the topology.
 
-Therefore B<YOU MUST> disable CDP and similar discovery protocols from your
-end-ports!  Leave CDP/LLDP support enabled on all your uplink ports.
+To avoid this problem, limit the address range that netdisco will discover
+or disable CDP and similar discovery protocols from your end-ports.
+Be aware that in configurations with IP phones, CDP may be necessary for
+certain aspects of phone support.  See L<README/"Security Warning"> for
+more information.
 
 =back
 
@@ -221,7 +228,7 @@ Make sure you have GraphViz 0.9 installed.
 
 =back
 
-=head1 APPLICATIONS
+=head1 APPLICATION NOTES
 
 =head2 Apache / Mod_perl
 
@@ -231,7 +238,7 @@ see if there are any security upgrades to apache or mod_perl.
 =head2 SNMP::Info
 
 When upgrading to any version, please make sure you have the
-newest version of SNMP::Info installed (at least 0.8) :
+newest version of SNMP::Info installed (at least 1.0):
 
 =over
 
@@ -256,7 +263,7 @@ and install.
 
 =back
 
-=head2 General Upgrade Procedures
+=head1 General Upgrade Procedures
 
 =over 
 
@@ -288,7 +295,7 @@ Make backups of all your files.
 
 For PostgreSQL you may be suffering from severe space and
 performance problems because of various issues.  Especially for 
-versions before 7.4.  Please consider upgrading to 7.4 and ALSO
+versions before 7.4.  Please consider upgrading to 8.x and ALSO
 run the Procedure, "Things are Getting Really Slow" in README.
 
 This will REINDEX and VACUUM FULL your database.  

@@ -239,18 +239,52 @@ network."
 Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported, and anywhere
 you see CDP you can assume we mean FDP and SSOMP too.
 
-B<WARNING>!  A security hole is opened by Netdisco as it tries to auto-discover
-network equipment.  If a malicious host were to implement CDP and Netdisco were
+=over
+
+=item Security Warning
+
+B<WARNING>!  There is a potential community string exposure when Netdisco is auto-discovering
+network equipment (C<netdisco> L<-r|/item__2dr__7c_7c__2d_2ddiscoverall_root_device>).  If a malicious host were to implement CDP and Netdisco were
 to discover that host, Netdisco would send all read-only community strings to
-that device in an attempt to add it to the topology.  
+that device in an attempt to add it to the topology.
 
-Therefore B<YOU MUST> disable CDP and similar discovery protocols from your
-end-ports!  Leave CDP/LLDP support enabled on all your uplink ports.
+There are two main ways to avoid this exposure:
 
-Sample C<IOS> Code for above :
+=over
+
+=item List addresses of valid devices
+
+Use the L<discover_only> and/or L<discover_no> configuration keywords to
+control what IP addresses netdisco will be permitted to visit.
+C<discover_only> is inclusive, and C<discover_no> is exclusive;
+it's recommended to use C<discover_only> if feasible.
+
+When using this method, check the backend log for devices visible via
+CDP but not via SNMP.  These may point out the need to expand the
+range that is discoverable, or may be instances of this class of attack.
+
+=item Disable CDP and other discovery protocols
+
+This solution involves disabling CDP and other discovery protocols
+from your user-connection ports, and leaving it on on inter-device
+ports.  Unfortunately, in some configurations, user-connection
+ports B<are> inter-device ports, e.g., especially when you want to
+keep the ability to easily add a phone to a port that didn't have
+one previously.
+
+Sample C<IOS> Code for above:
 
  interface range fastethernet1/1-32
- no cdp enable
+  no cdp enable
+
+Make sure you don't disable CDP on any ports that are connected to
+other pieces of infrastructure.
+Also make sure you don't use the global command C<no cdp run>, since that will
+disable CDP entirely.
+
+=back
+
+=back
 
 =back
 
