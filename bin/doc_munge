@@ -20,6 +20,7 @@ print $contents;
 sub fixref {
     my $file = shift;
 
+    $file =~ s!\./!!g;
     $file =~ s!/!-!g;
 
     return 'href="' . $file . '"';

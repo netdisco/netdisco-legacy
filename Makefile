@@ -4,7 +4,7 @@
 
 POD2TEXT = pod2text 
 POD2MAN  = pod2man
-POD2HTML = pod2html --podpath=doc
+POD2HTML = pod2html --podroot=doc --podpath=.
 
 SNMPLIBS := $(shell find SNMP -name "*.pm" | grep -v blib)
 
