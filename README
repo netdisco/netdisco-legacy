@@ -1,6 +1,6 @@
 NAME
 
-    Netdisco 0.95-RC1 - README
+    Netdisco 0.95 - README
 
 AUTHOR
 
@@ -206,6 +206,46 @@ GLOSSARY
 
         Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported,
         and anywhere you see CDP you can assume we mean FDP and SSOMP too.
+
+        Security Warning
+            WARNING! There is a potential community string exposure when
+            Netdisco is auto-discovering network equipment ("netdisco" -r).
+            If a malicious host were to implement CDP and Netdisco were to
+            discover that host, Netdisco would send all read-only community
+            strings to that device in an attempt to add it to the topology.
+
+            There are two main ways to avoid this exposure:
+
+            List addresses of valid devices
+                Use the discover_only and/or discover_no configuration
+                keywords to control what IP addresses netdisco will be
+                permitted to visit. "discover_only" is inclusive, and
+                "discover_no" is exclusive; it's recommended to use
+                "discover_only" if feasible.
+
+                When using this method, check the backend log for devices
+                visible via CDP but not via SNMP. These may point out the
+                need to expand the range that is discoverable, or may be
+                instances of this class of attack.
+
+            Disable CDP and other discovery protocols
+                This solution involves disabling CDP and other discovery
+                protocols from your user-connection ports, and leaving it on
+                on inter-device ports. Unfortunately, in some
+                configurations, user-connection ports are inter-device
+                ports, e.g., especially when you want to keep the ability to
+                easily add a phone to a port that didn't have one
+                previously.
+
+                Sample "IOS" Code for above:
+
+                 interface range fastethernet1/1-32
+                  no cdp enable
+
+                Make sure you don't disable CDP on any ports that are
+                connected to other pieces of infrastructure. Also make sure
+                you don't use the global command "no cdp run", since that
+                will disable CDP entirely.
 
 INSTALL
 
@@ -950,6 +990,10 @@ Config File
 
         Does not override macsuck_no_vlan.
 
+    nbt_days
+        DAYS. The maximum age of a node for it to be checked for NetBIOS
+        information. Default 7.
+
     nmis_dump
         FILENAME. Set this option to have nightly() (-B) dump an NMIS
         <http://www.sins.com.au/nmis> style Config file. Warning, this file
@@ -1108,6 +1152,10 @@ Config File
 
         This is only necessary if you turn on the "port_control" command.
 
+    mibdirs
+        LIST:STRING. A comma separated list of directories to search for MIB
+        files.
+
     nonincreasing
         BOOLEAN. Setting this to true will allow the bulkwalk of devices
         that have tables with non-increasing OIDs. The default is to not
@@ -1177,6 +1225,10 @@ Config File
         EXTREMELY VERY DANGEROUS - Turning off a VLAN could take out most of
         your network.
 
+    vlanctl
+        BOOLEAN. Set to True to allow Netdisco to be able to change the
+        default VLAN on an interface.
+
   Web Settings
 
     port_info
@@ -1233,7 +1285,7 @@ Config File
         and visual quality of them graph. Each integer step can mean an
         exponential time increase in the solving of the graph.
 
-    graph_cluster
+    graph_clusters
         BOOLEAN. Creates clusters of nodes based on their location field.
         Best with graph_layout "fdp". Only use if all or most devices in a
         given location have the same location string.
@@ -1242,16 +1294,34 @@ Config File
         STRING. Choose program to render graph with. Valid options are
         "neato", "twopi", "circo" and "fdp".
 
+    graph_fontpath
+        STRING. Path for graphviz to find font files to be used for
+        node_font. Defaults to home.
+
     graph_map
         FILE. Set to Full path and name to the ISMAP data for the network.
         Path should be the same as in the "netmap.html" component.
+
+    graph_nodesep
+        FLOAT. Node Separation (in inches) of nodes in graph.
 
     graph_overlap
         BOOLEAN. Parameter passed to "GraphViz" for the "overlap="""
         feature.
 
+    graph_png
+        FILE. Full path and name to the PNG graph of the network. Path
+        should be the same as in the "netmap.html" component. Use this if
+        you prefer not to use GIF, or if your graphviz binary doesn't
+        support GIF, reporting an error similar to "Renderer type: "gif" not
+        recognized. Use one of: [...png...]".
+
     graph_ranksep
         FLOAT. Rank Separation of elements in graph.
+
+    graph_ratio
+        FLOAT or STRING. Graph's aspect ratio, may be a floating point
+        number, or one of the keywords fill, compress, or auto.
 
     graph_raw
         FILE. Set to create the raw (.dot) graph file as well.
@@ -1270,11 +1340,16 @@ Config File
 
     graph_x, graph_y
         FLOAT. The X and Y dimensions of the graph in inches. To convert to
-        pixels, times by 100 (96 actually). So 30x30 will give you a graph
-        that is about 3000x3000 pixels wide.
+        pixels, times by 100 (96 actually). So the default values of 30x30
+        will give you a graph that is about 3000x3000 pixels wide.
 
     node_fillcolor
         STRING. Default background color for device
+
+    node_fixedsize
+        BOOLEAN. True keeps the box size small and fixed (for huge graphs);
+        false allows the box to be sized to fit the text inside. Default
+        TRUE.
 
     node_font
         FILE. Name of the True Type Font used for label of node. Exclude
@@ -1320,10 +1395,14 @@ Config File
         STRING. Color to use for devices that are not accessible
 
     node_shape
-        STRING. Default shape for device
+        STRING. Default shape for device, normally box.
 
     node_style
         STRING. Default style of device, normally filled.
+
+    root_device
+        STRING. IP address of a device to be used as the "center" of the
+        graph.
 
 DESIGN
 
@@ -1430,6 +1509,9 @@ DESIGN
     device_port_log
         Contains log entries for port_control, tool used for
         administratively enabling and disabling ports.
+
+    device_port_ssid
+        Holds SSID and channel information for wireless access points.
 
     log Holds log entries for human use.
 
