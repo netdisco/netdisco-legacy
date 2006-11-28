@@ -59,6 +59,7 @@ Netdisco is an Open Source web-based network management tool.
 [1492791] Added options snmp_force_v*
 []        pg_all, pg_run, pg_init, pg_back unified into single sql/pg script
           This script parses netdisco.conf for database settings.
+[]        Add graph_png option to use png output from graphviz
 </TEXTAREA>
         <BR>New Devices Supported:<BR>
         <TEXTAREA COLS=50 ROWS=3 WRAP=OFF>
@@ -91,7 +92,9 @@ Juniper</TEXTAREA>
           netdisco.
 []        Devices discovered from topo file were required to be in database
 [1580283] Workaround for buggy Net-SNMP perl connectors: turn off
-          bulkwalk if a buggy version is detected.</TEXTAREA>
+          bulkwalk if a buggy version is detected.
+[]        Don't work with undefined values if no link speed defined.
+[]        Print errors that would have been absorbed by eval.</TEXTAREA>
     <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
     </FORM>    
         </TD>
