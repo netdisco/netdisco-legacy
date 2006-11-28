@@ -6,9 +6,15 @@
 # Also change to the behind-the-scenes syntax.
 #
 # This syntax change is needed because Pod::Html can't resolve links
-# to items with special characters.  I haven't quite tracked down why.
-# If this gets fixed, the regexp could be changed to substitute in
-# $item, not $map.
+# to items with special characters.  It's a fairly subtle bug deep
+# inside Pod::HTML, described in perlbug #38295 and fixed in
+# change 25083
+# <http://public.activestate.com/cgi-bin/perlbrowse?patch=25083>.
+#
+# Once enough people are running the fixed perl, the regexp could
+# be changed to substitute in $item, not $map.
+
+# $Id$
 
 use Pod::Html;
 
