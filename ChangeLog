@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-0.95 ()
+0.95 (11/28/2006)
 
 New Device Support in SNMP::Info 1.0:
     + Foundry EdgeIron
