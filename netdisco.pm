@@ -29,7 +29,7 @@ use Digest::MD5;
 
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
-@netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do has_layer
+@netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do sql_begin sql_commit sql_disconnect has_layer
                        sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
@@ -1292,7 +1292,7 @@ sub insert_or_update {
 
         my $wherestr = join(' AND ',@where);
 
-        $sql = qq/SELECT * FROM $table WHERE $wherestr/;
+        $sql = qq/SELECT * FROM $table WHERE $wherestr FOR UPDATE/;
 
         carp($sql) if $SQLCARP;
         my $row = $dbh->selectrow_hashref($sql);
@@ -1423,6 +1423,74 @@ sub sql_do {
     carp($sql) if $SQLCARP;
 
     return $dbh->do($sql); 
+}
+
+=item sql_begin()
+
+Start an SQL transaction.
+
+Pass an array reference to the list of tables that should be
+locked in EXCLUSIVE mode for this transaction.  Normally, row
+locking is sufficient, so no tables need be locked.  However,
+netdisco's macsuck and arpnip processes perform statements like
+
+    UPDATE table SET active='f' WHERE (ip|mac)='foo'
+
+If two such statements are executed concurrently for the
+same value of 'foo', they can visit the same rows in different
+order, resulting in a deadlock.  It's tempting to say that
+you can solve this by making the UPDATE only touch one row at
+a time by adding "AND active" to the WHERE clause; however,
+it's possible to get multiple rows with active=true and open
+up the window for deadlock again.  Without a significant
+rewrite, the best option is to lock the appropriate table in
+exclusive mode (which still allows readers, such as the web
+front end, but blocks any inserts or updates).  Since netdisco
+performs updates in bulk, the table will not spend a significant
+amount of time locked.
+
+=cut
+
+sub sql_begin {
+    my $tables = shift;
+    my $dbh = &dbh;    
+    carp "[$$] starting a transaction" if $SQLCARP;
+    
+    $dbh->{AutoCommit} = 0;
+    if (defined($tables)) {
+        foreach my $table (@$tables) {
+	    sql_do("LOCK TABLE " . $table . " IN EXCLUSIVE MODE");
+	}
+    }
+}
+
+
+=item sql_commit()
+
+Finish an SQL transaction and return to AutoCommit mode
+
+=cut
+
+sub sql_commit {
+    my $dbh = &dbh;    
+    carp "[$$] completing transaction" if $SQLCARP;
+    if ($dbh->{AutoCommit}) {
+        carp "AutoCommit is already on, is this dbh new?";
+        return;
+    }
+    $dbh->commit();
+    $dbh->{AutoCommit} = 1;
+}
+
+=item sql_disconnect()
+
+Disconnect from the SQL database, e.g., before forking.
+
+=cut
+
+sub sql_disconnect {
+    my $dbh = &dbh;
+    $dbh->disconnect;
 }
 
 =item sql_hash(table, [columns], {where}) 

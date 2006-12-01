@@ -934,6 +934,7 @@ sub arpnip {
     my $at_netaddr = $device->at_netaddr();
 
     my $arp_count =0;
+    sql_begin(['node_ip']);
     foreach my $arp (keys %$at_paddr){
         my $mac = $at_paddr->{$arp};
         my $ip = $at_netaddr->{$arp};
@@ -972,6 +973,7 @@ sub arpnip {
         add_arp($mac,$ip);
         $arp_count++;
     }
+    sql_commit();
     print "  Processed $arp_count ARP Cache entries.\n";
     $ArpTotal += $arp_count;
     
@@ -1192,6 +1194,7 @@ sub find_neighbors {
     my $c_platform = $device->c_platform();
     my $interfaces = $device->interfaces();
 
+    sql_begin();
     foreach my $key (keys %$c_ip){
         print '.';
         # Get our port to iid mapping
@@ -1279,6 +1282,7 @@ sub find_neighbors {
             push (@Discover_Queue, $remote_ip);
         }
     }
+    sql_commit();
     print "\n";
 }
 
@@ -1444,6 +1448,7 @@ sub get_subnets {
 
     my $ip_netmask   = $device->ip_netmask();
 
+    sql_begin();
     foreach my $ip (keys %$ip_netmask){
         next if $ip eq '0.0.0.0';
         # Local Host
@@ -1486,6 +1491,7 @@ sub get_subnets {
                         );
         $DEBUG and print "Found subnet $cidr_subnet\n";
     }
+    sql_commit();
 }
 
 =item mac_getportmacs() 
@@ -1678,6 +1684,7 @@ sub mac_savecache {
         }
     }
 
+    sql_begin(['node']);
     foreach my $ip (keys %$fw_cache){
         foreach my $port (sort {sort_port} keys %{$fw_cache->{$ip}}){
             my $macs = $fw_cache->{$ip}->{$port};
@@ -1687,6 +1694,7 @@ sub mac_savecache {
             }
         }
     }
+    sql_commit();
 
 }
 
@@ -1954,6 +1962,8 @@ sub store_device {
 
     my $ip_index   = $device->ip_index();
     my $interfaces = $device->interfaces();
+
+    sql_begin();
     
     # Remove all alias IP addresses
     sql_do(qq/DELETE from device_ip where ip = '$devip'/);
@@ -1992,6 +2002,7 @@ sub store_device {
         # Mark alias down
         $device->{_alias}->{$ip}++;
     }
+    sql_commit();
 
     # VTP Management Domain -- assume only one.
     my $vtpdomains = $device->vtp_d_name();
@@ -2047,9 +2058,6 @@ sub store_interfaces {
     print "  Fetching Interface Information : ";
     my $ip = $device->{ip};
 
-    # Delete old interface information (for dynamic,vlan...)
-    sql_do(qq/DELETE from device_port where ip = '$ip'/);
-
     my $interfaces     = $device->interfaces();
     my $i_type         = $device->i_type();
     my $i_ignore       = $device->i_ignore();
@@ -2065,6 +2073,11 @@ sub store_interfaces {
     my $i_stp_state    = $device->i_stp_state();
     my $i_vlan         = $device->i_vlan();
     my $i_lastchange   = $device->i_lastchange();
+
+    sql_begin();
+
+    # Delete old interface information (for dynamic,vlan...)
+    sql_do(qq/DELETE from device_port where ip = '$ip'/);
 
     foreach my $if (keys %$interfaces) {
         print '.';
@@ -2098,11 +2111,14 @@ sub store_interfaces {
                          \%store );        
 
     }
+    sql_commit();
 
     # Get SSIDs for wireless interfaces
     my $ssidlist = $device->i_ssidlist();
     my $ssidbcast = $device->i_ssidbcast();
     my $channel = $device->i_80211channel();
+
+    sql_begin();
 
     sql_do(qq/DELETE from device_port_ssid where ip = '$ip'/);
 
@@ -2124,6 +2140,7 @@ sub store_interfaces {
                          \%store );
     }
 
+    sql_commit();
     print "\n";
 }
 
@@ -2251,6 +2268,7 @@ sub walk_fwtable {
         $fw_cache->{$ip}->{$port}->{$mac}++;
         $MacSeen{$mac}++;
     }
+
     print "\n" unless $DEBUG;
 }
 
@@ -2360,9 +2378,11 @@ sub nbtwalk {
     &load_old_nodes($days);
     print "  Searching ",scalar(keys(%$OldNodes))," nodes.\n" if $DEBUG;
     
+    sql_begin();
     foreach my $node (sort sort_ip keys %$OldNodes){
         nbtstat($node) if defined $OldNodes->{$node};
     }
+    sql_commit();
     
     sql_vacuum('node_nbt','print'=>1); 
 

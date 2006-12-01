@@ -8,6 +8,9 @@ Features:
     + []        Partial MAC search on an even number of hex digits
     + [1553561] (Optionally) display node NetBIOS info on device view
                    page
+    + [1107583] Use SQL transactions when bulk updating tables.
+                Based on Daniel Weber's work; updated partially
+                from experience in parallel arpnip+macsuck.
 
 0.95 (11/28/2006)
 
