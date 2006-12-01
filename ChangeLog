@@ -2,6 +2,13 @@
 # netdisco.org
 # $Id$
 
+0.96 ()
+
+Features:
+    + []        Partial MAC search on an even number of hex digits
+    + [1553561] (Optionally) display node NetBIOS info on device view
+                   page
+
 0.95 (11/28/2006)
 
 New Device Support in SNMP::Info 1.0:
