@@ -294,7 +294,7 @@ if ($node){
         my $mac = $node;
         if ($could_be_partial_mac) {
             # An even number of hex digits - turn it into a partial mac
-            $mac =~ s/${hex}{2}/$&:/g;
+            $mac =~ s/(${hex}{2})/$1:/g;
             $mac =~ s/:$/*/;
             $mac =~ s/^/*/;
         }
