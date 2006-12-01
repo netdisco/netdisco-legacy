@@ -287,10 +287,18 @@ if ($node){
     my $is_mac = &is_mac($node);
     my $wildhex = "[0-9a-fA-F?]";
     my $is_partial_mac = ($node =~ /^([?*]+)?(${wildhex}{2}:)+(${wildhex}{2})([?*]+)?$/);
+    my $could_be_partial_mac = ($node =~ /^${hex}+$/ && length($node) < 13 && (length($node) % 2) == 0);
 
     # Search by MAC Address
-    if ($is_mac or $is_partial_mac) {
-        my $where = { 'mac' => $is_mac ? $node : sql_match($node,0) };
+    if ($is_mac or $is_partial_mac or $could_be_partial_mac) {
+        my $mac = $node;
+        if ($could_be_partial_mac) {
+            # An even number of hex digits - turn it into a partial mac
+            $mac =~ s/${hex}{2}/$&:/g;
+            $mac =~ s/:$/*/;
+            $mac =~ s/^/*/;
+        }
+        my $where = { 'mac' => $is_mac ? $node : sql_match($mac,0) };
         $where->{'active'} = 1 unless $arg_archive;
 
         # Lookup IPs associated with this MAC
