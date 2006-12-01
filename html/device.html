@@ -16,11 +16,12 @@ $device_age => 'off'
 $archive    => 'off'
 $node_ip    => 'off'    # Show the IPs used by each MAC
 $node_dns   => 'off'    # Resolve IPs of connected devices
+$node_nbt   => 'off'    # Show the NetBIOS Name used by each MAC
 </%args>
 <%shared>
 my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip,
-    $arg_node_dns);
-my $ports = []; my $node_ips = {};
+    $arg_node_dns,$arg_node_nbt);
+my $ports = []; my $node_ips = {}; my $node_nbts = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
 my $now    = time;
@@ -68,7 +69,7 @@ my $admin        = defined $m->session->{user_admin} and $m->session->{user_admi
 #  Parsing of Arguments
 $arg_age  = $device_age; $arg_arch = $archive; 
 @arg_port = @port; $arg_node_ip = $node_ip;
-$arg_node_dns = $node_dns;
+$arg_node_dns = $node_dns; $arg_node_nbt = $node_nbt;
 
 if ($ip) {
     # Save Search Term
@@ -160,6 +161,7 @@ if ($ip) {
         foreach my $node (@$nodes){
             my $mac = $node->{mac};
             $node_ips->{$mac}++;
+            $node_nbts->{$mac}++;
         }
 
         # Add aliases to display of port name
@@ -185,6 +187,20 @@ if ($ip) {
             my $mac = $macip->{mac};
             my $ip  = $macip->{ip};
             push ( @{$node_ips->{$mac}},$ip);
+        }
+    }
+
+    # Get NetBIOS addresses of connected nodes
+    if ($node_nbt eq 'on'){
+        my @macs = keys %$node_nbts;
+        my $nbts = sql_rows('node_nbt',['mac','nbname','domain','user','ip'],
+                           {active => 1, mac => [\@macs] }
+                          );
+        $node_nbts = {};
+        # Push IP address into list in %node_nbts hash
+        foreach my $macnbt (@$nbts){
+            my $mac = $macnbt->{mac};
+            push ( @{$node_nbts->{$mac}},$macnbt);
         }
     }
 
@@ -251,6 +267,10 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
 <B>Resolve IPs</B>
 <INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_dns eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_dns eq 'on'  ? 'CHECKED' : '' %>>On
+<BR>
+<B>Show Connected Device NetBIOS</B>
+<INPUT TYPE="radio" NAME="node_nbt" VALUE="off" <%$arg_node_nbt eq 'off' ? 'CHECKED' : '' %>>Off
+<INPUT TYPE="radio" NAME="node_nbt" VALUE="on"  <%$arg_node_nbt eq 'on'  ? 'CHECKED' : '' %>>On
 <BR>
 <INPUT TYPE="submit" VALUE="Change View" NAME="submit">
 </FORM>
@@ -566,6 +586,16 @@ foreach my $port (sort sort_port @$ports){
 <%perl>
            }   # /each node_ip
         } # /if node_ip
+        # Show node_nbts?
+        if ($arg_node_nbt eq 'on' and defined $node_nbts->{$mac}) {
+            foreach my $nbt (sort @{$node_nbts->{$mac}}) {
+</%perl>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\\<A HREF="ip_search.html?domain=<%$nbt->{domain}|u%>&cmd=nbt" TITLE="Devices in this Domain"><%$nbt->{domain}%></A>\<A HREF="node.html?node=<% $nbt->{nbname} |u %>"><%$nbt->{nbname}%></A><BR>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<%$nbt->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$nbt->{ip}|u%>"><%$nbt->{ip}|h%></A><BR>
+
+<%perl>
+           }   # /each node_nbt
+        } # /if node_nbt
     } # /each node
 
     # Place holder for no connected devices
