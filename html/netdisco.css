@@ -6,7 +6,7 @@
     TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
     INPUT { font-family:monospace; font-size:9pt; }
     BODY { position:absolute; top:0; left:0; background-color:#f5deb3; color:black;
-font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; }
+font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     FORM { margin-bottom:0; margin-top:0; }
     UL,DL,OL { margin-top:0; margin-bottom:0; }
     .u      { text-decoration: underline; }
@@ -21,8 +21,7 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; }
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align: center;
               vertical-align:bottom; font-family:arial,helvetica,serif; font-size:8pt; clear:both; }
     .sidebar { float:left; height:100%; width:15%; }
-    .sidebar li { display:block; list-style:none; border-width: 0 thin thin thin
-; border-style: solid; padding: 1px;}
+    .sidebar li { display:block; list-style:none; border-width: 0 thin thin thin; border-style: solid; padding: 2px; }
     .sidebar ul { padding:0; border-width: thin 0 0 0; border-style: solid; }
     .sidebar-bg { background-color:#191970; border:black; }
     .sidebar-0 { text-align:center; background-color:#eed8ae;}
