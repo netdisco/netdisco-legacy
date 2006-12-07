@@ -1,6 +1,7 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
+<DIV>
 <h3>Log Entries</h3>
-<TABLE CELLSPACING=0 CELLPADDING=3 WIDTH=100% BORDER=0>
+<TABLE CELLSPACING=0 CELLPADDING=3 WIDTH="100%" BORDER=0>
 <TR>
     <TH>Class</TH>
     <TH>Entry</TH>
@@ -61,6 +62,7 @@ Number of Entries per category:
 </SELECT>
 <BR>
 <INPUT TYPE="submit" VALUE="Show Entries">
+</DIV>
 </FORM>
 <%args>
 @classes => qw/arp discover mac netbios/
