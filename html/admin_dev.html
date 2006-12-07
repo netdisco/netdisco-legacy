@@ -7,6 +7,7 @@
 % }
 <h4>Job Queue</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=GET> 
+<DIV>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
 <& SELF:list_queue &>
@@ -23,6 +24,7 @@ Ignore Actions of type:
 % }
 </SELECT>
 [<A HREF="<%$r->uri%>">Reset</a>]
+</DIV>
 </FORM>
 <%args>
 $dev      => undef
@@ -268,6 +270,7 @@ foreach my $item (@$queue){
 % my $act = $actions{$arg_act}->[0];
 <h3>Confirm <%$act%> <% $arg_dev ? "of $arg_dev" : ''%></h3>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
 <INPUT TYPE="hidden" NAME="dev" VALUE="<%$arg_dev|h%>">
 <INPUT TYPE="hidden" NAME="action" VALUE="<%$arg_act%>">
@@ -302,6 +305,7 @@ Restrict <%$act%> to
 Debug Output
 <P>
 <INPUT TYPE="submit" VALUE="<%$act%><% $arg_dev ? "- $arg_dev" : '' %>">
+</DIV>
 </FORM>
 </%method>
 %#
@@ -310,6 +314,7 @@ Debug Output
 <%method dev_control>
 <h4>Device Control</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
 <TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
 <TR>
@@ -330,7 +335,7 @@ Debug Output
     <TD>Enter Device : </TD>
     <TD>
         <INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text">
-        <% defined $arg_dev_text ? "<BR><FONT SIZE=-1><TT>($arg_dev_text)</TT></FONT>" : '' %>
+        <% defined $arg_dev_text ? "<BR><span class=\"small\"><TT>($arg_dev_text)</TT></span>" : '' %>
     </TD>
 </TR>
 <TR> 
@@ -345,10 +350,12 @@ Debug Output
 </TR>
 </TABLE>
 Use this box to control devices that are already in Netdisco's database.
+</DIV>
 </FORM>
 
 <h4>Discover Devices</h4>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
 <TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
 <TR>
@@ -371,6 +378,7 @@ Use this box to control devices that are already in Netdisco's database.
 </TR>
 </TABLE>
 Use this box to add new devices to the network, or to re-add devices after deletion.
+</DIV>
 </FORM>
 </%method>
 %#
@@ -390,7 +398,7 @@ Use this box to add new devices to the network, or to re-add devices after delet
 %#
 <%method list_queue>
 % return unless scalar @$queue;
-<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0> 
+<TABLE WIDTH="100%" CELLSPACING=0 CELLPADDING=2 BORDER=0> 
   <TR>
     <TH>Job</TH>
     <TH>Action</TH>
