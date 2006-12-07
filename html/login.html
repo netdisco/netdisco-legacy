@@ -3,6 +3,7 @@
 <H4><%$err%></H4>
 %}
 <FORM ACTION="<%$r->uri%>" METHOD="POST" NAME="loginForm">
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="login">
 <INPUT TYPE="hidden" NAME="done" VALUE="<%$done|h%>">
 <TABLE BORDER=0>
@@ -18,6 +19,7 @@
     <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Log On"></TD>
 </TR>
 </TABLE>
+</DIV>
 </FORM>
 <h4>Note</h4>
 <UL>

@@ -1,7 +1,9 @@
 <h3><%$user%> Logged Out</h3>
 % my $page = $netdisco::CONFIG{apache_auth} ? 'apache_login' : 'login';
 <FORM ACTION="<% $page %>.html" METHOD=GET>
+<DIV>
 <INPUT TYPE="submit" VALUE="Log Back In">
+</DIV>
 </FORM>
 <%init>
 my $user = $m->session->{user};
