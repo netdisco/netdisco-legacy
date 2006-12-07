@@ -4,14 +4,15 @@
 <TD>&nbsp;&nbsp;</TD>
 <TD ALIGN=CENTER VALIGN=TOP>
     <H4><A HREF="admin_dev.html">Device Control</A></H4>
-    <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 BORDER=0 ALIGN="middle"></A>
-    <HR NOSHADE>
+    <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 style="border: none; vertical-align: middle;"></A>
+    <hr class="noshade">
     <H4><A HREF="admin_user.html">User Control</A></H4>
-    <A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 BORDER=1 ALIGN="middle"></A>
-    <HR NOSHADE>
+    <A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 style="border: thin solid; vertical-align: middle;"></A>
+    <hr class="noshade">
 
     <h4>Maintenance</h4>
     <FORM ACTION="admin_dev.html" METHOD=POST> 
+    <DIV>
     <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
     <TABLE CELLSPACING=2 CELLPADDING=3 CLASS="box" border=0>
     <TR>
@@ -29,14 +30,17 @@
             Debug :
             <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
             <INPUT TYPE="submit" VALUE="Queue New Job">
-            </FORM>
-            <FORM ACTION="admin_dev.html" METHOD=GET>
-            <INPUT TYPE=SUBMIT VALUE="View Job Queue">
-            [<A HREF="<%$r->uri%>">Reset</A>]
-            </FORM>
+	    [<A HREF="<%$r->uri%>">Reset</A>]
         </TD>
     </TR>
     </TABLE>
+    </DIV>
+    </FORM>
+    <FORM ACTION="admin_dev.html" METHOD=GET>
+    <DIV style="text-align: center">
+    <INPUT TYPE=SUBMIT VALUE="View Job Queue">
+    </DIV>
+    </FORM>
 
 </TD>
 <TD CLASS="match-1">&nbsp;&nbsp;&nbsp;&nbsp;</TD>
@@ -45,27 +49,29 @@
     <& SELF:show_log &>
     <P>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
-        <NOBR>
-        <u>Type:</u> <SELECT MULTIPLE NAME="type" SIZE=4>
+    <DIV>
+        <span class="nobr">
+        <span class="u">Type:</span> <SELECT MULTIPLE NAME="type" SIZE=4>
 % foreach my $this_event (sort keys %$events) {
                    <OPTION VALUE="<%$this_event%>" <% grep(/^$this_event$/,@type) ? 'SELECTED' : ''%>><%$log_events{$this_event} || $this_event%>
 % }
                </SELECT>
-        </NOBR> &nbsp;&nbsp;
-        <NOBR>
-        <u>Entries</u>:
+        </span> &nbsp;&nbsp;
+        <span class="nobr">
+        <span class="u">Entries</span>:
         <SELECT NAME="entries" SIZE=3>
 % foreach (qw/All 10 20 50 100 200 500/){
             <OPTION VALUE="<% $_|h %>"<% $_ eq $entries ? ' SELECTED' : ''%>><%$_|h%>
 %}
         </SELECT>
-        </NOBR>
+        </span>
         <INPUT TYPE="submit" VALUE="Refresh Log">
         [<A HREF="<%$r->uri%>">Reset</A>] 
+    </DIV>
     </FORM>
 </TD></TR>
 </TABLE>
-<HR NOSHADE>
+<hr class="noshade">
 <b>Note:</b>
 <UL>
     <LI>Some maintenance jobs can take up to half an hour to complete. 
@@ -142,12 +148,12 @@ $logs = sql_rows('user_log',['username','userip','event','details',
     <TH>IP</TH>
     <TH>Log</TH>
 </TR>
-<TR><TD COLSPAN=5><HR NOSHADE></TD></TR>
+<TR><TD COLSPAN=5><hr class="noshade"></TD></TR>
 % my $count = 0;
 % foreach my $log (sort {$b->{creation} <=> $a->{creation} }@$logs){
 %   my $event = $log_events{$log->{event}} || $log->{event};
 <TR CLASS="match-<%$count%2%>">
-    <TD><NOBR><%scalar localtime($log->{creation})%></NOBR></TD>
+    <TD><span class="nobr"><%scalar localtime($log->{creation})%></span></TD>
     <TD><%$log->{username}%></TD>
     <TD><%$event%></TD>
     <TD><%$log->{userip}%></TD>
