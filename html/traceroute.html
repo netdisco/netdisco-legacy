@@ -218,7 +218,7 @@ if ($to{type} eq 'node'){
 }
 my $odd = 0;
 </%perl>
-
+<P>
 <%$sentfrom%> --&gt; <%$sentto%>
 <P>
 <TABLE CELLSPACING=2 CELLPADDING=2 BORDER=0 CLASS="box">
@@ -228,7 +228,7 @@ my $odd = 0;
     <TH class="tr-head"> Device </TH>
     <TH class="tr-head">Port<BR>Out</TH>
 </TR>
-<TR><TD COLSPAN=4><HR NOSHADE></TD></TR>
+<TR><TD COLSPAN=4><hr class="noshade"></TD></TR>
 <%perl>
 while (my $this = shift(@$path)){
     my $that = $path_info{$this}->{next};
@@ -238,8 +238,8 @@ while (my $this = shift(@$path)){
     my $link      = $path_info{$this}->{type} eq 'node' ? 
                     "node.html?node=$this" :
                     "device.html?ip=$this";
-    $link .= "\&port=$from_port" if defined $from_port;
-    $link .= "\&port=$to_port"   if defined $to_port;
+    $link .= "\&amp;port=$from_port" if defined $from_port;
+    $link .= "\&amp;port=$to_port"   if defined $to_port;
     $odd++;
 </%perl>
 
