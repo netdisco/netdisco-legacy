@@ -2,14 +2,12 @@
 
 <h3>Node Search</h3>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
-<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
+<TABLE CELLSPACING=0 CELLPADDING=0 CLASS="box" style="padding: 0 8px 0 8px;">
 <TR>
-    <TD ROWSPAN=5 WIDTH="8">&nbsp;</TD>
     <TD>MAC, Hostname, IP, NetBIOS: &nbsp;</TD>
     <TD><INPUT TYPE="text" name="node" maxlength=20 size=20 VALUE="<%$node%>">
-        <BR><font size=-2><B>*</B> and <B>?</B> are wildcards.</font>
+        <BR><span class="smaller"><B>*</B> and <B>?</B> are wildcards.</span>
     </TD>
-    <TD ROWSPAN=5 WIDTH="8">&nbsp;</TD>
 </TR>
 <TR>
     <TD>Time Stamps: </TD>
@@ -19,7 +17,7 @@
 </TR>
 <TR>
     <TD>Archived Data: </TD>
-    <TD><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$archive ? 'CHECKED' : '' %></TD>
+    <TD><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$archive ? 'CHECKED' : '' %>></TD>
 </TR>
 <TR>
     <TD>Show Vendor : </TD>
@@ -40,7 +38,7 @@
 % if ($expandoui){
 <& SELF:ouiform &>
 % } else {
-<h4>[<TT><FONT SIZE=+3><A HREF="<%$r->uri%>?expandoui=1">+</A></FONT></TT>]
+<h4>[<TT><span class="big"><A HREF="<%$r->uri%>?expandoui=1">+</A></span></TT>]
 <A HREF="<%$r->uri%>?expandoui=1">Search on Vendor or OUI</a> </h4>
 % }
 
@@ -54,7 +52,7 @@ the right range.  Also remember people can hide them under fake MAC addresses as
 </UL>
 </FORM>
 <P>
-* <font size=-1>Advanced Searches can be slow to load.</font>
+* <span class="small">Advanced Searches can be slow to load.</span>
 <%args>
 $node      => ''
 $dates     => 1
@@ -593,7 +591,7 @@ No results found.  Try checking Archived Data.
 %  }
 % }
 % return; }
-<TABLE cellspacing=0 cellpadding=4 border=0 width=100%>
+<TABLE cellspacing=0 cellpadding=4 border=0 width="100%">
 <TR>
 % foreach my $c (@cols){
     <TH><%$c->[1]%></TH>
@@ -646,7 +644,7 @@ foreach my $match (@sorted_matches) {
 %     } elsif ($col eq 'location') {
 %           my $loc = $match->{dns} || $match->{switch};
 %           $loc =~ s/\Q$domain\E//;
-        <A HREF="device.html?ip=<%$match->{switch}%>&port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>\
+        <A HREF="device.html?ip=<%$match->{switch}%>&amp;port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>\
 %     } else {
         &nbsp;\
 %     }
@@ -687,10 +685,10 @@ $match
 </%args>
 %if ($type eq 'ip'){
     <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>\
-    <NOBR>(<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)</NOBR>\
+    <span class="nobr">(<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)</span>\
 %} elsif ($type eq 'port' or $type eq 'swport') {
-    <NOBR><A HREF="device.html?ip=<% $match->{switch} |u%>&port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></NOBR>\
-    <NOBR>(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</NOBR>\
+    <span class="nobr"><A HREF="device.html?ip=<% $match->{switch} |u%>&amp;port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></span>\
+    <span class="nobr">(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</span>\
 %} elsif ($type eq 'host_ip') {
     <A HREF="node.html?node=<% $match->{ip} |u %>"><% $match->{ip} %></A>\
     (<% defined $match->{host} ? $match->{host} : '[No DNS]' %>)\
@@ -772,7 +770,7 @@ $match
 <%method oui_matches>
 % return unless scalar @search;
 <h4>OUI Matches</h4>
-<TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=2 BORDER=0>
+<TABLE WIDTH="100%" CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>OUI</TH>
     <TH>Count</TH>
@@ -844,6 +842,7 @@ foreach my $node_ip (@$ips){
 %# FILTER: highlight search term
 %#
 <%filter>
+return $_ unless $arg_node;
 my $open = '<SPAN CLASS="highlight">';
 my $close = '</SPAN>';
 my $search = $arg_node;
