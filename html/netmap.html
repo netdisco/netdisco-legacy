@@ -17,7 +17,7 @@ administrative rights.
     <%$line%>
 % }
 </MAP>
-<IMG SRC="<% $mapfile %>" ISMAP USEMAP="#netmap" BORDER=0>
+<IMG SRC="<% $mapfile %>" ISMAP USEMAP="#netmap" style="border: none;" alt="Network Map">
 <BR>Map Data is <%$map_days%> days old.
 % }
 <h4>Key</h4>
@@ -25,13 +25,13 @@ administrative rights.
 % for(my $i = 0; $i <= $#{$left_key} || $i <= $#{$right_key}; $i++) {
 <tr>
 %  if (defined($left_key->[$i])) {
-    <td bgcolor="black"><%$left_key->[$i]->[0]%></td>
+    <td class="mapkey"><%$left_key->[$i]->[0]%></td>
     <td><%$left_key->[$i]->[1]%></td>
 %  } else {
     <td colspan="2">&nbsp;</td>
 %  }
 %  if (defined($right_key->[$i])) {
-    <td bgcolor="black"><%$right_key->[$i]->[0]%></td>
+    <td class="mapkey"><%$right_key->[$i]->[0]%></td>
     <td><%$right_key->[$i]->[1]%></td>
 %  } else {
     <td colspan="2">&nbsp;</td>
@@ -63,10 +63,10 @@ if ($ok){
 }
 
 my $right_key = [
- [ '<font color="green">--------</font>', 'Green Lines - WAN' ],
- [ '<font color="#f5deb3">-------</font>', 'Thin lines - 10Mbps' ],
- [ '<font color="#f5deb3">=======</font>', 'Thick lines - 100Mbps' ],
- [ '<font color="cyan">=======</font>', 'Cyan lines - 1.0 Gbps' ] ];
+ [ '<span style="color:green;">--------</span>', 'Green Lines - WAN' ],
+ [ '<span style="color:#f5deb3;">-------</span>', 'Thin lines - 10Mbps' ],
+ [ '<span style="color:#f5deb3;">=======</span>', 'Thick lines - 100Mbps' ],
+ [ '<span style="color:cyan;">=======</span>', 'Cyan lines - 1.0 Gbps' ] ];
 
 my $left_key = [];
 foreach my $map (@{$netdisco::CONFIG{node_map}}) {
@@ -80,20 +80,20 @@ foreach my $map (@{$netdisco::CONFIG{node_map}}) {
 	} elsif ($attr eq 'color') {
 		$bracketcolor = $val;
 	}
-	my($txt) = '<font color="' . $bracketcolor . '">[';
+	my($txt) = '<span style="color:' . $bracketcolor . ';">[';
 	if ($textcolor ne $bracketcolor) {
-		$txt .= '</font><font color="' . $textcolor . '">';
+		$txt .= '</span><span style="color:' . $textcolor . ';">';
 	}
 	$txt .= $name;
 	if ($textcolor ne $bracketcolor) {
-		$txt .= '</font><font color="' . $bracketcolor . '">';
+		$txt .= '</span><span style="color:' . $bracketcolor . ';">';
 	}
-	$txt .= ']</font>';
+	$txt .= ']</span>';
 	push(@{$left_key}, [ $txt, $label ]);
 }
 my $problem = $netdisco::CONFIG{node_problem} || 'red';
 my $colorname = $problem; $colorname =~ s/^./\U$&/;
-push(@{$left_key}, [ '<font color="' . $problem . '">[bad-dev]</font>',
+push(@{$left_key}, [ '<span style="color:' . $problem . ';">[bad-dev]</span>',
 			$colorname . ' Box - Device unaccessable' ]);
 
 </%init>

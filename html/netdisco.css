@@ -43,3 +43,4 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; }
     .tr-data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
     .highlight { color:red;}
     .nobr { white-space: nowrap; }
+    td.mapkey { background-color:black; }
