@@ -1,11 +1,12 @@
 <h3>Port Reporting</h3>
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="search">
 <TABLE WIDTH="85%" CELLSPACING=0 CELLPADDING=2 BORDER=0 CLASS=box>
 <TR>
     <TH COLSPAN=2>Select Your Report Type</TH>
 </TR>
-<TR><TD COLSPAN=2><hr noshade></TD></TR>
+<TR><TD COLSPAN=2><hr class="noshade"></TD></TR>
 <TR CLASS="match-1">
     <TD>Reason:</TD>
     <TD>
@@ -19,13 +20,13 @@
 </TR>
 <TR CLASS="match-0">
     <TD>Text Search:
-        <BR><font size=-1>Popular searches include <i>blaster</i> and <i>nachi</i>.
+        <BR><span class="small">Popular searches include <i>blaster</i> and <i>nachi</i>.</span>
     </TD>
     <TD><INPUT TYPE="text" NAME="text" VALUE="<%$text|h%>"></TD>
 </TR>
 <TR CLASS="match-1">
     <TD>Action Type:
-    <BR><font size=-1>Limit search to the enabling or disabling of ports.</font>
+    <BR><span class="small">Limit search to the enabling or disabling of ports.</span>
     </TD>
     <TD>
     <INPUT TYPE="radio" NAME="dir" VALUE="enable"<%$dir eq 'enable' ? ' CHECKED' : ''%>>Port Enable
@@ -37,12 +38,12 @@
 <TR CLASS="match-0">
     <TD>
     Report Type:
-    <BR><font size=-1>Choose to see a list of log entries, or to see currently disabled ports that
-<i>also</i> have log entries.</font>
+    <BR><span class="small">Choose to see a list of log entries, or to see currently disabled ports that
+<i>also</i> have log entries.</span>
     </TD>
     <TD>
     <INPUT TYPE="radio" NAME="type" VALUE=""<%$type eq '' ? ' CHECKED' : ''%>>Historical Log Entries&nbsp;
-    <INPUT TYPE="radio" NAME="type" VALUE="now"<%$type eq 'now' ? ' CHECKED' : ''%>>Current Only <font size=-2>(slow)</font>&nbsp;
+    <INPUT TYPE="radio" NAME="type" VALUE="now"<%$type eq 'now' ? ' CHECKED' : ''%>>Current Only <span class="smaller">(slow)</span>&nbsp;
     </TD>
 </TR>
 <TR CLASS="match-1">
@@ -74,7 +75,7 @@
     <INPUT TYPE="radio" NAME="timeframe" VALUE="week"<%$timeframe eq 'week' ? ' CHECKED' : ''%>  >This Week
     <INPUT TYPE="radio" NAME="timeframe" VALUE="month"<%$timeframe eq 'month' ? ' CHECKED' : ''%>>This Month
     <BR>
-    <INPUT TYPE="radio" NAME="timeframe" VALUE="interval"<%$timeframe eq 'interval' ? ' CHECKED' : ''%>>Within the last<font size=-2></font>&nbsp;
+    <INPUT TYPE="radio" NAME="timeframe" VALUE="interval"<%$timeframe eq 'interval' ? ' CHECKED' : ''%>>Within the last&nbsp;
     <SELECT NAME="timenumber">
 % for (1..31) {
         <OPTION VALUE="<%$_%>"<%$timelength eq $_ ? ' SELECTED' : ''%>><%$_%>
@@ -87,11 +88,12 @@
     </SELECT>
     </TD>
 </TR>
-<TR CLASS="match-0"><TD COLSPAN=2><hr noshade></TD></TR>
+<TR CLASS="match-0"><TD COLSPAN=2><hr class="noshade"></TD></TR>
 <TR CLASS="match-0">
     <TD COLSPAN=2 ALIGN=CENTER><INPUT TYPE=SUBMIT VALUE="Generate Report"> [<a href="<%$r->uri%>">Reset</A>]</TD>
 </TR>
 </TABLE>
+</DIV>
 </FORM>
 <& SELF:report &>
 <%args>
@@ -253,17 +255,17 @@ No Ports Matching.<BR>
     <TH>Log</TH>
     <TH>Date</TH>
 </TR>
-<TR><TD COLSPAN=6><HR NOSHADE></TD></TR>
+<TR><TD COLSPAN=6><hr class="noshade"></TD></TR>
 % my $count = 0;
 % foreach my $port (@$matches) {
 %   my $dev = $port->{dns} || $port->{ip};
 %   $dev =~ s/\Q$netdisco::CONFIG{domain}\E//;
 <TR CLASS="match-<%++$count % 2 %>">
-    <TD><font size=-1><A HREF="device.html?ip=<%$port->{ip}|u%>&port=<%$port->{port}|u%>"><%$dev%> [<%$port->{port}%>]</A></font></TD>
-    <TD><%$port->{username}%><BR><font size=-1><a href="node.html?node=<%$port->{userip}%>"><%$port->{userip}%></a></font></TD>
+    <TD><span class="small"><A HREF="device.html?ip=<%$port->{ip}|u%>&amp;port=<%$port->{port}|u%>"><%$dev%> [<%$port->{port}%>]</A></span></TD>
+    <TD><%$port->{username}%><BR><span class="small"><a href="node.html?node=<%$port->{userip}%>"><%$port->{userip}%></a></span></TD>
     <TD><%$port->{reason}%>/<%$port->{action}%></TD>
-    <TD><font size=-2><%$port->{log} || '&nbsp;'%></font></TD>
-    <TD><NOBR><% scalar localtime($port->{creation})%></NOBR></TD>
+    <TD><span class="smaller"><%$port->{log} || '&nbsp;'%></span></TD>
+    <TD><span class="nobr"><% scalar localtime($port->{creation})%></span></TD>
 </TR>
 % }
 </TABLE>
