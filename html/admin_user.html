@@ -2,6 +2,8 @@
 <& SELF:error &>
 % if ($cmd eq 'Delete' and !$confirm) {
 <& SELF:confirm_del &>
+% } elsif ($cmd eq 'Edit' and !$err) {
+<& SELF:add_user, action => 'Change' &>
 % } else {
 <& SELF:list_users &>
 <& SELF:add_user &>
@@ -44,7 +46,7 @@ unless ($is_admin) {
 $m->comp('SELF:load_users');
 
 # Add 
-if ($cmd eq 'add'){
+if ($cmd eq 'Add'){
     $user = lc($user);
     $user =~  s/^\s*//;
     $user =~  s/\s+.*//;
@@ -128,6 +130,12 @@ if ($cmd eq 'Change'){
 
 }
 
+if ($cmd eq 'Edit'){
+    unless (defined $user_hash{$user}){
+        $err .= "User $user not found.\n";
+    } 
+}
+
 if ($cmd eq 'Delete'){
     unless (defined $user_hash{$user}){
         $err .= "User $user not found.\n";
@@ -159,7 +167,7 @@ if ($cmd eq 'Delete'){
 </%init>
 <%method list_users>
 <h4>Existing Users</h4>
-<TABLE WIDTH=100% CELLSPACING=0 BORDER=0>
+<TABLE WIDTH="100%" CELLSPACING=0 BORDER=0>
 <TR>
     <TH>User</TH>
     <TH>Port<BR>Control</TH>
@@ -167,7 +175,6 @@ if ($cmd eq 'Delete'){
     <TH>Full Name</TH>
     <TH>Note</TH>
     <TH>Created /<BR>Last Login</TH>
-    <TH>New Password</TH>
     <TH>&nbsp;</TH>
 </TR>
 % foreach my $user_entry (sort { $a->{username} cmp $b->{username} } @$users){
@@ -176,25 +183,29 @@ if ($cmd eq 'Delete'){
 %                   : 'Never logged in';
 <TR CLASS="match-<% ++$odd % 2 %>">
     <TD>
-        <FORM ACTION="<%$r->uri%>" METHOD=POST> 
-        <INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$user_entry->{username}|h%>">
         <B><%$user_entry->{username}%></B>
     </TD>
     <TD>
-        <INPUT TYPE="checkbox" NAME="port" VALUE="1" <%$user_entry->{port_control} ? 'CHECKED' : ''%>>
-    </TD>
-    <TD><INPUT TYPE="checkbox" NAME="admin" VALUE="1" <%$user_entry->{admin} ? 'CHECKED' : ''%>></TD>
-    <TD>
-        <INPUT TYPE="text" NAME="fullname" SIZE=20 MAXLENGTH=200 VALUE="<%$user_entry->{fullname} |h%>">
+        <%$user_entry->{port_control} ? 'Yes' : 'No'%>
     </TD>
     <TD>
-        <INPUT TYPE="text" NAME="note" SIZE=40 MAXLENGTH=255 VALUE="<%$user_entry->{note} |h%>">
+        <%$user_entry->{admin} ? 'Yes' : 'No'%>
     </TD>
-    <TD><NOBR><%scalar localtime($user_entry->{creation})%></NOBR><BR>
-        <NOBR><%$last_on%></NOBR></TD>
-    <TD><INPUT TYPE="password" NAME="pw" SIZE=20 MAXLENGTH=50></TD>
-    <TD><INPUT TYPE="submit" NAME="cmd" VALUE="Delete">
-        <INPUT TYPE="submit" NAME="cmd" VALUE="Change">
+    <TD>
+        <%$user_entry->{fullname} |h%>
+    </TD>
+    <TD>
+        <%$user_entry->{note} |h%>
+    </TD>
+    <TD><span class="nobr"><%scalar localtime($user_entry->{creation})%></span><BR>
+        <span class="nobr"><%$last_on%></span></TD>
+    <TD>
+        <FORM ACTION="<%$r->uri%>" METHOD=POST>
+        <DIV>
+        <INPUT TYPE="hidden" NAME="user" VALUE="<%$user_entry->{username}|h%>">
+        <INPUT TYPE="submit" NAME="cmd" VALUE="Delete">
+        <INPUT TYPE="submit" NAME="cmd" VALUE="Edit">
+        </DIV>
         </FORM>
     </TD>
 </TR>
@@ -203,14 +214,21 @@ if ($cmd eq 'Delete'){
 <%scalar @$users%> Users.
 </%method>
 <%method add_user>
-<h4>Add User</h4>
+% my $user = ($action eq 'Change') ? $user_hash{$arg_user} : undef;
+<h4><%$action%> User</h4>
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
-<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
+<DIV>
+<INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$action%>">
 <TABLE CLASS="box" CELLSPACING=0 CELLPADDING=3 BORDER=0>
 <TR>
     <TD>Username:</TD>
+% if ($action eq 'Add') {
     <TD><INPUT TYPE="text" NAME="user" SIZE="20" MAXLENGTH="50"></TD>
     <TD>Lower case, alphanumeric only.</TD>
+% } else {
+    <TD><INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$arg_user|h%>"><%$arg_user%></TD>
+    <TD>&nbsp;</TD>
+% }
 </TR>
 <TR>
     <TD>Password:</TD>
@@ -219,35 +237,43 @@ if ($cmd eq 'Delete'){
 </TR>
 <TR>
     <TD>Full Name:</TD>
-    <TD><INPUT TYPE="text" NAME="fullname" SIZE=35 MAXLENGTH=255></TD>
+    <TD><INPUT TYPE="text" NAME="fullname" SIZE=35 MAXLENGTH=255 VALUE="<%$user->{fullname} |h%>"></TD>
     <TD>(optional)</TD>
 </TR>
 <TR>
     <TD>Note:</TD>
-    <TD><INPUT TYPE="text" NAME="note" SIZE=35 MAXLENGTH=255></TD>
+    <TD><INPUT TYPE="text" NAME="note" SIZE=35 MAXLENGTH=255 VALUE="<%$user->{note} |h%>"></TD>
     <TD>(optional)</TD>
 </TR>
 <TR>
     <TD>Port Control:</TD>
-    <TD><INPUT NAME="port" TYPE="checkbox" VALUE="1"></TD>
+    <TD><INPUT NAME="port" TYPE="checkbox" VALUE="1" <%$user->{port_control} ? 'CHECKED' : ''%>></TD>
     <TD>Gives user ability to turn non-uplink ports on and off.</TD>
 <TR>
     <TD>Admin : </TD>
-    <TD><INPUT NAME="admin" TYPE="checkbox" VALUE="1"></TD>
+    <TD><INPUT NAME="admin" TYPE="checkbox" VALUE="1" <%$user->{admin} ? 'CHECKED' : ''%>></TD>
     <TD>Gives user ability to control device and users.</TD>
 </TR>
 <TR>
     <TD COLSPAN=3>
         <P> 
         <P> 
-        <INPUT TYPE="submit" VALUE="Add User">
+        <INPUT TYPE="submit" VALUE="<%$action%> User">
+% if ($action eq 'Change') {
+        [<A HREF="<%$r->uri%>">Don't Change</A>]
+% }
     </TD>
 </TR>
 </TABLE>
+</DIV>
 </FORM>
+<%args>
+$action => 'Add'
+</%args>
 </%method>
 <%method confirm_del>
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="Delete">
 <INPUT TYPE="hidden" NAME="user" VALUE="<%$arg_user|h%>"> 
 Confirm Deletion of <%$arg_user |h%> : 
@@ -255,6 +281,7 @@ Confirm Deletion of <%$arg_user |h%> :
 <BR>
 <INPUT TYPE="submit" VALUE="Delete <%$arg_user|h%>">
 [<A HREF="<%$r->uri%>">Cancel</A>]
+</DIV>
 </FORM> 
 </%method>
 <%method load_users>
