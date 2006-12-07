@@ -2,17 +2,15 @@
 <& SELF:matches &>
 <h3>Device Search</h3>
 
-<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box">
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box" style="padding: 0 8px 0 8px;">
 <TR>
-    <TD ROWSPAN=9 WIDTH="8">&nbsp;</TD>
     <TD COLSPAN=4><h4>Search All</h4></TD>
-    <TD ROWSPAN=9 WIDTH="8">&nbsp;</TD>
 </TR>
 <TR>
     <TD colspan=4>
         <INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>">
         <INPUT TYPE="submit" VALUE="Search All">
-        <FONT size=-1>(non-exact)</font>
+        <span class="small">(non-exact)</span>
     </TD>
 </TR> 
 <TR>
@@ -54,12 +52,12 @@
     </TD>
     <TD>OS:</TD>
     <TD VALIGN=TOP>
-        <u>type</u> <SELECT MULTIPLE NAME="os" SIZE=<%scalar(keys %$oses) > $winsize ? $winsize : scalar(keys %$oses)%>>
+        <span class="u">type</span> <SELECT MULTIPLE NAME="os" SIZE=<%scalar(keys %$oses) > $winsize ? $winsize : scalar(keys %$oses)%>>
 % foreach my $this_os (sort keys %$oses) {
                    <OPTION VALUE="<%$this_os%>" <% grep(/^$this_os$/,@os) ? 'SELECTED' : ''%>><%$this_os%>
 % }
                </SELECT>
-        <u>version</u> <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
+        <span class="u">version</span> <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
 % foreach my $this_os_ver (sort keys %$os_vers) {
                       <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
 % }
@@ -80,7 +78,7 @@
     <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
         <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
         <BR>
-        <font size=-1><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</font>
+        <span class="small"><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</span>
     </TD>
 </TR>
 </TABLE>
@@ -111,8 +109,8 @@
 </FORM>
 
 <h4>Hints</h4>
-<UL type=square>
-    <LI>Matches on <u>DNS</u> or <u>IP</u> may be matching aliases <i>inside</i> those devices.
+<UL class="square">
+    <LI>Matches on <span class="u">DNS</span> or <span class="u">IP</span> may be matching aliases <i>inside</i> those devices.
         Check inside the device for the matching entries.
     <LI>If you want to find blank entries, search on "is null" or conversely "is not null"
     <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
@@ -480,7 +478,7 @@ my $time2 = time;
     No Results Found.
 %    return;
 % }
- <TABLE cellspacing=0 cellpadding=3 WIDTH=100%>
+ <TABLE cellspacing=0 cellpadding=3 WIDTH="100%">
     <TR>
         <TH>Device</TH>
 %    foreach my $col (sort keys %$where){
@@ -505,7 +503,7 @@ foreach my $result (@sort_matches){
    $count++;
 </%perl>
     <TR CLASS="match-<% $count % 2%>">
-    <TD><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&port=' : ''%><% $port|u %>"><% $dns %></A></TD>
+    <TD><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&amp;port=' : ''%><% $port|u %>"><% $dns %></A></TD>
 <%perl>
     foreach my $col (sort keys %$where){
         # Trim off table name for column
@@ -522,6 +520,7 @@ foreach my $result (@sort_matches){
     </TR>
 %}
   </TABLE>
+<P>
 <% $count %> matches.
 <P>
 </%method>

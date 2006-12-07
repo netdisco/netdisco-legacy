@@ -44,3 +44,4 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; }
     .highlight { color:red;}
     .nobr { white-space: nowrap; }
     td.mapkey { background-color:black; }
+    ul.square { list-style-type:square; }
