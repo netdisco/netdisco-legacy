@@ -2,6 +2,7 @@
 <% $err %>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="age">
 <TABLE CLASS="box" BORDER=0>
 <TR>
@@ -21,7 +22,7 @@
         </SELECT>
     </TD>
 </TR>
-<TR> <TD COLSPAN=4><HR NOSHADE></TD> </TR>
+<TR> <TD COLSPAN=4><hr class="noshade"></TD> </TR>
 <TR>
     <TD>Sort By :</TD>
     <TD><SELECT NAME="sort" SIZE=1>
@@ -37,7 +38,7 @@
     <TD VALIGN=TOP>Subnet :</TD>
     <TD>
         <INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
-        <BR><font size=-2>(CIDR Format : <tt>192.168.0.0/24</tt>)</font>
+        <BR><span class="smaller">(CIDR Format : <tt>192.168.0.0/24</tt>)</span>
         <BR>
 % if (@$subnets) {
         <SELECT NAME="subnet_select">
@@ -74,6 +75,7 @@
     </TD>
 </TR>
 </TABLE>
+</DIV>
 </FORM>
 Finds IP Addresses used by nodes.
 <BR>To find IP addresses that have never been used in a subnet, select "12 Years" and Check the Checkbox.
@@ -81,8 +83,9 @@ Finds IP Addresses used by nodes.
 <h3>Netbios Inventory</h3>
 % $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
-<TABLE CLASS="box" BORDER=0>
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="nbt">
+<TABLE CLASS="box" BORDER=0>
 <TR>
     <TD>Domain:</TD>
     <TD><SELECT NAME="domain" MULTIPLE SIZE=8>
@@ -105,6 +108,7 @@ Finds IP Addresses used by nodes.
     </TD>
 </TR>
 </TABLE>
+</DIV>
 </FORM>
 <%args>
 $subnet  => ''
@@ -297,7 +301,7 @@ if ($cmd eq 'nbt'){
 % unless (scalar @$nodes) {
 No Results Found.
 % return; }
-<TABLE BORDER=0 CELLSPACING=0 WIDTH=100%>
+<TABLE BORDER=0 CELLSPACING=0 WIDTH="100%">
     <TR>
         <TH>Domain</TH>
         <TH>Count</TH>
@@ -310,7 +314,7 @@ No Results Found.
 % if ($cnt%2){
 <TR CLASS="match-<%++$odd%2%>">
 %}
-    <TD><A HREF="<%$r->uri%>?domain=<%$d||'blank'%>"><%$d || '[Blank]'%></A></TD>
+    <TD><A HREF="<%$r->uri%>?domain=<%$d||'blank'|u%>"><%$d || '[Blank]'|h%></A></TD>
     <TD><%$domain_count->{$d}%></TD>
 % if (($cnt+1)%2) {
 </TR>
@@ -333,10 +337,10 @@ No Results Found.
 %                      (lc($a->{nbname}) cmp lc($b->{nbname}) )} 
 %                @$nodes){
     <TR CLASS="match-<%++$odd%2%>">
-        <TD><%$last_domain ne $n->{domain} ? $n->{domain} : '&nbsp;'%></TD>
+        <TD><%$last_domain ne $n->{domain} ? $m->interp->apply_escapes($n->{domain}, 'h') : '&nbsp;'%></TD>
         <TD><A HREF="node.html?node=<%$n->{mac}|u%>"><%$n->{mac}%></A></TD>
-        <TD><%$n->{domain} ? "\\\\$n->{domain}\\" : '' %><A HREF="node.html?node=<%$n->{nbname} |u%>"><%$n->{nbname} || '[None]'%></A></TD>
-        <TD><%$n->{nbuser} || '[No User]' %> @
+        <TD><%$n->{domain} ? "\\\\$n->{domain}\\" : '' |h%><A HREF="node.html?node=<%$n->{nbname} |u%>"><%$n->{nbname} || '[None]'|h%></A></TD>
+        <TD><%$n->{nbuser} || '[No User]' |h%> @
             <A HREF="node.html?node=<%$n->{ip} |u%>"><%$n->{ip}%></A>
         </TD>
         <TD><& 'node.html:format_date', date=>$n->{time_first}&></TD>
