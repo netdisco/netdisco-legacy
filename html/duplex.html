@@ -1,10 +1,12 @@
 <h3>Duplex Mismatch Finder</h3>
-<FORM ACTION="<%$r->uri%>" METHOD="get">
 <& SELF:results &>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<DIV>
 <h4>Search</h4>
 <INPUT TYPE="submit" name="search" value="Search for Duplex Mismatches between device ports">
 <P>
 This search could take a while.
+</DIV>
 </FORM>
 <%args>
 $search => undef
@@ -31,7 +33,7 @@ if (defined $search and $search =~ /duplex/i){
 No Duplex Mismatches found.
 % return;}
 <h4>Search Results</h4>
-<TABLE CELLSPACING=0 CELLPADDING=2 BORDER=0 WIDTH=75%>
+<TABLE CELLSPACING=0 CELLPADDING=2 BORDER=0 WIDTH="75%">
 <TR>
     <TH>Device / Port</TH>
     <TH>Duplex</TH>
@@ -59,9 +61,9 @@ foreach my $result (@$results){
     $count++;
 </%perl>
 <TR CLASS="match-<% $count % 2 %>">
-    <TD><A HREF="device.html?ip=<%$ip%>&port=<%$port%>"><%$name%> (<%$port%>)</A></TD>
+    <TD><A HREF="device.html?ip=<%$ip%>&amp;port=<%$port%>"><%$name%> (<%$port%>)</A></TD>
     <TD><%$duplex%></TD>
-    <TD><A HREF="device.html?ip=<%$remote_ip%>&port=<%$remote_port%>"><%$remote_name%> (<%$remote_port%>)</A></TD>
+    <TD><A HREF="device.html?ip=<%$remote_ip%>&amp;port=<%$remote_port%>"><%$remote_name%> (<%$remote_port%>)</A></TD>
     <TD><%$remote_duplex%></TD>
 </TR>
 <%perl>
