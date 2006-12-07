@@ -1,0 +1,45 @@
+    A { text-decoration:none; color:#000099;}
+    H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
+         background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
+    H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; margin-bottom:5px;}
+    TH { font-family:arial,helvetica,sans-serif; font-size:12pt; text-align:center;}
+    TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
+    INPUT { font-family:monospace; font-size:9pt; }
+    BODY { position:absolute; top:0; left:0; background-color:#f5deb3; color:black;
+font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; }
+    FORM { margin-bottom:0; margin-top:0; }
+    UL,DL,OL { margin-top:0; margin-bottom:0; }
+    .u      { text-decoration: underline; }
+    .small   { font-size: 85%; }
+    .smaller { font-size: 75%; }
+    .tiny { font-size: 50%; }
+    .big { font-size: 200%; }
+    .halfwidth { width: 50%; /* XXX to do  align: left; */}
+    div.topbar { background-color:#8b7e66; background-image: url('corner-tl.png'); background-repeat: no-repeat; padding-left: 20px; }
+    .topbar { background-color:#8b7e66; color:#eed8ae; height:20px;
+              font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
+    .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align: center;
+              vertical-align:bottom; font-family:arial,helvetica,serif; font-size:8pt; clear:both; }
+    .sidebar { float:left; height:100%; width:15%; }
+    .sidebar li { display:block; list-style:none; border-width: 0 thin thin thin
+; border-style: solid; padding: 1px;}
+    .sidebar ul { padding:0; border-width: thin 0 0 0; border-style: solid; }
+    .sidebar-bg { background-color:#191970; border:black; }
+    .sidebar-0 { text-align:center; background-color:#eed8ae;}
+    .sidebar-1 { text-align:center; background-color:#ffe7ba;}
+    .content { float:right; height:100%; width:84%; }
+    .match-1 { text-align:center; background-color:#eed8ae;}
+    .match-0 { text-align:center; background-color:#ffe7ba;}
+    .box     { background-color:#eed8ae; border:thin solid; border-color:#191970; }
+    .port-up { color:black;}
+    .port-off { color:red;}
+    .port-down { color:#a0a0a0; }
+    .port-block { color:#33ccff; }
+    .dead-link { color:white; background-color:red;}
+    .ip-phone {color: white; background-color:blue;}
+    .device-link { color:blue; }
+    .tr-head   { text-align:left; font:normal normal 12pt monospace;}
+    .tr-data-1 { text-align:left; font-family:monospace; background-color:#eed8ae; }
+    .tr-data-0 { text-align:left; font-family:monospace; background-color:#ffe7ba; }
+    .highlight { color:red;}
+    .nobr { white-space: nowrap; }

@@ -1,40 +1,11 @@
 <h3>Intro</h3>
 Netdisco is an Open Source web-based network management tool.  
-<P>
-<TABLE>
-<TR>
-    <TD>
-        Here are some of the favorite uses for this tool:
-        <UL>
-            <LI>Find a Switch Port from a MAC or IP address and the reverse.
-            <LI>Administratively disable a Switch Port while leaving an audit
-                trail.<BR>
-                <font size=-1>(Required ReadWrite SNMP passwords to be configured)</font>
-            <LI>Quickly provide configuration information for network devices.
-            <LI>Inventory your network hardware by model, vendor and IOS.
-            <LI>Control your IP address space; know who uses what IP and when.
-            <LI>Historical data: know what IP and MAC addresses
-                that are in use, <i>and were in use</i> on what ports.
-            <LI>Pretty pictures of your network.
-        </UL>
-        <P>
-        Things connected to the network are divided into two categories: 
-        <UL>
-            <LI><u>Devices</u> - Network appliances such as routers, switches,
-                and hubs that support SNMP.  Each device has multiple
-                interfaces (ports) and can have IPs assigned to those
-                interfaces.  
-            <LI><u>Nodes</u> - Anything on the network that has a MAC address that isn't a device.
-                Printers, Computers, Servers, Devices for which we don't have SNMP access.
-                <P>See <A HREF="doc/README.html#glossary">the glossary</a> for more details.
-        </UL>
-    </TD>
-    <TD VALIGN=TOP CLASS="box">
+<div class="box" style="float: right; width: 45%;">
     <B>New in 0.95</B>:
-    <HR NOSHADE>
-    <FORM>
+    <HR class="noshade">
+        <div>
         New Features:<BR>
-        <TEXTAREA COLS=50 ROWS=4 WRAP=OFF>
+        <pre class="featurebox">
 []        Apache-based HTTP authentication added.
 []        Apache2 + mod_perl2 support from Manuel Bouyer
 [1107564] Disable BULKWALK on a per device or per device type basis:
@@ -60,9 +31,9 @@ Netdisco is an Open Source web-based network management tool.
 []        pg_all, pg_run, pg_init, pg_back unified into single sql/pg script
           This script parses netdisco.conf for database settings.
 []        Add graph_png option to use png output from graphviz
-</TEXTAREA>
+</pre>
         <BR>New Devices Supported:<BR>
-        <TEXTAREA COLS=50 ROWS=3 WRAP=OFF>
+        <pre class="featurebox">
 Foundry EdgeIron
 Nortel Passport/Accelar 1100 and 1200 series
 Nortel Passport/Accelar 8100 series
@@ -71,9 +42,9 @@ Extreme Alpine and Summit switches
 Aruba wireless switches
 Nortel 2700 series (Airespace) wireless switches
 Nortel/Bay/Synoptics System 3000 and 281X hubs
-Juniper</TEXTAREA>
+Juniper</pre>
         <BR>Bugs Fixed:<BR>
-        <TEXTAREA COLS=50 ROWS=3 WRAP=OFF>
+        <pre class="featurebox">
 [1094208] "problemnode" attribute on network map was being overriden by default color settings.
 [1100029] Nbtwalk whole network bug - would die if couldn't connect to a node.
 [1107565] Log file was trying to be written not in batch mode.
@@ -94,12 +65,36 @@ Juniper</TEXTAREA>
 [1580283] Workaround for buggy Net-SNMP perl connectors: turn off
           bulkwalk if a buggy version is detected.
 []        Don't work with undefined values if no link speed defined.
-[]        Print errors that would have been absorbed by eval.</TEXTAREA>
+[]        Print errors that would have been absorbed by eval.</pre>
     <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
-    </FORM>    
-        </TD>
-    </TR>
-</TABLE>
+        </div>
+</div>
+<P>
+Here are some of the favorite uses for this tool:
+<UL>
+    <LI>Find a Switch Port from a MAC or IP address and the reverse.
+    <LI>Administratively disable a Switch Port while leaving an audit
+	trail.<BR>
+	<span class="small">(Required ReadWrite SNMP passwords to be configured)</span>
+    <LI>Quickly provide configuration information for network devices.
+    <LI>Inventory your network hardware by model, vendor and IOS.
+    <LI>Control your IP address space; know who uses what IP and when.
+    <LI>Historical data: know what IP and MAC addresses
+	that are in use, <i>and were in use</i> on what ports.
+    <LI>Pretty pictures of your network.
+</UL>
+<P>
+Things connected to the network are divided into two categories: 
+<UL>
+    <LI><span class="u">Devices</span> - Network appliances such as routers, switches,
+	and hubs that support SNMP.  Each device has multiple
+	interfaces (ports) and can have IPs assigned to those
+	interfaces.  
+    <LI><span class="u">Nodes</span> - Anything on the network that has a MAC address that isn't a device.
+	Printers, Computers, Servers, Devices for which we don't have SNMP access.
+	<P>See <A HREF="doc/README.html#glossary">the glossary</a> for more details.
+</UL>
+<br style="clear: both;">
 
 <h3>Support</h3>
 If you have problems with Netdisco you should :
@@ -107,12 +102,12 @@ If you have problems with Netdisco you should :
 <OL>
     <LI>Talk to your Network Administrator who installed Netdisco
     <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A>
-    <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&atid=558508">Check for Bugs</A>
-    <LI><A HREF="http://sourceforge.net/search/?group_id=80033&type_of_search=mlists">Search the Mailing List Archives</A>
+    <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&amp;atid=558508">Check for Bugs</A>
+    <LI><A HREF="http://sourceforge.net/search/?group_id=80033&amp;type_of_search=mlists">Search the Mailing List Archives</A>
     <LI><A HREF="http://lists.sourceforge.net/lists/listinfo/netdisco-users">Ask a Question on the Mailing List</A>
 </OL>
-<P>
 <h3>Register</h3>
+<P>
 The developers are now maintaining a registry of Netdisco installs.  This is
 mainly for morale boosting purposes, but also helps us direct feature requests
 to our target audience.  One drawback of the Source Forge system is that we
@@ -120,16 +115,21 @@ have no idea how many people are using the software compared to the number of
 downloads.  
 <P>
 Please spend a minute to let us know you're using Netdisco at 
-<A HREF="http://netdisco.org/register.html" TARGET="_new">http://netdisco.org/register.html</A>.
+<A HREF="http://netdisco.org/register.html" onclick="window.open(this.href,'netdiscoregister'); return false">http://netdisco.org/register.html</A>.
 
 <P>
-<hr noshade width=50% ALIGN=left>
+<hr class="halfwidth">
 <A HREF="http://netdisco.org">Netdisco</a> is an Open Source project 
 headed up by developers Eric Miller, Bill Fenner and Max Baker.
 <BR>
 Originally created at <a href="http://its.ucsc.edu/services/network">UCSC</a>
 and now hosted by <A HREF="http://sourceforge.net/projects/netdisco">Source Forge</A>.
 
+<%method html_head>
+<STYLE TYPE="text/css">
+pre.featurebox { width: 99%; height: 5em; overflow: auto; background-color: white; color: black; border: 2px inset; }
+</STYLE>
+</%method>
 %# TODO - Autoparse the changelog
 %# $Id$
 %# vim:syntax=mason

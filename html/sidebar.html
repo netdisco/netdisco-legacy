@@ -1,85 +1,61 @@
-<TABLE class="sidebar-bg" cellpadding=5 cellspacing=0 border=1>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
-    <A HREF="<%$path%>/index.html"><IMG SRC="<%$path%>/netdiscoball.gif" BORDER=0 width=82 height=90 alt="[Disco Ball]"></A><BR>
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+<ul class="sidebar-bg">
+    <li CLASS="sidebar-<% ++$odd%2 %>">
+    <A HREF="<%$path%>/index.html"><IMG SRC="<%$path%>/netdiscoball.gif" style="border: 0;" width=82 height=90 alt="[Disco Ball]"></A><BR>
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/netmap.html">Network Map</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     <FORM ACTION="<%$path%>/device.html" METHOD=GET>
+    <div>
     [<A HREF="<%$path%>/device_search.html">Device Search</A>]<BR>
     <INPUT TYPE="text" size=10 maxlength=60 NAME="ip" TITLE="Enter the DNS or IP of a device and hit return.">
+    </div>
     </FORM>
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/device_inv.html">Device Inventory</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     <FORM ACTION="<%$path%>/node.html" METHOD=GET>
+    <div>
     [<A HREF="<%$path%>/node.html">Node Search</A>]<BR>
     <INPUT TYPE="text" size=10 maxlength=60 NAME="node" TITLE="IP, DNS, MAC, NetBios  * and ? are wildcards.">
+    </div>
     </FORM>
-    </TD>
-</TR>
+    </li>
 % if ($port_info) {
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/jack_search.html" TITLE="Search Pinnacles Database">Jack Search</A>]
-    </TD>
-</TR>
+    </li>
 % }
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Report</A>]
-    </TD>
-</TR>
-%#<TR>
-%#    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+%#    <li CLASS="sidebar-<% ++$odd%2 %>">
 %#    [<A HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>]
-%#    </TD>
-%#</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+%#    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/duplex.html">Duplex Mismatch Finder</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space or Netbios Domains">Node Inventory</A>]
-    </TD>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/log.html">Backend Log</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/doc">Documentation</A>]
-    </TD>
-</TR>
+    </li>
 % if ($admin and $secure) {
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/admin.html">Administration Panel</A>]
-    </TD>
-</TR>
+    </li>
 % }
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/stats.html">About</A>]
-    </TD>
-</TR>
-<TR>
-    <TD CLASS="sidebar-<% ++$odd%2 %>">
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
 % if ($secure and $netdisco::CONFIG{secure_server} ) {
 <IMG SRC="<%$path%>/icon_lock.gif" ALT="Secure Connection" TITLE="Secure Connection" HEIGHT=15 WIDTH=15>
 % } elsif (!$secure) {
@@ -101,9 +77,8 @@
     [<A HREF="<%$path%>/login.html">Login</A>]
 %   }
 %}
-    </TD>
-</TR>
-</TABLE>
+    </li>
+</ul>
 <%once>
 </%once>
 <%shared>
