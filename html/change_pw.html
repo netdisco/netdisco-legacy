@@ -50,6 +50,7 @@ if ($cmd eq 'change'){
 </%init>
 <%method change>
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
+<DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="change">
 <TABLE>
 <TR>
@@ -62,6 +63,7 @@ if ($cmd eq 'change'){
 </TR>
 </TABLE>
 <INPUT TYPE="SUBMIT" VALUE="Change Password for <%$user|h%>">
+</DIV>
 </FORM>
 </%method>
 <%method error>
