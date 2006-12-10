@@ -44,3 +44,39 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     .nobr { white-space: nowrap; }
     td.mapkey { background-color:black; }
     ul.square { list-style-type:square; }
+
+/* footerStickAlt from www.themaninblue.com */
+
+html
+{
+	height: 100%;
+}
+
+body
+{
+	height: 100%;
+}
+
+#nonFooter
+{
+	position: relative;
+	min-height: 100%;
+}
+
+* html #nonFooter
+{
+	height: 100%;
+}
+
+#footer
+{
+	position: relative;
+	margin: -22px auto 0 auto;
+}
+
+/* A CSS hack that only applies to IE -- specifies a different height for the footer */
+
+* html #footer
+{
+	margin-top: -21px;
+}

@@ -7,6 +7,7 @@
 <& SELF:html_head &>
 </HEAD>
 <BODY>
+    <div id="nonFooter">
     <div class="topbar">
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N&nbsp;e&nbsp;t&nbsp;&nbsp;d&nbsp;i&nbsp;s&nbsp;c&nbsp;o
     </div>
@@ -16,7 +17,8 @@
     <div class="content">
 %       $m->call_next;
     </div>
-    <div class="botbar">
+    </div>
+    <div class="botbar" id="footer">
         Netdisco <%$netdisco::VERSION%> 
     </div>
 </BODY>
