@@ -1,15 +1,17 @@
 <h3>Admin - Reload Config File</h3>
+<P>
 Config File reloaded. But for this process (<%$$%>) only.
+<P>
+Note that this should no longer be needed, as the config file
+timestamp is checked at each page load.
 <%init>
-my $is_admin  = $m->session->{user_admin};
-unless ($is_admin){
-    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
-    $m->redirect("login.html?done=$url");
-}
+# Enforce secure + admin
+$m->comp('admin.html:force_secure_admin');
+
 &netdisco::config('/usr/local/netdisco/netdisco.conf');
 </%init>
 <%method title>
-- Admin Panel - Users \
+- Admin Panel - Reconfig \
 </%method>
 %# $Id$
 %# vim:syntax=mason
