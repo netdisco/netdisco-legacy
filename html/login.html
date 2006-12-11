@@ -2,6 +2,9 @@
 % if ($err) {
 <H4><%$err%></H4>
 %}
+% if ($m->session->{_login_msg}) {
+<H4><%$m->session->{_login_msg}%></H4>
+% }
 <FORM ACTION="<%$r->uri%>" METHOD="POST" NAME="loginForm">
 <DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="login">
@@ -115,6 +118,9 @@ if ($err) {
     insert_or_update('user_log',{},
 	    {'username'=>$m->session->{user},'event'=>$how,
 	     'userip'=>$userip,'details'=>$done});
+
+    # Remove any login message
+    $m->session->{_login_msg} = undef;
 
     # Redirect
     if (defined $done and length($done)) {

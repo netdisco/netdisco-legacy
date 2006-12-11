@@ -19,28 +19,17 @@ $fullname => undef
 $note  => undef
 </%args>
 <%shared>
-my ($this_user,$users,$is_admin,%user_hash,$arg_user);
+my ($this_user,$users,%user_hash,$arg_user);
 my $odd    = 0;
 my $err    = '';
-my $secure = &is_secure;
 my $userip = $r->connection->remote_ip; 
 </%shared>
 <%init>
+# Enforce secure + admin
+$m->comp('admin.html:force_secure_admin');
+
 $this_user = $m->session->{user};
-$is_admin  = $m->session->{user_admin};
 $arg_user = $user;
-
-# Send to https if not secure.
-unless ($secure){
-    my $url = url_secure($r->uri);
-    $m->redirect($url);
-}
-
-# Send to login if not admin.
-unless ($is_admin) {
-    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
-    $m->redirect("login.html?done=$url");
-}
 
 # Fetch users from db.
 $m->comp('SELF:load_users');

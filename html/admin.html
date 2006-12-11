@@ -84,8 +84,6 @@ $entries => 20
 <%shared>
 my ($arg_entries,$logs);
 my $user      = $m->session->{user};
-my $is_admin  = $m->session->{user_admin};
-my $secure    = &is_secure;
 my $domain    = $netdisco::CONFIG{domain};
 my %actions = ( 
             # action       => [longname, confirm action?]
@@ -107,18 +105,10 @@ my %log_events = (
                   );
 </%shared>
 <%init>
-$arg_entries = $entries;
-# Send to https if not secure.
-unless ($secure){
-    my $url = url_secure($r->uri);
-    $m->redirect($url);
-}
+# Enforce secure + admin
+$m->comp('SELF:force_secure_admin');
 
-# Send to login if not admin.
-unless ($is_admin) {
-    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
-    $m->redirect("login.html?done=$url");
-}
+$arg_entries = $entries;
 
 # Get names of events in db
 my $events = sql_column('user_log',['distinct(event)','true']);
@@ -136,6 +126,25 @@ $logs = sql_rows('user_log',['username','userip','event','details',
                  $where,1);
 
 </%init>
+<%method force_secure_admin>
+<%perl>
+# Send to https if not secure.
+unless (&is_secure){
+    my $url = url_secure($r->uri);
+    $m->redirect($url);
+}
+
+# Send to login if not admin.
+unless ($m->session->{user_admin}) {
+    my $url = $m->interp->apply_escapes( $r->uri, 'u' );
+    my $title = $m->scomp('REQUEST:title');
+    $title =~ s/^\s*-\s+//;
+    $title =~ s/\s+$//;
+    $m->session->{_login_msg} = "Please log in as a netdisco administrator in order to use the ${title}.";
+    $m->redirect("login.html?done=$url");
+}
+</%perl>
+</%method>
 %#
 %# show_log() - Barfs out contents of @$logs
 %#
