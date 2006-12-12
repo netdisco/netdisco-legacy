@@ -1294,7 +1294,7 @@ sub insert_or_update {
 
         $sql = qq/SELECT * FROM $table WHERE $wherestr FOR UPDATE/;
 
-        carp($sql) if $SQLCARP;
+        carp("[$$] $sql") if $SQLCARP;
         my $row = $dbh->selectrow_hashref($sql);
         carp "insert_or_update($sql) ". $dbh->errstr . "\n" if $dbh->err;
 
@@ -1307,7 +1307,7 @@ sub insert_or_update {
 
             # Certain devices were null padding and postgres barfs on nulls in text fields.
             $sql =~ s/\0//g;
-            carp($sql) if $SQLCARP;
+            carp("[$$] $sql") if $SQLCARP;
 
             $dbh->do($sql); 
             if ($dbh->err) { 
@@ -1328,7 +1328,7 @@ sub insert_or_update {
 
     # Certain devices were null padding and postgres barfs on nulls in text fields.
     $sql =~ s/\0//g;
-    carp($sql) if $SQLCARP;
+    carp("[$$] $sql") if $SQLCARP;
 
     my $sth = $dbh->prepare($sql);
     if ($dbh->err) { 
@@ -1391,7 +1391,7 @@ sub sql_column {
         $sql .= sprintf(" WHERE %s", join(' AND ',@where));
     }
     
-    carp($sql) if $SQLCARP;
+    carp("[$$] $sql") if $SQLCARP;
 
     my %hash;
     my $sth = $dbh->prepare($sql);
@@ -1420,7 +1420,7 @@ sub sql_do {
     my $sql = shift;
     my $dbh = &dbh;    
     
-    carp($sql) if $SQLCARP;
+    carp("[$$] $sql") if $SQLCARP;
 
     return $dbh->do($sql); 
 }
@@ -1791,7 +1791,7 @@ sub sql_query {
     # Certain devices were null padding and postgres barfs on nulls in text fields.
     $sql =~ s/\0//g;
 
-    carp($sql) if $SQLCARP;
+    carp("[$$] $sql") if $SQLCARP;
 
     my $sth = $dbh->prepare($sql);
     if (!defined $sth) {
