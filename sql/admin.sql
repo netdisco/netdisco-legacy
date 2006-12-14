@@ -19,3 +19,5 @@ CREATE TABLE admin (
     log         text,
     debug       boolean
                    );
+
+CREATE INDEX idx_admin_entered    ON admin(entered);

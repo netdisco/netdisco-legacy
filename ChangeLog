@@ -12,6 +12,11 @@ Features:
                 Based on Daniel Weber's work; updated partially
                 from experience in parallel arpnip+macsuck.
 
+Bugfixes:
+    * [1605351] admin_dev.html could take a long time to load.
+                (only partially fixed)
+
+
 0.95 (11/28/2006)
 
 New Device Support in SNMP::Info 1.0:

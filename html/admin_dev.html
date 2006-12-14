@@ -232,7 +232,7 @@ $queue = sql_rows('admin',['job','extract(epoch from entered) as entered','extra
 $where->{status} = [['done','error']];
 my $done = sql_rows('admin',['job','extract(epoch from entered) as entered','extract(epoch from finished) as finished',
                              'extract(epoch from started) as started','device','action','status','username'],
-                    $where,undef,"order by entered desc limit $old_jobs");
+                    $where,undef,"order by admin.entered desc limit $old_jobs");
 push (@$queue,@$done);
 
 # Log entries are fetched separately, as these can be rather large, and should
