@@ -208,6 +208,7 @@ sub discover{
     store_interfaces($device);
 
     # Walk Modules
+    store_modules($device);
 
     # Walk neighbors
     find_neighbors($device);
@@ -1454,37 +1455,14 @@ sub get_subnets {
         # Local Host
         next if $ip =~ /^127\./;
 
-        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets}) {
-            my $ignore =0;
-            # Class A Private
-            $ignore++ if $ip =~ /^10\./;
-            # Class B Private
-            $ignore++ if $ip =~ /^172\.16\./;
-            # Class C private
-            $ignore++ if $ip =~ /^192\.168\.0\./;
-            print "  Ignoring private address $ip\n" if ($ignore and $DEBUG);
-            next if $ignore;
+        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets} and is_private($ip)) {
+            print "  Ignoring private address $ip\n" if ($DEBUG);
+            next;
         }
 
-        my $netmask  = $ip_netmask->{$ip};
-        my @maskbyte = split /\./, $netmask;
-        my @ipbyte = split /\./, $ip;
-        my $netaddr = undef;
-
-        for (my $i=0; $i < 4; $i++) {
-            my $b1 = $maskbyte[$i]+0;
-            my $b2 = $ipbyte[$i]+0;
-            my $netbyte = $b1 & $b2;
-            if ($i != 0) { 
-                $netaddr = $netaddr . "." . $netbyte;
-            }
-            else {
-                $netaddr = $netbyte; 
-            }
-        }
-        my $cidr_mask = mask_to_bits($netmask);
-        next if $cidr_mask == 32;
-        my $cidr_subnet = "$netaddr/$cidr_mask";
+        my $netmask = $ip_netmask->{$ip};
+        next if $netmask eq '255.255.255.255' or $netmask eq '0.0.0.0';
+        my $cidr_subnet = cidr($ip, $netmask);
         
         insert_or_update('subnets', {'net' => $cidr_subnet},
                         {'net' => $cidr_subnet , 'last_discover' => scalar(localtime) }
@@ -1492,6 +1470,73 @@ sub get_subnets {
         $DEBUG and print "Found subnet $cidr_subnet\n";
     }
     sql_commit();
+}
+
+=item store_modules()
+
+Gets all the physical module information using Table Methods in SNMP::Info.
+
+Deletes the old module entries in device_module and puts in new ones.
+
+=cut
+
+sub store_modules {
+    my $device = shift;
+    my $devip  = $device->{ip};
+
+    print "  Fetching Module Information    : ";
+
+    my $e_descr   = $device->e_descr();
+    my $e_type    = $device->e_type();
+    my $e_parent  = $device->e_parent();
+    my $e_name    = $device->e_name();
+    my $e_class   = $device->e_class();
+    my $e_pos     = $device->e_pos();
+    my $e_hwver   = $device->e_hwver();
+    my $e_fwver   = $device->e_fwver();
+    my $e_swver   = $device->e_swver();
+    my $e_model   = $device->e_model();
+    my $e_serial  = $device->e_serial();
+    my $e_fru     = $device->e_fru();
+
+    sql_begin();
+    sql_do(qq/DELETE from device_module where ip = '$devip'/);
+    foreach my $key (keys %$e_class) {
+        my %store;
+        my $type;
+
+        $store{ip}            = $devip;
+        $store{index}         = $key;
+        $store{description}   = $e_descr->{$key};
+        $type = $e_type->{$key};
+        # OID translation - SNMP::Info should do this
+        #  but versions before 1.06 do not
+        if ($type =~ /^[0-9.]+$/) {
+            my $trans = SNMP::translateObj($type);
+            $type = $trans if defined($trans);
+        }
+        $store{type}          = $type;
+        $store{parent}        = $e_parent->{$key};
+        $store{name}          = $e_name->{$key};
+        $store{class}         = $e_class->{$key};
+        $store{pos}           = $e_pos->{$key};
+        $store{hw_ver}        = $e_hwver->{$key};
+        $store{fw_ver}        = $e_fwver->{$key};
+        $store{sw_ver}        = $e_swver->{$key};
+        $store{model}         = $e_model->{$key};
+        $store{serial}        = $e_serial->{$key};
+        $store{fru}           = $e_fru->{$key};
+        $store{last_discover} = 'now';
+
+        insert_or_update('device_module', { 'ip' => $devip,
+                                            'index' => $key },
+                         \%store );
+
+        print '.';
+    }
+    sql_commit();
+
+    print "\n";
 }
 
 =item mac_getportmacs() 
@@ -1962,6 +2007,7 @@ sub store_device {
 
     my $ip_index   = $device->ip_index();
     my $interfaces = $device->interfaces();
+    my $ip_netmask = $device->ip_netmask();
 
     sql_begin();
     
@@ -1970,31 +2016,24 @@ sub store_device {
 
     # Store all our IPs
     foreach my $ip (keys %$ip_index){
-        next if $ip eq $devip;
-
         next if $ip eq '0.0.0.0';
         # Local Host
         next if $ip =~ /^127\.0\.0\./;
 
-        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets}) {
-            my $ignore =0;
-            # Class A Private
-            $ignore++ if $ip =~ /^10\./;
-            # Class B Private
-            $ignore++ if $ip =~ /^172\.16\./;
-            # Class C private
-            $ignore++ if $ip =~ /^192\.168\.0\./;
-            print "  Ignoring private address $ip\n" if ($ignore and $DEBUG);
-            next if $ignore;
+        if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets} and is_private($ip)) {
+            print "  Ignoring private address $ip\n" if ($DEBUG);
+            next;
         }
 
         my $iid  = $ip_index->{$ip};
         my $port = $interfaces->{$iid}; 
         my $dns  = &hostname($ip);
+        my $netmask = $ip_netmask->{$ip};
+        my $subnet  = $netmask eq '0.0.0.0' ? undef : cidr($ip, $netmask);
 
         insert_or_update('device_ip', {'ip' => $devip,  'alias' => $ip},
                         {'ip' => $devip , 'alias' => $ip, 'port' => $port,
-                         'dns' => $dns }
+                         'subnet' => $subnet, 'dns' => $dns }
                         );
         $DEBUG and print "  Adding $ip to device_ip\n";
         $Aliases->{$ip} = $devip;
@@ -2017,6 +2056,7 @@ sub store_device {
     $store{dns}         = $device->{dns};
     $store{snmp_ver}    = $device->snmp_ver();
     $store{snmp_comm}   = $device->snmp_comm();
+    $store{snmp_class}  = $device->class();
     $store{description} = $device->description();
     $store{uptime}      = $device->uptime();
     $store{contact}     = $device->contact();

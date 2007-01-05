@@ -11,10 +11,18 @@ Features:
     + [1107583] Use SQL transactions when bulk updating tables.
                 Based on Daniel Weber's work; updated partially
                 from experience in parallel arpnip+macsuck.
+    + [1606309] Add subnet info to device_ip table, and keep
+                device's primary ip address in device_ip too.
+                (not yet in web front end)
+    + []        Record device's SNMP::Info class for debugging
+    + [1603913] Record module info from Entity MIB.
+                (not yet in web front end)
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
                 (only partially fixed)
+    * []        Fix RFC1918 range (and abstract into netdisco.pm)
+    * []        Don't believe netmask 0.0.0.0 (from buggy Net-SNMP agent)
 
 
 0.95 (11/28/2006)

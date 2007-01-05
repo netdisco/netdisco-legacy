@@ -5,6 +5,7 @@ DROP TABLE device_ip;
 CREATE TABLE device_ip (
     ip          inet,
     alias       inet,
+    subnet      cidr,
     port        text,
     dns         text,
     creation    TIMESTAMP DEFAULT now(),

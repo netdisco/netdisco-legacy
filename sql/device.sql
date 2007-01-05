@@ -28,6 +28,7 @@ CREATE TABLE device (
     log          text,      -- HP Devices can store their log in here.
     snmp_ver     integer,   -- Holds the SNMP Version of device 
     snmp_comm    text,      -- Holds the SNMP Community String
+    snmp_class   text,      -- Holds SNMP::Info class for debugging
     vtp_domain   text,
     last_discover TIMESTAMP,
     last_macsuck  TIMESTAMP,

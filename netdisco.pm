@@ -34,7 +34,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        active_subnets dump_subnet in_device
-                       url_secure mask_to_bits bits_to_mask dbh_quote sql_vacuum
+                       url_secure is_private cidr mask_to_bits bits_to_mask dbh_quote sql_vacuum
                        tryuse homepath/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
@@ -746,6 +746,46 @@ sub mail {
     print SENDMAIL "Subject: $subject\n\n";
     print SENDMAIL $body;
     close (SENDMAIL) or die "Can't send letter. $!\n";
+}
+
+=item is_private(ip)
+
+Returns true if a given IP address is in the RFC1918 private
+address range.
+
+=cut
+
+sub is_private {
+    my ($ip) = @_;
+    my $ignore = 0;
+
+    # Class A Private
+    $ignore++ if $ip =~ /^10\./;
+    # Class B Private
+    $ignore++ if $ip =~ /^172\.(\d+)\./ && ($1 >= 16 && $1 <= 31);
+    # Class C private
+    $ignore++ if $ip =~ /^192\.168\./;
+
+    return $ignore;
+}
+
+=item cidr(ip, mask)
+
+Takes an IP address and netmask and returns the CIDR format
+subnet.
+
+=cut
+
+sub cidr {
+    my ($ip, $mask) = @_;
+    my $bits = mask_to_bits($mask);
+
+    return undef if (!defined($ip) || !defined($mask));
+
+    my $nip = unpack("N", pack("C*", split(/\./, $ip)));
+    my $nmask = unpack("N", pack("C*", split(/\./, $mask)));
+    my $netaddr = join(".", unpack("C*", pack("N", $nip & $nmask)));
+    return "$netaddr/$bits";
 }
 
 =item mask_to_bits(mask)
