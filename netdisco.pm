@@ -1537,17 +1537,18 @@ sub sql_disconnect {
 
 Returns reference to hash representing single row.
 
-Internally calls sql_rows() -- See for Usage.
+Usage is the same as sql_rows() -- See for Usage.
 
     my $hashref = sql_hash('device',['ip','ports'], {'ip'=>'127.0.0.1'});
 
 =cut
 
 sub sql_hash {
-    my $results = sql_rows(@_);
-    return undef unless defined $results;
-    return undef unless scalar (@$results);
-    return shift(@$results); 
+    my $sth = sql_query(@_);
+    # If the query failed, return undef.
+    return undef if (!defined($sth));
+    # Otherwise, return the first matching row (or undef)
+    return $sth->fetchrow_hashref();
 }
 
 =item sql_match(text,exact_flag)
