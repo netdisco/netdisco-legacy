@@ -17,6 +17,8 @@ Features:
     + []        Record device's SNMP::Info class for debugging
     + [1603913] Record module info from Entity MIB.
                 (not yet in web front end)
+    + [1364276] Multi-process parallel mode for macwalk, arpwalk
+                   and nbtwalk.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.

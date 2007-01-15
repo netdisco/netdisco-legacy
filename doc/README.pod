@@ -1122,6 +1122,20 @@ Setting this would revert macsuck to the same behavior as 0.93 and before.
 
 Does not override L<macsuck_no_vlan>.
 
+=item max_procs
+
+INTEGER.  The number of simultaneous processes to use when collecting data
+from devices.  Using several processes speeds up data collection, but uses
+more database resources.  Be careful of using up all of your database
+connection handles.  Typical values are 15-25.
+
+Note that the load average will be quite high with this option, very
+nearly the same as the value of max_procs.  However, that's because
+each of these processes spends much of its time waiting for responses
+from the device, so is ready to run.  The high load average doesn't
+affect the usability of the system in the same way that a high load
+average caused by cpu-bound jobs would.
+
 =item nbt_days
 
 DAYS.  The maximum age of a node for it to be checked for NetBIOS

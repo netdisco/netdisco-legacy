@@ -35,9 +35,9 @@ $SIG{ALRM} = \&timeout;
 #                         Globals                               
 # --------------------------------------------------------------
 use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP %UnDiscovered
-            %TimedOut $Aliases $OldDevices $OldNodes $PortMAC $start_time $end_time $ArpTotal $NbtTotal %MacSeen
-            $MacTotal @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
-            $New_Only $VERSION $DaemonMode/;
+            %TimedOut $Aliases $OldDevices $OldNodes $PortMAC $start_time $end_time
+            @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
+            $New_Only $VERSION $DaemonMode $nprocs $controller/;
 
 $VERSION = '0.96-cvs';
 %Discovered = ();
@@ -50,14 +50,12 @@ $Aliases = undef;
 $OldDevices = undef;
 $PortMAC = undef;
 $DaemonMode=$start_time=$end_time=0;
-$ArpTotal = 0;
-$NbtTotal = undef;
-%MacSeen = ();
-$MacTotal = 0; 
 @OldSTDOUT = ();
 @LogFH     = ();
 @LogFile   = ();
 %DeviceTopo = ();
+$nprocs     = 1;
+$controller = 0;
 
 # --------------------------------------------------------------
 #              Command Line Flags                               
@@ -359,6 +357,8 @@ sub schlop {
     &topo_load_file($file);
     &load_old_devices;
 
+    $controller = $$;
+
     # Add devices
     foreach my $dev (keys %DeviceTopo){
         next if ($New_Only and defined $OldDevices->{$dev});
@@ -393,6 +393,7 @@ sub schlop {
     &load_old_devices;
     &mac_getportmacs;
 
+    sql_begin();
     foreach my $dev (keys %DeviceTopo){
         $dev = root_device($dev);
         my $layers = $OldDevices->{$dev};
@@ -401,15 +402,34 @@ sub schlop {
             next;
         }
 
-        macsuck($dev) if (has_layer($layers,2));
-        arpnip($dev)  if (has_layer($layers,3));
+        queue_process($dev, 'macsuck') if (has_layer($layers,2));
+        queue_process($dev, 'arpnip')  if (has_layer($layers,3));
     }
+    sql_commit();
+    dispatcher('macsuck', \&macsuck);
+    dispatcher('arpnip', \&arpnip);
 
     foreach my $dev (@Discover_Queue){
         next if (defined $OldDevices->{$dev} or defined $Aliases->{$dev});
         print "  Found new device: $dev\n";
     }
     &end;
+}
+
+=item queue_process(device, action, [status])
+
+Queue a request for this controller to perform an action.
+
+=cut
+
+sub queue_process {
+    my ($device, $action, $status) = @_;
+
+    insert_or_update('process', undef,
+            {controller => $controller,
+             device => $device,
+             action => $action,
+             status => $status || 'queued'});
 }
 
 =item topo_add_link([{},{}])
@@ -721,31 +741,46 @@ Prints various statistics to stdout or batch_redirect() and calls Netdisco::log(
 
 sub end {
     return unless $start_time != 0;
+    # If we're in multi-process mode, but we're not the controller, it's
+    # not our job to do this.
+    return if ($controller != 0 && $controller != $$);
 
     $end_time = time;
     my $run_time = sprintf("%-.2f",($end_time-$start_time)/60);
     print "\n" .'-'x70 . "\n";
     print "Run took $run_time minutes\n";
 
-    if ($ArpTotal > 0 ){
-        print "Found $ArpTotal arp cache entries.\n";
-        log('arp',"$ArpTotal entries. $run_time minutes.",$LogFile[-1]) if $Log;
+    my $status = sql_rows('process', ['action','count(*) as num','sum(count) as tot'],
+        {'controller' => $controller}, 0, 'GROUP BY action');
+
+    my %actions = ();
+    foreach my $action (@$status) {
+        $actions{$action->{action}} = $action;
     }
 
-    if (defined $NbtTotal){
-        my $nodes = scalar(keys(%$OldNodes));
+    if ($actions{arpnip}) {
+        my $ArpTotal = $actions{arpnip}->{tot} || 0;
+        my $ArpDevices = $actions{arpnip}->{num};
+        print "Found $ArpTotal arp cache entries from $ArpDevices devices.\n";
+        log('arp',"$ArpTotal entries. $ArpDevices devices. $run_time minutes.",$LogFile[-1]) if $Log;
+    }
+
+    if ($actions{nbtstat}){
+        my $NbtTotal = $actions{nbtstat}->{tot} || 0;
+        my $nodes = $actions{nbtstat}->{num};
         my $pct   = $nodes ? sprintf("%2.2f",($NbtTotal/$nodes)*100) : 0;
         print "Found $NbtTotal/$nodes ($pct\%) nodes with NetBIOS entries.\n";
         log('netbios',"$NbtTotal/$nodes ($pct\%) nodes w/ NetBIOS. $run_time minutes.",$LogFile[-1]) if $Log;
     }
-    
-    my $mac_seen = scalar keys(%MacSeen);
-    if ($mac_seen){
-        
-        print "Saw $mac_seen distinct nodes in $MacTotal forwarding table entries.\n";
-        log('mac',"$mac_seen distinct nodes.  $MacTotal forwarding table entries.  $run_time minutes.",$LogFile[-1]) if $Log;
+
+    if ($actions{macsuck}){
+        my $MacTotal = $actions{macsuck}->{tot} || 0;
+        my $MacDevices = $actions{macsuck}->{num};
+        print "Found $MacTotal forwarding table entries from $MacDevices devices.\n";
+        log('mac',"$MacTotal forwarding table entries.  $MacDevices devices.  $run_time minutes.",$LogFile[-1]) if $Log;
     }
 
+    #XXX
     my $discover_count = scalar(keys(%Discovered));
     if ($discover_count){
         print "Discovered $discover_count devices.\n";
@@ -790,6 +825,10 @@ sub end {
             }
             log('timeout',join(' ',keys %TimedOut),$LogFile[-1]) if $Log;
         }
+    }
+    if ($controller) {
+        # clean up process table
+        sql_do(qq/DELETE FROM process WHERE controller='$controller'/);
     }
     &batch_mode_end;
     if ($DaemonMode){
@@ -903,10 +942,10 @@ sub arpnip {
 
     my $ip = getip($hostname);
 
-    print "arpnip($hostname) : ";
+    print "arpnip($hostname) :\n";
 
     unless (defined $ip){
-        print " Name does not resolve with DNS.\n";
+        print "[$hostname] Name does not resolve with DNS.\n";
         return;
     }
 
@@ -921,11 +960,9 @@ sub arpnip {
 
     if (in_device($dev,$CONFIG{arpnip_no}) ||
         ($CONFIG{arpnip_only} && !in_device($dev,$CONFIG{arpnip_only}))) {
-        print " Excluded from arpnipping in config file.\n";
+        print "[$hostname] Excluded from arpnipping in config file.\n";
         return;
     }
-
-    print "\n";
 
     my $device = get_device($hostname);
     return unless defined $device;
@@ -945,7 +982,7 @@ sub arpnip {
         # BayRS routers report incomplete MAC addresses for frame relay DLCI
         # interfaces.  Include this check for this case plus any others.
         unless (&is_mac($mac)) {
-            print " $mac malformed ... skipping\n" if $DEBUG;
+            print "[$hostname] $mac malformed ... skipping\n" if $DEBUG;
             next;
         }
         # Skip network broadcast addresses.  Some devices use this and then the
@@ -960,28 +997,29 @@ sub arpnip {
         # Skip VRRP addresses - don't want them showing up as nodes.  Don't know
         # what else to do with these right now.  What about HSRP IP's?
         if ($mac =~ /^00:00:5e:00:/i) {
-            print " $mac is a VRRP address ... skipping\n" if $DEBUG;
+            print "[$hostname] $mac is a VRRP address ... skipping\n" if $DEBUG;
             next;
         }
 
         if (defined $PortMAC->{$mac}) {
-            print "  $mac is a port on device $PortMAC->{$mac} ... skipping\n"
+            print "[$hostname]  $mac is a port on device $PortMAC->{$mac} ... skipping\n"
                 if $DEBUG;
             next;
         }   
 
-        print "  $ip : $mac\n" if $DEBUG;
+        print "[$hostname]  $ip : $mac\n" if $DEBUG;
         add_arp($mac,$ip);
         $arp_count++;
     }
     sql_commit();
-    print "  Processed $arp_count ARP Cache entries.\n";
-    $ArpTotal += $arp_count;
+    print "[$hostname]  Processed $arp_count ARP Cache entries.\n";
     
     insert_or_update('device',{'ip'=> $dev->{ip} },{'last_arpnip'=> scalar localtime});
 
     # Fetch Subnets
     get_subnets($device);
+
+    return $arp_count;
 }
 
 =item arpwalk() 
@@ -1006,10 +1044,13 @@ sub arpwalk {
     # Grab existing mac addresses for switch ports
     &mac_getportmacs;
 
+    $controller = $$;
+    sql_begin();
     foreach my $device (keys %$OldDevices){
-        my $has_3 = has_layer($OldDevices->{$device},3);
-        arpnip($device) if ($has_3);
+        queue_process($device, 'arpnip')  if (has_layer($OldDevices->{$device},3));
     }
+    sql_commit();
+    dispatcher('arpnip', \&arpnip);
 
     sql_vacuum('node_ip','print'=>1);
 
@@ -1593,11 +1634,12 @@ VLAN and get the MAC addresses from there.
 =cut
 
 sub macsuck{
+    my $nodes = 0;
     my $hostname = shift;
 
     my $ip = getip($hostname);
 
-    print "macsuck($hostname) : ";
+    print "macsuck($hostname) :\n";
 
     unless (defined $ip){
         print " Name does not resolve with DNS.\n";
@@ -1610,13 +1652,13 @@ sub macsuck{
         {'ip'=>$ip});
 
     unless (defined $dev->{ip}) { 
-        print "\n  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        print "! [$hostname]  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
         return;
     }
 
     if (in_device($dev,$CONFIG{macsuck_no}) ||
         ($CONFIG{macsuck_only} && !in_device($dev,$CONFIG{macsuck_only}))) {
-        print " Excluded from macsucking in config file.\n";
+        print "[$hostname] Excluded from macsucking in config file.\n";
         return;
     }
 
@@ -1633,19 +1675,18 @@ sub macsuck{
     # Make the SNMP connection
     my $time1 = time;
     my $device = get_device($hostname) or return;
-    my $entries1 = $MacTotal;
 
     my $interfaces = $device->interfaces();
     my $fw_cache = {};
 
-    walk_fwtable($device,\%dbports,$interfaces,$fw_cache);
+    $nodes += walk_fwtable($device,\%dbports,$interfaces,$fw_cache);
 
     # For certain Cisco switches you have to connect to each
     # VLAN and get the forwarding table out of it.
     #   Notably the Catalyst 5k, 6k, and 3500 series
     my $cisco_comm_indexing = $device->cisco_comm_indexing() || 0;
     if ($cisco_comm_indexing){
-        print " Device supports Cisco community string indexing. Connecting to each VLAN:\n";
+        print "[$hostname] Device supports Cisco community string indexing. Connecting to each VLAN:\n";
         my $v_name   = $device->v_name() || {};
         my $i_vlan   = $device->i_vlan() || {};
         my $ver      = $device->snmp_ver();
@@ -1674,7 +1715,7 @@ sub macsuck{
             $vlan =~ s/^\d+\.//;
 
             if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
-                print " VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
+                print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
                 next;
             }
 
@@ -1682,11 +1723,11 @@ sub macsuck{
             #   but check to see if device serves us that list first
             if (scalar keys(%$i_vlan) and !defined $vlans{$vlan}
                 and !$CONFIG{macsuck_all_vlans}){
-                print " VLAN:$vlan_name ($vlan) Skipped because not in use by a port.\n";
+                print "[$hostname] VLAN:$vlan_name ($vlan) Skipped because not in use by a port.\n";
                 next;
             }
 
-            print " VLAN:$vlan_name ($vlan) : ";
+            print "[$hostname] VLAN:$vlan_name ($vlan) :\n";
 
             # feeding all the connect info as a speedup, instead of
             #   retrying all the versions and communities
@@ -1699,21 +1740,19 @@ sub macsuck{
             my $vlan_device = create_device(%args);
 
             unless (defined $vlan_device){
-                print "!\n";
+                print "[$hostname] VLAN:$vlan_name ($vlan) !\n";
                 next;
             }
-            walk_fwtable($vlan_device,\%dbports,$interfaces,$fw_cache);
-
+            $nodes += walk_fwtable($vlan_device,\%dbports,$interfaces,$fw_cache);
         }
     }
     mac_savecache($fw_cache,\%dbports);
 
     # Log This
-    my $entries2 = $MacTotal;
     my $started = localtime($time1);  my $time2 = time;
     insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$started});
-    print " Saw : ",$entries2-$entries1, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
-
+    print " Saw : ",$nodes, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
+    return $nodes;
 }
 
 =item mac_savecache({},{})
@@ -1740,7 +1779,7 @@ sub mac_savecache {
 
             # Check for detected uplink
             next unless $remote_ip eq 'uplink';
-            print "  Port $port detected as uplink, topology broken.  Not adding nodes from this port.\n";
+            print "[$ip]  Port $port detected as uplink, topology broken.  Not adding nodes from this port.\n";
             delete $fw_cache->{$ip}->{$port};
         }
     }
@@ -1780,28 +1819,139 @@ sub macwalk {
     # Get mac addresses of all the ports 
     &mac_getportmacs;
 
-    my $timeout = $CONFIG{macsuck_timeout} || 90;
+    $controller = $$;
+    sql_begin();
     foreach my $device (keys %$OldDevices){
-        my $has_2 = has_layer($OldDevices->{$device},2);
-        next unless $has_2;
-        eval {
-            alarm($timeout);
-            macsuck($device);
-            alarm(0);
-        };
-
-        if ($@) {
-            if ($@ =~ /timeout/){
-                $TimedOut{$device}++;
-                print "\n  ! Device $device timed out in macsuck() ($timeout sec)\n";
-            } else {
-                print "\n$@\n";
-            }
-        }
+        queue_process($device, 'macsuck') if (has_layer($OldDevices->{$device},2));
     }
+    sql_commit();
+    dispatcher('macsuck', \&macsuck);
+
     sql_vacuum('node','print'=>1);
 
     &end;
+}
+
+=item set_status()
+
+Sets $0 to a status string.  Use sprintf-style arguments.
+=cut
+
+sub set_status($@) {
+    my($fmt) = shift;
+    $0 = "netdisco - " . sprintf($fmt, @_);
+}
+
+=item parallel_init()
+
+Initializes parallelization with the maximum number of simultaneously running processes
+set in configuration file. Creates a dummy SNMP::Info object to load MIBs only once for each child.
+Disconnects the database handle so that it's not held open across a fork.
+=cut
+
+sub parallel_init {
+    $nprocs = $CONFIG{max_procs} || 1;
+    my $pm = undef;
+
+    if ($nprocs > 1) {
+        my ($ret) = tryuse('Parallel::ForkManager');
+        if ($$ret[0] == 0) {
+            print "! Parallel mode disabled: $$ret[1]\n";
+            $nprocs = 1;
+        }
+    }
+    if ($nprocs < 2) {
+        $nprocs = 1;
+        return undef;
+    }
+    $pm = new Parallel::ForkManager($nprocs);
+    print "Parallel mode enabled, forking $nprocs processes.\n";
+    #HACK to prevent SNMP::Info load mib-init in each forked process
+    my $dummy = new SNMP::Info( DestHost    => 'localhost',
+                                Version     => 1,
+                                AutoSpecify => 0,
+                                Debug       => 0,);
+    sql_disconnect();   # parent shouldn't have a database handle
+    set_status("parent forking %d children", $nprocs);
+    return $pm;
+}
+
+=item dispatcher(action, subroutine)
+
+Multi-process dispatcher that handles the "standard" case of
+multiple macsuck/arpnip/nbtstat.  It uses Parallel::ForkManager
+in a slightly unusual way, in that it forks off long-lived
+worker children that service the queue themselves, similar to
+Apache.
+
+=cut
+
+sub dispatcher {
+    my ($action, $sub) = @_;
+    my $pm = parallel_init();
+    my $timeout = $CONFIG{$action . "_timeout"} || $CONFIG{timeout} || 90;
+
+    # The discovery process can result in adding jobs
+    # to the queue, so if we're discovering, loop until
+    # $njobs == 0.
+    do {
+        my $njobs = sql_scalar('process',['count(*)'],
+                    { controller => $controller,
+                      action => $action,
+                      status => 'queued' });
+        return if ($njobs == 0);
+
+        $njobs = $nprocs if ($njobs > $nprocs);
+        # Disconnect from server before forking.
+        sql_disconnect();
+        # Fork off workers.  If we're not forking, parallel_init()
+        #  set nprocs to 1.
+        for (my $i = 0; $i < $njobs; $i++) {
+            $pm->start and next if defined($pm);
+            while (1) {
+		set_status("worker looking for %s job", $action);
+		# I wanted to do "FOR UPDATE LIMIT 1", to limit how many rows get
+		# locked, but postgresql doesn't permit this, so we just lock
+		# the whole table while we're looking for a row.
+                sql_begin(['process']);
+                my $dev = sql_hash('process',['controller','action','device'],
+                        {'controller' => $controller,
+                         'action' => $action,
+                         'status' => 'queued'}, 0, 'LIMIT 1');
+                if (!defined($dev)) {
+                    sql_commit();
+                    last;
+                }
+                insert_or_update('process', $dev, { 'status' => 'running' });
+                sql_commit();
+		set_status("%s %s", $action, $dev->{device});
+                my $count = 0;
+                eval {
+                    alarm($timeout);
+                    $count = &$sub($dev->{device});
+                    alarm(0);
+                };
+
+                my $status = 'done';
+                if ($@) {
+                    if ($@ =~ /timeout/){
+                        $status = 'timedout';
+                        print "\n  ! Device $dev->{device} timed out in $action ($timeout sec)\n";
+                    } else {
+                        $status = 'error';
+                        print "\n$@\n";
+                    }
+                }
+                insert_or_update('process', $dev, { 'status' => $status, 'count' => $count });
+            }
+            $pm->finish if defined($pm);
+        }
+        if (defined($pm)) {
+            set_status("parent waiting for children to exit");
+            $pm->wait_all_children;
+            print "Parallel mode completed.\n";
+        }
+    } until ($action ne 'discover');
 }
 
 =item port_control(switch,port,direction)
@@ -2204,6 +2354,7 @@ sub store_interfaces {
 
 Walks the Forwarding table from the C<BRIDGE-MIB>
 for the given device, and then adds MAC addresses to the C<node> table.
+Returns the number of entries fetched.
 
 =cut
 
@@ -2214,6 +2365,7 @@ sub walk_fwtable {
     my $fw_mac     = $device->fw_mac();
     my $fw_port    = $device->fw_port();
     my $bp_index   = $device->bp_index();
+    my $nodes = 0;
 
     # To map the port in the forwarding table to the 
     # physical device port we have this triple indirection:
@@ -2223,7 +2375,7 @@ sub walk_fwtable {
         my $mac    = $fw_mac->{$fw_index};
         my $bp_id  = $fw_port->{$fw_index};
 
-        $MacTotal++;
+        $nodes++;
 
         unless (defined $bp_id) {
             print "  $mac: $fw_index has no fw_port mapping.  Skipping\n"
@@ -2317,15 +2469,12 @@ sub walk_fwtable {
 
         if ($DEBUG) { 
             print "  $mac: $bp_id -> $iid -> $port\n";
-        } else {
-            print ".";
         }
         
         $fw_cache->{$ip}->{$port}->{$mac}++;
-        $MacSeen{$mac}++;
     }
 
-    print "\n" unless $DEBUG;
+    return $nodes;
 }
 
 =back
@@ -2348,10 +2497,10 @@ sub nbtstat {
     my $ip = getip($host);
     my $nb = Net::NBName->new;
     
-    print "nbtstat($host) : ";
+    print "nbtstat($host) :\n";
 
 	unless (defined $ip) {
-		print "No IP match.\n";
+		print "[$host] No IP match.\n";
 		return 0;
 	}
 
@@ -2359,7 +2508,7 @@ sub nbtstat {
 
     # Check for NetBIOS Info
     unless ($ns) {  
-        print "No NetBIOS.\n";
+        print "[$host] No NetBIOS.\n";
         return 0;
     }
 
@@ -2390,25 +2539,24 @@ sub nbtstat {
     $mac =~ s/-/:/g;
 
     unless ($nbname){
-        print "No computer name found.\n";
-        return 1;
+        print "[$host] No computer name found.\n";
+        return 0;
     }
         
     if (!$mac or $mac eq '00:00:00:00:00:00'){
         # Just assume it's the last MAC we saw this IP at.
         $mac = sql_scalar('node_ip',['mac'],{'ip'=>$ip,'active'=>1});
         unless (defined $mac){
-            print "No MAC in given or in DB.\n";
-            return 1;
+            print "[$host] No MAC in given or in DB.\n";
+            return 0;
         }
-        print "(No MAC)" if $DEBUG;
+        print "[$host] (No MAC)" if $DEBUG;
     }
 
-    print "\\\\$domain\\$nbname $nbuser $mac ",$server ? 'server' : 'client', "\n";
+    print "[$host] \\\\$domain\\$nbname $nbuser $mac ",$server ? 'server' : 'client', "\n";
     add_nbt($ip,$mac,$nbname,$domain,$server,$nbuser);
-    $NbtTotal++;
 
-    return 1;    
+    return 1;
 }
     
 =item nbtwalk() 
@@ -2421,7 +2569,6 @@ Calls nbtstat() for each device.
 
 sub nbtwalk {
     $start_time = time;
-    $NbtTotal=0;
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     my $month = sprintf("%d%02d",$year+1900,$mon+1);
@@ -2431,14 +2578,18 @@ sub nbtwalk {
     my $days = $CONFIG{nbt_days} || 7;
     print "Grabbing NetBIOS from all nodes seen in last $days days. (". localtime() . ")...\n";
 
+    # Preload Net::NBName so that we don't have to load it for
+    # every node.
+    tryuse('Net::NBName', die => 1);
+
     &load_old_nodes($days);
     print "  Searching ",scalar(keys(%$OldNodes))," nodes.\n" if $DEBUG;
     
-    sql_begin();
-    foreach my $node (sort sort_ip keys %$OldNodes){
-        nbtstat($node) if defined $OldNodes->{$node};
+    $controller = $$;
+    foreach my $node (keys %$OldNodes){
+        queue_process($node, 'nbtstat') if defined $OldNodes->{$node};
     }
-    sql_commit();
+    dispatcher('nbtstat', \&nbtstat);
     
     sql_vacuum('node_nbt','print'=>1); 
 
