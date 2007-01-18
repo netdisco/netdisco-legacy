@@ -1548,7 +1548,7 @@ sub store_modules {
     my $e_parent  = $device->e_parent();
     my $e_name    = $device->e_name();
     my $e_class   = $device->e_class();
-    my $e_pos     = $device->e_pos();
+    my $e_pos     = undef; #$device->e_pos();
     my $e_hwver   = $device->e_hwver();
     my $e_fwver   = $device->e_fwver();
     my $e_swver   = $device->e_swver();
