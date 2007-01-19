@@ -3317,7 +3317,10 @@ sub nightly {
     &netbios_dump("netbios/$month");
 
     print "  Running Database Vacuum...\n";
-    sql_vacuum('','print'=>1);
+    foreach my $db (@{$CONFIG{db_tables}}) {
+        $db =~ s/\.sql$//;
+        sql_vacuum("$db",'print'=>1);
+    }
 
     &batch_mode_end unless $no_batch;
 }
