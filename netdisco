@@ -22,6 +22,7 @@ use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
+use Compress::Zlib;
 use netdisco qw/:all/;  
 tryuse('SNMP::Info', ver => '1.0', die => 1);
 
@@ -658,7 +659,7 @@ sub batch_mode{
 
     # YYYYMMDD-HHmm
     my $date = sprintf("%d%02d%02d",$year+1900,$mon+1,$mday);
-    my $time = sprintf("%02d:%02d",$hour,$min);
+    my $time = sprintf("%02d-%02d",$hour,$min);
 
     my $timestamp = (defined $want_time and $want_time) ? "$date-$time" : $date;
     
@@ -670,7 +671,7 @@ sub batch_mode{
 
     # Make the target directory if not already there
     unless (-d $path){
-        system("mkdir -m 0775 -p $path") and die "Can't make directory $path. $!\n";
+        mkdir ($path,0775) or die "Can't make directory $path. $!\n";
     }
 
     my $fh = new IO::File;
@@ -714,8 +715,15 @@ sub batch_mode_end {
 
     if (defined $CONFIG{compresslogs} and $CONFIG{compresslogs} and ! defined $no_compress){
        print STDERR "\tCompressing $file\n" if $DEBUG;
-       my $compress = defined $CONFIG{compress} ? $CONFIG{compress} : "/usr/bin/gzip -f";
-       system("$compress $file") and warn "Compress of $file Failed.\n";
+       open(OLD, "< $file") or die "Can't open $file: $!\n";
+       my $gz = gzopen("$file.gz", "wb") or die "Can't open $file.gz: $gzerrno\n";
+       while (<OLD>) {
+           $gz->gzwrite($_) 
+              or die "Error writing: $gzerrno\n" ;
+       }
+       $gz->gzclose ;
+       close(OLD)      or die "Can't close $file: $!\n";
+       unlink($file)   or die "Can't delete $file: $!\n";
     }
     
     return $file;
@@ -3787,7 +3795,6 @@ sub admin_daemon {
 
     # Create log dir
     my $datadir = $CONFIG{datadir};
-    #system("mkdir -m 0775 -p $datadir/admin") unless (-d "$datadir/admin");
 
     # Mark left over jobs as bad
     sql_do("UPDATE admin SET status='error' WHERE status = 'running';"); 
