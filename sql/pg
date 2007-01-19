@@ -8,6 +8,7 @@
 # $Id$
 
 use FindBin;
+use Compress::Zlib;
 
 $|=1;
 $EXIT=0;
@@ -33,12 +34,45 @@ BEGIN {
     die "use lib '$Dir': $@." if ($@);
 }
 
-# TODO, move this list into netdisco.conf and use for 
-#   this function and for nightly vacuum
-@ALL = qw/ admin.sql device.sql device_ip.sql device_port.sql
-           device_port_log.sql device_port_ssid.sql log.sql node.sql
-           node_ip.sql node_nbt.sql oui.sql sessions.sql subnets.sql
-           user_log.sql users.sql /;
+my $OS = $^O;
+
+if ($OS =~ /^MSWin/i) {
+    $OS = 'WINDOWS';
+}
+else {
+    $OS = 'UNIX';
+}
+
+eval "use Win32::NetAdmin qw(GetUsers GroupIsMember
+                             UserGetAttributes UserSetAttributes
+                             FILTER_NORMAL_ACCOUNT)";
+
+my $split = ($OS eq 'WINDOWS') ? ';' : ':';
+my @dirList = split /$split/, $ENV{PATH};
+my $Path;
+foreach $dir (@dirList) {
+  if ( -e "$dir/psql"  or -e "$dir/psql.exe") {
+    if (($OS eq 'WINDOWS') and ($dir !~ /\\$/)) {
+        $Path = "$dir" . "\\";
+    }
+    elsif (($OS eq 'UNIX') and ($dir !~ /\/$/)) {
+        $Path = "$dir" . "/";
+    }
+    else {
+     $Path = $dir;
+    }
+    last;
+  }
+}
+
+unless ($Path or $Psql ne 'psql') {
+    print "Unable to determine psql cli executable, define with -p option\n\n";
+    die &usage
+}
+
+if ($Psql =~ /(.+)psql(\.exe)?$/){
+    $Path=$1;
+}
 
 die &usage if defined $ARGS{h};
 
@@ -53,12 +87,14 @@ if ($@) {
     if (-f $Dir . "/netdisco.pm" && ! -r _) {
         warn "$Dir/netdisco.pm exists but is not readable by you.\n";
     }
-    die "Could not find netdisco.pm: $@.  Please set option -d to point to your netdisco directory.\n";
+    die "Could not find netdisco.pm: $@.  Please set option -d to point to
+    your netdisco directory.\n";
 }
 
 # Load Config File
 unless (-r $ConfigFile) { 
-    die "The netdisco config file specified, $ConfigFile, does not exist or is not readable.\n";
+    die "The netdisco config file specified, $ConfigFile, does not exist or
+    is not readable.\n";
 }
 netdisco::config($ConfigFile);
 
@@ -67,8 +103,12 @@ $DB='netdisco';
 $DB_USER = $CONFIG{db_Pg_user};
 $DB_PW   = $CONFIG{db_Pg_pw};
 
-unless (defined $DB_USER) { die "Please set a database user in netdisco.conf under db_Pg_user.\n"; }
-unless (defined $DB_PW)   { die "Please set a database password in netdisco.conf under db_Pg_pw.\n"; }
+unless (defined $DB_USER) {
+    die "Please set a database user in netdisco.conf under db_Pg_user.\n";
+    }
+unless (defined $DB_PW)   {
+    die "Please set a database password in netdisco.conf under db_Pg_pw.\n";
+    }
 
 # Init all tables, run a command, or launch the shell
 $File = shift @ARGV || '';
@@ -111,13 +151,13 @@ sub interactive {
 }
 
 sub init {
-    $CREATEUSER = "psql -a template1 --command \\\"CREATE USER $DB PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\\\"";
-    $CREATEDB   = "createdb $DB";
+    $CREATEUSER = "\"$Path"."psql\" -a template1 --command \\\"CREATE USER $DB PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\\\"";
+    $CREATEDB   = "\"$Path"."createdb\" $DB";
 
     open (ALL,">pg_all.input") or die "Can't create pg_all.input for output. $!\n";
 
     # Cat all tables into one big file
-    foreach my $f (@ALL) {
+    foreach my $f (@{$CONFIG{db_tables}}) {
         print "[ $f ]\n";
         open (F, "<$f") or die "Can't read $f. $!\n";
         while (<F>) {
@@ -133,30 +173,69 @@ sub init {
     print "\n";
 
     # Determine the System Database User
+
     $SYS_DB_USER=$ARGS{u};
-    open (PASSWD, "< /etc/passwd") or die "Can't open /etc/passwd to figure out db user. $!\n";
-    while (<PASSWD>){
-        if ($_ =~ /^(postgres|pgsql):/){
-            $SYS_DB_USER=$1;
-            last;
+
+    # Windows first
+    if ($OS eq 'WINDOWS') {
+
+        my %hash;
+        GetUsers("", FILTER_NORMAL_ACCOUNT , \%hash)
+            or die "GetUsers() failed: $^E";
+
+        foreach (keys %hash) {
+            if ($_ =~ /^(postgres|pgsql)/i){
+                $SYS_DB_USER = $_;
+                last;
+            }
+
+            my ($password, $passwordAge, $privilege,
+                $homeDir, $comment, $flags, $scriptPath);
+            UserGetAttributes("", $_, $password, $passwordAge, $privilege,
+                              $homeDir, $comment, $flags, $scriptPath)
+                or die "UserGetAttributes() failed: $^E";
+
+            if ($comment =~ /^(postgres|pgsql)/i){
+                $SYS_DB_USER = $_;
+                last;
+            }
+            next;
         }
     }
-    close(PASSWD);
+
+    # UNIX
+    if ($OS eq 'UNIX') {
+        setpwent();
+        while (defined($name = getpwent())) {
+            if ($name =~ /^(postgres|pgsql)/){
+                $SYS_DB_USER=$1;
+                last;
+            }
+        }
+        endpwent();
+    }
 
     # Wrap calls in 'su' if we have sys db user
-    if (defined $SYS_DB_USER){
+    if (defined $SYS_DB_USER and $OS eq 'UNIX'){
         print "Running database commands as $SYS_DB_USER user.\n";
         $CREATEUSER = "su $SYS_DB_USER -c \"$CREATEUSER\"";
         $CREATEDB   = "su $SYS_DB_USER -c \"$CREATEDB\"";
+    } elsif (defined $SYS_DB_USER and $OS eq 'WINDOWS') {
+        print "Running database commands as $SYS_DB_USER user.\n";
+	print "When prompted enter the $SYS_DB_USER user password.\n";
+        $CREATEUSER = "\"$Path"."psql\" -U $SYS_DB_USER -W -a template1 --command \"CREATE USER $DB PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\"";
+        $CREATEDB   = "\"$Path"."createdb\" -U $SYS_DB_USER -W $DB";	
     } else {
         print "Could not determine which user Postgresql is running under. Will try as current user.\n";
         print "Use option -u to specify the unix user the database runs under.\n";
     }
 
     print "Creating User $DB_USER.\n";
+    print "Enter the $SYS_DB_USER user password.\n" if ($OS eq 'WINDOWS') ;
     system($CREATEUSER) and bug("createuser did not return success.\n"); 
 
     print "Creating Database $DB.\n";
+    print "Enter the $SYS_DB_USER user password.\n" if ($OS eq 'WINDOWS');
     system($CREATEDB) and bug("createdb did not return success.\n"); 
 
     print "Creating tables and indicies.\n";
@@ -167,18 +246,27 @@ sub init {
 
 sub back {
     # TODO - Change this to pureperl
-    my $DATE=`date "+%Y%m%d"`;
-    chomp($DATE);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $DATE = sprintf("%d%02d%02d",$year+1900,$mon+1,$mday);
     my $FILE="db_back-${DATE}.sql";
     
     print "Backing up $DB to $FILE\n";
-    $EXIT=system("pg_dump -a -d -D -O -U ${DB_USER} ${DB} | gzip > ${FILE}.gz");
-    system("chmod go-rwx ${FILE}.gz");
+    $EXIT=system("\"$Path"."pg_dump\" -a -d -D -O -U ${DB_USER} ${DB} > ${FILE}");
+    open(OLD, "< $FILE") or die "Can't open $FILE: $!\n";
+       my $gz = gzopen("$FILE.gz", "wb") or die "Can't open $FILE.gz: $gzerrno\n";
+       while (<OLD>) {
+           $gz->gzwrite($_) 
+              or die "Error writing: $gzerrno\n" ;
+       }
+       $gz->gzclose ;
+       close(OLD)      or die "Can't close $FILE: $!\n";
+       unlink($FILE)   or die "Can't delete $FILE: $!\n";    
+    chmod (0600, "$FILE.gz");
 }
 
 sub psql {
     my $cmd = shift;
-    $EXIT = system("$Psql $cmd");
+    $EXIT = system("\"$Psql\" $cmd");
 }
 
 
