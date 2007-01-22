@@ -205,18 +205,16 @@ sub init {
 
     # UNIX
     if ($OS eq 'UNIX') {
-        setpwent();
-        while (defined($name = getpwent())) {
-            if ($name =~ /^(postgres|pgsql)/){
-                $SYS_DB_USER=$1;
+        foreach $user qw(postgres pgsql) {
+            if (($SYS_DB_UID = getpwnam($user))) {
+                $SYS_DB_USER=$user;
                 last;
             }
         }
-        endpwent();
     }
 
     # Wrap calls in 'su' if we have sys db user
-    if (defined $SYS_DB_USER and $OS eq 'UNIX'){
+    if (defined $SYS_DB_USER and $OS eq 'UNIX' and $> ne $SYS_DB_UID){
         print "Running database commands as $SYS_DB_USER user.\n";
         $CREATEUSER = "su $SYS_DB_USER -c \"$CREATEUSER\"";
         $CREATEDB   = "su $SYS_DB_USER -c \"$CREATEDB\"";
