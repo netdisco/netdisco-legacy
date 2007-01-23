@@ -42,7 +42,7 @@ my %port_cols = (
                 );
 
 my %device_info = (
-                   'Aliases'  => 'aliases',
+                   'Addresses'  => 'addresses',
                    'First Discovered' => 'creation',
                    'Last MacSuck' => 'last_macsuck',
                    'Last ArpNip' => 'last_arpnip',
@@ -100,16 +100,16 @@ if ($ip) {
     # This could take a while.
     $m->flush_buffer();
 
-    # Grab aliases  
-    my $aliases = sql_rows('device_ip',['alias','dns','port'],
+    # Grab addresses  
+    my $addresses = sql_rows('device_ip',['alias','dns','port','subnet'],
                            {'ip'=>$devip});
     # Sort Aliases by Port
-    my $port_aliases = {};
-    foreach my $a (@$aliases) {
-        push @{$port_aliases->{$a->{port}}},$a; 
+    my $port_addresses = {};
+    foreach my $a (@$addresses) {
+        push @{$port_addresses->{$a->{port}}},$a; 
     }
 
-    $device->{aliases} = $aliases;
+    $device->{addresses} = $addresses;
     
     # Hide Ports
     if ($submit =~ /hide/i) {
@@ -137,7 +137,7 @@ if ($ip) {
         }
     }
 
-    # PORTS - Connected Nodes, aliases and log entries
+    # PORTS - Connected Nodes, addresses and log entries
     foreach my $portreq (@$ports) {
         my $switch = $portreq->{ip};
         my $port   = $portreq->{port}; 
@@ -164,13 +164,14 @@ if ($ip) {
             $node_nbts->{$mac}++;
         }
 
-        # Add aliases to display of port name
-        my $aliases = $port_aliases->{$port} || [];
-        foreach my $alias ( sort {sort_ip($a->{alias},$b->{alias})} @$aliases ) {
+        # Add addresses to display of port name
+        my $addresses = $port_addresses->{$port} || [];
+        foreach my $alias ( sort {sort_ip($a->{alias},$b->{alias})} @$addresses ) {
                 my $alias_ip = $alias->{alias};
+                my $alias_subnet = $alias->{subnet};
                 my $dns = $alias->{dns} || '[No DNS]';
                 $dns =~ s/\Q$domain\E//;
-                $portreq->{portdisp} .= "<BR> $alias_ip ($dns)";
+                $portreq->{portdisp} .= "<BR> $alias_ip - $alias_subnet ($dns)";
         }
 
     }
@@ -359,17 +360,18 @@ foreach my $item (sort keys %device_info) {
     next unless defined $val and length($val);
 
     # Munge
-    if ($db_col eq 'aliases'){
+    if ($db_col eq 'addresses'){
         next unless scalar @$val;
         my @vals;
-       foreach my $alias (sort { sort_ip($a->{alias}, $b->{alias}) } @$val){
+        foreach my $alias (sort { sort_ip($a->{alias}, $b->{alias}) } @$val){
             my $ip = $alias->{alias};
             my $dns = $alias->{dns};
             $dns = defined $dns ? $dns :
                     '[No DNS]';
             $dns =~ s/\Q$domain\E//;
             my $port = $alias->{port};
-            push (@vals, "$ip ($dns) \@ $port");
+            my $subnet = $alias->{subnet};
+            push (@vals, "$ip ($dns) \@ $port - $subnet");
         }
         $val = join("<BR>",@vals);
     }
@@ -600,7 +602,7 @@ foreach my $port (sort sort_port @$ports){
 
     # Place holder for no connected devices
     unless ($seen_macs or defined $remote_ip) {
-       $m->out('&nbsp;');
+        $m->out('&nbsp;');
     }
 # end connected dev col.
 </%perl>
