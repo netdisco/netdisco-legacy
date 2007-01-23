@@ -666,12 +666,14 @@ sub batch_mode{
     my $file = "$file_path/$file_name-$timestamp.$extension";
 
     # Path is everything up to the last /
-    my $path = $file;
-    $path =~ s/\/[^\/]+$//;
-
-    # Make the target directory if not already there
-    unless (-d $path){
-        mkdir ($path,0775) or die "Can't make directory $path. $!\n";
+    my $path = "";
+    my @path = split(m|/|, $file);
+    for (my $elem = 1; $elem < $#path; $elem++) {
+        $path .= "/" . $path[$elem];
+        # Make the target directory if not already there
+        unless (-d $path){
+            mkdir ($path,0775) or die "Can't make directory $path. $!\n";
+        }
     }
 
     my $fh = new IO::File;
