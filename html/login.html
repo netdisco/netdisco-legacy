@@ -68,10 +68,16 @@ if ($how eq 'login') {
 	$err .= "User Not Found.\n";
     }
 
-    my $md5_pw = Digest::MD5::md5_hex($pw);    
-
-    unless ($err or $md5_pw eq $db_user->{password}){
-	$err .= "Bad Login.\n";
+    if ($db_user->{ldap}) {
+        if (!user_ldap_verify($user,$pw)) {
+            $err .= "Bad Login.\n";
+        }
+    } else {
+        # User from local Database
+        my $md5_pw = Digest::MD5::md5_hex($pw); 
+        unless ($err or $md5_pw eq $db_user->{password}){
+        $err .= "Bad Login.\n";
+        }
     }
     $useuserdb = 1;
 } else {

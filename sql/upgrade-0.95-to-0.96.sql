@@ -44,3 +44,7 @@ CREATE TABLE process (
     status      text,    	  -- queued, running, skipped, done, error, timeout, nocdp, nosnmp
     count       integer
     );
+
+--
+-- Add ldap to users table
+ALTER TABLE users ADD ldap boolean DEFAULT false;

@@ -1465,6 +1465,54 @@ on the sidebar, "Netdisco Login" to log in using the netdisco user database.
 
 =back
 
+=head3 LDAP Settings
+
+=over
+
+=item ldap_server
+
+LIST:STRING.  Comma separated list of LDAP servers.  If using Active Directory
+these would be domain controllers.
+
+=item ldap_user_string
+
+STRING.  String to construct the user portion of the DN.  %USER% will be
+replaced with the logon name.  Examples:  cn=%USER%, uid=%USER%.  Active
+Directory users may use DOMAIN\%USER% and skip all other options except
+ldap_server as this notation eliminates the need to construct the full
+distinguished name.
+
+=item ldap_base
+
+STRING.  String which indicates where in the hierarchy to begin searches.
+If a proxy user is not defined and anonymous binds are not enabled this
+value will be appended to the ldap_user_string to construct the distinguished
+name for authentication.
+
+=item ldap_proxy_user
+
+STRING.  User to bind with to perform searches.  If defined as anonymous, then
+anonymous binds will be performed and ldap_proxy_pass will be ignored.  For
+organizations with users in multiple OU's this option can be used to
+search for the user and construct the DN based upon the result.
+
+=item ldap_proxy_pass
+
+STRING.  Proxy user password.  Ignored if proxy user defined as anonymous.
+
+=item ldap_opts
+
+HASH.   Options to add to the connect string.  Normally only needed if server
+does not support LDAPv3.
+
+=item ldap_tls_opts
+
+HASH.   If defined the connection will use Transport Layer Security (TLS),
+which provides an encrypted connection. This is only possible if using LDAPv3
+and the server supports it.  These are the options for the TLS connection.
+
+=back
+
 =head3 Graph Settings
 
 =over

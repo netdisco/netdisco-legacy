@@ -13,6 +13,7 @@ $cmd   => undef
 $user  => undef
 $port  => 0
 $admin => 0
+$ldap  => 0
 $confirm => 0
 $pw    => undef
 $fullname => undef
@@ -42,7 +43,7 @@ if ($cmd eq 'Add'){
     unless ($user){
         $err .= "Select a user name.\n";
     }
-    unless ($pw){
+    unless ($pw || $ldap){
         $err .= "Enter a password for this user.\n";
     }
     if (defined $user_hash{$user}) {
@@ -54,6 +55,7 @@ if ($cmd eq 'Add'){
                                     'pw' => $pw,
                                     'admin' => $admin eq '1' ? 1 : 0,
                                     'port'  => $port eq  '1' ? 1 : 0,
+                                    'ldap'  => $ldap eq  '1' ? 1 : 0,
                                     'fullname' => $fullname,
                                     'note' => $note,
                                 ));
@@ -88,6 +90,11 @@ if ($cmd eq 'Change'){
         # Check for Port Change
         if ($port != $user_hash{$user}->{port_control}) {
             $user_change{port} = $port;
+        }
+        
+        # Check for Ldap Change
+        if ($ldap != $user_hash{$user}->{ldap}) {
+            $user_change{ldap} = $ldap;
         }
 
         # Check for Note Change
@@ -161,6 +168,7 @@ if ($cmd eq 'Delete'){
     <TH>User</TH>
     <TH>Port<BR>Control</TH>
     <TH>Admin<BR>Control</TH>
+    <TH>LDAP</TH>
     <TH>Full Name</TH>
     <TH>Note</TH>
     <TH>Created /<BR>Last Login</TH>
@@ -179,6 +187,9 @@ if ($cmd eq 'Delete'){
     </TD>
     <TD>
         <%$user_entry->{admin} ? 'Yes' : 'No'%>
+    </TD>
+    <TD>
+        <%$user_entry->{ldap} ? 'Yes' : 'No'%>
     </TD>
     <TD>
         <%$user_entry->{fullname} |h%>
@@ -223,6 +234,11 @@ if ($cmd eq 'Delete'){
     <TD>Password:</TD>
     <TD><INPUT TYPE="password" NAME="pw" SIZE="20" MAXLENGTH="50"></TD>
     <TD>Case Sensitive.</TD>
+</TR>
+<TR>
+    <TD>LDAP:</TD>
+    <TD><INPUT NAME="ldap" TYPE="checkbox" VALUE="1" <%$user->{ldap} ? 'CHECKED' : ''%>></TD>
+    <TD>Use LDAP for Login</TD>
 </TR>
 <TR>
     <TD>Full Name:</TD>
@@ -277,7 +293,7 @@ Confirm Deletion of <%$arg_user |h%> :
 <%perl>
 $users = sql_rows('users',['username','password','extract(epoch from creation) as creation',
                            'extract(epoch from last_on) as last_on','port_control','admin',
-                           'note','fullname']
+                           'note','fullname','ldap']
                  );
 
 %user_hash = map {$_->{username} => $_} @$users;

@@ -35,7 +35,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        active_subnets dump_subnet in_device
                        url_secure is_private cidr mask_to_bits bits_to_mask dbh_quote sql_vacuum
-                       tryuse homepath/;
+                       tryuse homepath user_ldap_verify ldap_search/;
 
 %netdisco::EXPORT_TAGS = (all => \@netdisco::EXPORT_OK);
 
@@ -257,12 +257,13 @@ sub config {
                         macsuck_no arpnip_no discover_no
                         macsuck_only arpnip_only discover_only
                         snmpforce_v1 snmpforce_v2 snmpforce_v3 db_tables
-                       /;
+                        ldap_server /;
 
     # these will make a reference to a hash:
     #      keys :comma separated list entries value : number > 0
     my @hash_refs  = qw/portcontrol admin web_console_vendors
                        web_console_models macsuck_no_vlan
+                       ldap_opts ldap_tls_opts
                       /;
 
     # Multiple arrays
@@ -1185,6 +1186,10 @@ sub user_add {
             $db_args{admin} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
         }
 
+        if ($arg eq 'ldap') {
+            $db_args{ldap} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
+        }
+
         if ($arg eq 'port') {
             $db_args{port_control} = ($val =~ /^(1|true|yes|y)$/i) ? 1 : 0;
         }
@@ -1217,6 +1222,109 @@ sub user_del{
     my $dbh = &dbh;
     $user = $dbh->quote($user);
     return sql_do(qq/DELETE from users where username=$user/);
+}
+
+=item user_ldap_verify(user,password)
+
+Test a user from netdisco.
+
+Returns 1 if user and password are OK, or undef if error.
+
+=cut
+
+sub user_ldap_verify{
+    tryuse('Net::LDAP', die => 1);
+    my ($user, $pass) = @_;
+
+    return undef unless defined($user);
+
+    my $ldapuser = $CONFIG{ldap_user_string};
+    $ldapuser =~ s/\%USER\%?/$user/egi;
+
+    # If we can bind as anonymous or proxy user
+    # search for user's distinguished name
+    if ( $CONFIG{ldap_proxy_user} ) {
+        my $user   = $CONFIG{ldap_proxy_user};
+        my $pass   = $CONFIG{ldap_proxy_pass};
+        my $attrs  = ['distinguishedName'];
+        my $result = ldap_search ($ldapuser, $attrs, $user, $pass);
+        $ldapuser  = $result->[0] if ($result->[0]);
+    }
+    # If we can't search and aren't using AD and then construct DN by
+    # appending base
+    elsif ( $ldapuser =~ /=/ ) {
+        $ldapuser = "$ldapuser,$CONFIG{ldap_base}";
+    }
+    
+    foreach my $server (@{$CONFIG{ldap_server}}) {
+        my $opts = $CONFIG{ldap_opts} || {};
+        my $ldap = Net::LDAP->new( $server, %$opts ) or next;
+
+        my $msg ;
+
+        if ( $CONFIG{ldap_tls_opts} ) {
+            $msg  = $ldap->start_tls( %{$CONFIG{ldap_tls_opts}} );
+        }
+       
+        $msg = $ldap->bind( $ldapuser, password => $pass );
+
+        $ldap->unbind(); # take down session
+
+        return 1 unless $msg->code();
+    }
+    return undef;
+}
+
+=item ldap_search(filter,attrs,user,pass)
+
+Perform an LDAP search from the configured ldap_base with the specified filter.
+
+Uses an anonymous bind if the user is 'anonymous' or undefined.
+
+Returns reference to an array of Net::LDAP::Entry objects which match the
+search filter.  Each entry will contain the accessible attributes as defined
+in attrs array reference.  If attrs is undefined, then the server will return
+the attributes that are specified as accessible by default given the bind
+credentials.
+
+=cut
+
+sub ldap_search {
+    tryuse('Net::LDAP', die => 1);
+    my ($filter, $attrs, $user, $pass) = @_;
+
+    return undef unless defined($filter);
+    return undef if (defined $attrs and ref($attrs) ne 'ARRAY');
+
+    foreach my $server (@{$CONFIG{ldap_server}}) {
+        my $opts = $CONFIG{ldap_opts} || {};
+        my $ldap = Net::LDAP->new( $server, %$opts ) or next;
+
+        my $msg;
+
+        if ( $CONFIG{ldap_tls_opts} ) {
+            $msg  = $ldap->start_tls( %{$CONFIG{ldap_tls_opts}} );
+        }
+        
+        if ( $user and $user ne 'anonymous' ) {
+            $msg = $ldap->bind( $user, password => $pass);
+        }
+        else {
+            $msg = $ldap->bind();
+        }
+
+        $msg = $ldap->search(   
+                                base=> $CONFIG{ldap_base},
+                                filter=>"($filter)",
+                                attrs=> $attrs );
+
+        $ldap->unbind(); # take down session
+        
+        my $entries = [ $msg->entries ];
+
+        return $entries unless $msg->code();
+    }
+    return undef;
 }
 
 =back
