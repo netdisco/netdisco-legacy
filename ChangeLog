@@ -19,6 +19,8 @@ Features:
                 (not yet in web front end)
     + [1364276] Multi-process parallel mode for macwalk, arpwalk
                    and nbtwalk.
+    + [1641944] LDAP authentication based on contributions from Bernhard
+                Augenstein.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
