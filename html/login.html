@@ -76,7 +76,7 @@ if ($how eq 'login') {
         # User from local Database
         my $md5_pw = Digest::MD5::md5_hex($pw); 
         unless ($err or $md5_pw eq $db_user->{password}){
-        $err .= "Bad Login.\n";
+            $err .= "Bad Login.\n";
         }
     }
     $useuserdb = 1;
