@@ -5,7 +5,7 @@
     TH { font-family:arial,helvetica,sans-serif; font-size:12pt; text-align:center;}
     TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
     INPUT { font-family:monospace; font-size:9pt; }
-    BODY { position:absolute; top:0; left:0; background-color:#f5deb3; color:black;
+    BODY { background-color:#f5deb3; color:black;
 font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     FORM { margin-bottom:0; margin-top:0; }
     UL,DL,OL { margin-top:0; margin-bottom:0; }
@@ -21,12 +21,12 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align: center;
               vertical-align:bottom; font-family:arial,helvetica,serif; font-size:8pt; clear:both; }
     .sidebar { float:left; height:100%; width:15%; }
-    .sidebar li { display:block; list-style:none; border-width: 0 thin thin thin; border-style: solid; padding: 2px; }
-    .sidebar ul { padding:0; border-width: thin 0 0 0; border-style: solid; }
+    .sidebar li { display:block; list-style:none; border-width: 0 thin thin thin; border-style: solid; padding: 2px; width: 100%; }
+    .sidebar ul { padding:0; margin: 0; border-width: thin 0 0 0; border-style: solid; }
     .sidebar-bg { background-color:#191970; border:black; }
     .sidebar-0 { text-align:center; background-color:#eed8ae;}
     .sidebar-1 { text-align:center; background-color:#ffe7ba;}
-    .content { float:right; height:100%; width:84%; }
+    .content { float:right; height:100%; width:84%; padding-bottom: 23px; }
     .match-1 { text-align:center; background-color:#eed8ae;}
     .match-0 { text-align:center; background-color:#ffe7ba;}
     .box     { background-color:#eed8ae; border:thin solid; border-color:#191970; }
