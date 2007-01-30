@@ -21,6 +21,10 @@ Features:
                    and nbtwalk.
     + [1641944] LDAP authentication based on contributions from Bernhard
                 Augenstein.
+                Multiple root devices for -r.
+                External program to get community.
+                NetBIOS search node also matches usernames.
+                Customer name and icon in config file.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
@@ -29,6 +33,10 @@ Bugfixes:
     * []        Don't believe netmask 0.0.0.0 (from buggy Net-SNMP agent)
     * []        Look up remote device name if we get 0.0.0.0 or 127.x
                    from CDP instead of skipping altogether.
+    * [1641944] Reload configuration in daemon if changed.
+                Clear variables in daemon so you can run discover
+                   multiple times.
+
 
 
 0.95 (11/28/2006)

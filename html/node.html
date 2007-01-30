@@ -445,8 +445,8 @@ if ($node){
     
     # Search by NetBIOS Name
     unless ($is_mac) {
-        # Find MACs associated with this NetBIOS Name
-        my $where = { 'nbname'=>sql_match($node)};
+        # Find MACs associated with this NetBIOS Name or User
+        my $where = { 'nbname/nbuser'=>sql_match($node)};
         $where->{'active'} = 1 unless $archive;
         my $macs = sql_rows('node_nbt',
                 ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],

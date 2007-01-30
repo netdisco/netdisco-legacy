@@ -33,7 +33,7 @@ use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTRO
                        sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
-                       active_subnets dump_subnet in_device
+                       active_subnets dump_subnet in_device get_community
                        url_secure is_private cidr mask_to_bits bits_to_mask dbh_quote sql_vacuum
                        tryuse homepath user_ldap_verify ldap_search/;
 
@@ -233,6 +233,65 @@ bitmask.
 sub bits_to_mask {
     my $bits = shift;
     return join(".",unpack("C4",pack("N", 2**32 - (2 ** (32-$bits)))));
+}
+
+=item get_community(type,host,ip)
+
+Get Community depending on type (ro,rw).
+If C<get_community> is defined, then get the try to get the community from
+shell-command. If C<get_community> is undefined or nothing
+is returned from the command use C<community> or 
+C<community_rw>.
+
+The command specified in C<get_community> must return in stdout a string like
+
+    community=<list of readonly-communities>
+    setCommunity=<list of write-communities>
+
+Returns Community-List as Array reference
+
+Options:
+    type => 'ro'|'rw' for the type of community
+    host => name of the device
+    ip   => device ip-address
+
+=cut
+
+sub get_community($$;$) {
+    my $type = lc(shift);
+    my $host = shift;
+    my $ip = shift || $host;
+ 
+    my $cmd   = $CONFIG{get_community};
+    my $rcom  = $CONFIG{community};
+    my $rwcom = $CONFIG{community_rw};
+ 
+    if (defined $cmd && length($cmd)) {
+        my @com;
+        # replace variables
+        $cmd =~ s/\%HOST\%?/$host/egi;
+        $cmd =~ s/\%IP\%?/$ip/egi;
+        my $return = `$cmd`;
+        my @lines = split (/\n/,$return);
+        foreach (@lines) {
+            if (/^community\s*=\s*(.*)\s*$/i) {
+                if (length($1)) {
+                    @com = split(/\s*,\s*/,$1);
+                    $rcom = \@com;
+                } else {
+                    $rcom = undef;
+                }
+            } elsif (/^setCommunity\s*=\s*(.*)\s*$/i) {
+                if (length($1)) {
+                    @com = split(/\s*,\s*/,$1);
+                    $rwcom = \@com;
+                } else {
+                    $rwcom = undef;
+                }
+            }
+        }
+    }
+    return  ($type eq 'rw' ? $rwcom : $rcom);
 }
 
 =item  config() 
@@ -1160,7 +1219,7 @@ sub root_device {
 
 Adds or changes a user account.
 
-C<%args> can have key values of { pw, admin, port }
+C<%args> can have key values of { pw, admin, port, ldap }
 
 Returns error message if problem.
 

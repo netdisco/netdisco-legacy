@@ -1,6 +1,19 @@
 <ul class="sidebar-bg">
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    <A HREF="<%$path%>/index.html"><IMG SRC="<%$path%>/netdiscoball.gif" style="border: 0;" width=82 height=90 alt="[Disco Ball]"></A><BR>
+    <A HREF="<%$path%>/index.html">
+% my $width = 82;
+% my $height = 90;
+% my $src = $path . "/netdiscoball.gif";
+% my $alt = "[Disco Ball]";
+% if (defined $netdisco::CONFIG{customericon}) {
+%    my ($iconname, $iconwidth, $iconheight) = split(/\s*,\s*/, $netdisco::CONFIG{customericon});
+%    $src = ($iconname =~ m|/|) ? $iconname : $path . "/" . $iconname;
+%    $width = $iconwidth if defined($iconwidth);
+%    $height = $iconheight if defined($iconheight);
+%    $alt = "[Home]";
+% }
+      <IMG SRC="<%$src%>" style="border: 0;" width=<%$width%> height=<%$height%> alt="<%$alt%>">
+    </A><BR>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/netmap.html">Network Map</A>]

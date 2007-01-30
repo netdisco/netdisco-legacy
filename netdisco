@@ -282,18 +282,27 @@ sub run {
 
     print "Network discovery starting from root $root_device at " . localtime() . "\n";
 
-    my $root_dev_ip = &getip($root_device);
-    unless (defined $root_dev_ip){
-        print "Cannot resolve $root_device to an IP address.\n";
+    my @root_dev_list = split(/\s*,\s*/, $root_device);
+    foreach my $root_dev (@root_dev_list) {
+        my $root_dev_ip = &getip($root_dev);
+        unless (defined $root_dev_ip){
+            print "Cannot resolve $root_dev to an IP address.\n";
+        } else {
+            push(@Discover_Queue, $root_dev_ip);
+        }
+    }
+    print "start from " . scalar(@Discover_Queue) . " root device(s)\n"  if scalar(@Discover_Queue) > 1 && $DEBUG;
+    if (scalar(@Discover_Queue) == 0) {
+        print "No devices in discovery queue.\n";
         return;
     }
+    my (@Root_Device_List) = @Discover_Queue;
 
     # Getting old devices for statistics.
     &load_old_devices;
     topo_load_file();
 
     $start_time = time;
-    push (@Discover_Queue, $root_dev_ip);
 
     my $timeout = $CONFIG{timeout};
 
@@ -307,9 +316,9 @@ sub run {
         next if defined $UnDiscovered{$this_dev};
 
         # New Only scan, ignore existing devices
-        #   except let us rediscover our target
+        #   except let us rediscover our target(s)
         next if ( ((defined $OldDevices->{$this_dev} or defined $Aliases->{$this_dev}) and $New_Only)
-                  and ($this_dev ne $root_dev_ip)                                               
+                  and !grep($_ eq $this_dev, @Root_Device_List)
                 );
 
         # Set time out 
@@ -1450,7 +1459,7 @@ sub get_device {
         }
 
         # Try each community string
-        foreach my $config_comm (@{$CONFIG{community}}) {
+        foreach my $config_comm (@{get_community('ro',$hostname)}) {
 
             # Don't bother retrying the failed one.
             next if (defined $comm and ($config_comm eq $comm));
@@ -1491,7 +1500,7 @@ sub get_device_rw {
     # Check for bulkwalk disabling
     my $no_bw = in_device($host,$CONFIG{bulkwalk_no});
 
-    foreach my $comm (@{$CONFIG{community_rw}}) {
+    foreach my $comm (@{get_community('rw',$host)}) {
         %args = ('DestHost'  => $host,
                  'Community' => $comm,
                  'Version'   => $ver
@@ -3816,6 +3825,7 @@ sub admin_daemon {
 
         # Run each Job
         foreach my $job (sort {$a->{entered} <=> $b->{entered}} @$jobs) {
+            updateconfig();
             admin_daemon_job($job);
             last if $end_flag;
         }
@@ -3869,6 +3879,13 @@ sub admin_daemon_job {
     my $subaction = $job->{subaction};
 
     print "Daemon: Working on job : $id\n" if $DEBUG;
+
+    # init Variables
+    %Discovered = ();
+    %Discovered_Alias = ();
+    @Discover_Queue = ();
+    %NoCDP = ();
+    %UnDiscovered = ();
 
     # Set to running
     insert_or_update('admin',{'job'=>$id },{'status'=>'running', 'started' => scalar(localtime)});

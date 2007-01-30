@@ -517,9 +517,10 @@ Import OUI information from oui.txt
 
 Control the Admin Daemon.  Takes arguments (start,stop,status,restart).
 
-=item  -r || --discoverall root_device
+=item  -r || --discoverall root_device_list
 
-Walk the network with the given root.  Use L<-N|/item__2dn__7c_7c__2d_2dnewonly> to discover new devices only.  Given root device
+Walk the network with the given (comma-seperated) root(s).
+Use L<-N|/item__2dn__7c_7c__2d_2dnewonly> to discover new devices only.  Given root devices
 will always be discovered.
 
 =item -R || --refresh
@@ -1000,6 +1001,14 @@ in front of your value :
 
 PATH.  Full path to where netdisco lives.  Is the root path for all other files and paths.
 
+=item customer
+
+STRING.  Name added to page titles and heading.
+
+=item customericon
+
+STRING.  URL,width,height - replaces discoball icon with custom logo.
+
 =back
 
 =head2 Database Maintenance
@@ -1334,6 +1343,25 @@ LIST:STRING. A comma separated list of community strings to try on each device.
 LIST:STRING.  OPTIONAL. A comma separated list of Read-Write community strings.  
 
 This is only necessary if you turn on the C<port_control> command.
+
+=item get_community
+
+STRING.  An external program to run to get the community string for a given
+device.  This is useful if, for example, you have you devices already configured
+in another NMS and you want to use that information instead of configuring
+C<community> and/or C<community_rw> in this file.
+
+The strings %IP% and %HOST% are replaced by the IP address and the hostname
+(or IP address if no hostname is known) of the system being contacted.
+
+The command must return output in the following form:
+
+    community=<list of readonly-communities>
+    setCommunity=<list of write-communities>
+
+If the community string is not known for the given system, the command
+should return no output and the community strings configured in netdisco
+will be used.
 
 =item mibdirs
 

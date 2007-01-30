@@ -2,14 +2,21 @@
 <HTML>
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<TITLE>n e t  d i s c o <& SELF:title &> </TITLE>
+<TITLE>n e t  d i s c o \
+% if (defined $netdisco::CONFIG{customer}) {
+-  <% $netdisco::CONFIG{customer} %> \
+% }
+<& SELF:title &> </TITLE>
 <LINK REL="stylesheet" HREF="<%$path%>/netdisco.css" TYPE="text/css" MEDIA="screen">
 <& SELF:html_head &>
 </HEAD>
 <BODY>
     <div id="nonFooter">
     <div class="topbar">
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N&nbsp;e&nbsp;t&nbsp;&nbsp;d&nbsp;i&nbsp;s&nbsp;c&nbsp;o
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N&nbsp;e&nbsp;t&nbsp;&nbsp;d&nbsp;i&nbsp;s&nbsp;c&nbsp;o \
+% if (defined $netdisco::CONFIG{customer}) {
+-  <% $netdisco::CONFIG{customer} %> \
+% }
     </div>
     <div class="sidebar">
         <& sidebar.html &>
