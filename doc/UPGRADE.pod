@@ -35,6 +35,28 @@ sections.
 
 =over
 
+=item v.0.95 -> 0.96
+
+=over
+
+=item New Perl Modules
+
+  Parallel::ForkManager
+
+=item Update Database
+
+You will have to run the following command to add new tables and modify existing
+ones.
+
+ cd /usr/local/netdisco/sql
+ ./pg upgrade-0.95-to-0.96.sql
+
+Note that it is safe to run the upgrade.sql scripts more than once (in case you are
+running a CVS or RC version). Also note that if you are upgrading from 0.94,
+you must run C<upgrade-0.94-to-0.95.sql> first.
+
+=back
+
 =item v.0.94 -> 0.95
 
 =over
