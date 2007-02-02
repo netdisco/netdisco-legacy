@@ -188,16 +188,16 @@ Discovers one device, stores its info, interfaces, and neighbors, and returns.
 sub discover{
     my $hostname = shift;
 
-    print "Discover($hostname) : ";
+    print "[$hostname] Discover starting\n";
 
     my $ip = getip($hostname);
     if (in_device($ip,$CONFIG{discover_no}) ||
         ($CONFIG{discover_only} && !in_device($ip,$CONFIG{discover_only}))) {
-        print " Excluded from discovery in config file.\n";
-        return;
+        print "[$ip] Excluded from discovery in config file.\n";
+        return 0;
     }
 
-    my $device = get_device($hostname) or return;
+    my $device = get_device($hostname) or return 0;
     $ip        = $device->{ip};
 
     # Store Device Info
@@ -221,6 +221,8 @@ sub discover{
         next unless defined $alias and length($alias);
         $Discovered_Alias{ $alias }++;
     }
+
+    return 1;
 }
 
 =item refresh_all()
@@ -243,22 +245,14 @@ sub refresh_all {
 
     my $timeout = $CONFIG{timeout};
 
-    foreach my $dev (keys %$OldDevices){
-        eval {
-            alarm($timeout);
-            discover($dev);
-            alarm(0); 
-        };
+    $controller = $$;
 
-        if ($@) {
-            if ($@ =~ /timeout/){
-                $TimedOut{$dev}++;
-                print "\n  ! Device Timed out ($timeout sec)\n";
-            } else {
-                print "\n$@\n";
-            }
-        }
+    sql_begin();
+    foreach my $dev (keys %$OldDevices){
+        queue_process($dev, 'rediscover');
     }
+    sql_commit();
+    dispatcher('rediscover', \&discover);
 
     sql_vacuum('device','print'=>1);
     sql_vacuum('device_port','print'=>1);
@@ -771,6 +765,7 @@ sub end {
 
     my $status = sql_rows('process', ['action','count(*) as num','sum(count) as tot'],
         {'controller' => $controller}, 0, 'GROUP BY action');
+    # and status = done?
 
     my %actions = ();
     foreach my $action (@$status) {
@@ -799,7 +794,56 @@ sub end {
         log('mac',"$MacTotal forwarding table entries.  $MacDevices devices.  $run_time minutes.",$LogFile[-1]) if $Log;
     }
 
-    #XXX
+    # this will eventually be for discover too.
+    foreach my $action (qw/rediscover/) {
+        if ($actions{$action}) {
+            my $discover_count = $actions{$action}->{tot} || 0;
+            my %where = ('controller' => $controller, 'action' => $action);
+            my $TimedOut = sql_column('process',['device','count'],{ %where, status => 'timedout' });
+            $where{'count'} = 1;
+            my $Discovered = sql_column('process',['device','count'],\%where);
+            $where{'count'} = 0;
+            $where{'status'} = '!timedout';
+            my $UnDiscovered = sql_column('process',['device','count'],\%where);
+
+            # Check for new/old devices
+            my $new = 0;
+            my $old = scalar keys %$OldDevices;
+
+            foreach my $device (keys %$Discovered){
+                $new++ unless defined $OldDevices->{$device};
+            }
+
+            foreach my $device (keys %$OldDevices){
+                $old-- if defined $Discovered->{$device};
+            }
+
+            print "Discovered : $new new devices.  Missed: $old old devices.\n";
+
+            log($action,"$discover_count devices. ($new new) ($old old) $run_time minutes.",$LogFile[-1]) 
+                if $Log;
+
+            if (scalar keys %$UnDiscovered) {
+                print "Devices Found by CDP but not reachable by SNMP : \n";
+                foreach my $dev (keys %$UnDiscovered){
+                    print "    $dev\n";
+                } 
+                log('nosnmp',join(' ',keys %$UnDiscovered),$LogFile[-1]) if $Log;
+            }
+
+            # XXX todo: NoCDP
+
+            if (scalar keys %$TimedOut){
+                print "Devices timed out : \n";
+                foreach my $dev (keys %$TimedOut){
+                    print "    $dev\n";
+                }
+                log('timeout',join(' ',keys %$TimedOut),$LogFile[-1]) if $Log;
+            }
+        }
+    }
+
+    #XXX this is just for old discover now and will be deleted
     my $discover_count = scalar(keys(%Discovered));
     if ($discover_count){
         print "Discovered $discover_count devices.\n";
@@ -1236,16 +1280,17 @@ Adds to the @Discover_Queue
 
 sub find_neighbors {
     my $device = shift;
-   
-    print "  Fetching Neighbor Information  : ";
 
     my $ip = $device->{ip};
+    print "[$ip]  Fetching Neighbor Information\n";
+    my $n_count = 0;
+
     my $c_ip       = $device->c_ip();
 
     unless ($device->hasCDP() or scalar keys %$c_ip){
         # Great, catalyst 2926 doesnt give us cdpRun
         $NoCDP{$ip}++;    
-        print "! CDP not Enabled.\n";
+        print "[$ip]   ! CDP not Enabled.\n";
         return;
     }
 
@@ -1257,13 +1302,13 @@ sub find_neighbors {
 
     sql_begin();
     foreach my $key (keys %$c_ip){
-        print '.';
+        $n_count++;
         # Get our port to iid mapping
         my $iid = $c_if->{$key};
         my $port = $interfaces->{$iid};
 
         unless (defined $port){
-           print "find_neighbors($ip) - Port for IID:$iid not resolved.\n";
+           print "[$ip]  - Port for IID:$iid not resolved.\n";
            next;
         }
 
@@ -1278,7 +1323,7 @@ sub find_neighbors {
         # will after all devices are discovered.
         if ($remote_ip eq '0.0.0.0' or $remote_ip =~ /^127\./) {
             if ($remote_id) {
-                print "find_neighbors($ip) - Got unusable address ($remote_ip) on port $port, looking up $remote_id.\n";
+                print "[$ip]  - Got unusable address ($remote_ip) on port $port, looking up $remote_id.\n";
                 my $try = sql_scalar('device',['ip'], {'name' => $remote_id});
 		# device name might be truncated with long domain name.
 		# Try removing the domain name altogether and use a wildcard
@@ -1289,13 +1334,13 @@ sub find_neighbors {
 		}
                 if (defined($try)) {
                     $remote_ip = $try;
-                    print "find_neighbors($ip) - found $remote_id with IP address $remote_ip.\n";
+                    print "[$ip]  - found $remote_id with IP address $remote_ip.\n";
                 } else {
-                    print "find_neighbors($ip) - could not find $remote_id, skipping.\n";
+                    print "[$ip]  - could not find $remote_id, skipping.\n";
                     next;
                 }
             } else {
-                print "find_neighbors($ip) - Skipping unusable address ($remote_ip) on port $port.\n";
+                print "[$ip]  - Skipping unusable address ($remote_ip) on port $port.\n";
                 next;
             }
         }
@@ -1306,11 +1351,11 @@ sub find_neighbors {
         # Therefore, set a loop back to ourselfs as a place marker, but add
         # our found nodes to the discovery queue.
         if (ref $remote_ip eq 'ARRAY'){
-            $DEBUG and print "  Port:$port sees multiple neighbors. Setting loopback.\n";
+            $DEBUG and print "[$ip]  Port:$port sees multiple neighbors. Setting loopback.\n";
             # Discover neighbors
             foreach my $neighbor (@$remote_ip){
                 unless (defined $Discovered{$neighbor}) {
-                    $DEBUG and print "  Adding $neighbor to discovery queue.\n";
+                    $DEBUG and print "[$ip]  Adding $neighbor to discovery queue.\n";
                     push (@Discover_Queue, $neighbor);
                 }
             }
@@ -1328,7 +1373,7 @@ sub find_neighbors {
                 # Swap catalyst remote port as 2/1 to 2.1
                 $remote_port =~ s/\//\./ if ($remote_port =~ /^\d+\/\d+$/);
             } else {
-                print "  No remote_port found for Port:$port connected to $remote_ip.\n";
+                print "[$ip]  No remote_port found for Port:$port connected to $remote_ip.\n";
             }
         }
 
@@ -1341,7 +1386,7 @@ sub find_neighbors {
 
         my $port_exists = sql_scalar('device_port',['true'],{'ip'=>$ip,'port'=>$port});
         unless (defined $port_exists and $port_exists){
-            print "  Port $port not in DB -> $remote_ip/$remote_port.\n";
+            print "[$ip]  Port $port not in DB -> $remote_ip/$remote_port.\n";
             next;
         }
 
@@ -1355,12 +1400,12 @@ sub find_neighbors {
                         \%store);
 
         unless (defined $Discovered{$remote_ip}) {
-            $DEBUG and print "  Adding $remote_ip to discovery queue.\n";
+            $DEBUG and print "[$ip]  Adding $remote_ip to discovery queue.\n";
             push (@Discover_Queue, $remote_ip);
         }
     }
     sql_commit();
-    print "\n";
+    print "[$ip]   $n_count Neighbors.\n";
 }
 
 =item get_device(host)
@@ -1560,7 +1605,8 @@ sub store_modules {
     my $device = shift;
     my $devip  = $device->{ip};
 
-    print "  Fetching Module Information    : ";
+    print "[$devip]  Fetching Module Information\n";
+    my $m_count = 0;
 
     my $e_descr   = $device->e_descr();
     my $e_type    = $device->e_type();
@@ -1608,11 +1654,11 @@ sub store_modules {
                                             'index' => $key },
                          \%store );
 
-        print '.';
+        $m_count++;
     }
     sql_commit();
 
-    print "\n";
+    print "[$devip]   $m_count Modules.\n";
 }
 
 =item mac_getportmacs() 
@@ -1955,12 +2001,13 @@ sub dispatcher {
                 if ($@) {
                     if ($@ =~ /timeout/){
                         $status = 'timedout';
-                        print "\n  ! Device $dev->{device} timed out in $action ($timeout sec)\n";
+                        print "[$dev->{device}]  ! timed out in $action ($timeout sec)\n";
                     } else {
                         $status = 'error';
-                        print "\n$@\n";
+                        print "[$dev->{device}] !! $@\n";
                     }
                 }
+                $count ||= 0;
                 insert_or_update('process', $dev, { 'status' => $status, 'count' => $count });
             }
             $pm->finish if defined($pm);
@@ -2175,7 +2222,7 @@ Calls all the global methods and sends the results off to the database
 sub store_device {
     my $device = shift;
 
-    print "\n  Fetching Device Info           : \n";
+    print "[$device->{ip}]  Fetching Device Info\n";
 
     # Deal w/ devices with multiple IP address like most routers
     my $foundip = $device->{ip};
@@ -2183,7 +2230,7 @@ sub store_device {
     $device->{ip} = $devip;
 
     if ($devip ne $foundip) {
-        print "  Using $devip instead of $foundip \n" if $DEBUG;
+        print "[$devip]  Using $devip instead of $foundip \n" if $DEBUG;
 
         # Set device name to root, not alias
         my $new_dns = &hostname($devip);
@@ -2206,7 +2253,7 @@ sub store_device {
         next if $ip =~ /^127\.0\.0\./;
 
         if (defined $CONFIG{ignore_private_nets} and $CONFIG{ignore_private_nets} and is_private($ip)) {
-            print "  Ignoring private address $ip\n" if ($DEBUG);
+            print "[$devip]  Ignoring private address $ip\n" if ($DEBUG);
             next;
         }
 
@@ -2220,7 +2267,7 @@ sub store_device {
                         {'ip' => $devip , 'alias' => $ip, 'port' => $port,
                          'subnet' => $subnet, 'dns' => $dns }
                         );
-        $DEBUG and print "  Adding $ip to device_ip\n";
+        $DEBUG and print "[$devip]  Adding $ip to device_ip\n";
         $Aliases->{$ip} = $devip;
         
         # Mark alias down
@@ -2280,8 +2327,9 @@ Deletes the old interface entries in device_port and puts in new ones.
 sub store_interfaces { 
     my $device = shift;
     
-    print "  Fetching Interface Information : ";
     my $ip = $device->{ip};
+    print "[$ip]  Fetching Interface Information\n";
+    my $i_count;
 
     my $interfaces     = $device->interfaces();
     my $i_type         = $device->i_type();
@@ -2305,7 +2353,7 @@ sub store_interfaces {
     sql_do(qq/DELETE from device_port where ip = '$ip'/);
 
     foreach my $if (keys %$interfaces) {
-        print '.';
+        $i_count++;
         my %store = ();
         my $port = $interfaces->{$if};
         unless (defined $port and length($port)) {
@@ -2337,6 +2385,7 @@ sub store_interfaces {
 
     }
     sql_commit();
+    print "[$ip]   $i_count Interfaces.\n";
 
     # Get SSIDs for wireless interfaces
     my $ssidlist = $device->i_ssidlist();
@@ -2366,7 +2415,6 @@ sub store_interfaces {
     }
 
     sql_commit();
-    print "\n";
 }
 
 =item walk_fwtable()  
