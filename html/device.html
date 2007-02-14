@@ -696,6 +696,7 @@ push (@times,"$week weeks") if $week;
 push (@times,"$day days") if ($week or $day);
 push (@times,"$hour hours") if ($week or $day or $hour);
 push (@times,"$min min.") if ($week or $day or $hour or $min);
+push (@times,"$sec sec.") unless ($week or $day or $hour or $min);
 return join(',',@times);
 </%perl>
 </%method>
