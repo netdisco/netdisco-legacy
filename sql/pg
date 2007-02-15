@@ -27,7 +27,14 @@ BEGIN {
                       'h|help',
               );
 
-    $Dir        = $ARGS{d} || '/usr/local/netdisco';
+    $DefaultDir = "/usr/local/netdisco";
+    # add more possible locations here
+    foreach $poss ($FindBin::Bin . "/..", "..") {
+	if (-f $poss . "/netdisco.pm") {
+	    $DefaultDir = $poss;
+	}
+    }
+    $Dir        = $ARGS{d} || $DefaultDir;
     $ConfigFile = $ARGS{c} || "$Dir/netdisco.conf";
     $Psql       = $ARGS{p} || 'psql';
     eval "use lib '$Dir';";
@@ -100,6 +107,9 @@ netdisco::config($ConfigFile);
 
 # Get Database Configuration
 $DB='netdisco';
+if ($CONFIG{db_Pg} =~ /dbname=([^:]+)/) {
+	$DB = $1;
+}
 $DB_USER = $CONFIG{db_Pg_user};
 $DB_PW   = $CONFIG{db_Pg_pw};
 
@@ -132,7 +142,12 @@ sub run {
 
     # Prompt for destructoness
     unless ($file =~ /^upgrade/ or defined $ARGS{b}) {
-        print "This will nuke all the data in the table in $file.  You Sure (y/n)?";
+        if ($file =~ /^db_back-(\d\d\d\d)(\d\d)(\d\d)/) {
+            $msg = "This will restore the database backup taken on $2-$3-$1";
+        } else {
+            $msg = "This will nuke all the data in the table in $file";
+        }
+        print "$msg.  You Sure (y/n)?";
         my $reply = <STDIN>;
         chomp($reply);
         unless ($reply =~ /^y/i) {
@@ -141,17 +156,17 @@ sub run {
         }
     }
     print "If prompted enter '$DB_PW' as password.\n";
-    psql("-e -f $file -U $DB $DB");
+    psql("-e -f $file -U $DB_USER $DB");
 
 }
 
 sub interactive {
     print "If prompted enter '$DB_PW' as password.\n";
-    psql("-e -U $DB $DB");
+    psql("-e -U $DB_USER $DB");
 }
 
 sub init {
-    $CREATEUSER = "\"$Path"."psql\" -a template1 --command \\\"CREATE USER $DB PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\\\"";
+    $CREATEUSER = "\"$Path"."psql\" -a template1 --command \\\"CREATE USER $DB_USER PASSWORD '$DB_PW' NOCREATEDB NOCREATEUSER\\\"";
     $CREATEDB   = "\"$Path"."createdb\" $DB";
 
     open (ALL,">pg_all.input") or die "Can't create pg_all.input for output. $!\n";
@@ -239,7 +254,7 @@ sub init {
     print "Creating tables and indicies.\n";
     print "If prompted enter '$DB_PW' as password.\n";
 
-    psql("-e -f pg_all.input -U $DB $DB");
+    psql("-e -f pg_all.input -U $DB_USER $DB");
 }
 
 sub back {
