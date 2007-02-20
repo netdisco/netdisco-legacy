@@ -68,7 +68,7 @@ GetOptions(\%args,'a|arpwalk',
                   'B|backup',
                   'C|configfile=s',
                   'd|discover=s',
-                  'D|debug',
+                  'D|debug+',
                   'e|expirenodes=s',
                   'E|expiredevice=s',
                   'expire-nodes-subnet=s',
@@ -1473,6 +1473,14 @@ sub get_device {
 
         $device = create_device(%args);
                                
+        # a -1 return from create_device means that we *did*
+        # talk to it, but it's a device type that we can't manage.
+        # This means that it changed from when it was first put
+        # into the database (or that SNMP::Info changed).
+        if ($device == -1) {
+            print "!  Talked to $dev_ip with SNMP community and version info in database but can't handle that type of device (check your SNMP::Info installation).\n";
+            return undef;
+        }
         print "!  Could not connect to $dev_ip with SNMP community and version info in database.\n"
             unless defined $device;
     }
@@ -1553,7 +1561,13 @@ sub get_device_rw {
         $args{BulkWalk} = 0 if $no_bw;
         
         $device = create_device(%args);
-        last if (defined $device and $device != -1); 
+
+        if (defined $device and $device == -1){
+            $device = undef;
+            last;
+        } elsif (defined $device){
+            last;
+        }
     }
     return $device;
 }
@@ -1804,7 +1818,7 @@ sub macsuck{
             $args{BulkWalk} = $bulkwalk if defined $bulkwalk;
             my $vlan_device = create_device(%args);
 
-            unless (defined $vlan_device){
+            unless (defined $vlan_device && $vlan_device != -1){
                 print "[$hostname] VLAN:$vlan_name ($vlan) !\n";
                 next;
             }
@@ -2357,12 +2371,12 @@ sub store_interfaces {
         my %store = ();
         my $port = $interfaces->{$if};
         unless (defined $port and length($port)) {
-            $DEBUG and print "\n  Ignoring $if (no port mapping)\n";
+            $DEBUG and print "  Ignoring $if (no port mapping)\n";
             next;
         }
         $store{type}  = $i_type->{$if};
         if(exists $i_ignore->{$if}) {
-            $DEBUG and print "\n  Ignoring $if ($store{type})\n";
+            $DEBUG and print "  Ignoring $if ($port) ($store{type})\n";
             next;
         }
         $store{ip}           = $ip;

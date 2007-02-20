@@ -36,6 +36,9 @@ Bugfixes:
     * [1641944] Reload configuration in daemon if changed.
                 Clear variables in daemon so you can run discover
                    multiple times.
+    * []        Properly handle -1 return from create_device when
+                   a device is discovered, added to the database,
+                   then SNMP::Info can't handle that type of device.
 
 
 
