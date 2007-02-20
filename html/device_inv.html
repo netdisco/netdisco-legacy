@@ -87,8 +87,8 @@ foreach my $row (sort
         $count += $row->{count};
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
-    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>&amp;models=show&amp;os=show&amp;os_ver=show"><%$row->{vendor}%></A></TD>
-    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>&amp;models=<%$row->{model}|u%>&amp;boolean=and&amp;os=show&amp;os_ver=show"><%$row->{model}%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=show&amp;os=show&amp;os_ver=show"><%$row->{vendor} || 'Unknown'|h%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and&amp;os=show&amp;os_ver=show"><%$row->{model} || 'Unknown'|h%></A></TD>
     <TD><%$row->{count}%></TD>
 </TR>
 %                  }
@@ -122,8 +122,8 @@ foreach my $row (sort
     $count += $row->{count};
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
-    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' %></A></TD>
-    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'%>&amp;os_ver=<%$row->{os_ver}||'IS NULL'%>&amp;boolean=and&amp;models=show&amp;vendors=show"><% $row->{os_ver} || 'Unknown' %></a></TD>
+    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' |h%></A></TD>
+    <TD><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;os_ver=<%$row->{os_ver}||'IS NULL'|u%>&amp;boolean=and&amp;models=show&amp;vendors=show"><% $row->{os_ver} || 'Unknown' |h%></a></TD>
     <TD><% $row->{count} %></TD>
 </TR>
 % }
@@ -251,11 +251,11 @@ foreach my $dev (@results) {
     my $uptime = $m->comp('device.html:uptime',uptime => $dev->{uptime});
 </%perl>
 <TR CLASS="match-<%++$odd %2%>">
-    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dns%></A></TD>
-    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dev->{ip}%></A></TD>
-    <TD><A HREF="device_search.html?vendors=<%$dev->{vendor}|u%>&amp;models=<%$dev->{model}|u%>&amp;boolean=and"><%$dev->{vendor}%> - <%$dev->{model}%></A></TD>
-    <TD><%$arg_age_type eq 'uptime' ? $uptime : $creation_age%></TD>
-    <TD><%$last_discover_age%></TD>
+    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dns|h%></A></TD>
+    <TD><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dev->{ip}|h%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$dev->{vendor}||'IS NULL'|u%>&amp;models=<%$dev->{model}||'IS NULL'|u%>&amp;boolean=and"><%$dev->{vendor} || "Unknown"%> - <%$dev->{model} || "Unknown"|h%></A></TD>
+    <TD><%$arg_age_type eq 'uptime' ? $uptime : $creation_age|h%></TD>
+    <TD><%$last_discover_age|h%></TD>
 </TR>
 % }
 </TABLE>
@@ -341,10 +341,10 @@ foreach my $row (sort
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
     <TD><A><%$row->{location} || '[Not Set]'%></A></TD>
-    <TD><A HREF="device.html?ip=<%$row->{ip}%>" TITLE="Click to View Device"><%$dns|h%></A></TD>
-    <TD><A HREF="device.html?ip=<%$row->{ip}%>" TITLE="Click to View Device"><%$row->{name}|h%></A></TD>
-    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>" TITLE="All devices from this vendor"><%$row->{vendor}|h%></A></TD>
-    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}|u%>&amp;models=<%$row->{model}|u%>&amp;boolean=and" TITLE="All devices of this model"><%$row->{model}|h%></A></TD>
+    <TD><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$dns|h%></A></TD>
+    <TD><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$row->{name}|h%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>" TITLE="All devices from this vendor"><%$row->{vendor} || "Unknown"|h%></A></TD>
+    <TD><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and" TITLE="All devices of this model"><%$row->{model} || "Unknown"|h%></A></TD>
 </TR>
 %                  }
 <TR CLASS="match-<%++$odd%2%>">
