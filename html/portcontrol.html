@@ -34,6 +34,7 @@ if ($cmd =~ /^(up|down|switch|vlan)$/ and !$secure) {
     $m->redirect($url);
 }
 if ($cmd =~ /^(up|down|switch|vlan)$/ and !$port_ctl) {
+    $m->session->{_login_msg} = "Please log in as a user with port control privileges.";
     my $url = $m->interp->apply_escapes( $r->uri, 'u' );
     $m->redirect("login.html?done=$url");
 }
