@@ -25,6 +25,7 @@ Features:
                 External program to get community.
                 NetBIOS search node also matches usernames.
                 Customer name and icon in config file.
+    + []        Allow sql_column() to use sql_query()'s WHERE builder.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
@@ -39,6 +40,8 @@ Bugfixes:
     * []        Properly handle -1 return from create_device when
                    a device is discovered, added to the database,
                    then SNMP::Info can't handle that type of device.
+    * []        Set active='f' properly when a node moves from one port
+                   to another of the same switch.
 
 
 

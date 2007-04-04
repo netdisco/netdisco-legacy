@@ -183,7 +183,7 @@ sub add_node {
     my $oui = substr($mac,0,8);
     # Set the active flag to false to archive all other instances
     #   of this mac address
-    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND switch != '$ip'/);
+    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND NOT (switch = '$ip' AND port = '$port')/);
 
     # Add this entry to node table. 
     my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port );
@@ -1563,10 +1563,7 @@ Returns reference to hash.  Hash has form C<$hash{key_val}={val_val}>
 
 If multiple matches are found for key_col, only the last one is kept.
 
-Supports
-
-    * (NOT) NULL
-    * Auto-Quoting Values
+Usage is the same as sql_rows() -- See for Usage.
 
     $OldDevices = sql_column('device',['ip','layers']);
 
@@ -1575,35 +1572,8 @@ Creates the hash %$OldDevices where the key is the IP address and the Value is t
 =cut
 
 sub sql_column {
-    my $dbh = &dbh;
-
-    my ($table,$column,$wherehash) = @_;
-
-    my $sql = sprintf("SELECT %s FROM $table", join(',',@$column));
-
-    if (defined $wherehash) {
-        my @where;
-        foreach my $index (keys %$wherehash){
-            my $val = $wherehash->{$index};
-
-            my $con = '=';
-
-            if ($val =~  m/^\s*is\s+(not)?\s*null$/i ){
-               $con = ''; 
-            }
-
-            $val = $dbh->quote($val) if $con;
-            push(@where, sprintf("$index $con $val"));
-        }
-
-        $sql .= sprintf(" WHERE %s", join(' AND ',@where));
-    }
-    
-    carp("[$$] $sql") if $SQLCARP;
-
     my %hash;
-    my $sth = $dbh->prepare($sql);
-    $sth->execute;
+    my $sth = sql_query(@_);
     my $arrayref =  $sth->fetchall_arrayref;
     foreach my $arr (@$arrayref){
         my $idx = $arr->[0];
