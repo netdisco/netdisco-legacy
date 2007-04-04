@@ -29,7 +29,7 @@ use Digest::MD5;
 
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
-@netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do sql_begin sql_commit sql_disconnect has_layer
+@netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do sql_begin sql_commit sql_rollback sql_disconnect has_layer
                        sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
@@ -1657,6 +1657,27 @@ sub sql_commit {
         return;
     }
     $dbh->commit();
+    $dbh->{AutoCommit} = 1;
+}
+
+=item sql_rollback()
+
+If an SQL transaction is in progress, roll it back
+and return to AutoCommit mode.  Suitable to be called
+in a generic error situation when you don't know what
+has been done, since it is a noop if there is no transaction
+occurring.
+
+=cut
+
+sub sql_rollback {
+    my $dbh = &dbh;    
+    carp "[$$] rolling back transaction" if $SQLCARP;
+    if ($dbh->{AutoCommit}) {
+        carp "AutoCommit is already on, no transaction in progress?" if $::DEBUG;
+        return;
+    }
+    $dbh->rollback();
     $dbh->{AutoCommit} = 1;
 }
 
