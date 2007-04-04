@@ -914,7 +914,7 @@ Populates %Old_Devices with which devices are in the database.
 sub load_old_devices {
     print "load_old_devices()\n" if $DEBUG;
     $OldDevices = sql_column('device',['ip','layers']);
-    $Aliases = sql_column('device_ip',['alias','ip']);
+    $Aliases = sql_column('device_ip',['alias','ip'],{'ip' => \\'!= alias'});
 }
 
 =item load_old_nodes(days)
@@ -1482,7 +1482,7 @@ sub get_device {
         # talk to it, but it's a device type that we can't manage.
         # This means that it changed from when it was first put
         # into the database (or that SNMP::Info changed).
-        if ($device == -1) {
+        if (defined($device) && $device == -1) {
             print "!  Talked to $dev_ip with SNMP community and version info in database but can't handle that type of device (check your SNMP::Info installation).\n";
             return undef;
         }
@@ -1931,6 +1931,7 @@ sub set_status($@) {
 Initializes parallelization with the maximum number of simultaneously running processes
 set in configuration file. Creates a dummy SNMP::Info object to load MIBs only once for each child.
 Disconnects the database handle so that it's not held open across a fork.
+
 =cut
 
 sub parallel_init {
@@ -2698,7 +2699,7 @@ usually necessary after a device has been merged into another one.
 sub alias_clean {
     print "Cleaning out Aliases that showed up as devices :\n";
     
-    my $aliases = sql_rows('device_ip',['ip','alias','dns']);
+    my $aliases = sql_rows('device_ip',['ip','alias','dns'],{'ip' => \\'!= alias'});
     foreach my $row (@$aliases) {
         my $ip = $row->{ip};
         my $alias = $row->{alias};
