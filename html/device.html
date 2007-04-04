@@ -2,7 +2,7 @@
 <& SELF:show_device &>
 <h4>Device Search - Quick</h4>
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
-Device name or IP :<INPUT TYPE="text" name="ip" maxlength=20 size=20>
+Device name or IP :<INPUT TYPE="text" name="ip" maxlength=255 size=30>
 <INPUT TYPE="submit" Value="Search">
 <A HREF="<%$r->uri%>">[Reset Page]</A>
 </FORM>

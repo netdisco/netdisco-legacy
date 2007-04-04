@@ -8,7 +8,7 @@
 </TR>
 <TR>
     <TD colspan=4>
-        <INPUT TYPE="text" size=30 maxlength=60 NAME="text" VALUE="<%$text%>">
+        <INPUT TYPE="text" size=30 maxlength=255 NAME="text" VALUE="<%$text%>">
         <INPUT TYPE="submit" VALUE="Search All">
         <span class="small">(non-exact)</span>
     </TD>
@@ -18,15 +18,15 @@
 </TR>
 <TR>
     <TD> IP: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="ip" VALUE="<%$ip%>"></TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="ip" VALUE="<%$ip%>"></TD>
     <TD>Location:</TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="loc" VALUE="<%$loc%>"></TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="loc" VALUE="<%$loc%>"></TD>
 </TR>
 <TR>
     <TD> DNS: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="dns" VALUE="<%$dns%>"> </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="dns" VALUE="<%$dns%>"> </TD>
     <TD>Description: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="desc" VALUE="<%$desc%>"> </TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="desc" VALUE="<%$desc%>"> </TD>
 </TR>
 <TR>
     <TD> Vendor:</TD>
@@ -66,7 +66,7 @@
 </TR>
 <TR>
     <TD> sysName: </TD>
-    <TD><INPUT TYPE="text" size=30 maxlength=60 NAME="name" VALUE="<%$name%>"></TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="name" VALUE="<%$name%>"></TD>
     <TD VALIGN=TOP> Exact Match: </TD>
     <TD><INPUT TYPE="radio" NAME="exact" VALUE="1"<% $exact ? 'CHECKED' : ''%>>On
         <INPUT TYPE="radio" NAME="exact" VALUE="0"<% !$exact ? 'CHECKED' : ''%>>Off
@@ -101,7 +101,7 @@
 <DL>
     <DT>
     <DD><INPUT TYPE="submit" name="specific" VALUE="SSID Search">
-        <B>SSID:</B><INPUT TYPE="text" size=30 maxlength=60 NAME="ssid" VALUE="<%$ssid%>">
+        <B>SSID:</B><INPUT TYPE="text" size=30 maxlength=255 NAME="ssid" VALUE="<%$ssid%>">
         <INPUT TYPE="radio" NAME="ssidbcast" value="1" <% defined $ssidbcast && $ssidbcast  ? ' CHECKED' : ''%>>Broadcast
         <INPUT TYPE="radio" NAME="ssidbcast" value="0" <% defined $ssidbcast && !$ssidbcast ? ' CHECKED' : ''%>>Stealth
         <INPUT TYPE="radio" NAME="ssidbcast" value="" <% !defined $ssidbcast ? ' CHECKED' : ''%>>Either
