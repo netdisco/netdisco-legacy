@@ -868,7 +868,8 @@ The format of the manual topology consists of four types of lines:
 
 =item #comment
 
-Comments are delimited with a C<#> They can happen on any line.
+Comments are delimited with a C<#> They can happen on any line.  Escape as C<\#> if 
+you need to use a literal pound sign.
 
 =item routername
 

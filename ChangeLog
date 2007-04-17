@@ -42,7 +42,7 @@ Bugfixes:
                    then SNMP::Info can't handle that type of device.
     * []        Set active='f' properly when a node moves from one port
                    to another of the same switch.
-
+    * []        Allow \# escape in topology file. Patch from Maxim Gelin.
 
 
 0.95 (11/28/2006)

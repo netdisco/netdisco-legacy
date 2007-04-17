@@ -540,7 +540,10 @@ sub topo_load_file {
     while (my $line = (<DEVS>)){
         chomp $line;
         # comments
-        $line =~ s/#.*//;
+        $line =~ s/(?<!\\)#.*//;
+        # Handle escaped pound signs
+        $line =~ s/\\#/#/g;
+
         # White Space
         $line =~ s/^\s+//g;
         $line =~ s/\s+$//g;
