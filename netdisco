@@ -219,7 +219,7 @@ sub discover{
 
     foreach my $alias (keys %{$device->{_alias}}){
         next unless defined $alias and length($alias);
-        $Discovered_Alias{ $alias }++;
+        $Discovered_Alias{ $alias } = $ip;
     }
 
     return 1;
@@ -1308,6 +1308,8 @@ sub find_neighbors {
     my $c_platform = $device->c_platform();
     my $interfaces = $device->interfaces();
 
+    my $remote_type_match = $CONFIG{discover_no_type} || '';
+
     sql_begin();
     foreach my $key (keys %$c_ip){
         $n_count++;
@@ -1407,7 +1409,20 @@ sub find_neighbors {
         insert_or_update('device_port', {'ip' => $ip , 'port' => $port },
                         \%store);
 
-        unless (defined $Discovered{$remote_ip}) {
+        my $ok_to_discover = 1;
+        if (defined $Discovered{$remote_ip}) {
+            $DEBUG and print "[$ip]  $remote_ip already discovered.\n";
+            $ok_to_discover = 0;
+        }
+        if (defined $Discovered_Alias{$remote_ip}) {
+            $DEBUG and print "[$ip]  $remote_ip already discovered (alias of $Discovered_Alias{$remote_ip}).\n";
+            $ok_to_discover = 0;
+        }
+        if (defined $remote_type and $remote_type_match and $remote_type =~ m/$remote_type_match/) {
+            $DEBUG and print "[$ip]  $remote_ip excluded by discover_no_type.\n";
+            $ok_to_discover = 0;
+        }
+        if ($ok_to_discover) {
             $DEBUG and print "[$ip]  Adding $remote_ip to discovery queue.\n";
             push (@Discover_Queue, $remote_ip);
         }

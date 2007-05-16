@@ -263,6 +263,9 @@ When using this method, check the backend log for devices visible via
 CDP but not via SNMP.  These may point out the need to expand the
 range that is discoverable, or may be instances of this class of attack.
 
+Additionaly C<discover_no_type> can be used to prevent netdisco
+from visiting certain devices based on the device_type returned by CDP.
+
 =item Disable CDP and other discovery protocols
 
 This solution involves disabling CDP and other discovery protocols
@@ -1073,6 +1076,13 @@ PATH. Full or relative path to the directory that backups and logs will be store
 LIST:string.  IP addresses in this list will not be visited during discovery.
 See L<bulkwalk_no> for syntax, except that only hostnames, IP addresses
 and subnets are valid.
+
+=item discover_no_type
+
+REGEX:string.  Place a pattern here to exclude the discovery of certain devices
+based on the CDP device type information.  Good for excluding a whole device
+class like lightweight access points or IP phones that have CDP but don't talk
+SNMP.
 
 =item discover_only
 
