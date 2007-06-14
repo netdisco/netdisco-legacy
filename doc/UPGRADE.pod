@@ -42,6 +42,9 @@ sections.
 =item New Perl Modules
 
   Parallel::ForkManager
+  Net::LDAP (optional for LDAP authentication)
+  Net::SSLeay (optional for encrypted LDAP authentication)
+  IO::Socket::SSL (optional for encrypted LDAP authentication)
 
 =item Update Database
 
