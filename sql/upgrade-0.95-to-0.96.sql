@@ -47,4 +47,5 @@ CREATE TABLE process (
 
 --
 -- Add ldap to users table
-ALTER TABLE users ADD ldap boolean DEFAULT false;
+ALTER TABLE users ADD ldap boolean;
+ALTER TABLE users ALTER ldap SET DEFAULT false;
