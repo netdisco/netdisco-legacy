@@ -1292,6 +1292,7 @@ sub find_neighbors {
     my $ip = $device->{ip};
     print "[$ip]  Fetching Neighbor Information\n";
     my $n_count = 0;
+    my %seen;
 
     my $c_ip       = $device->c_ip();
 
@@ -1312,7 +1313,6 @@ sub find_neighbors {
 
     sql_begin();
     foreach my $key (keys %$c_ip){
-        $n_count++;
         # Get our port to iid mapping
         my $iid = $c_if->{$key};
         my $port = $interfaces->{$iid};
@@ -1355,12 +1355,22 @@ sub find_neighbors {
             }
         }
 
+        if (exists($seen{$port}{$remote_ip})) {
+            print "[$ip]  Port:$port skipping duplicate entry $remote_ip.\n";
+            next;
+        }
+        else {
+            %seen = ( $port => {$remote_ip => $remote_port} );
+        }
+        
+        $n_count++;
+
         # Hack for BAY devices where if a BAY device is connected to a
         # non-bay device, we 'hear' other devices on the other end of this
         # port, but we don't know who we're talking to.
         # Therefore, set a loop back to ourselfs as a place marker, but add
         # our found nodes to the discovery queue.
-        if (ref $remote_ip eq 'ARRAY'){
+        if ((ref $remote_ip eq 'ARRAY') or ( scalar(keys %{$seen{$port}}) > 1 )) {
             $DEBUG and print "[$ip]  Port:$port sees multiple neighbors. Setting loopback.\n";
             # Discover neighbors
             foreach my $neighbor (@$remote_ip){
