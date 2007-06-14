@@ -823,8 +823,11 @@ and their prerequisites automatically:
         install Graph        ( > 0.50 )
         install GraphViz     ( > 2.02 )
         install Compress::Zlib (probably already have this one)
-        install Net::NBName
-
+        install Parallel::ForkManager
+        install Net::NBName (optional for NetBIOS lookup on devices)
+        install Net::LDAP (optional for LDAP authentication)
+        install Net::SSLeay (optional for encrypted LDAP authentication)
+        install IO::Socket::SSL (optional for encrypted LDAP authentication)
 
 For Apache1 install these modules:
 
