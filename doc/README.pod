@@ -16,9 +16,9 @@ connection data for network devices are retrieved and set by SNMP.  With
 Netdisco you can locate the switch port of an end-user system by IP or MAC
 address.  Data is stored using a SQL database for scalability and speed.
 
-Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP),
-and SynOptics Network Management Protocol (SONMP) optionally provide
-automatic discovery of the network topology.  
+Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP), Link Layer
+Discovery Protocol (LLDP), and SynOptics Network Management Protocol (SONMP)
+optionally provide automatic discovery of the network topology.  
 
 The network is inventoried by both device model and operating system (like
 IOS).  Netdisco uses router ARP tables and L2 switch MAC forwarding tables to
@@ -132,8 +132,8 @@ will also not allow people to switch off uplink ports by accident.
 
 Netdisco supports any Network device that talks SNMP and has basic information
 available through MIB-II (RFC 1213).   Additional vendor-specific information
-is available for a number of devices, but especially for Cisco, HP, and Bay
-devices.  
+is available for a number of devices, but especially for Cisco, Extreme,
+Foundry, HP, and Nortel/Bay devices.  
 
 Device support is handled through C<SNMP::Info> -- a Perl module that is
 an integral part of Netdisco that handles device-specific code.  See the
@@ -218,7 +218,7 @@ use a Linux or BSD box as your router, you will need to install net-snmp
 on the machine, and then have netdisco discover that machine.  Otherwise
 you will not be able to resolve a MAC address to an IP address.
 
-=item CDP / FDP / SONMP
+=item CDP / FDP / LLDP / SONMP
 
 Having topology information is crucial for Netdisco to function.  So.
 if you network does not support one of the above Layer2 discover protocols,
@@ -236,8 +236,9 @@ discovering the topology.   If your devices don't use CDP, then you need
 to work with the F<netdisco-topology.txt> file to create a layout of your
 network."
 
-Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported, and anywhere
-you see CDP you can assume we mean FDP and SSOMP too.
+Note that LLDP (IEEE Standard), FDP (Foundry), and SONMP (Nortel/Bay) are
+supported, and anywhere you see CDP you can assume we mean LLDP, FDP, and
+SONMP too.
 
 =over
 
@@ -1515,8 +1516,9 @@ these would be domain controllers.
 
 =item ldap_user_string
 
-STRING.  String to construct the user portion of the DN.  %USER% will be
-replaced with the logon name.  Examples:  cn=%USER%, uid=%USER%.  Active
+STRING.  String to construct the user portion of the DN.  %USER% is a variable
+which will be replaced at runtime with the logon name entered on the logon
+page of the application.  Examples:  cn=%USER%, uid=%USER%.  Active
 Directory users may use DOMAIN\%USER% and skip all other options except
 ldap_server as this notation eliminates the need to construct the full
 distinguished name.
@@ -1546,9 +1548,29 @@ does not support LDAPv3.
 
 =item ldap_tls_opts
 
-HASH.   If defined the connection will use Transport Layer Security (TLS),
-which provides an encrypted connection. This is only possible if using LDAPv3
-and the server supports it.  These are the options for the TLS connection.
+HASH.   If defined, the connection will use Transport Layer Security (TLS)
+which provides an encrypted connection. TLS is the preferred method of
+encryption, ldaps (port 636) is not supported.  This is only possible if
+using LDAPv3 and the server supports it.  These are the options for the
+TLS connection.  See the Net::LDAP documentation under start_tls for options,
+but the defaults should work in most cases.
+
+=item Example configuration to use Microsoft Active Directory
+
+ ldap_server          = AD-Domain-Controller1,AD-Domain-Controller2
+ ldap_user_string     = DOMAIN\%USER%
+
+Note:  Only one domain is currently supported in this configuration
+
+=item Example configuration to use Novell E-Directory
+
+ ldap_server          = LDAP-Server-1,LDAP-Server-2
+ ldap_user_string     = cn=%USER%
+ ldap_base            = o=MYORGANIZATION
+ ldap_proxy_user      = anonymous
+
+Note:  This configuration will support users split across multiple containers
+as long as the containers exist below MYORGANIZATION
 
 =back
 
