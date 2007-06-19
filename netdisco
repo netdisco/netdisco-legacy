@@ -2872,11 +2872,11 @@ sub db_clean {
     &load_old_devices ;
 
     print "  Deleting nodes that are actually device ports...\n";
-    my $num = sql_do(q/DELETE FROM node WHERE mac IN (select mac from device_port)
-                                 OR mac IN (select mac from device)/);
+    my $num = sql_do(q/DELETE FROM node WHERE mac IN (select mac from device_port union
+                                 select mac from device)/);
     print "    $num MAC entries deleted\n";
-    $num = sql_do(q/DELETE FROM node_ip WHERE mac IN (select mac from device_port)
-                                 OR mac IN (select mac from device)/);
+    $num = sql_do(q/DELETE FROM node_ip WHERE mac IN (select mac from device_port union
+                                 select mac from device)/);
     print "    $num ARP entries deleted\n";
     
     print "  Checking for Nodes that exist on nonexistent ports:\n";
