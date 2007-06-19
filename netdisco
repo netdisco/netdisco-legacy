@@ -1209,7 +1209,7 @@ sub create_device {
     if ( (!defined $device or !defined $layers) and 
          $args{Version} != 1 and !$version_force ){
         
-        print " [Trying SNMP Version 1] ";
+        print "[$args{DestHost}] [Trying SNMP Version 1]\n";
         printf("create_device(%s,%s,1)\n",$args{DestHost},$print_comm) if $DEBUG;
         $args{Version} = 1;
         
@@ -1229,18 +1229,18 @@ sub create_device {
         
     if ($class eq 'SNMP::Info'){
         my $layers = $device->layers();
-        print "  Device Talks SNMP but only has layers $layers.  Skipping\n";
+        print "[$args{DestHost}]  Device Talks SNMP but only has layers $layers.  Skipping\n";
         return -1;
     }
 
     my $error = $device->error() || '';
     if ($error){
         # Debug already spit it out, no need to see it twice.
-        print "  $error" unless $DEBUG;
+        print "[$args{DestHost}]  $error" unless $DEBUG;
         return undef;
     }
 
-    $DEBUG and print "  Device Type : $class \n";
+    $DEBUG and print "[$args{DestHost}]  Device Type : $class\n";
 
     # Tag on some netdisco specific info to the SNMP::Info object.
     $device->{ip}        = &getip($args{DestHost});
