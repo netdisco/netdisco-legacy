@@ -30,7 +30,7 @@ use Digest::MD5;
 use vars qw/%DBH $DB %CONFIG %GRAPH %GRAPH_SPEED $SENDMAIL $SQLCARP %PORT_CONTROL_REASONS $VERSION/;
 @netdisco::ISA = qw/Exporter/;
 @netdisco::EXPORT_OK = qw/insert_or_update getip hostname sql_do sql_begin sql_commit sql_rollback sql_disconnect has_layer
-                       sql_hash sql_column sql_rows sql_query add_node add_arp add_nbt dbh sql_match
+                       sql_hash sql_column sql_columns sql_rows sql_query add_node add_arp add_nbt dbh sql_match
                        all config updateconfig sort_ip sort_port sql_scalar root_device log
                        make_graph is_mac user_add user_del mail is_secure in_subnet in_subnets
                        active_subnets dump_subnet in_device get_community
@@ -1585,6 +1585,36 @@ sub sql_column {
 
     return \%hash;
 }
+
+=item sql_columns(table,[key_col,val_col,...],{where}) 
+
+Returns reference to hash.  Hash has form C<$hash{key_val}=hash of all columns}>
+
+If multiple matches are found for key_col, only the last one is kept.
+
+Usage is the same as sql_rows() -- See for Usage.
+
+    $OldDevices = sql_columns('device',['ip','layers','dns']);
+
+Creates the hash %$OldDevices where the key is the IP address and the Value is a hash
+with the keys 'ip', 'layers' and 'dns'.
+
+=cut
+
+sub sql_columns {
+    my $key_col = $_[1]->[0];
+    my $sth = sql_query(@_);
+    my $arrayref =  $sth->fetchall_arrayref({});
+    my %hash;
+    foreach my $h (@$arrayref){
+        my $idx = $h->{$key_col};
+        next unless defined $idx;
+        $hash{$idx} = $h;
+    }
+
+    return \%hash;
+}
+
 
 =item sql_do(sql)
 
