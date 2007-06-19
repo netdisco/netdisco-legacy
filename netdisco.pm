@@ -535,6 +535,9 @@ Returns the IP Address of a given IP or hostname. If the
 given argument appears to be in dotted octet notation, it
 does no DNS hits and just returns it.
 
+It also just returns an IP address with a subnet mask.
+Subnet masks are not permitted on host names.
+
 =cut
 
 sub getip {
@@ -542,7 +545,7 @@ sub getip {
 
     my $ip;
 
-    if ($hostname =~ /^\d+\.\d+\.\d+\.\d+$/) {
+    if ($hostname =~ /^\d+\.\d+\.\d+\.\d+(?:\/\d+)?$/) {
         $ip = $hostname;
     } else {
         my $testhost = inet_aton($hostname);

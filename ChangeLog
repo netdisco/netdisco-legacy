@@ -45,6 +45,8 @@ Bugfixes:
     * []        Set active='f' properly when a node moves from one port
                    to another of the same switch.
     * []        Allow \# escape in topology file. Patch from Maxim Gelin.
+    * [1702383] Fix to getip() to allow subnets (allows using subnets in
+		_only and _no config options).  Patch from Oliver Gorwits.
 
 
 0.95 (11/28/2006)
