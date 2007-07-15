@@ -1,0 +1,122 @@
+<H3>Device Module View</H3>
+<p>Note: this is a development view.  It will hopefully change substantially
+before it gets any links to it.  Plus this means I can say you aren't allowed
+to laugh at how useless it looks.</p>
+<ul>
+% foreach my $item (@{$modules{root}}) {
+<& SELF:dump_module, id=>$item &>
+% }
+</ul><hr></ul>
+% foreach my $key (sort { $a <=> $b } keys %modules) {
+%   if (!$printed{$key}) {
+<& SELF:dump_module, id=>$key &>
+%   }
+% }
+</ul>
+<hr>
+<pre>
+% print Dumper(\%modules);
+</pre>
+<%args>
+$ip         => ''   # Can be IP or hostname
+</%args>
+<%shared>
+my %modules = {};
+my %printed = {};
+my $device;
+</%shared>
+<%init>
+#XXX
+use Data::Dumper;
+
+if ($ip) {
+    # Save Search Term
+    my $match = $ip;
+    
+    # Resolve input
+    my $hostname = &hostname($ip);
+    my $ip = &getip($ip);
+
+    # Check if we're an alias of another device
+    my $devip = &root_device($ip);
+    
+    # redirect to search if no match
+    $m->redirect("device_search.html?text=$match") unless $devip;
+
+    # Grab Device INFO
+    $device = sql_hash('device',
+                        ['ip','extract(epoch from creation) as creation','dns',
+                         'description','uptime','contact','name','location','layers',
+                         'ports','mac','serial','model','ps1_type','ps2_type','ps1_status',
+                         'ps2_status','fan','slots','vendor','log','os_ver','os','vtp_domain',
+                         'extract(epoch from last_discover) as last_discover',
+                         'extract(epoch from last_macsuck) as last_macsuck',
+                         'extract(epoch from last_arpnip) as last_arpnip' ],
+                        {'ip'=>$devip});
+
+    my $modules = sql_rows('device_module',['*'],{'ip'=>$devip},0,'order by parent,pos,index') || [];
+    foreach my $module (@$modules) {
+	$modules{$module->{index}}{module} = $module;
+	if ($module->{parent}) {
+	    # this is wrong.  a given parent can
+	    # have multiple items at a single pos value.
+	    # (HP may have gotten this wrong, but that's
+	    # reality...)
+	    if ($module->{pos}) {
+		${$modules{$module->{parent}}{children}}[$module->{pos}] = $module->{index};
+	    } else {
+		push(@{$modules{$module->{parent}}{children}}, $module->{index});
+	    }
+	} else {
+	    push(@{$modules{root}}, $module->{index});
+	}
+    }
+} else {
+    $m->redirect("device_search.html");
+}
+</%init>
+<%method dump_module>
+<%args>
+$id
+</%args>
+<li>
+<%perl>
+  return if ($id eq 'root');
+  if (!defined($modules{$id})) {
+	print "can't get module $id\n";
+	print Dumper($id);
+	return;
+  }
+  $printed{$id}++;
+  my $mod = $modules{$id}{module};
+</%perl>
+<% $mod->{description} %> (<% $mod->{name} %>)
+%  if ($mod->{port}) {
+(<% $mod->{port} %>)
+%  }
+%  for my $f qw(fw hw sw) {
+%    if ($mod->{"${f}_ver"}) {
+[<%$f%>: <%$mod->{"${f}_ver"}%>]
+%    }
+%  }
+%  if ($mod->{serial}) {
+[serial: <%$mod->{serial}%>]
+%  }
+/ <% $mod->{type} %> / <% $mod->{model} %>
+%  if ($mod->{fru}) {
+<b>[FRU]</b>
+%  }
+// <i><% $mod->{class} %></i>
+<!-- parent <% $mod->{parent} %> pos <% $mod->{pos} %> -->
+%  #print join(" | ", keys %$mod);
+%  if ($modules{$id}{children}) {
+<ul>
+%  foreach my $kid (@{$modules{$id}{children}}) {
+%    if (defined($kid)) {
+       <& SELF:dump_module, id=>$kid &>
+%    }
+%  }
+</ul>
+%  }
+</li>
+</%method>
