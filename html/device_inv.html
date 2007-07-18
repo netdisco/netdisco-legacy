@@ -4,6 +4,7 @@
 [<A HREF="#os">By OS</a>]
 [<A HREF="#location">By Location</a>]
 [<A HREF="#ssid">Wireless SSID</a>]
+[<A HREF="#vlan">VLAN</a>]
 <h4><A NAME="age">By Age</A></h4>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <TABLE BORDER=0>
@@ -155,6 +156,17 @@ foreach my $row (sort
 </DIV>
 </FORM>
 % }
+<h4><A NAME="vlan">VLAN Inventory</A></h4>
+% if ($show_vlan) {
+<& SELF:show_vlan &>
+% } else {
+<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<DIV>
+<INPUT TYPE="hidden" NAME="show_vlan" VALUE=1>
+<INPUT TYPE="SUBMIT" VALUE="VLAN Inventory">
+</DIV>
+</FORM>
+% }
 <%args>
 $cmd      => undef
 $age_type => 'last'
@@ -163,6 +175,7 @@ $age_mul  => 'months'
 $age_bool => 'not in'
 $show_loc => 0
 $show_ssid => 0
+$show_vlan => 0
 </%args>
 <%shared>
 my $age = [];
@@ -298,6 +311,42 @@ foreach my $row (sort { $b->{count} <=> $a->{count} } @$ssid_count) {
 <TR CLASS="match-<%$odd%2%>">
     <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;specific=SSID" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
     <TD><%$row->{broadcast} ? "Broadcast" : "Stealth"%></TD>
+    <TD><%$row->{count}%></TD>
+</TR>
+<%perl>
+}
+</%perl>
+</TABLE>
+[<A HREF="<%$r->uri%>">Hide</A>]
+</%method>
+%#
+%# show_vlan() - Inventory based on VLAN
+%#
+<%method show_vlan>
+<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
+<TR>
+    <TH>VLAN ID</TH>
+    <TH>VLAN Name</TH>
+    <TH>Count</TH>
+</TR>
+<%perl>
+my $vlan_count = sql_rows('device_vlan',['vlan','description','count(vlan)'],
+                        undef,undef,'group by vlan,description');
+$count = 0; $odd = 1; my $old_vlan = -1;
+foreach my $row (sort { $a->{vlan} <=> $b->{vlan} || $a->{description} cmp $b->{description} } @$vlan_count) {
+    if ($row->{vlan} != $old_vlan) {
+	$old_vlan = $row->{vlan};
+	$odd++;
+    }
+</%perl>
+<TR CLASS="match-<%$odd%2%>">
+<!--
+    <TD><A HREF="device_search.html?ssid=<%$row->{ssid}|u%>&amp;specific=SSID" TITLE="All devices with this SSID"><%$row->{ssid}|h%></A></TD>
+    <TD><%$row->{broadcast} ? "Broadcast" : "Stealth"%></TD>
+    <TD><%$row->{count}%></TD>
+-->
+    <TD><%$row->{vlan}%></TD>
+    <TD><%$row->{description}%></TD>
     <TD><%$row->{count}%></TD>
 </TR>
 <%perl>

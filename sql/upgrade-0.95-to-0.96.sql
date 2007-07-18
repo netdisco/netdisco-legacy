@@ -49,3 +49,30 @@ CREATE TABLE process (
 -- Add ldap to users table
 ALTER TABLE users ADD ldap boolean;
 ALTER TABLE users ALTER ldap SET DEFAULT false;
+
+--
+-- Add pvid to device_port table
+ALTER TABLE device_port ADD pvid integer;
+
+--
+-- Create device_port_vlan table
+CREATE TABLE device_port_vlan (
+    ip          inet,   -- ip of device
+    port        text,   -- Unique identifier of Physical Port Name
+    vlan        integer, -- VLAN ID
+    native      boolean not null default false, -- native or trunked
+    creation    TIMESTAMP DEFAULT now(),
+    last_discover TIMESTAMP DEFAULT now(),
+    PRIMARY KEY(ip,port,vlan)
+);
+
+--
+-- Create device_vlan table
+CREATE TABLE device_vlan (
+    ip          inet,   -- ip of device
+    vlan        integer, -- VLAN ID
+    description text,   -- VLAN description
+    creation    TIMESTAMP DEFAULT now(),
+    last_discover TIMESTAMP DEFAULT now(),
+    PRIMARY KEY(ip,vlan)
+);
