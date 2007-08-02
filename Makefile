@@ -65,9 +65,8 @@ snmp: SNMP
 SNMP:
 	echo "Getting newest (cvs) version of SNMP::Info"
 	echo "Hit Return at Password Prompt"
-	cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info login
-	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/snmp-info co snmp-info
-	mv -f snmp-info SNMP
+	cvs -d:pserver:anonymous@snmp-info.cvs.sourceforge.net:/cvsroot/snmp-info login
+	cvs -z3 -d:pserver:anonymous@snmp-info.cvs.sourceforge.net:/cvsroot/snmp-info co -d SNMP snmp-info
 
 oui:
 	echo "Downloading oui.txt from ieee.org"
