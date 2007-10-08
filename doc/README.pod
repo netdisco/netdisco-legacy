@@ -1203,6 +1203,12 @@ BOOLEAN.  Turn this on to have Netdisco do a reverse lookup of the sysName.0 fie
 as the management IP address for a device.  See bug 810939 and device_root() for more info.
 Default C<false> 
 
+=item store_modules
+
+BOOLEAN.  Set to false to skip the module inventory on device discovery.
+The module inventory can double the device discovery time so if you
+aren't using the information you can skip it.
+
 =item topofile
 
 FILE. Full path of the file that contains manual topology information.  Defaults to

@@ -208,7 +208,9 @@ sub discover{
     store_vlans($device);
 
     # Walk Modules
-    store_modules($device);
+    if (!defined($CONFIG{'store_modules'}) || $CONFIG{'store_modules'}) {
+	store_modules($device);
+    }
 
     # Walk neighbors
     find_neighbors($device);
@@ -1656,6 +1658,7 @@ sub store_modules {
     print "[$devip]  Fetching Module Information\n";
     my $m_count = 0;
 
+    my $e_index   = $device->e_index();
     my $e_descr   = $device->e_descr();
     my $e_type    = $device->e_type();
     my $e_parent  = $device->e_parent();
@@ -1676,7 +1679,7 @@ sub store_modules {
         my $type;
 
         $store{ip}            = $devip;
-        $store{index}         = $key;
+        $store{index}         = $e_index->{$key};
         $store{description}   = $e_descr->{$key};
         $type = $e_type->{$key};
         # OID translation - SNMP::Info should do this
@@ -1699,7 +1702,7 @@ sub store_modules {
         $store{last_discover} = 'now';
 
         insert_or_update('device_module', { 'ip' => $devip,
-                                            'index' => $key },
+                                            'index' => $store{index} },
                          \%store );
 
         $m_count++;
