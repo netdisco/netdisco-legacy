@@ -157,6 +157,9 @@ if ($ip) {
         my $ssids = sql_rows('device_port_ssid',['*'],{'ip'=>$switch,'port'=>$port});
         $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
 
+        # Get Power info
+        $portreq->{power} = sql_hash('device_port_power',['*'],{'ip'=>$switch,'port'=>$port});
+
         # Save MAC addresses for IP lookup
         foreach my $node (@$nodes){
             my $mac = $node->{mac};
@@ -208,6 +211,12 @@ if ($ip) {
     # Resolve IPs of connected nodes to host names
     if ($node_ip eq 'on' and $node_dns eq 'on'){
 
+    }
+
+    # Get power supply info
+    $device->{poe} = sql_rows('device_power',['*'],{'ip'=>$devip},0,'order by module');
+    foreach my $poe (@{$device->{poe}}) {
+        $m->comp('SELF:poe_stats', poe => $poe);
     }
 }
 
@@ -334,7 +343,7 @@ $web_dns =~ s/\Q$domain\E//;
     / <% scalar localtime($device->{last_discover}) %>
     </TD>
 </TR>
-% if (defined $device->{fan} or $device->{ps1_status}) {
+% if (defined $device->{fan} or $device->{ps1_status} or @{$device->{poe}}) {
 <TR CLASS="match-<%++$odd %2%>">
     <TD><U>Power</U></TD>
     <TD ALIGN=LEFT>
@@ -347,6 +356,15 @@ $web_dns =~ s/\Q$domain\E//;
 %   if (defined $device->{ps2_status}) {
     PS2 [<%$device->{ps2_type}%>] :  <%$device->{ps2_status}%>&nbsp;&nbsp;
 % }
+%   if (@{$device->{poe}}) {
+%     foreach my $poe (@{$device->{poe}}) {
+<br>    POE module <%$poe->{module}%> : <%$poe->{status}%>,
+    <%$poe->{stats}->{ports}%> power-capable ports,
+    <%$poe->{stats}->{on}%> powered
+    (<%$poe->{stats}->{disabled}%> admin disabled, <%$poe->{stats}->{err}%> errors),
+    <%$poe->{stats}->{committed}%>/<%$poe->{power}%> watts committed.
+%     }
+%   }
 
     </TD>
 </TR>
@@ -698,6 +716,30 @@ push (@times,"$hour hours") if ($week or $day or $hour);
 push (@times,"$min min.") if ($week or $day or $hour or $min);
 push (@times,"$sec sec.") unless ($week or $day or $hour or $min);
 return join(',',@times);
+</%perl>
+</%method>
+<%method poe_stats>
+<%args>
+$poe
+</%args>
+<%perl>
+    my $poemax = { 'class0' => 12.95, 'class1' => '3.84', 'class2' => 6.49, 'class3' => 12.95 };
+    $poe->{stats} = { 'disabled' => 0, 'ports' => 0, 'on' => 0, 'err' => 0, 'committed' => 0 };
+    my $poeports = sql_rows('device_port_power',['*'],{'ip'=>$poe->{ip},'module'=>$poe->{module}});
+    foreach my $pport (@{$poeports}) {
+        $poe->{stats}->{ports}++;
+        if ($pport->{admin} eq 'false') {
+            $poe->{stats}->{disabled}++;
+        } else {
+            if ($pport->{status} ne 'searching' and
+                $pport->{status} ne 'deliveringPower') {
+                $poe->{stats}->{err}++;
+            } elsif ($pport->{status} eq 'deliveringPower') {
+                $poe->{stats}->{on}++;
+                $poe->{stats}->{committed} += $poemax->{$pport->{class}};
+            }
+        }
+    }
 </%perl>
 </%method>
 <%method title>

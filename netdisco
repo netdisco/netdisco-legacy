@@ -206,6 +206,7 @@ sub discover{
     # Walk Interfaces
     store_interfaces($device);
     store_vlans($device);
+    store_power($device);
 
     # Walk Modules
     if (!defined($CONFIG{'store_modules'}) || $CONFIG{'store_modules'}) {
@@ -2550,6 +2551,67 @@ sub store_vlans {
 	    vlan => $vlan}, \%store);
     }
     print "[$ip]   $v_count VLAN Interfaces, $v_ncount names.\n";
+}
+
+=item store_power()
+
+Gets all the Power-over-Ethernet information using Table Methods in SNMP::Info.  
+
+Deletes the old PoE entries in device_power and device_port_power and puts in new ones.
+
+=cut
+
+sub store_power {
+    my $device = shift;
+    
+    my $ip = $device->{ip};
+    print "[$ip]  Fetching Power Information\n";
+    my $p_count = 0;
+    my $pp_count = 0;
+
+    my $p_watts    = $device->peth_power_watts();
+    if (!defined($p_watts)) {
+	print "[$ip]   0 Power Modules\n";
+	return;
+    }
+    my $p_status   = $device->peth_power_status();
+
+    my $p_admin    = $device->peth_port_admin();
+    my $p_pstatus  = $device->peth_port_status();
+    my $p_class    = $device->peth_port_class();
+    my $p_ifindex  = $device->peth_port_ifindex();
+    my $interfaces = $device->interfaces();
+
+    sql_begin();
+    sql_do(qq/DELETE from device_power where ip = '$ip'/);
+    foreach my $module (keys %$p_watts) {
+	my %store = ();
+	$p_count++;
+	$store{ip} = $ip;
+	$store{module} = $module;
+	$store{power} = $p_watts->{$module};
+	$store{status} = $p_status->{$module};
+	insert_or_update('device_power', {ip => $ip,
+	    module => $module}, \%store);
+    }
+    sql_do(qq/DELETE from device_port_power where ip = '$ip'/);
+    foreach my $port (keys %$p_ifindex) {
+	my %store = ();
+	my $portname = $interfaces->{$p_ifindex->{$port}};
+	next unless $portname;
+	$pp_count++;
+	my ($module) = split(/\./, $port);
+	$store{ip} = $ip;
+	$store{port} = $portname;
+	$store{module} = $module;
+	$store{admin} = $p_admin->{$port};
+	$store{status} = $p_pstatus->{$port};
+	$store{class} = $p_class->{$port};
+	insert_or_update('device_port_power', {ip => $ip,
+	    port => $portname}, \%store);
+    }
+    sql_commit();
+    print "[$ip]   $p_count Power Modules, $pp_count Power-Capable Ports\n";
 }
 
 =item walk_fwtable()  

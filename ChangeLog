@@ -36,6 +36,7 @@ Features:
     + [1808041] Make locations in device and location inventory
                 clickable to search for all devices at this location.
                 Submitted by Stefan Radman.
+    + []        Add Power-over-Ethernet data collection and reporting.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
