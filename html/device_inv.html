@@ -138,7 +138,7 @@ foreach my $row (sort
 % if ($show_loc) {
 <& SELF:show_loc &>
 % } else {
-<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<FORM ACTION="<%$r->uri%>#location" METHOD="GET">
 <DIV>
 <INPUT TYPE="hidden" NAME="show_loc" VALUE=1>
 <INPUT TYPE="SUBMIT" VALUE="Inventory by Location">
@@ -149,7 +149,7 @@ foreach my $row (sort
 % if ($show_ssid) {
 <& SELF:show_ssid &>
 % } else {
-<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<FORM ACTION="<%$r->uri%>#ssid" METHOD="GET">
 <DIV>
 <INPUT TYPE="hidden" NAME="show_ssid" VALUE=1>
 <INPUT TYPE="SUBMIT" VALUE="Wireless SSID Inventory">
@@ -160,7 +160,7 @@ foreach my $row (sort
 % if ($show_vlan) {
 <& SELF:show_vlan &>
 % } else {
-<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<FORM ACTION="<%$r->uri%>#vlan" METHOD="GET">
 <DIV>
 <INPUT TYPE="hidden" NAME="show_vlan" VALUE=1>
 <INPUT TYPE="SUBMIT" VALUE="VLAN Inventory">
