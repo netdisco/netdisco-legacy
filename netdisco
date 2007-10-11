@@ -1659,6 +1659,10 @@ sub store_modules {
     my $m_count = 0;
 
     my $e_index   = $device->e_index();
+    if (!defined($e_index)) {
+        print "[$devip]   0 Modules.\n";
+        return;
+    }
     my $e_descr   = $device->e_descr();
     my $e_type    = $device->e_type();
     my $e_parent  = $device->e_parent();
@@ -2446,8 +2450,11 @@ sub store_interfaces {
 
     # Get SSIDs for wireless interfaces
     my $ssidlist = $device->i_ssidlist();
-    my $ssidbcast = $device->i_ssidbcast();
-    my $channel = $device->i_80211channel();
+    my ($ssidbcast, $channel) = (undef, undef);
+    if (defined($ssidlist)) {
+        $ssidbcast = $device->i_ssidbcast();
+        $channel = $device->i_80211channel();
+    }
 
     sql_begin();
 
