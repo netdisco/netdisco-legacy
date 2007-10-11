@@ -33,6 +33,9 @@ Features:
     + [1616058] Add device_vlan and device_port_vlan tables based on
                 Justin Hunter's patch, modified for use with the new
                 classes in SNMP::Info.
+    + [1808041] Make locations in device and location inventory
+                clickable to search for all devices at this location.
+                Submitted by Stefan Radman.
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.

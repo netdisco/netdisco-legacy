@@ -389,7 +389,8 @@ foreach my $row (sort
         $dns =~ s/\Q$domain\E//;
 </%perl>
 <TR CLASS="match-<%$odd%2%>">
-    <TD><A><%$row->{location} || '[Not Set]'%></A></TD>
+    <TD><A HREF="device_search.html?loc=<%$row->{location}||'IS NULL'|u%>&amp;e
+xact=1" TITLE="All devices at this location"><%$row->{location} || '[Not Set]'%></A></TD>
     <TD><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$dns|h%></A></TD>
     <TD><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$row->{name}|h%></A></TD>
     <TD><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>" TITLE="All devices from this vendor"><%$row->{vendor} || "Unknown"|h%></A></TD>

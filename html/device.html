@@ -308,7 +308,7 @@ $web_dns =~ s/\Q$domain\E//;
 </TR>
 <TR CLASS="match-<%++$odd %2%>">
     <TD><U>Location / Contact</U></TD>
-    <TD ALIGN=LEFT><%$device->{location} || '[Not Set]' |h%>
+    <TD ALIGN=LEFT><A HREF="device_search.html?loc=<%$device->{location}||'IS NULL'|u%>&amp;exact=1" TITLE="All devices at this location"><%$device->{location} || '[Not Set]' |h%></A>
         / <%$device->{contact} || '[Not Set]' |h%>
     </TD>
 </TR>
