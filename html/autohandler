@@ -15,7 +15,7 @@
     <div class="topbar">
     <TABLE WIDTH="95%">
     <TR>
-        <TD VALIGN=CENTER ROWSPAN=2 STYLE="text-align:left;">
+        <TD VALIGN=MIDDLE ROWSPAN=2 STYLE="text-align:left;">
         <A HREF="<%$path%>/index.html">
 % my $width = 60;
 % my $height = 65;
@@ -41,12 +41,14 @@
         </TD>
         <TD ROWSPAN=2 STYLE="text-align:right;">
         <FORM ACTION="search.html" METHOD=GET>
+	<DIV>
         <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255>
         <BR>
         <INPUT TYPE="submit" class="topbutton" VALUE="Search">
         <INPUT TYPE="RADIO" NAME="stype" VALUE="device" CHECKED>Device
         <INPUT TYPE="RADIO" NAME="stype" VALUE="node">Node
         <INPUT TYPE="RADIO" NAME="stype" VALUE="vlan">VLAN
+	</DIV>
         </FORM>
         </TD>
         </TR>

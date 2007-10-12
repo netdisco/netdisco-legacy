@@ -30,7 +30,7 @@ my $odd    = 1;
 my %port_cols = (
                  'descr'=>   ['Description',0],
                  'type' =>   ['Type',0],
-                 'duplex' => ['Duplex<BR><font size=-2>(Link/Admin)</font>',1],
+                 'duplex' => ['Duplex<BR><span class="smaller">(Link/Admin)</span>',1],
                  'speed' =>  ['Speed',1],
                  'name'  =>  ['Name',1],
                  'mac'   =>  ['Port MAC',0],
@@ -184,7 +184,7 @@ if ($ip) {
                 $alias_ip_anch =~ s/\./_/g;
                 $portreq->{portdisp} .= "<BR><a class=\"smlbutton\" href=\"javascript:tl('$alias_ip_anch');\">+</A> \n";
                 $portreq->{portdisp} .= "<A HREF=\"node.html?node=$alias_ip\">$alias_ip</A>";
-                $portreq->{portdisp} .= "<DIV id=\"$alias_ip_anch\" class=\"hidden\">$dns $alias_subnet</div>\n";
+                $portreq->{portdisp} .= "<SPAN id=\"$alias_ip_anch\" class=\"hidden\">$dns $alias_subnet</SPAN>\n";
         }
 
     }
@@ -269,9 +269,9 @@ if (defined $device) {
 <div class="navbar">
 <A class="navbutton" HREF="#details">Device Details</A>
 % if (defined $db_ports and scalar @$db_ports and $arg_ports ne 'all') {
-<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&ports=all">Show All Ports</A>
+<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=all">Show All Ports</A>
 % } else {
-<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&ports=">Hide Ports</A>
+<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=">Hide Ports</A>
 % }
 <A class="navbutton" HREF="javascript:tlgo('port_key')">Show Key</A>
 <A class="navbutton" HREF="javascript:tlgo('port_view')">Change View</A>
@@ -289,6 +289,7 @@ if (defined $device) {
 <div id="port_view" class="hidden">
 <A NAME="port_view"><SPAN CLASS="subheader">Change View</SPAN></A><BR>
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
+<DIV>
 <INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
 % if ($arg_ports eq 'all') {
 <INPUT TYPE="hidden" NAME="ports" VALUE="all">
@@ -338,6 +339,7 @@ if (defined $device) {
 </TR>
 <TR><TD>&nbsp;</TD><TD COLSPAN=3><INPUT TYPE="submit" VALUE="Update View" CLASS="navbutton"></TD></TR>
 </TABLE>
+</DIV>
 </FORM>
 </div>
 </%method>
@@ -359,14 +361,14 @@ if (defined $device) {
 </TR>
 <TR>
     <TH>Model / Serial</TH>
-    <TD><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&models=<%$device->{model}|u%>&boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
+    <TD><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&amp;models=<%$device->{model}|u%>&amp;boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
     / <%$device->{serial} || 'Unknown'%>
     </TD>
 </TR>
 <TR>
     <TH>OS / Version</TH>
     <TD><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
-        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
+        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=<%$device->{os_ver} || 'is null' |u%>&amp;boolean=and" TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
     </TD>
 </TR>
 <TR>
@@ -481,7 +483,7 @@ if (defined $log and length($log)){
 %   next unless $on;
     <TH><%$desc%></TH>
 %}
-    <TH>Connected<BR>Devices<% $arg_age eq 'on' ? '<BR><font size=-2>(Last Seen)</font>' : ''%></TH>
+    <TH>Connected<BR>Devices<% $arg_age eq 'on' ? '<BR><span class="smaller">(Last Seen)</span>' : ''%></TH>
 %# if ($port_control) {
     <TH>Port<BR>Control</TH>
 %#}
@@ -518,7 +520,7 @@ foreach my $port (sort sort_port @$db_ports){
     my $rowclass = (++$odd % 2 ) ? 'ports-0': 'ports-1';
 </%perl>
 <TR>
-    <TD CLASS="<%$rowclass%>" STYLE="text-align:left;padding-left:6px;"><SPAN="<%$class%>"><%$port->{portdisp}%></SPAN></TD>
+    <TD CLASS="<%$rowclass%>" STYLE="text-align:left;padding-left:6px;"><SPAN CLASS="<%$class%>"><%$port->{portdisp}%></SPAN></TD>
 <%perl>
     foreach my $col (sort keys %port_cols){
         my $colname  = $port_cols{$col}->[0];
@@ -569,7 +571,7 @@ foreach my $port (sort sort_port @$db_ports){
             $name =~ s/\Q$domain\E//;
             $name .= " ($remote_port)";
             $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
-            $link = "device.html?ip=$remote_ip&port=$remote_port";
+            $link = "device.html?ip=$remote_ip&amp;port=$remote_port";
 
         # Not an alias, use info from device table
         } elsif (defined $remote_dev) {
@@ -578,7 +580,7 @@ foreach my $port (sort sort_port @$db_ports){
             $name =~ s/\Q$domain\E//;
             $name .= " ($remote_port)";
             $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
-            $link = "device.html?ip=$remote_ip&port=$remote_port";
+            $link = "device.html?ip=$remote_ip&amp;port=$remote_port";
 
         # Found a device, but not in our database
         } else {
@@ -652,7 +654,7 @@ foreach my $port (sort sort_port @$db_ports){
         if ($arg_node_nbt eq 'on' and defined $node_nbts->{$mac}) {
             foreach my $nbt (sort @{$node_nbts->{$mac}}) {
 </%perl>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\\<A HREF="ip_search.html?domain=<%$nbt->{domain}|u%>&cmd=nbt" TITLE="Devices in this Domain"><%$nbt->{domain}%></A>\<A HREF="node.html?node=<% $nbt->{nbname} |u %>"><%$nbt->{nbname}%></A><BR>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\\<A HREF="ip_search.html?domain=<%$nbt->{domain}|u%>&amp;cmd=nbt" TITLE="Devices in this Domain"><%$nbt->{domain}%></A>\<A HREF="node.html?node=<% $nbt->{nbname} |u %>"><%$nbt->{nbname}%></A><BR>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<%$nbt->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$nbt->{ip}|u%>"><%$nbt->{ip}|h%></A><BR>
 
 <%perl>
@@ -670,16 +672,16 @@ foreach my $port (sort sort_port @$db_ports){
 % # Port Control Column
     <TD CLASS="<%$rowclass%>"> \
 % if ($device->{dns} =~ /^hub/i and $port_info) {
-      <A HREF="port_info.html?hub=<%$device->{dns}%>&port=<%$port->{port}%>"><IMG SRC="icon_info.gif" WIDTH=12 HEIGHT=11 BORDER=0 ALT="Pinnacles DB Info" TITLE="Pinnacles DB Info"></A> \
+      <A HREF="port_info.html?hub=<%$device->{dns}%>&amp;port=<%$port->{port}%>"><IMG SRC="icon_info.gif" WIDTH=12 HEIGHT=11 BORDER=0 ALT="Pinnacles DB Info" TITLE="Pinnacles DB Info"></A> \
 % }
 %     if ($port->{logs}){
-        <A HREF="portcontrol.html?cmd=log&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Admin Log Entries" TITLE="<%$port->{logs}%> Admin Log Entries" BORDER=0></A> \
+        <A HREF="portcontrol.html?cmd=log&amp;ip=<%$port->{ip} |u%>&amp;port=<%$port->{port} |u%>"><IMG SRC="icon_note.gif" ALT="<%$port->{logs}%> Admin Log Entries" TITLE="<%$port->{logs}%> Admin Log Entries" BORDER=0></A> \
 %     } 
 % if ($port_control and !$is_uplink) {
 %   my $dir = $port->{up_admin} eq 'down' ? 'up' : 'down';
-    <A HREF="portcontrol.html?cmd=<%$dir%>&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" TITLE="Bring Port <%$dir%>" BORDER=0></A> \
+    <A HREF="portcontrol.html?cmd=<%$dir%>&amp;ip=<%$port->{ip} |u%>&amp;port=<%$port->{port} |u%>"><IMG SRC="icon_<%$dir%>.gif" ALT="Bring Port <%$dir%>" TITLE="Bring Port <%$dir%>" BORDER=0></A> \
 %   if ($vlan_ctl) {
-    <A HREF="portcontrol.html?cmd=vlan&ip=<%$port->{ip} |u%>&port=<%$port->{port} |u%>"><IMG SRC="icon_v.gif" ALT="Change VLANs" TITLE="Change VLANs" BORDER=0></A> \
+    <A HREF="portcontrol.html?cmd=vlan&amp;ip=<%$port->{ip} |u%>&amp;port=<%$port->{port} |u%>"><IMG SRC="icon_v.gif" ALT="Change VLANs" TITLE="Change VLANs" BORDER=0></A> \
 %   }
 % } elsif (! $port->{logs}){
 &nbsp; \
@@ -718,12 +720,12 @@ foreach my $port (sort sort_port @$db_ports){
 <TR CLASS="tr-data-2">
     <TD>Admin :</TD>
     <TD>
-    <NOBR><IMG SRC="icon_note.gif" BORDER=0> Log </NOBR>
-    <NOBR><IMG SRC="icon_up.gif" BORDER=0> Enable </NOBR>
-    <NOBR><IMG SRC="icon_down.gif" BORDER=0> Disable </NOBR>
-    <NOBR><IMG SRC="icon_v.gif" BORDER=0> VLAN</NOBR> 
+    <SPAN CLASS="nobr"><IMG SRC="icon_note.gif" ALT="" BORDER=0> Log </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_up.gif" ALT="" BORDER=0> Enable </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_down.gif" ALT="" BORDER=0> Disable </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_v.gif" ALT="" BORDER=0> VLAN</SPAN> 
 % if ($port_info) {
-    <NOBR><IMG SRC="icon_info.gif" BORDER=0> Pinnacle DB Info</NOBR> 
+    <SPAN CLASS="nobr"><IMG SRC="icon_info.gif" ALT="" BORDER=0> Pinnacle DB Info</SPAN> 
 % }
     </TD>
 </TR>
@@ -732,7 +734,7 @@ foreach my $port (sort sort_port @$db_ports){
 <TR CLASS="tr-data-1">
     <TD>Settings :</TD>
     <TD>
-    <Font size=-2>Entries without timestamps are less than 1 day old.</font>
+    <span class="smaller">Entries without timestamps are less than 1 day old.</span>
     <BR>* denotes archived data
     </TD>
 </TR>
@@ -801,7 +803,7 @@ $poe
 %#                            default anchor is same as layer
 %#
 <%method html_head>
-<script>
+<script type="text/javascript">
 function tl ( whichLayer ) {
   var elem, vis;
   if ( document.getElementById ) elem = document.getElementById( whichLayer );
