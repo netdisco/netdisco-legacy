@@ -191,11 +191,7 @@ sub discover{
     print "[$hostname] Discover starting\n";
 
     my $ip = getip($hostname);
-    if (in_device($ip,$CONFIG{discover_no}) ||
-        ($CONFIG{discover_only} && !in_device($ip,$CONFIG{discover_only}))) {
-        print "[$ip] Excluded from discovery in config file.\n";
-        return 0;
-    }
+    return 0 unless ok_to($ip, $hostname, 'discover');
 
     my $device = get_device($hostname) or return 0;
     $ip        = $device->{ip};
@@ -253,6 +249,7 @@ sub refresh_all {
 
     sql_begin();
     foreach my $dev (keys %$OldDevices){
+        next unless ok_to($dev, $dev, 'discover');
         queue_process($dev, 'rediscover');
     }
     sql_commit();
@@ -998,6 +995,31 @@ sub timeout {
     die "timeout";
 }
 
+=item ok_to(dev,name,what)
+
+Given a device or IP address, a display name (hostname or IP address),
+and an action (arpnip, macsuck, discover), check the configuration
+file for _no and _only configurations.  Return 1 if it's OK, or 0
+if it's not OK.
+
+=cut
+
+sub ok_to {
+    my $dev = shift;
+    my $name = shift;
+    my $what = shift;
+
+    my $no = $what . "_no";
+    my $only = $what . "_only";
+
+    if (in_device($dev,$CONFIG{$no}) ||
+        ($CONFIG{$only} && !in_device($dev,$CONFIG{$only}))) {
+        print "[$name] Excluded from $what in config file.\n";
+        return 0;
+    }
+    return 1;
+}
+
 =back
 
 =head2 SNMP Functions
@@ -1033,11 +1055,7 @@ sub arpnip {
         return;
     }
 
-    if (in_device($dev,$CONFIG{arpnip_no}) ||
-        ($CONFIG{arpnip_only} && !in_device($dev,$CONFIG{arpnip_only}))) {
-        print "[$hostname] Excluded from arpnipping in config file.\n";
-        return;
-    }
+    return unless ok_to($dev, $hostname, 'arpnip');
 
     my $device = get_device($hostname);
     return unless defined $device;
@@ -1122,6 +1140,7 @@ sub arpwalk {
     $controller = $$;
     sql_begin();
     foreach my $device (keys %$OldDevices){
+        next unless ok_to($device, $device, 'arpnip');
         queue_process($device, 'arpnip')  if (has_layer($OldDevices->{$device},3));
     }
     sql_commit();
@@ -1777,11 +1796,7 @@ sub macsuck{
         return;
     }
 
-    if (in_device($dev,$CONFIG{macsuck_no}) ||
-        ($CONFIG{macsuck_only} && !in_device($dev,$CONFIG{macsuck_only}))) {
-        print "[$hostname] Excluded from macsucking in config file.\n";
-        return;
-    }
+    return unless ok_to($dev, $hostname, 'macsuck');
 
     &load_old_devices unless (defined $OldDevices);
     &mac_getportmacs  unless (defined $PortMAC);
@@ -1943,6 +1958,7 @@ sub macwalk {
     $controller = $$;
     sql_begin();
     foreach my $device (keys %$OldDevices){
+        next unless ok_to($device, $device, 'macsuck');
         queue_process($device, 'macsuck') if (has_layer($OldDevices->{$device},2));
     }
     sql_commit();
