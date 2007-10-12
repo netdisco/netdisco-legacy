@@ -2030,8 +2030,27 @@ sub dispatcher {
         #  set nprocs to 1.
         for (my $i = 0; $i < $njobs; $i++) {
             $pm->start and next if defined($pm);
+            # First make sure we can get a database connection.
+            # A given worker gets and holds a database connection
+            # for its life, so that failing to get a connection
+            # (e.g., because resource limits are too low) doesn't
+            # lose work.
+            eval {
+                # Don't allow DBI to print its errors using warn
+                local $SIG{__WARN__} = sub {};
+                dbh();
+            };
+            if ($@) {
+                printf("Worker #%d failed to get a database connection: %s", $i + 1, $@);
+                if ($i == 0) {
+                    print "Work may not get done.\n";
+                } else {
+                    print "Work should get done anyway.\n";
+                }
+                exit;
+            }
             while (1) {
-		set_status("worker looking for %s job", $action);
+		set_status("worker %d looking for %s job", $i + 1, $action);
 		# I wanted to do "FOR UPDATE LIMIT 1", to limit how many rows get
 		# locked, but postgresql doesn't permit this, so we just lock
 		# the whole table while we're looking for a row.
