@@ -131,6 +131,7 @@ $boolean  => 'and'
 $exact    => 0
 $loc      => ''
 $specific => undef
+$vlan     => undef
 $ssid     => undef
 $ssidbcast => undef
 </%args>
@@ -236,6 +237,26 @@ if ($specific =~ /alias/i){
                         ['d.ip','d.dns','p.port','p.up_admin'],
                         {'d.ip' => \'p.ip', 'up_admin' => 'down'}
                        );
+
+} elsif ($specific =~ /vlan/i){
+    $title = "Device ports carrying Vlan $vlan";
+    $where->{type}++;
+    $where->{name}++;
+    $where->{speed}++;
+    $matches = sql_rows(
+        'device_port_vlan v, device d, device_port p',
+        ['d.ip','d.dns','v.port','p.name','p.speed'],
+        {'d.ip' => \'v.ip', 'v.ip' => \'p.ip',
+            'v.port' => \'p.name', 'v.vlan' => \"$vlan"}
+    );
+    map {$_->{type} = 'Trunk'} @$matches;
+    my $matches_access = sql_rows(
+        'device_port p, device d',
+        ['d.ip','d.dns','p.port','p.speed'],
+        {'d.ip' => \'p.ip', 'p.vlan' => \"$vlan"}
+    );
+    map {$_->{type} = 'Access'} @$matches_access;
+    push (@$matches, @$matches_access);
 
 } elsif ($specific =~ /blocking/i){
     $title = 'Device ports that are blocking';
