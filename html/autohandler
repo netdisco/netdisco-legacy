@@ -13,20 +13,92 @@
 <BODY>
     <div id="nonFooter">
     <div class="topbar">
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N&nbsp;e&nbsp;t&nbsp;&nbsp;d&nbsp;i&nbsp;s&nbsp;c&nbsp;o \
-% if (defined $netdisco::CONFIG{customer}) {
--  <% $netdisco::CONFIG{customer} %> \
+    <TABLE WIDTH="95%">
+    <TR>
+        <TD VALIGN=CENTER ROWSPAN=2 STYLE="text-align:left;">
+        <A HREF="<%$path%>/index.html">
+% my $width = 60;
+% my $height = 65;
+% my $src = $path . "/discoball2.gif";
+% my $alt = "[Disco Ball]";
+% if (defined $netdisco::CONFIG{customericon}) {
+%    my ($iconname, $iconwidth, $iconheight) = split(/\s*,\s*/, $netdisco::CONFIG{customericon});
+%    $src = ($iconname =~ m|/|) ? $iconname : $path . "/" . $iconname;
+%    $width = $iconwidth if defined($iconwidth);
+%    $height = $iconheight if defined($iconheight);
+%    $alt = "[Home]";
 % }
-    </div>
-    <div class="sidebar">
-        <& sidebar.html &>
+      <IMG SRC="<%$src%>" style="border: 0;" width=<%$width%> height=<%$height%> alt="<%$alt%>">
+    </A>
+       </TD>
+        <TD ROWSPAN=2 STYLE="text-align:left;font-size:16pt;letter-spacing:8pt;">netdisco</TD>
+        <TD ALIGN=CENTER>ADVANCED SEARCH:
+        <SPAN STYLE="white-space:nowrap;">
+        <A class="topbutton" HREF="<%$path%>/netmap.html">NetMap</A> 
+        <A class="topbutton" HREF="<%$path%>/device_search.html">Device</A> 
+        <A class="topbutton" HREF="<%$path%>/node.html">Node</A>
+        </SPAN>
+        </TD>
+        <TD ROWSPAN=2 STYLE="text-align:right;">
+        <FORM ACTION="search.html" METHOD=GET>
+        <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255>
+        <BR>
+        <INPUT TYPE="submit" class="topbutton" VALUE="Search">
+        <INPUT TYPE="RADIO" NAME="stype" VALUE="device" CHECKED>Device
+        <INPUT TYPE="RADIO" NAME="stype" VALUE="node">Node
+        <INPUT TYPE="RADIO" NAME="stype" VALUE="vlan">VLAN
+        </FORM>
+        </TD>
+        </TR>
+        <TR>
+            <TD>REPORT:
+            <A class="topbutton" HREF="<%$path%>/device_inv.html" TITLE="Device Inventory by Vendor and Model">Inventory</A>
+            <A class="topbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Ports</A>
+            <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space">IP</A>
+            <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of Netbios Domains">SMB</A>
+            <A class="topbutton" HREF="<%$path%>/log.html" TITLE="Backend Log">Log</A>
+            </TD>
+        </TR>
+        </TABLE>
     </div>
     <div class="content">
 %       $m->call_next;
     </div>
     </div>
     <div class="botbar" id="footer">
-        Netdisco <%$netdisco::VERSION%> 
+    <TABLE CLASS="botbar">
+    <TR>
+        <TD CLASS="ver"><SPAN CLASS="logotext">netdisco</SPAN> <%$netdisco::VERSION%></TD>
+        <TD CLASS="nav"><A HREF="<%$path%>/stats.html" CLASS="navbutton">About</A>
+            <A HREF="<%$path%>/doc" class="navbutton">Documentation</A>
+% if ($admin and $secure) {
+            <A HREF="<%$path%>/admin.html" class="navbutton">Administration Panel</A>
+% }
+        </TD>
+        <TD CLASS="login">
+% if ($secure and $netdisco::CONFIG{secure_server} ) {
+            <IMG SRC="<%$path%>/icon_lock.gif" ALT="Secure Connection" TITLE="Secure Connection" HEIGHT=15 WIDTH=15>
+% } elsif (!$secure) {
+            <A HREF="<%$url%>" ALT="Switch to Secure Connection for more features" TITLE="Switch to Secure Connection for more features"><IMG SRC="<%$path%>/icon_up.gif" WIDTH=11 HEIGHT=10 BORDER=0></A> 
+% }
+% if ($user) {
+            <u>User</u>: <%$user%> <A HREF="<%$path%>/logout.html" CLASS="navbutton">Logout</A>
+%   if ($useuserdb) {
+            <A HREF="<%$path%>/change_pw.html" class="navbutton">Change Password</A>
+%   } else {
+            <A HREF="<%$path%>/login.html" class="navbutton">Netdisco Login</A>
+%   }
+% } else {
+%   if ($netdisco::CONFIG{apache_auth}) {
+            <A HREF="<%$path%>/apache_login.html" class="navbutton">Login</A>
+            <A HREF="<%$path%>/login.html" class="navbutton">Netdisco Login</A>
+%   } else {
+            <A HREF="<%$path%>/login.html" class="navbutton">Login</A>
+%   }
+%}
+    </TD>
+  </TR>
+</TABLE>
     </div>
 </BODY>
 </HTML>
@@ -59,6 +131,24 @@ unless ($ok or $target =~ /(apache_)?login.html/) {
 # For Logging, tell apache what user is in:
 $r->connection->user($m->session->{user}) if ($ok && defined($m->session->{user}));
 </%init>
+<%shared>
+my $path   = $netdisco::CONFIG{webpath};
+my $user   = $m->session->{user};
+my $secure = &is_secure;
+my $admin  = $m->session->{user_admin};
+my $useuserdb = $m->session->{useuserdb};
+my $port_info = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /^(1|t|y)/i) ? 1 : 0;
+my $url    = $r->uri;
+my $args   = $r->args;
+$url .= "?$args" if (defined $args and length($args));
+$url = url_secure($url);
+</%shared>
+<%flags>
+inherit=>undef
+</%flags>
+<%method topbar>
+\
+</%method>
 <%method html_head>
 \
 </%method>

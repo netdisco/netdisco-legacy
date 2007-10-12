@@ -1,27 +1,26 @@
-<H3>Device View</H3>
+<div class="pagehead"><span class="header">Device View:</span> \
+<% defined $device ? "$dns ($devip)" : ''%></div>
+% if (defined $device) {
+<& SELF:page_nav    &>
+<& SELF:show_ports  &>
 <& SELF:show_device &>
-<h4>Device Search - Quick</h4>
-<FORM ACTION="<%$r->uri%>" METHOD=GET>
-Device name or IP :<INPUT TYPE="text" name="ip" maxlength=255 size=30>
-<INPUT TYPE="submit" Value="Search">
-<A HREF="<%$r->uri%>">[Reset Page]</A>
-</FORM>
-<h4>[<A href="device_search.html">Full Search</A>]</h4>
+% }
 <%args>
 $ip         => ''   # Can be IP or hostname
+$ports      => 'all'
 @port       => ()   # Ports to be shown
 @portcol    => ()   # Columns to Show for each port
 $submit     => ''   # Can have all/hide to control ports
 $device_age => 'off'
 $archive    => 'off'
-$node_ip    => 'off'    # Show the IPs used by each MAC
-$node_dns   => 'off'    # Resolve IPs of connected devices
-$node_nbt   => 'off'    # Show the NetBIOS Name used by each MAC
+$node_ip    => 'on'     # Show the IPs used by each MAC
+$node_dns   => 'on'     # Resolve IPs of connected devices
+$node_nbt   => 'on'     # Show the NetBIOS Name used by each MAC
 </%args>
 <%shared>
-my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip,
-    $arg_node_dns,$arg_node_nbt);
-my $ports = []; my $node_ips = {}; my $node_nbts = {};
+my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip, $model, $arg_ports,
+    $arg_node_dns,$arg_node_nbt,$dns,$vendor,$want_web_link,$web_dns);
+my $db_ports = []; my $node_ips = {}; my $node_nbts = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
 my $now    = time;
@@ -43,9 +42,9 @@ my %port_cols = (
 
 my %device_info = (
                    'Addresses'  => 'addresses',
-                   'First Discovered' => 'creation',
-                   'Last MacSuck' => 'last_macsuck',
-                   'Last ArpNip' => 'last_arpnip',
+                   #'First Discovered' => 'creation',
+                   #'Last MacSuck' => 'last_macsuck',
+                   #'Last ArpNip' => 'last_arpnip',
                    'Mac Address' => 'mac',
                    #'OSI Layers' => 'layers',
                    'VTP Domain' => 'vtp_domain',
@@ -65,11 +64,15 @@ my $vlan_ctl     = ($port_ctl and $secure and $vlanctl);
 my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
 my $admin        = defined $m->session->{user_admin} and $m->session->{user_admin} ? 1 : 0;
 </%shared>
+%#
+%#
+%#
 <%init>
 #  Parsing of Arguments
 $arg_age  = $device_age; $arg_arch = $archive; 
 @arg_port = @port; $arg_node_ip = $node_ip;
 $arg_node_dns = $node_dns; $arg_node_nbt = $node_nbt;
+$arg_ports = $ports;
 
 if ($ip) {
     # Save Search Term
@@ -112,33 +115,36 @@ if ($ip) {
     $device->{addresses} = $addresses;
     
     # Hide Ports
-    if ($submit =~ /hide/i) {
+    if ($arg_ports =~ /hide/i) {
         @port = @arg_port = (); 
     } 
 
-    # All Ports
-    if ($submit =~ /all/i or grep(/^all$/,@port)){
-        @arg_port = @port = ('all'); 
-        $ports = sql_rows('device_port',['*'],{'ip'=>$devip}) || [];         
-    } 
 
     # Selected Ports 
-    else {
+    if (scalar @port) {
+        # change default of 'all'
         foreach my $portreq (@port) {
             next unless defined $portreq;
         
-            my $db_ports = sql_rows('device_port',['*'],
+            my $p = sql_rows('device_port',['*'],
                             {'ip'=>$devip,'port'=>$portreq});
 
             # add our results to the list
-            if (defined $db_ports and scalar @$db_ports){
-                push (@$ports,@$db_ports);
+            if (defined $p and scalar @$p){
+                $arg_ports = $ports = 'selected';
+                push (@$db_ports,@$p);
             }
         }
     }
 
+    # All Ports
+    if ($arg_ports eq 'all') {
+        @arg_port = @port = ('all'); 
+        $db_ports = sql_rows('device_port',['*'],{'ip'=>$devip}) || [];         
+    } 
+
     # PORTS - Connected Nodes, addresses and log entries
-    foreach my $portreq (@$ports) {
+    foreach my $portreq (@$db_ports) {
         my $switch = $portreq->{ip};
         my $port   = $portreq->{port}; 
         $portreq->{portdisp} = $portreq->{port}; 
@@ -154,11 +160,11 @@ if ($ip) {
         $portreq->{macs} = (defined $nodes and scalar @$nodes) ? $nodes : undef;
 
         # Get SSIDs
-        my $ssids = sql_rows('device_port_ssid',['*'],{'ip'=>$switch,'port'=>$port});
-        $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
-
         # Get Power info
         $portreq->{power} = sql_hash('device_port_power',['*'],{'ip'=>$switch,'port'=>$port});
+
+        my $ssids = sql_rows('device_port_ssid',['*'],{'ip'=>$switch,'port'=>$port});
+        $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
 
         # Save MAC addresses for IP lookup
         foreach my $node (@$nodes){
@@ -172,9 +178,13 @@ if ($ip) {
         foreach my $alias ( sort {sort_ip($a->{alias},$b->{alias})} @$addresses ) {
                 my $alias_ip = $alias->{alias};
                 my $alias_subnet = $alias->{subnet};
-                my $dns = $alias->{dns} || '[No DNS]';
+                my $dns = $alias->{dns} || '';
                 $dns =~ s/\Q$domain\E//;
-                $portreq->{portdisp} .= "<BR> $alias_ip - $alias_subnet ($dns)";
+                my $alias_ip_anch = 'a_' . $alias_ip;
+                $alias_ip_anch =~ s/\./_/g;
+                $portreq->{portdisp} .= "<BR><a class=\"smlbutton\" href=\"javascript:tl('$alias_ip_anch');\">+</A> \n";
+                $portreq->{portdisp} .= "<A HREF=\"node.html?node=$alias_ip\">$alias_ip</A>";
+                $portreq->{portdisp} .= "<DIV id=\"$alias_ip_anch\" class=\"hidden\">$dns $alias_subnet</div>\n";
         }
 
     }
@@ -205,18 +215,19 @@ if ($ip) {
         foreach my $macnbt (@$nbts){
             my $mac = $macnbt->{mac};
             push ( @{$node_nbts->{$mac}},$macnbt);
+
         }
-    }
-
-    # Resolve IPs of connected nodes to host names
-    if ($node_ip eq 'on' and $node_dns eq 'on'){
-
     }
 
     # Get power supply info
     $device->{poe} = sql_rows('device_power',['*'],{'ip'=>$devip},0,'order by module');
     foreach my $poe (@{$device->{poe}}) {
         $m->comp('SELF:poe_stats', poe => $poe);
+    }
+
+    # Resolve IPs of connected nodes to host names
+    if ($node_ip eq 'on' and $node_dns eq 'on'){
+        # TODO: Insert code here ?
     }
 }
 
@@ -236,117 +247,150 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
         $port_cols{$col}->[1] = 1;
     }
 }
+
+# Some constants used in the display
+if (defined $device) {
+    $dns = $device->{dns} || '[No DNS]';
+    $vendor = $device->{vendor};
+    $model  = $device->{model};
+    $want_web_link = (defined $web_vendors->{$vendor} or defined $web_models->{$model});
+    $web_dns = $dns;
+    $web_dns =~ s/\Q$domain\E//;
+}
 </%init>
 %#
 %# END MAIN COMPONENT
 %#
+%#
+%# page_nav() - SHOW ALL / HIDE ALL
+%#
+%#
+<%method page_nav>
+<div class="navbar">
+<A class="navbutton" HREF="#details">Device Details</A>
+% if (defined $db_ports and scalar @$db_ports and $arg_ports ne 'all') {
+<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&ports=all">Show All Ports</A>
+% } else {
+<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&ports=">Hide Ports</A>
+% }
+<A class="navbutton" HREF="javascript:tlgo('port_key')">Show Key</A>
+<A class="navbutton" HREF="javascript:tlgo('port_view')">Change View</A>
+%   if ($want_web_link) {
+<A class="navbutton" HREF="switch/<%$web_dns|u%>/">Web Console</A>
+%   } if ($admin) {
+<A class="navbutton" HREF="admin_dev.html?dev=<%$devip |u%>">Device Control</A>
+%   }
+</div>
+</%method>
+%#
 %# port_view() - Prints out the Port View control form
 %#
 <%method port_view>
-<h4>Port View</h4>
-<FORM ACTION="<%$r->uri%>" METHOD="get">
-<INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip%>">
-% foreach my $port (@arg_port){
-    <INPUT TYPE="hidden" NAME="port" VALUE="<%$port%>">
+<div id="port_view" class="hidden">
+<A NAME="port_view"><SPAN CLASS="subheader">Change View</SPAN></A><BR>
+<FORM ACTION="<%$r->uri%>" METHOD="GET">
+<INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
+% if ($arg_ports eq 'all') {
+<INPUT TYPE="hidden" NAME="ports" VALUE="all">
+% } else {
+%   foreach my $p (@arg_port) {
+<INPUT TYPE="hidden" NAME="port" VALUE="<%$p|h%>">
+%   }
 %}
-<INPUT TYPE="submit" VALUE="Show All Ports" NAME="submit" >
-% if (defined $ports and scalar @$ports) {
-<INPUT TYPE=SUBMIT VALUE="Hide Ports">
-% }
-<P>
-<B>Columns:</B>
+<TABLE class="dev-portview">
+<TR><TH>Columns:</TH>
+<TD COLSPAN=3>
+% my $i = 0;
 % foreach my $col (keys %port_cols) {
+%   $i++;
 %   my $name  = $port_cols{$col}->[0];
 %   my $check = $port_cols{$col}->[1];
 %   $name =~ s/<BR>.*$//;
    <%$name%><INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>>&nbsp;
+%    $m->out("<BR>") if ($i % 5) == 0;
 % }
-<BR>
-<B>Connected Device Age Stamp</B>:
+</TD></TR>
+<TR><TH>Connected Device Age Stamp:</TH>
+<TD>
 <INPUT TYPE="radio" NAME="device_age" VALUE="off" <%$arg_age eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="device_age" VALUE="on"  <%$arg_age eq 'on'  ? 'CHECKED' : '' %>>On
-&nbsp; &nbsp; &nbsp; &nbsp;
-<B>Show Archived Data</B>:
+</TD><TH>Show Archived Data:</TH>
+<TD>
 <INPUT TYPE="radio" NAME="archive" VALUE="off" <%$arg_arch eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$arg_arch eq 'on'  ? 'CHECKED' : '' %>>On
-<BR>
-<B>Show Connected Device IP</B>:
+</TD></TR>
+<TR><TH>Show Connected Device IP:</TH>
+<TD>
 <INPUT TYPE="radio" NAME="node_ip" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
-&nbsp; &nbsp; &nbsp; &nbsp;
-<B>Resolve IPs</B>
+</TD><TH>Resolve IPs:</TH>
+<TD>
 <INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_dns eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_dns eq 'on'  ? 'CHECKED' : '' %>>On
-<BR>
-<B>Show Connected Device NetBIOS</B>
+</TD></TR>
+<TR><TH>Show Connected Device NetBIOS:</TH>
+<TD>
 <INPUT TYPE="radio" NAME="node_nbt" VALUE="off" <%$arg_node_nbt eq 'off' ? 'CHECKED' : '' %>>Off
 <INPUT TYPE="radio" NAME="node_nbt" VALUE="on"  <%$arg_node_nbt eq 'on'  ? 'CHECKED' : '' %>>On
-<BR>
-<INPUT TYPE="submit" VALUE="Change View" NAME="submit">
+</TD>
+<TH>&nbsp;</TH>
+<TD>&nbsp;</TD>
+</TR>
+<TR><TD>&nbsp;</TD><TD COLSPAN=3><INPUT TYPE="submit" VALUE="Update View" CLASS="navbutton"></TD></TR>
+</TABLE>
 </FORM>
+</div>
 </%method>
 %#
 %# show_device() - Display device Info.
 %#
 <%method show_device>
-<%perl>
-return unless defined $device;
-
-my $dns = $device->{dns} || '[No DNS]';
-my $vendor = $device->{vendor};
-my $model  = $device->{model};
-my $want_web_link = (defined $web_vendors->{$vendor} or defined $web_models->{$model});
-my $web_dns = $dns;
-$web_dns =~ s/\Q$domain\E//;
-</%perl>
-<B><%$dns%></B> (<%$devip%>)
-% if ($want_web_link or $admin) {
-<BR>
-%}
-% if ($want_web_link) {
-[<A HREF="switch/<%$web_dns|u%>/">Web Console</A>]
-% } 
-% if ($admin) {
-[<A HREF="admin_dev.html?dev=<%$devip |u%>">Device Control</A>]
-% }
-<HR NOSHADE>
-<TABLE CELLSPACING=0 CELLPADDING=3 BORDER=0>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Name</U></TD>
-    <TD ALIGN=LEFT><%$device->{name}|h%></TD>
+<A NAME="details"><SPAN CLASS="subheader">Device Details</SPAN></A>
+<TABLE CLASS="dev-details">
+<TR>
+    <TH>Name</TH>
+    <TD><%$device->{name}|h%></TD>
 </TR>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Location / Contact</U></TD>
-    <TD ALIGN=LEFT><A HREF="device_search.html?loc=<%$device->{location}||'IS NULL'|u%>&amp;exact=1" TITLE="All devices at this location"><%$device->{location} || '[Not Set]' |h%></A>
+<TR>
+    <TH>Location / Contact</TH>
+    <TD><A HREF="device_search.html?loc=<%$device->{location}||'IS NULL'|u%>&amp;exact=1" TITLE="All devices at this location"><%$device->{location} || '[Not Set]' |h%></A>
         / <%$device->{contact} || '[Not Set]' |h%>
     </TD>
 </TR>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Model / Serial</U></TD>
-    <TD ALIGN=LEFT><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&models=<%$device->{model}|u%>&boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
+<TR>
+    <TH>Model / Serial</TH>
+    <TD><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&models=<%$device->{model}|u%>&boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
     / <%$device->{serial} || 'Unknown'%>
     </TD>
 </TR>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>OS / Version</U></TD>
-    <TD ALIGN=LEFT><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
-                   <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
+<TR>
+    <TH>OS / Version</TH>
+    <TD><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
+        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&os_ver=<%$device->{os_ver} || 'is null' |u%>&boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
     </TD>
 </TR>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Description</U></TD>
-    <TD ALIGN=LEFT><%$device->{description}|h%></TD>
+<TR>
+    <TH>Description</TH>
+    <TD><%$device->{description}|h%></TD>
 </TR>
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Uptime</U>/<BR><U>Last Discovered</U></TD>
-    <TD ALIGN=LEFT><% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
-    / <% scalar localtime($device->{last_discover}) %>
+<TR>
+    <TH>Timestamps</TH>
+    <TD>
+        <u>uptime</u> <% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
+        <u>discover</u> <% scalar localtime($device->{last_discover}) %>
+%   if (defined $device->{last_arpnip}) {
+        <u>arpnip</u> <% scalar localtime $device->{last_arpnip}%>  
+% }
+%   if (defined $device->{last_macsuck}) {
+        <u>macsuck</u> <% scalar localtime $device->{last_macsuck}%>  
+% }
+
     </TD>
 </TR>
-% if (defined $device->{fan} or $device->{ps1_status} or @{$device->{poe}}) {
-<TR CLASS="match-<%++$odd %2%>">
-    <TD><U>Power</U></TD>
-    <TD ALIGN=LEFT>
+% if (defined $device->{fan} or $device->{ps1_status} or defined $device->{poe}) {
+<TR>
+    <TH>Power</TH>
+    <TD>
 %   if (defined $device->{fan}) {
     Fan : <%$device->{fan}%> &nbsp;&nbsp;
 % }
@@ -356,7 +400,7 @@ $web_dns =~ s/\Q$domain\E//;
 %   if (defined $device->{ps2_status}) {
     PS2 [<%$device->{ps2_type}%>] :  <%$device->{ps2_status}%>&nbsp;&nbsp;
 % }
-%   if (@{$device->{poe}}) {
+%   if (defined $device->{poe} and scalar @{$device->{poe}}) {
 %     foreach my $poe (@{$device->{poe}}) {
 <br>    POE module <%$poe->{module}%> : <%$poe->{status}%>,
     <%$poe->{stats}->{ports}%> power-capable ports,
@@ -389,9 +433,11 @@ foreach my $item (sort keys %device_info) {
             $dns =~ s/\Q$domain\E//;
             my $port = $alias->{port};
             my $subnet = $alias->{subnet};
-            push (@vals, "$ip ($dns) \@ $port - $subnet");
+            push (@vals, "<TR><TD><A HREF=\"node.html?node=$ip\">$ip</a></TD><TD><A HREF=\"node.html?node=$dns\">$dns</A></TD><TD>$port</TD><TD>$subnet</TD></TR>\n");
         }
-        $val = join("<BR>",@vals);
+        $val = "<TABLE CLASS=\"dev-addr\">\n";
+        $val .= join("",@vals);
+        $val .= "</TABLE>\n";
     }
     if ($db_col eq 'creation') {
         $val = localtime($val);
@@ -407,21 +453,21 @@ foreach my $item (sort keys %device_info) {
     }
 
     my $match_class = ++$odd % 2;
-    $m->out("<TR CLASS=\"match-$match_class\"><TD ALIGN=CENTER><u>$item</u></TD>");
-    $m->out("<TD ALIGN=LEFT>$val</TD></TR>\n");
+    $m->out("<TR><TH>$item</TH>");
+    $m->out("<TD>$val</TD></TR>\n");
 }
 # Treat the log a little different
 my $log = $device->{log};
 if (defined $log and length($log)){
     my $logclass = ++$odd % 2;
 </%perl>
-<TR CLASS="match-<%$logclass%>">
-    <TD ALIGN=CENTER><u>Log</u></TD>
-    <TD ALIGN=LEFT><TEXTAREA ROWS=3 COLS="50" WRAP="soft"><%$log|h%></TEXTAREA></TD>
+<TR>
+    <TH>Log</TH>
+    <TD><TEXTAREA ROWS=3 COLS="50" WRAP="soft"><%$log|h%></TEXTAREA></TD>
 </TR>
 %}
 </TABLE>
-<& SELF:show_ports &>
+<& SELF:page_nav &>
 </%method>
 %#
 %# port_header() - Prints out the header block depending on the columns selected
@@ -445,22 +491,12 @@ if (defined $log and length($log)){
 %# show_ports()
 %#
 <%method show_ports>
-<%perl>
-# No ports specified
-unless (scalar @$ports) { 
-    $m->comp('SELF:port_view' );
-    return;
-}
-
-# Ports Found
-my $link = $r->uri() . "?ip=$devip";
-
-</%perl>
-<TABLE cellspacing=0 cellpadding=3 border=1>
+% return unless (scalar @$db_ports);
+<TABLE class="dev-ports">
 <& SELF:port_header &>
 <%perl>
 # Display the Ports
-foreach my $port (sort sort_port @$ports){
+foreach my $port (sort sort_port @$db_ports){
     my $remote_ip   = $port->{remote_ip};
     my $remote_port = $port->{remote_port};
     my $remote_id   = $port->{remote_id};
@@ -479,10 +515,10 @@ foreach my $port (sort sort_port @$ports){
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking, but not down
     $class    = ($up ne 'down' and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
-    my $rowclass = (++$odd % 2 ) ? 'match-0': 'match-1';
+    my $rowclass = (++$odd % 2 ) ? 'ports-0': 'ports-1';
 </%perl>
-<TR CLASS="<%$rowclass%>">
-    <TD CLASS="<%$class%>"><% $port->{portdisp} %></TD>
+<TR>
+    <TD CLASS="<%$rowclass%>" STYLE="text-align:left;padding-left:6px;"><SPAN="<%$class%>"><%$port->{portdisp}%></SPAN></TD>
 <%perl>
     foreach my $col (sort keys %port_cols){
         my $colname  = $port_cols{$col}->[0];
@@ -506,10 +542,16 @@ foreach my $port (sort sort_port @$ports){
             $val = scalar localtime($device->{last_discover} - $diff_sec);
         }
 </%perl>
-        <TD CLASS="<%$class%>"><% $val || '' |h %></TD>
-%    }
+        <TD CLASS="<%$rowclass%>"><SPAN CLASS="<%$class%>"> \
+% if (defined $val) {
+<% $val |h %> \
+% } else {
+&nbsp; \
+% } 
+</SPAN></TD>
+% }
 % # Connected Devices Column
-        <TD ALIGN=LEFT>
+        <TD CLASS="<%$rowclass%>" ALIGN=LEFT>
 <%perl>
     # CDP speaking device connected
     if (defined $remote_ip) {
@@ -626,7 +668,7 @@ foreach my $port (sort sort_port @$ports){
 </%perl>
             </TD>    
 % # Port Control Column
-    <TD> \
+    <TD CLASS="<%$rowclass%>"> \
 % if ($device->{dns} =~ /^hub/i and $port_info) {
       <A HREF="port_info.html?hub=<%$device->{dns}%>&port=<%$port->{port}%>"><IMG SRC="icon_info.gif" WIDTH=12 HEIGHT=11 BORDER=0 ALT="Pinnacles DB Info" TITLE="Pinnacles DB Info"></A> \
 % }
@@ -647,14 +689,20 @@ foreach my $port (sort sort_port @$ports){
 % }  # end foreach port
 % 
 % # Print out the legend again if we have lots of results
-% $m->comp('SELF:port_header') if (scalar @$ports > 10);
+% $m->comp('SELF:port_header') if (scalar @$db_ports > 10);
 % 
+</TABLE>
+% $m->comp('SELF:page_nav') if (scalar @$db_ports > 10);
 <& SELF:port_key &>
 <& SELF:port_view &>
 </%method>
+%#
+%# port_key() -  Shows the port_key table, located in hidden div port_key
+%#
 <%method port_key>
-</TABLE>
-<h4>Key</h4>
+<div id="port_key" class="hidden">
+<SPAN CLASS="subheader">Key</SPAN>
+<BR>
 <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
 <TR CLASS="tr-data-1">
     <TD>Ports:</TD>
@@ -690,6 +738,7 @@ foreach my $port (sort sort_port @$ports){
 </TR>
 % }
 </TABLE>
+</div>
 </%method>
 %#
 %# uptime() - Returns pretty-print of uptime values
@@ -718,6 +767,9 @@ push (@times,"$sec sec.") unless ($week or $day or $hour or $min);
 return join(',',@times);
 </%perl>
 </%method>
+%#
+%# poe_stats() - Return the aggregate Power-over-ethernet information for this device.
+%#
 <%method poe_stats>
 <%args>
 $poe
@@ -741,6 +793,31 @@ $poe
         }
     }
 </%perl>
+</%method>
+%#
+%# Add javascript routines to header
+%#      tl(layer) - Toggles Layer visibility
+%#     tlgo(layer,[anchor]) - Toggles layer and goes to anchor,
+%#                            default anchor is same as layer
+%#
+<%method html_head>
+<script>
+function tl ( whichLayer ) {
+  var elem, vis;
+  if ( document.getElementById ) elem = document.getElementById( whichLayer );
+  else if ( document.all )       elem = document.all[whichLayer];
+  else if ( document.layers )    elem = document.layers[whichLayer];
+  vis = elem.style;
+  if (vis.display==''&&elem.offsetWidth!=undefined&&elem.offsetHeight!=undefined)
+    vis.display = (elem.offsetWidth!=0&&elem.offsetHeight!=0)?'block':'none';
+  vis.display = (vis.display==''||vis.display=='block')?'none':'block';
+}
+function tlgo ( whichLayer, anchor ) {
+    if (anchor == undefined) anchor = whichLayer;
+    tl(whichLayer);
+    location.href="#"+anchor;
+}
+</script>
 </%method>
 <%method title>
 - Device View \

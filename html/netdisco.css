@@ -1,11 +1,25 @@
+/* color pallet c/o http://slayeroffice.com/tools/color_palette/
+
+Wheat -> Blue
+F5DEB3 D0BDBE B8A7C6 7B6FDA 3D38EC 1916F8
+
+Wheat -> Black
+F5DEB3 D0BD98 B8A786 7B6F5A 3D382D 191612
+
+Wheat -> White
+F5DEB3 F6E3BE F8E7C6 FBEFDA FCF7EC FFFCF8
+
+border order: top right bottom left
+
+*/
     A { text-decoration:none; color:#000099;}
     H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
          background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
     H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; margin-bottom:5px;}
     TH { font-family:arial,helvetica,sans-serif; font-size:12pt; text-align:center;}
-    TD { font-family:arial,helvetica,sans-serif; font-size:10pt; }
+    TD { font-family:arial,helvetica,sans-serif; font-size:10pt; text-align:center;}
     INPUT { font-family:monospace; font-size:9pt; }
-    BODY { background-color:#f5deb3; color:black;
+    BODY { background-color:#8b7e66; color:black;
 font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     FORM { margin-bottom:0; margin-top:0; }
     UL,DL,OL { margin-top:0; margin-bottom:0; }
@@ -15,8 +29,8 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     .tiny { font-size: 50%; }
     .big { font-size: 200%; }
     .halfwidth { width: 50%; /* XXX to do  align: left; */}
-    div.topbar { background-color:#8b7e66; background-image: url('corner-tl.png'); background-repeat: no-repeat; padding-left: 20px; }
-    .topbar { background-color:#8b7e66; color:#eed8ae; height:20px;
+    div.topbar { background-color:#8b7e66; background-image: url('corner-tl.png'); background-repeat: no-repeat; padding-left: 20px; width:100%}
+    .topbar { background-color:#8b7e66; color:#eed8ae; 
               font-family:arial,helvetica,serif; font-size:14pt; border:black; } 
     .botbar { background-color:#8b7e66; color:#eed8ae;  height:22px; text-align: center;
               vertical-align:bottom; font-family:arial,helvetica,serif; font-size:8pt; clear:both; }
@@ -26,9 +40,11 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     .sidebar-bg { background-color:#191970; border:black; }
     .sidebar-0 { text-align:center; background-color:#eed8ae;}
     .sidebar-1 { text-align:center; background-color:#ffe7ba;}
-    .content { float:right; height:100%; width:84%; padding-bottom: 23px; }
+    .content { float:right; height:100%; width:99%; padding-left:6px; padding-bottom: 23px; background-color:#F5DEB3; }
     .match-1 { text-align:center; background-color:#eed8ae;}
     .match-0 { text-align:center; background-color:#ffe7ba;}
+    .nomatch-0 { text-align:center; background-color:#ffe7ba;}
+    .nomatch-1 { text-align:center; background-color:#ffe7ba;}
     .box     { background-color:#eed8ae; border:thin solid; border-color:#191970; }
     .port-up { color:black;}
     .port-off { color:red;}
@@ -44,6 +60,154 @@ font-family:arial,helvetica,sans-serif; font-size:10pt; margin:0; width:100%; }
     .nobr { white-space: nowrap; }
     td.mapkey { background-color:black; }
     ul.square { list-style-type:square; }
+    .header   { font-weight:bold; font-size:130%; }
+    .subheader   { font-weight:bold; font-size:115%; margin-left:20px;}
+    .hidden { display: none; }
+    .left { text-align:left; }
+    .logotext { letter-spacing: 8pt; }
+
+.navbutton {
+    color:#FFFCF8;
+    font-family:sans-serif;
+    font-size:84%;
+    font-weight:bold;
+    background-color:#D0BDBE;
+    padding: 2px;
+    border:1px solid #7B6F5A; 
+}
+
+.smlbutton {
+    color:black;
+    font-family:monospace;
+    font-size:8pt;
+    background-color:#D0BDBE;
+    padding: 0px;
+    margin: 0px;
+    border:1px solid #7B6F5A; 
+}
+
+.topbutton {
+    color:#3d382D;
+    font-family:sans-serif;
+    font-size:100%;
+    font-weight:bold;
+    background-color:#D0BDBE;
+    padding: 2px;
+    border:1px solid #7B6F5A;
+}
+
+div.navbar { background-color: #f6e3Be; width:98%; 
+             padding-top: 5px; padding-bottom: 8px;}
+
+DIV.pagehead {
+    background-color: #3D38EC;
+    color: #f5deb3;
+    width: 98%;
+}
+
+A.pagehead {
+    color: #f5deb3;
+    font-weight:bold;
+}
+
+table.dev-ports {
+    border-width: 1px 2px 2px 1px;
+    border-spacing: 0px;
+    border-style: solid solid solid solid;
+    border-color: black black black black;
+    border-collapse: separate;
+}
+table.dev-ports th {
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 0px;
+    border-style: solid dotted solid dotted;
+    border-color: black black black black;
+    padding: 2px 2px 2px 2px;
+    background-color: #eed8ae;
+    color: black;
+}
+
+table.dev-ports TD.ports-0 {
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 0px;
+    border-style: none dotted none none;
+    border-color: gray gray gray gray;
+    padding: 1px 1px 1px 1px;
+    background-color: #ffe7ba;
+}
+
+table.dev-ports TD.ports-1 {
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 0px;
+    border-style: dotted dotted dotted none;
+    border-color: gray gray gray gray;
+    padding: 2px 1px 1px 1px;
+    background-color: #eed8ae;
+}
+
+table.dev-portview {
+    border-width: 1px 2px 2px 1px;
+    border-spacing: 0px;
+    border-style: solid solid solid solid;
+    border-color: black black black black;
+    border-collapse: separate;
+    background-color: #ffe7ba;
+}
+table.dev-portview th {
+    padding: 1px 1px 1px 1px;
+    color: black;
+    text-size:12pt;
+    text-align:right;
+}
+
+table.dev-portview TD {
+    padding: 1px 1px 1px 1px;
+    text-align:left;
+}
+
+table.botbar { border-spacing: 0px; border-style: none; width:98%; }
+table.botbar TD.ver   { text-align:left; }
+table.botbar TD.nav   { text-align:center; }
+table.botbar TD.login { text-align:right; }
+
+table.dev-details {
+    border-width: 1px 2px 2px 1px;
+    border-spacing: 0px;
+    border-style: solid solid solid solid;
+    border-color: black black black black;
+    border-collapse: separate;
+    background-color: #ffe7ba;
+    width:75%;
+}
+
+table.dev-details th {
+    padding-right:10px;
+    color: black;
+    text-align:right;
+    border-style: solid solid solid solid;
+    border-collapse: separate;
+    border-spacing: 0px;
+    border-width: 1px 1px 1px 1px;
+    border-color: #7b6f5a;
+}
+
+table.dev-details TD {
+    padding-left:10px;
+    text-align:left;
+    border-collapse: separate;
+    border-spacing: 0px;
+    border-style: solid solid solid solid;
+    border-width: 1px 1px 1px 1px;
+    border-color: #B8A786;
+}
+
+table.dev-addr {
+    border-width: 0px;
+    border-spacing: 0px;
+    border-style: none;
+}
+
+table.dev-addr TD { border-style: none; }:
 
 /* footerStickAlt from www.themaninblue.com */
 
@@ -60,7 +224,7 @@ body
 #nonFooter
 {
 	position: relative;
-	min-height: 100%;
+	min-height: 99%;
 }
 
 * html #nonFooter

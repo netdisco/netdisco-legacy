@@ -1,0 +1,23 @@
+You are being redirected to <A HREF="<%$dest%>">Your Search</A>.
+<%args>
+$stype=>'device'
+$s=>''
+</%args>
+<%init>
+my $page  = 'device_search.html';
+my $query = 'text';
+if ($stype eq 'vlan') {
+    $query = 'specific=vlan&vlan';
+}
+if ($stype eq 'node') {
+    $page  = 'node.html';
+    $query = 'node';
+}
+my $dest = "$page?$query=$s";
+$m->redirect($dest);
+</%init>
+<%method title>
+- Search Redirect \
+</%method>
+%# $Id$
+%# vim:syntax=mason
