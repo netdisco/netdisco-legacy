@@ -84,7 +84,7 @@
             <A HREF="<%$url%>" ALT="Switch to Secure Connection for more features" TITLE="Switch to Secure Connection for more features"><IMG SRC="<%$path%>/icon_up.gif" WIDTH=11 HEIGHT=10 BORDER=0></A> 
 % }
 % if ($user) {
-            <u>User</u>: <%$user%> <A HREF="<%$path%>/logout.html" CLASS="navbutton">Logout</A>
+            <span class="u">User</span>: <%$user%> <A HREF="<%$path%>/logout.html" CLASS="navbutton">Logout</A>
 %   if ($useuserdb) {
             <A HREF="<%$path%>/change_pw.html" class="navbutton">Change Password</A>
 %   } else {

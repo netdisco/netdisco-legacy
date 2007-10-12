@@ -13,6 +13,7 @@ border order: top right bottom left
 
 */
     A { text-decoration:none; color:#000099;}
+    IMG { border: none; }
     H3 { font-family:arial,helvetica,sans-serif; font-size:12pt; text-indent:5px;
          background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px;}
     H4 { font-family:arial,helvetica,sans-serif; font-size:11pt; margin-bottom:5px;}
