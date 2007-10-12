@@ -20,4 +20,6 @@ CREATE TABLE admin (
     debug       boolean
                    );
 
-CREATE INDEX idx_admin_entered    ON admin(entered);
+CREATE INDEX idx_admin_entered ON admin(entered);
+CREATE INDEX idx_admin_status  ON admin(status);
+CREATE INDEX idx_admin_action  ON admin(action);

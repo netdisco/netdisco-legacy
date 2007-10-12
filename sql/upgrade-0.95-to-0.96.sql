@@ -12,8 +12,10 @@ ALTER TABLE device ADD snmp_class text;
 ALTER TABLE device_ip ADD subnet cidr;
 
 --
--- Add index on admin table
-CREATE INDEX idx_admin_entered    ON admin(entered);
+-- Add indexes on admin table
+CREATE INDEX idx_admin_entered ON admin(entered);
+CREATE INDEX idx_admin_status  ON admin(status);
+CREATE INDEX idx_admin_action  ON admin(action);
 
 --
 -- Create device_module table
