@@ -19,7 +19,7 @@ Finished Jobs: <SELECT NAME="old_jobs">
 </SELECT>
 Ignore Actions of type: 
 <SELECT NAME="act_ignore" SIZE=3 MULTIPLE>
-% foreach my $act (sort keys %$action_types) {
+% foreach my $act (sort @$action_types) {
     <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
 % }
 </SELECT>
@@ -208,13 +208,13 @@ if ($commit) {
 # job queue is after device control in case we just added to it.
 
 # Load device list, unless device provided.
-$devices = sql_rows('device',['ip','dns'], undef, undef,'order by ip asc');
+$devices = sql_rows('device',['ip','dns'], undef, undef,'order by ip asc') if not defined $arg_dev;
 
 # Taint check (head between legs)
 $old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
 
-# Fetch action types
-$action_types = sql_column('admin',['distinct(action)','true']);
+# Fetch action types - Changed to static values, be sure to add new ones here
+$action_types = ['arpnip', 'delete', 'delete+nodes', 'discover', 'graph', 'macsuck', 'portcontrol', 'refresh'];
 
 # Create NOT IN list if we are ignoring certain types.
 my $where = {};
