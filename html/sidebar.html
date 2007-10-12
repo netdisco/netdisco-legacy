@@ -45,6 +45,13 @@
     <li CLASS="sidebar-<% ++$odd%2 %>">
     [<A HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Report</A>]
     </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
+     <FORM ACTION="<%$path%>/device_search.html" METHOD=GET>
+     [Vlan Hunt]<BR>
+     <INPUT TYPE="hidden" NAME="specific" VALUE="vlan">
+     <INPUT TYPE="text" size=10 maxlength=4 NAME="vlan" TITLE="Vlan number">
+     </FORM>
+    </li>
 %#    <li CLASS="sidebar-<% ++$odd%2 %>">
 %#    [<A HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>]
 %#    </li>
