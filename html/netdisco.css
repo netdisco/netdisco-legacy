@@ -157,7 +157,7 @@ table.dev-portview {
 table.dev-portview th {
     padding: 1px 1px 1px 1px;
     color: black;
-    text-size:12pt;
+    font-size:12pt;
     text-align:right;
 }
 
@@ -208,7 +208,7 @@ table.dev-addr {
     border-style: none;
 }
 
-table.dev-addr TD { border-style: none; }:
+table.dev-addr TD { border-style: none; }
 
 /* footerStickAlt from www.themaninblue.com */
 
