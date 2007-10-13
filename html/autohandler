@@ -42,7 +42,7 @@
         <TD ROWSPAN=2 STYLE="text-align:right;">
         <FORM ACTION="search.html" METHOD=GET>
 	<DIV>
-        <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255>
+        <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255 VALUE="<%$search_default|h%>">
         <BR>
         <INPUT TYPE="submit" class="topbutton" VALUE="Search">
         <INPUT TYPE="RADIO" NAME="stype" VALUE="device" CHECKED>Device
@@ -59,6 +59,7 @@
             <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space">IP</A>
             <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of Netbios Domains">SMB</A>
             <A class="topbutton" HREF="<%$path%>/log.html" TITLE="Backend Log">Log</A>
+            <A class="topbutton" HREF="<%$path%>/duplex.html" TITLE="Duplex Mismatch Finder">Duplex</A>
             </TD>
         </TR>
         </TABLE>
@@ -107,6 +108,7 @@
 <%init>
 my $cfgupdate = netdisco::updateconfig();
 my $session_timeout = $netdisco::CONFIG{websession} || 60; # min
+my $search_default = $m->session->{_search} || '';
 
 my $ok = 0;
 # Authentication - Logged in and not expired?
