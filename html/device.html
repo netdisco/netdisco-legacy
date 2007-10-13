@@ -369,7 +369,7 @@ if (defined $device) {
 <TR>
     <TH>OS / Version</TH>
     <TD><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=show" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
-        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=<%$device->{os_ver} || 'is null' |u%>&amp;boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
+        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=<%$device->{os_ver} || 'is null' |u%>&amp;boolean=and" TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
     </TD>
 </TR>
 <TR>
