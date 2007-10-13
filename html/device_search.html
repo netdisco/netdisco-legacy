@@ -349,6 +349,7 @@ my @show_cols = ();
 # Search on all text fields
 if (length($text)) {
     my $match = sql_match($text,0);
+    push(@{$where->{'d.ip/i.alias'}},  $match);
     push(@{$where->{'d.dns/i.dns'}},  $match);
     push(@{$where->{'d.name'}}, $match);
     push(@{$where->{'d.description'}}, $match);
