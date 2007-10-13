@@ -268,9 +268,10 @@ if (defined $device) {
 <%method page_nav>
 <div class="navbar">
 <A class="navbutton" HREF="#details">Device Details</A>
-% if (defined $db_ports and scalar @$db_ports and $arg_ports ne 'all') {
+% unless ($arg_ports eq 'all') {
 <A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=all">Show All Ports</A>
-% } else {
+% }
+% if ( defined $db_ports and scalar @$db_ports) {
 <A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=">Hide Ports</A>
 % }
 <A class="navbutton" HREF="javascript:tlgo('port_key')">Show Key</A>
@@ -367,8 +368,8 @@ if (defined $device) {
 </TR>
 <TR>
     <TH>OS / Version</TH>
-    <TD><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
-        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=<%$device->{os_ver} || 'is null' |u%>&amp;boolean=and" TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
+    <TD><A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=show" TITLE="List Devices running this OS."><%$device->{os} || 'Unknown'%></A> /
+        <A HREF="device_search.html?os=<%$device->{os} || 'is null' |u%>&amp;os_ver=<%$device->{os_ver} || 'is null' |u%>&amp;boolean=and"i TITLE="List devices with this OS Version"><%$device->{os_ver} || 'Unknown'%></A>
     </TD>
 </TR>
 <TR>
