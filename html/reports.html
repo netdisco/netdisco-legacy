@@ -1,0 +1,184 @@
+% if ($report && defined($title{$report})) {
+%  $m->comp('SELF:report_' . $report);
+% } else {
+%  $m->comp('SELF:pickreport');
+% }
+<h3><%$title{$report}%></h3>
+% if ($report && (!defined($results) || @$results == 0)) {
+No results returned.
+% } else {
+<TABLE>
+<TR>
+% foreach my $column (@$columns) {
+<TH><%$column->[0]%></TH>
+% }
+</TR>
+% foreach my $row (@$results) {
+<TR CLASS="match-<%++$odd%2%>">
+%  foreach my $column (@$columns) {
+%   $row->{$column->[1]} =~ s/\Q$netdisco::CONFIG{domain}\E// if ($column->[1] eq 'name');
+<TD><%$row->{$column->[1]} or '[none]'%>
+%  }
+</TR>
+% }
+% }
+</TABLE>
+<%args>
+$report => undef
+</%args>
+<%shared>
+my $results = undef;
+my $columns = [];
+my %title;
+my $odd = 1;
+</%shared>
+<%init>
+%title = (
+	device_inventory => "Device Inventory",
+	radio_channels => "Access Point SSID and Channels",
+	radio_power => "Access Point Channels and Power",
+	dns_mismatch => "Device Name / DNS mismatches",
+	ap_clients => "Clients per Access Point",
+	poe_status => "PoE Status",
+);
+</%init>
+<%method pickreport>
+<h3>Pick a Report</h3>
+<FORM ACTION="<%$r->uri%>" METHOD=GET>
+<SELECT NAME="report">
+% foreach my $key (sort keys %title) {
+<OPTION VALUE="<%$key%>"><%$title{$key}%></OPTION>
+% }
+</SELECT>
+<INPUT TYPE="SUBMIT" VALUE="View Report">
+</FORM>
+</%method>
+<%method report_radio_channels>
+<%perl>
+$columns = [
+	[ 'Name', 'name' ],
+	[ 'Location', 'location' ],
+	[ 'Port', 'port' ],
+	[ 'SSID', 'ssid' ],
+	[ 'Channel', 'channel' ],
+	[ 'Tx Power (mW)', 'power' ],
+	[ 'Tx Power (dBm)', 'power2' ]
+	   ];
+$results = sql_rows('device d, device_port_ssid s',
+	[ 'd.name', 'd.location', 's.port', 's.ssid', 's.channel', 's.power' ],
+	{ 'd.ip' => \'s.ip' });
+$results = [ sort sortnameport @$results ];
+foreach $r (@$results) {
+	next unless defined($r->{power}) && $r->{power};
+	$r->{power2} = sprintf("%.1f", 10.0*CORE::log($r->{power})/CORE::log(10));
+}
+
+sub sortnameport {
+	$a->{name} cmp $b->{name} or sort_port($a,$b);
+}
+</%perl>
+</%method>
+<%method report_device_inventory>
+<%perl>
+$columns = [
+	[ 'Name', 'name' ],
+	[ 'Location', 'location' ],
+	[ 'Serial No', 'serial' ],
+	[ 'Vendor', 'vendor' ],
+	[ 'Model', 'model' ],
+	[ 'OS Rev', 'os_ver' ]
+	   ];
+$results = sql_rows('device', ['*']);
+$results = [ sort { $a->{name} cmp $b->{name} } @$results ];
+</%perl>
+</%method>
+<%method report_dns_mismatch>
+<%perl>
+$columns = [
+	[ 'Device Name', 'name' ],
+	[ 'DNS Name', 'dns' ]
+	   ];
+my $alldev = sql_rows('device', ['name', 'dns']);
+$results = [];
+foreach my $dev (@$alldev) {
+	my $name = $dev->{name};
+	my $dns = $dev->{dns};
+	$name =~ s/\Q$netdisco::CONFIG{domain}\E//;
+	$dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
+	push(@$results, $dev) if (lc($name) ne lc($dns));
+}
+</%perl>
+</%method>
+<%method report_ap_clients>
+<%perl>
+$columns = [
+	[ 'Name', 'name' ],
+	[ 'Location', 'location' ],
+	[ 'Port', 'port' ],
+	[ '# Clients', 'count' ]
+	   ];
+$results = sql_rows('device,node', ['device.name','device.location','node.port','count(node.port) as count'],
+	{ 'device.ip' => \'node.switch',
+		'device.name' => '%ap%',
+		'node.active' => 't',
+		'node.time_last' => \\'>= device.last_macsuck' },
+	0,
+	'group by device.name,device.location,node.port');
+$results = [ sort { $b->{count} <=> $a->{count} } @$results ];
+</%perl>
+</%method>
+<%method report_radio_power>
+<%perl>
+$columns = [
+	[ 'Name', 'name' ],
+	[ 'Model', 'model' ],
+	[ 'Location', 'location' ],
+	[ 'Port', 'port' ],
+	[ 'Channel', 'channel' ],
+	[ 'Tx Power (mW)', 'power' ],
+	[ 'Tx Power (dBm)', 'power2' ]
+	   ];
+$results = sql_rows('device d, device_port_ssid s',
+	[ 'distinct d.name', 'd.model', 'd.location', 's.port', 's.channel', 's.power' ],
+	{ 'd.ip' => \'s.ip' });
+$results = [ sort sortportname @$results ];
+foreach $r (@$results) {
+	next unless defined($r->{power}) && $r->{power};
+	$r->{power2} = sprintf("%.1f", 10.0*CORE::log($r->{power})/CORE::log(10));
+}
+
+sub sortportname {
+	sort_port($a,$b) or $a->{name} cmp $b->{name};
+}
+</%perl>
+</%method>
+<%method report_poe_status>
+<%perl>
+$columns = [
+	[ 'Name', 'name' ],
+	[ 'Model', 'model' ],
+	[ 'Location', 'location' ],
+	[ 'PoE<br>Module', 'module' ],
+	[ 'Power<br>(W)', 'power' ],
+	[ 'Supply', 'status' ],
+	[ 'Capable<br>Ports', 'ports' ],
+	[ 'Supplied<br>Ports', 'on' ],
+	[ 'Disabled<br>Ports', 'disabled' ],
+	[ 'Power<br>Errors', 'err' ],
+	[ 'Committed<br>(W)', 'committed' ],
+	   ];
+$results = sql_rows('device d, device_power p',
+	[ 'd.ip', 'd.name', 'd.model', 'd.location', 'p.module', 'p.status', 'p.power' ],
+	{ 'd.ip' => \'p.ip' }, 0,
+	'order by d.name, p.module');
+foreach my $poe (@$results) {
+    $m->comp('device.html:poe_stats', poe => $poe);
+    foreach my $k (keys %{$poe->{stats}}) {
+	$poe->{$k} = $poe->{stats}->{$k};
+    }
+}
+</%perl>
+</%method>
+<%method title>
+- Reporting \
+</%method>
