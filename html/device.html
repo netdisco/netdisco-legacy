@@ -390,7 +390,7 @@ if (defined $device) {
 
     </TD>
 </TR>
-% if (defined $device->{fan} or $device->{ps1_status} or defined $device->{poe}) {
+% if (defined $device->{fan} or $device->{ps1_status} or (defined $device->{poe} and scalar @{$device->{poe}})) {
 <TR>
     <TH>Power</TH>
     <TD>
