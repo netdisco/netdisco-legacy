@@ -328,7 +328,7 @@ if ($specific =~ /alias/i){
     $matches = sql_rows('device_port_ssid p, device d',
             ['d.ip','d.dns','d.vendor','d.model','d.location','d.contact','p.port','p.broadcast','p.ssid'],
             {'d.ip' => \'p.ip',
-             'p.ssid' => sql_match($ssid,0),
+             'p.ssid' => sql_match($ssid,$exact),
              %xtrawhere
             }
             );
