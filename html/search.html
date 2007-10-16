@@ -17,7 +17,8 @@ my $dest = "$page?$query=$s";
 
 # save search term for display
 if (defined $s and length $s) {
-    $m->session->{_search} = $s;
+    $m->session->{_s_term} = $s;
+    $m->session->{_s_type} = $stype;
 }
 
 $m->redirect($dest);
