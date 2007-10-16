@@ -1,0 +1,72 @@
+<h3>Debugging information</h3>
+<p>
+You're visiting this page from <% $r->connection->remote_ip %>.
+% if (!defined($arp)) {
+I can't find that IP address in my database.  Possible reasons:
+<ul>
+<li>You've just started using the network.  I only poll every 10 minutes,
+so try again in a bit.
+<li>You're using a proxy or VPN, and the address that the web server
+sees is not actually the address you're using on the network.
+</ul>
+% } else {
+<p>
+I found MAC address <% $arp->{mac} %> in use since <% $arp->{time_first} %>.
+<p>
+<%perl>
+#XXX copied from public_map.html
+$ports = sql_rows('node',
+	    ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+	    {mac => $arp->{mac}},
+	    undef,
+	    'order by time_first desc limit 10'
+	    );
+# for efficiency: build up a set of 'ip', and use a single sql_rows()
+#  to get all of them.
+my %ipuniq = ();
+foreach my $port (@$ports) {
+  $ipuniq{$port->{switch}} = 1;
+}
+#XXX could really use a variant of sql_column that returns hash refs for
+#  multiple returns
+my $nameret = sql_rows('device', ['ip','dns','name','location'], {'ip' => [[keys %ipuniq]]});
+my %namemap = ();
+foreach my $ret (@$nameret) {
+  $namemap{$ret->{ip}}->{switchname}=$ret->{name} || $ret->{dns};
+  $namemap{$ret->{ip}}->{switchloc} = $ret->{location};
+}
+foreach my $port (@$ports) {
+  $port->{switchname} = $namemap{$port->{switch}}->{switchname} || '';
+  $port->{switchloc} = $namemap{$port->{switch}}->{switchloc} || '';
+  $port->{first} = scalar(localtime($port->{time_first}));
+  $port->{last} = scalar(localtime($port->{time_last}));
+}
+# XXX We don't care about the locations here, we leave that to the
+#  png generator.  We just care which maps to display.
+my $mapret = sql_rows('device_port_location', ['image'], { 'ip' => [[keys %ipuniq]]});
+my %maplist = ();
+foreach my $entry (@$mapret) {
+  $maplist{$entry->{image}} = 1;
+}
+</%perl>
+% if (@$ports) {
+This MAC address was seen on the following ports:
+<ul>
+%   foreach my $port (@$ports) {
+   <li>On <% $port->{switchname} %> (<% $port->{switchloc} %>) port <% $port->{port} %> from <% $port->{first} %> to <% $port->{last} %>
+%   }
+</ul>
+% } else {
+This MAC address hasn't been seen on any ports.
+% }
+% }
+<%init>
+use Data::Dumper;
+my $arp;
+my $ports;
+
+$arp = sql_hash('node_ip', ['mac','ip','time_first'], { ip => $r->connection->remote_ip });
+</%init>
+<%method title>
+- Debugging Info
+</%method>

@@ -18,6 +18,7 @@
         <TD VALIGN=MIDDLE ROWSPAN=2 CLASS="logo">
             <A HREF="<%$path%>/index.html" TITLE="Netdisco Main Menu"><IMG SRC="<%$src%>" style="border: 0;" width=<%$width%> height=<%$height%> alt="<%$alt%>"></A>
         </TD>
+% if ($ok) {
         <TD ALIGN=CENTER ROWSPAN=2 CLASS="search">
             <FORM ACTION="search.html" METHOD=GET>
             <DIV>
@@ -45,6 +46,14 @@
             <A class="topbutton" HREF="<%$path%>/log.html" TITLE="Backend Log">Log</A>
             <A class="topbutton" HREF="<%$path%>/duplex.html" TITLE="Duplex Mismatch Finder">Duplex</A>
         </TD></TR>
+% } else {
+	<TD COLSPAN=2 ROWSPAN=2>
+	<!-- not logged in -->
+	<!-- wish logo could be pushed more to the left -->
+        &nbsp;
+	</TD>
+	</TR>
+% }
         </TABLE>
     </div>
     <div id="content">
@@ -57,12 +66,18 @@
     <TABLE CLASS="botbar">
     <TR>
         <TD CLASS="ver"><SPAN CLASS="logotext">netdisco </SPAN><%$netdisco::VERSION%></TD>
+% if ($ok) {
         <TD CLASS="nav"><A HREF="<%$path%>/stats.html" CLASS="navbutton">About</A>
             <A HREF="<%$path%>/doc" class="navbutton">Documentation</A>
 % if ($admin and $secure) {
             <A HREF="<%$path%>/admin.html" class="navbutton">Administration Panel</A>
 % }
         </TD>
+% } else {
+        <TD>
+        &nbsp;
+        </TD>
+% }
         <TD CLASS="login">
 % if ($secure and $netdisco::CONFIG{secure_server} ) {
             <IMG SRC="<%$path%>/icon_lock.gif" ALT="Secure Connection" TITLE="Secure Connection" HEIGHT=15 WIDTH=15>
@@ -83,7 +98,7 @@
 %   } else {
             <A HREF="<%$path%>/login.html" class="navbutton">Login</A>
 %   }
-%}
+% }
     </TD>
   </TR>
 </TABLE>
@@ -109,7 +124,7 @@ if (defined $m->session->{_logged_in} and $m->session->{_logged_in} ){
 # Redirect to Login page unless we're ok
 my $path   = $netdisco::CONFIG{webpath};
 my $target = $m->fetch_next->name;
-unless ($ok or $target =~ /(apache_)?login.html/) {
+unless ($ok or $target =~ /(apache_)?login.html/ or $target =~ /^public/) {
     my $target_uri = $r->uri;
     my $target_args = $r->args;
     my $url = $target_uri;
