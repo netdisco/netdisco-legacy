@@ -1,5 +1,5 @@
-<div class="pagehead"><span class="header">Device View:</span> \
-<% defined $device ? "$dns ($devip)" : ''%></div>
+<h1 class="pagehead"> Device View: \
+<% defined $device ? "$dns ($devip)" : ''%></h1>
 % if (defined $device) {
 <& SELF:page_nav    &>
 <& SELF:show_ports  &>
@@ -288,7 +288,8 @@ if (defined $device) {
 %#
 <%method port_view>
 <div id="port_view" class="hidden">
-<A NAME="port_view"><SPAN CLASS="subheader">Change View</SPAN></A><BR>
+<A NAME="port_view" class="subheader">Change View</A>
+<BR>
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
 <DIV>
 <INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
@@ -299,9 +300,10 @@ if (defined $device) {
 <INPUT TYPE="hidden" NAME="port" VALUE="<%$p|h%>">
 %   }
 %}
-<TABLE class="dev-portview">
-<TR><TH>Columns:</TH>
-<TD COLSPAN=3>
+<TABLE class="dev-view">
+<TR>
+    <TH>Columns:</TH>
+    <TD COLSPAN=3>
 % my $i = 0;
 % foreach my $col (keys %port_cols) {
 %   $i++;
@@ -311,34 +313,45 @@ if (defined $device) {
    <%$name%><INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>>&nbsp;
 %    $m->out("<BR>") if ($i % 5) == 0;
 % }
-</TD></TR>
-<TR><TH>Connected Device Age Stamp:</TH>
-<TD>
-<INPUT TYPE="radio" NAME="device_age" VALUE="off" <%$arg_age eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="device_age" VALUE="on"  <%$arg_age eq 'on'  ? 'CHECKED' : '' %>>On
-</TD><TH>Show Archived Data:</TH>
-<TD>
-<INPUT TYPE="radio" NAME="archive" VALUE="off" <%$arg_arch eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$arg_arch eq 'on'  ? 'CHECKED' : '' %>>On
-</TD></TR>
-<TR><TH>Show Connected Device IP:</TH>
-<TD>
-<INPUT TYPE="radio" NAME="node_ip" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
-</TD><TH>Resolve IPs:</TH>
-<TD>
-<INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_dns eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_dns eq 'on'  ? 'CHECKED' : '' %>>On
-</TD></TR>
-<TR><TH>Show Connected Device NetBIOS:</TH>
-<TD>
-<INPUT TYPE="radio" NAME="node_nbt" VALUE="off" <%$arg_node_nbt eq 'off' ? 'CHECKED' : '' %>>Off
-<INPUT TYPE="radio" NAME="node_nbt" VALUE="on"  <%$arg_node_nbt eq 'on'  ? 'CHECKED' : '' %>>On
-</TD>
-<TH>&nbsp;</TH>
-<TD>&nbsp;</TD>
+    </TD>
 </TR>
-<TR><TD>&nbsp;</TD><TD COLSPAN=3><INPUT TYPE="submit" VALUE="Update View" CLASS="navbutton"></TD></TR>
+<TR>
+    <TH>Connected Device Age Stamp:</TH>
+    <TD>
+        <INPUT TYPE="radio" NAME="device_age" VALUE="off" <%$arg_age eq 'off' ? 'CHECKED' : '' %>>Off
+        <INPUT TYPE="radio" NAME="device_age" VALUE="on"  <%$arg_age eq 'on'  ? 'CHECKED' : '' %>>On
+    </TD>
+    <TH>Show Archived Data:</TH>
+    <TD>
+        <INPUT TYPE="radio" NAME="archive" VALUE="off" <%$arg_arch eq 'off' ? 'CHECKED' : '' %>>Off
+        <INPUT TYPE="radio" NAME="archive" VALUE="on"  <%$arg_arch eq 'on'  ? 'CHECKED' : '' %>>On
+    </TD>
+</TR>
+<TR>
+    <TH>Show Connected Device IP:</TH>
+    <TD>
+        <INPUT TYPE="radio" NAME="node_ip" VALUE="off" <%$arg_node_ip eq 'off' ? 'CHECKED' : '' %>>Off
+        <INPUT TYPE="radio" NAME="node_ip" VALUE="on"  <%$arg_node_ip eq 'on'  ? 'CHECKED' : '' %>>On
+    </TD>
+    <TH>Resolve IPs:</TH>
+    <TD>
+        <INPUT TYPE="radio" NAME="node_dns" VALUE="off" <%$arg_node_dns eq 'off' ? 'CHECKED' : '' %>>Off
+        <INPUT TYPE="radio" NAME="node_dns" VALUE="on"  <%$arg_node_dns eq 'on'  ? 'CHECKED' : '' %>>On
+    </TD>
+</TR>
+<TR>
+    <TH>Show Connected Device NetBIOS:</TH>
+    <TD>
+        <INPUT TYPE="radio" NAME="node_nbt" VALUE="off" <%$arg_node_nbt eq 'off' ? 'CHECKED' : '' %>>Off
+        <INPUT TYPE="radio" NAME="node_nbt" VALUE="on"  <%$arg_node_nbt eq 'on'  ? 'CHECKED' : '' %>>On
+    </TD>
+    <TH>&nbsp;</TH>
+    <TD>&nbsp;</TD>
+</TR>
+<TR>
+    <TD>&nbsp;</TD>
+    <TD COLSPAN=3><INPUT TYPE="submit" VALUE="Update View" CLASS="navbutton"></TD>
+</TR>
 </TABLE>
 </DIV>
 </FORM>
@@ -379,13 +392,13 @@ if (defined $device) {
 <TR>
     <TH>Timestamps</TH>
     <TD>
-        <span class="u">uptime</span> <% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
-        <span class="u">discover</span> <% scalar localtime($device->{last_discover}) %>
+        <span class="category">uptime</span> <% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
+        <span class="category">discover</span> <% scalar localtime($device->{last_discover}) %>
 %   if (defined $device->{last_arpnip}) {
-        <span class="u">arpnip</span> <% scalar localtime $device->{last_arpnip}%>  
+        <span class="category">arpnip</span> <% scalar localtime $device->{last_arpnip}%>  
 % }
 %   if (defined $device->{last_macsuck}) {
-        <span class="u">macsuck</span> <% scalar localtime $device->{last_macsuck}%>  
+        <span class="category">macsuck</span> <% scalar localtime $device->{last_macsuck}%>  
 % }
 
     </TD>
@@ -710,39 +723,39 @@ foreach my $port (sort sort_port @$db_ports){
 %#
 <%method port_key>
 <div id="port_key" class="hidden">
-<SPAN CLASS="subheader"><A NAME="port_key">Key</A></SPAN>
+<A NAME="port_key" class="subheader">Key</A>
 <BR>
-<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
-<TR CLASS="tr-data-1">
-    <TD>Ports:</TD>
+<TABLE class="dev-key">
+<TR>
+    <TH>Ports:</TH>
     <TD>
-    [<SPAN CLASS="port-off">Admin Disabled</SPAN>]
-    [<SPAN CLASS="port-down">Link Down</SPAN>]
-    [<SPAN CLASS="port-block">Blocking</SPAN>]
-    [<SPAN CLASS="ip-phone">IP Phone</SPAN>]
-    (<SPAN CLASS="dead-link">Discovered Neighbor not accessible</SPAN>)
+    [ <SPAN CLASS="port-off">Admin Disabled</SPAN> ]
+    [ <SPAN CLASS="port-down">Link Down</SPAN> ]
+    [ <SPAN CLASS="port-block">Blocking</SPAN> ]
+    [ <SPAN CLASS="ip-phone">IP Phone</SPAN> ]
+    [ <SPAN CLASS="dead-link">Discovered Neighbor not accessible</SPAN> ]
     </TD>
 </TR>
 % if ($port_control) { 
-<TR CLASS="tr-data-2">
-    <TD>Admin :</TD>
+<TR>
+    <TH>Admin:</TH>
     <TD>
-    <SPAN CLASS="nobr"><IMG SRC="icon_note.gif" ALT=""> Log </SPAN>
-    <SPAN CLASS="nobr"><IMG SRC="icon_up.gif" ALT=""> Enable </SPAN>
-    <SPAN CLASS="nobr"><IMG SRC="icon_down.gif" ALT=""> Disable </SPAN>
-    <SPAN CLASS="nobr"><IMG SRC="icon_v.gif" ALT=""> VLAN</SPAN> 
+    <SPAN CLASS="nobr"><IMG SRC="icon_note.gif"> Log </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_up.gif"> Enable </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_down.gif"> Disable </SPAN>
+    <SPAN CLASS="nobr"><IMG SRC="icon_v.gif"> VLAN</SPAN> 
 % if ($port_info) {
-    <SPAN CLASS="nobr"><IMG SRC="icon_info.gif" ALT=""> Pinnacle DB Info</SPAN> 
+    <SPAN CLASS="nobr"><IMG SRC="icon_info.gif"> Pinnacle DB Info</SPAN> 
 % }
     </TD>
 </TR>
 %}
 % if ($arg_arch eq 'on' or $arg_age eq 'on'){
-<TR CLASS="tr-data-1">
-    <TD>Settings :</TD>
-    <TD>
-    <span class="smaller">Entries without timestamps are less than 1 day old.</span>
-    <BR>* denotes archived data
+<TR>
+    <TH>Settings:</TH>
+    <TD CLASS="smaller">
+        Entries without timestamps are less than 1 day old.
+        <BR>* denotes archived data
     </TD>
 </TR>
 % }
@@ -812,22 +825,22 @@ $poe
 <%method html_head>
 <script type="text/javascript">
 function tl ( whichLayer ) {
-  var elem, vis;
-  if ( document.getElementById ) elem = document.getElementById( whichLayer );
-  else if ( document.all )       elem = document.all[whichLayer];
-  else if ( document.layers )    elem = document.layers[whichLayer];
+    var elem, vis;
+    if ( document.getElementById ) elem = document.getElementById( whichLayer );
+    else if ( document.all )       elem = document.all[whichLayer];
+    else if ( document.layers )    elem = document.layers[whichLayer];
 
-  vis = elem.style;
+    vis = elem.style;
 
-  // safari bug -- if hidden doesn't have any properties, so we know it's hidden.
-  if (vis == undefined) {
-    elem.setStyle('display', 'block');
-    return;
-  }
+    // safari bug -- if hidden doesn't have any properties, so we know it's hidden.
+    if (vis == undefined) {
+        elem.setStyle('display', 'block');
+        return;
+    }
 
-  if (vis.display==''&&elem.offsetWidth!=undefined&&elem.offsetHeight!=undefined)
-    vis.display = (elem.offsetWidth!=0&&elem.offsetHeight!=0)?'block':'none';
-  vis.display = (vis.display==''||vis.display=='block')?'none':'block';
+    if (vis.display==''&&elem.offsetWidth!=undefined&&elem.offsetHeight!=undefined)
+        vis.display = (elem.offsetWidth!=0&&elem.offsetHeight!=0)?'block':'none';
+    vis.display = (vis.display==''||vis.display=='block')?'none':'block';
 }
 
 function tlgo ( whichLayer, anchor ) {
