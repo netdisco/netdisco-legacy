@@ -494,7 +494,13 @@ if (defined $log and length($log)){
 %# show_ports()
 %#
 <%method show_ports>
-% return unless (scalar @$db_ports);
+% # Return if there are no matches
+% unless (scalar @$db_ports) {
+% # add these two layers so we can still view them even if there are no ports.
+<& SELF:port_key &>
+<& SELF:port_view &>
+% return; }
+% # Have matches, will travel.
 <TABLE class="dev-ports">
 <& SELF:port_header &>
 <%perl>
@@ -704,7 +710,7 @@ foreach my $port (sort sort_port @$db_ports){
 %#
 <%method port_key>
 <div id="port_key" class="hidden">
-<SPAN CLASS="subheader">Key</SPAN>
+<SPAN CLASS="subheader"><A NAME="port_key">Key</A></SPAN>
 <BR>
 <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=2>
 <TR CLASS="tr-data-1">
@@ -810,11 +816,20 @@ function tl ( whichLayer ) {
   if ( document.getElementById ) elem = document.getElementById( whichLayer );
   else if ( document.all )       elem = document.all[whichLayer];
   else if ( document.layers )    elem = document.layers[whichLayer];
+
   vis = elem.style;
+
+  // safari bug -- if hidden doesn't have any properties, so we know it's hidden.
+  if (vis == undefined) {
+    elem.setStyle('display', 'block');
+    return;
+  }
+
   if (vis.display==''&&elem.offsetWidth!=undefined&&elem.offsetHeight!=undefined)
     vis.display = (elem.offsetWidth!=0&&elem.offsetHeight!=0)?'block':'none';
   vis.display = (vis.display==''||vis.display=='block')?'none':'block';
 }
+
 function tlgo ( whichLayer, anchor ) {
     if (anchor == undefined) anchor = whichLayer;
     tl(whichLayer);
