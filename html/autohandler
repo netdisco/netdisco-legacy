@@ -13,12 +13,12 @@
 <BODY>
     <div id="topbar">
     <div class="leftpad"></div>
-    <TABLE WIDTH="95%" CELLSPACING=0 CELLPADDING=1>
+    <TABLE CLASS="topbar">
     <TR>
-        <TD VALIGN=MIDDLE ROWSPAN=2 STYLE="text-align:left;">
+        <TD VALIGN=MIDDLE ROWSPAN=2 CLASS="logo">
             <A HREF="<%$path%>/index.html" TITLE="Netdisco Main Menu"><IMG SRC="<%$src%>" style="border: 0;" width=<%$width%> height=<%$height%> alt="<%$alt%>"></A>
         </TD>
-        <TD ALIGN=CENTER ROWSPAN=2>
+        <TD ALIGN=CENTER ROWSPAN=2 CLASS="search">
             <FORM ACTION="search.html" METHOD=GET>
             <DIV>
                 <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255 VALUE="<%$s_term|h%>">
@@ -30,15 +30,13 @@
             </DIV>
             </FORM>
         </TD>
-        <TD TYLE="text-align:right;">
+        <TD CLASS="navtop">
             ADVANCED SEARCH:
-            <SPAN STYLE="white-space:nowrap;">
             <A class="topbutton" HREF="<%$path%>/netmap.html">NetMap</A> 
             <A class="topbutton" HREF="<%$path%>/device_search.html">Device</A> 
             <A class="topbutton" HREF="<%$path%>/node.html">Node</A>
-            </SPAN>
         </TD></TR>
-        <TR><TD>
+        <TR><TD CLASS="navbot">
             REPORT:
             <A class="topbutton" HREF="<%$path%>/device_inv.html" TITLE="Device Inventory by Vendor and Model">Inventory</A>
             <A class="topbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Ports</A>
@@ -58,7 +56,7 @@
     <div class="leftpad"></div>
     <TABLE CLASS="botbar">
     <TR>
-        <TD CLASS="ver"><SPAN CLASS="logotext">netdisco</SPAN> <%$netdisco::VERSION%></TD>
+        <TD CLASS="ver"><SPAN CLASS="logotext">netdisco </SPAN><%$netdisco::VERSION%></TD>
         <TD CLASS="nav"><A HREF="<%$path%>/stats.html" CLASS="navbutton">About</A>
             <A HREF="<%$path%>/doc" class="navbutton">Documentation</A>
 % if ($admin and $secure) {
