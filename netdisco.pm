@@ -1552,10 +1552,6 @@ sub insert_or_update {
         return undef;
     }
 
-    if ($DB eq 'Pg'){
-        $rv = $sth->{pg_oid_status} || $rv;
-    }
-    
     $sth->finish;
     return $rv;
 }
