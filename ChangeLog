@@ -59,6 +59,8 @@ Bugfixes:
     * [1807941] Forgot to add new tables in netdisco.conf (Stefan Radman)
     * [1807954] Location, SSID and VLAN inventories brought you to the
                 top of the page (Stefan Radman)
+    * [1824229] Newer postgres doesn't add oids by default, so fix
+                portcontrol to not rely on them. (Justin A)
 
 
 0.95 (11/28/2006)

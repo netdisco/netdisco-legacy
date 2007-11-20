@@ -82,13 +82,13 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     }
     
     # Add to admin queue
-    my $oid = insert_or_update('admin',{},
+    insert_or_update('admin',{},
                                {'device'=>$ip,'action'=>$action,'status'=>'queued','port'=>$port,
                                 'username' => $user, 'userip', $userip, 'debug' => $debug, 'subaction' => $subaction,
                                 'log' => $log}
                               ); 
 
-    my $job_id = sql_scalar('admin',['job'],{'oid' => $oid});
+    my $job_id = sql_scalar('admin',["currval('admin_job_seq')"]);
 
     # Wait for a response from admin daemon
     my $now = time; my $job;
@@ -106,7 +106,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
                        );
 
         if (! defined $job || !defined($job->{job})){
-            $err = "Problem entering job $job_id ($oid) into admin queue.<BR>\n";
+            $err = "Problem entering job $job_id into admin queue.<BR>\n";
             last;
         }   
 
@@ -133,9 +133,9 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     } elsif (!$err and $status eq 'error'){
         $cmd = 'err';
         $err = "[Failed] <P>$job->{log}<BR>\n";
-    } elsif (!$err) {
+    } else {
         $cmd = 'err';
-        $err = "[Failed] I don't know what happened to the job.  Status: $job->{status}. <P>Log: $job->{log}<BR>.\n";
+        $err = "[Failed] I don't know what happened to the job.  Status: $job->{status}. <P>Log: $job->{log}<BR>.\n" unless ($err);
     }
 
 }
