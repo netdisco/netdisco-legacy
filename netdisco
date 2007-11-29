@@ -24,7 +24,7 @@ use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
 use Compress::Zlib;
 use netdisco qw/:all/;  
-tryuse('SNMP::Info', ver => '1.0', die => 1);
+tryuse('SNMP::Info', ver => '1.07', die => 1);
 
 $| = 1;
 
@@ -1688,7 +1688,7 @@ sub store_modules {
     my $e_parent  = $device->e_parent();
     my $e_name    = $device->e_name();
     my $e_class   = $device->e_class();
-    my $e_pos     = undef; #$device->e_pos();
+    my $e_pos     = $device->e_pos();
     my $e_hwver   = $device->e_hwver();
     my $e_fwver   = $device->e_fwver();
     my $e_swver   = $device->e_swver();
