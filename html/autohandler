@@ -1,5 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<HTML>
+<!-- Put IE into quirks mode -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <TITLE>n e t  d i s c o \
@@ -12,7 +15,6 @@
 </HEAD>
 <BODY>
     <div id="topbar">
-    <div class="leftpad"></div>
     <TABLE CLASS="topbar">
     <TR>
         <TD VALIGN=MIDDLE ROWSPAN=2 CLASS="logo">
@@ -57,12 +59,9 @@
         </TABLE>
     </div>
     <div id="content">
-        <div class="toppad"></div>
 %       $m->call_next;
-        <div class="botpad"></div>
     </div>
     <div id="botbar">
-    <div class="leftpad"></div>
     <TABLE CLASS="botbar">
     <TR>
         <TD CLASS="ver"><SPAN CLASS="logotext">netdisco </SPAN><%$netdisco::VERSION%></TD>

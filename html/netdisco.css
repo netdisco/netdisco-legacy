@@ -132,80 +132,72 @@ ul.square  { list-style-type:square; }
  * AUTOHANDLER
  *      Keep Footer and Header onscreen and scroll content
  */
-html {
-    height:100%; 
-    max-height:100%; 
-    padding:0; 
-    margin:0; 
-    border:0; 
-    background:#8b7e66; 
-    font-size:10pt;
-    /*font-family:arial,helvetica,serif; */
-    font-family: Trebuchet MS, Helvetica, sans-serif;
-    color:black;
-    /* hide overflow:hidden from IE5/Mac */ 
-    /* \*/ 
-    overflow: hidden; 
-    /* */ 
-}
 
 body {
-    height:100%;
-    max-height:100%;
-    overflow:hidden;
-    padding:0;
-    margin:0;
-    border:0;
-}
+  margin:0;
+  border:0;
+  padding:0;
+  height:100%; 
+  max-height:100%; 
+  background:#fff; 
+  font-family:arial, verdana, sans-serif; 
+  font-size:76%;
+  overflow: hidden; 
+  }
 
-.leftpad { display:block; width:18px; height:35px; float:left; }
-
-.toppad { display:block; height:80px; }
-#topbar {
-position:absolute;
-    margin:0;
-    top:0;
-    right:15px;
-    display:block;
-    width:100%;
-    height:75px;  /* must match .toppad */
-    background-image: url('corner-tl.png'); 
-    background-color:#8b7e66; 
-    background-repeat: no-repeat; 
-    font-size:14pt; 
-    z-index:5;
-    color:#eed8ae; 
-    border-bottom:1px solid #000;
-}
+/* for internet explorer */
+* html body {
+  padding:70px 0 30px 0; 
+  }
 
 #content {
-    display:block;
-    padding-left:8px;
-    height:100%;
-    max-height:100%;
-    overflow:auto;
-    position:relative;
-    z-index:3;
-    word-wrap:break-word;
-    background-color:#F5DEB3;
-}
-#content p {padding:5px; }
+  font-family: Treuchet MS, Helvetica, sans-serif;
+  font-size: 10pt;
+  position:fixed; 
+  top:71px;
+  left:0;
+  bottom:31px; 
+  right:0; 
+  overflow:auto; 
+  background:#F5DEB3;
+  padding:20px;
+  }
 
-.botpad { display:block; height:31px; }
-#botbar {
-    position:absolute;
-    margin:0;
-    bottom:-1px;
-    right:15px;
-    display:block;
-    width:100%;
-    height:30px; /* must match .botpad -1 */
-    background-color:#8b7e66; 
-    color:#eed8ae;  
-    font-size:8pt; 
-    z-index:4;
-    border-top:1px solid #000;
-}
+* html #content {
+  height:100%; 
+  width:100%; 
+  }
+
+#topbar {
+  position:absolute; 
+  top:0; 
+  left:0; 
+  width:100%; 
+  height:70px; 
+  overflow:auto;
+  font-size:14pt;
+  background-image: url('corner-tl.png'); 
+  background-color:#8b7e66; 
+  background-repeat: no-repeat;
+  color:#eed8ae; 
+  border-bottom:1px solid #000;
+  }
+* html #topbar {height:71px;}
+
+#botbar  {
+  position:absolute; 
+  bottom:0; 
+  left:0;
+  width:100%; 
+  height:30px; 
+  overflow:auto; 
+  text-align:right; 
+  background:#8b7e66;
+  color:#eed8ae;  
+  font-size:8pt; 
+  border-top:1px solid #000;
+  }
+* html #botbar  {height:30px;}
 
 table.topbar { width:95%; }
 table.topbar TD.logo   { text-align:left; vertical-align:middle; }
