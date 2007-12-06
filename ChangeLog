@@ -37,6 +37,8 @@ Features:
                 clickable to search for all devices at this location.
                 Submitted by Stefan Radman.
     + []        Add Power-over-Ethernet data collection and reporting.
+    + []        Allow override of the Net-SNMP bugginess detection
+                introduced in 0.95 with "bulkwalk_off: false" (Stefan Radman)
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
