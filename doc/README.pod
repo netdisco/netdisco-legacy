@@ -1297,6 +1297,9 @@ Example :
 BOOLEAN.  Set to true to use GETNEXT instead of BULKWALK for every device.  
 This slows things down, but might be necessary for problem devices. 
 
+Set to false to use BULKWALK even if netdisco thinks you have a buggy
+version of Net-SNMP (e.g., because your installation is patched)
+
 Other solutions include addding C< sub bulkwalk_off { 1; } > to the device
 class that is misbehaving in SNMP::Info.  This will turn off bulkwalk for a
 class of devices, not all.
