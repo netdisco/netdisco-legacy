@@ -63,6 +63,9 @@ Bugfixes:
                 top of the page (Stefan Radman)
     * [1824229] Newer postgres doesn't add oids by default, so fix
                 portcontrol to not rely on them. (Justin A)
+    * [1470984] Allow -M, -A and -d to use device aliases.
+                This may also resolve the problem that devices get
+                discovered multiple times with different IP addresses.
 
 
 0.95 (11/28/2006)

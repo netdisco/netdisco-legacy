@@ -1045,8 +1045,7 @@ sub arpnip {
         print "[$hostname] Name does not resolve with DNS.\n";
         return;
     }
-
-    &mac_getportmacs unless defined $PortMAC;
+    $ip = root_device($ip);
 
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
 
@@ -1059,6 +1058,8 @@ sub arpnip {
 
     my $device = get_device($hostname);
     return unless defined $device;
+
+    &mac_getportmacs unless defined $PortMAC;
 
     # Fetch ARP Cache
     my $at_paddr = $device->at_paddr();
@@ -1490,7 +1491,6 @@ sub get_device {
     # Warn if we are using an alias
     if (defined $dev_ip and $dev_ip ne $ip){
         print "!  $ip is an alias of $dev_ip.\n";
-        $dev_ip = undef;
     }
 
     # Call with stored comm/ver unless supplied $ver
@@ -1785,6 +1785,8 @@ sub macsuck{
         print " Name does not resolve with DNS.\n";
         return;
     }
+
+    $ip = root_device($ip);
 
     # Get the device info and its interfaces
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
