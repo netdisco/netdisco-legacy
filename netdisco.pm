@@ -1222,7 +1222,7 @@ sub root_device {
 
 Adds or changes a user account.
 
-C<%args> can have key values of { pw, admin, port, ldap }
+C<%args> can have key values of { pw, admin, port, ldap, full_name, note }
 
 Returns error message if problem.
 

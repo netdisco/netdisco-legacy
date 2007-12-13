@@ -609,7 +609,7 @@ If all 4 are not there, then interactive mode is entered and prompts are given.
 =cut
 
 sub add_user {
-    my ($user, $pw, $port, $admin) = @_;
+    my ($user, $pw, $port, $admin, $fullname) = @_;
 
     my %args;
     unless (defined $user){
@@ -638,10 +638,15 @@ sub add_user {
         $admin = <STDIN>;
         chomp $admin;
     }
+    unless (defined $fullname){
+        print "User Full Name [none]? ";
+        $fullname = <STDIN>;
+        chomp $fullname;
+    }
 
-    print "$user $pw $port $admin\n" if $DEBUG;
+    print "$user $pw $port $admin $fullname\n" if $DEBUG;
 
-    my $rv = user_add($user, admin => $admin, port => $port, pw => $pw);
+    my $rv = user_add($user, admin => $admin, port => $port, pw => $pw, fullname => $fullname);
 
     if ($rv) { 
         print "Added user $user. ($rv)\n";
@@ -3602,7 +3607,7 @@ sub nightly {
     my $datadir = homepath('datadir', 'data');
     print "  Backing up Data to $datadir\n";
 
-    die "Can't write to Data Directory.\n" unless -w $datadir;
+    die "Can't write to Data Directory '$datadir'. $!\n" unless -w $datadir;
 
     &nmis_dump;
 
