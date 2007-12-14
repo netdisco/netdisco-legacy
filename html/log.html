@@ -1,6 +1,6 @@
+<h1 class="pagehead">Log Entries</h1>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DIV>
-<h3>Log Entries</h3>
 <TABLE CELLSPACING=0 CELLPADDING=3 WIDTH="100%" BORDER=0>
 <TR>
     <TH>Class</TH>
@@ -49,7 +49,7 @@ foreach my $class (sort keys %log_sort){
 %   }
 %}
 </TABLE>
-<h4>Entry Types to Show</h4>
+<h2 class="subheader">Entry Types to Show</h2>
 % foreach my $c (keys %$db_classes){
 <%$c%>:<INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>> &nbsp;
 %}
@@ -61,7 +61,7 @@ Number of Entries per category:
 %}
 </SELECT>
 <BR>
-<INPUT TYPE="submit" VALUE="Show Entries">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Show Entries">
 </DIV>
 </FORM>
 <%args>

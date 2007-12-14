@@ -10,10 +10,10 @@
 % } elsif (! $err){
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="list">
-<h3>Jack Search</h3>
-<h4>Search the Pinnacles database for switches connected to a building / room / jack.</h4>
+<h1 class="pagehead">Jack Search</h1>
+<h2 class="subheader">Search the Pinnacles database for switches connected to a building / room / jack.</h2>
 <P>
-Click <INPUT TYPE="submit" VALUE="List Buildings"> for a list of buildings. 
+Click <INPUT TYPE="submit" CLASS="navbutton" VALUE="List Buildings"> for a list of buildings. 
 <P>
 List will take up to 10 seconds to load from Pinnacles.
 </FORM>
@@ -156,11 +156,11 @@ if ($building and scalar(@rooms)){
 %# show_jacks() - Display results
 %#
 <%method show_jacks>
-<h3>Jack List</h3>
+<h1 class="pagehead">Jack List</h1>
 % unless (scalar @$jacks) {
-<h4>No Jacks found for Building <%$arg_building%>.</h4>
+<h2 class="subheader">No Jacks found for Building <%$arg_building%>.</h2>
 % return; }
-<h4>Building : <A HREF="<%$r->uri%>?building=<%$arg_building%>"><%$jacks->[0]->{BUILDING}%> (<%$arg_building%>)</a></h4>
+<h2 class="subheader">Building : <A HREF="<%$r->uri%>?building=<%$arg_building%>"><%$jacks->[0]->{BUILDING}%> (<%$arg_building%>)</a></h2>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=2 WIDTH="100%">
 <TR>
     <TH>Jack</TH>
@@ -193,7 +193,7 @@ if ($building and scalar(@rooms)){
 %# show_ports() - Display results from port_info
 %#
 <%method show_ports>
-<h3>Port Info</h3>
+<h1 class="pagehead">Port Info</h1>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=2 WIDTH="100%">
 <TR>
     <TH>Switch / Port</TH>
@@ -227,7 +227,7 @@ Data imported live from Pinnacles database.
 %# show_rooms() - Fetch rooms in a building from pinnacle
 %#
 <%method show_rooms>
-<h3>Jack Search - Select Rooms</h3>
+<h1 class="pagehead">Jack Search - Select Rooms</h1>
 <%perl>
 my $rooms;
 {
@@ -241,7 +241,7 @@ unless (scalar @$rooms){
 </%perl>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <INPUT TYPE="HIDDEN" NAME="building" VALUE="<%$arg_building%>">
-<h4>Building : <%$rooms->[0]->{BUILDING}%> (<%$arg_building%>)</h4>
+<h2 class="subheader">Building : <%$rooms->[0]->{BUILDING}%> (<%$arg_building%>)</h2>
 <TABLE BORDER=0 CLASS="box" CELLSPACING=2 CELLPADDING=3>
 <TR>
     <TD>Select Rooms : </TD>
@@ -254,7 +254,7 @@ unless (scalar @$rooms){
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2><INPUT TYPE="SUBMIT" VALUE="List Jacks"></TD>
+    <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="List Jacks"></TD>
 </TR>
 </TABLE>
 </FORM>
@@ -263,7 +263,7 @@ unless (scalar @$rooms){
 %# list_buildings() - Populates drop-downs with options from Pinnacles
 %#
 <%method list_buildings>
-<h3>Jack Search - Building List</h3>
+<h1 class="pagehead">Jack Search - Building List</h1>
 <%perl>
 my $buildings;
 my $time1 = time;
@@ -279,7 +279,7 @@ my $time1 = time;
 % }
 </SELECT>
 <BR>
-<INPUT TYPE="submit" VALUE="List Rooms">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="List Rooms">
 </FORM>
 %my $time2 = time;
 <font size=-2>Data took <%$time2 - $time1 %> seconds to load.</font>
@@ -365,7 +365,7 @@ return $hub_ip_cache{$hub_no};
 %#
 <%method err>
 % return unless $err;
-<h3><%$err%></h3>
+<h1 class="pagehead"><%$err%></h1>
 </%method>
 %#
 %# title()

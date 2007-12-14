@@ -28,7 +28,7 @@
 <TR>
     <TD>&nbsp;</TD>
     <TD>
-        <INPUT TYPE="submit" Value="Search" class="navbutton">
+        <INPUT TYPE="submit" CLASS="navbutton" Value="Search" class="navbutton">
         <A HREF="<%$r->uri%>" class="navbutton">Clear</A>
     </TD>
 </TR>
@@ -767,7 +767,7 @@ $match
 </TR>
 <TR>
     <TD>&nbsp;</TD>
-    <TD><INPUT TYPE="submit" VALUE="Search" class="navbutton"> <A href="<%$r->uri%>" class="navbutton">Reset</A></TD>
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Search" class="navbutton"> <A href="<%$r->uri%>" class="navbutton">Reset</A></TD>
 <TR>
 </TABLE>
 </FORM>
@@ -777,7 +777,7 @@ $match
 %#
 <%method oui_matches>
 % return unless scalar @search;
-<h4>OUI Matches</h4>
+<h2 class="subheader">OUI Matches</h2>
 <TABLE WIDTH="100%" CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>OUI</TH>
@@ -802,7 +802,7 @@ foreach my $search (sort {$ouicount{$b} <=> $ouicount{$a} } @search) {
 </TR>
 %}
 </TABLE>
-<h4>Node Matches</h4>
+<h2 class="subheader">Node Matches</h2>
 </%method>
 %#
 %# add_node_ips(\%where) - Adds to @$matches all the IPs

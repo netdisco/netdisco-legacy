@@ -1,4 +1,4 @@
-<h3>Changing Password for user <%$user|h%></h3>
+<h1 class="pagehead">Changing Password for user <%$user|h%></h1>
 <& SELF:error &>
 % unless (defined $cmd and $cmd eq 'change'){
     <& SELF:change &>
@@ -62,13 +62,13 @@ if ($cmd eq 'change'){
     <TD><INPUT TYPE="PASSWORD" NAME="pw2" SIZE=10 MAXLENGTH=30></TD>
 </TR>
 </TABLE>
-<INPUT TYPE="SUBMIT" VALUE="Change Password for <%$user|h%>">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Change Password for <%$user|h%>">
 </DIV>
 </FORM>
 </%method>
 <%method error>
 % return unless $err;
-<h3><%$err%></h3>
+<h1 class="pagehead"><%$err%></h1>
 </%method>
 <%method title>
 - Change Password \

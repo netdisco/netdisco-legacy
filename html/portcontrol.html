@@ -1,4 +1,4 @@
-<h3>Device Port Control</h3>
+<h1 class="pagehead">Device Port Control</h1>
 % $m->comp('SELF:switch') if $cmd =~ /^(up|down)$/;
 % $m->comp('SELF:log') if $cmd eq 'log';
 % $m->comp('SELF:err') if $cmd eq 'err';
@@ -147,13 +147,13 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
 %       {'device'=>$arg_ip, 'port'=>$arg_port, 'status'=>'queued'} );
 % my $count = 0;
 % if ($err) {
-<h4><%$err%></h4>
+<h2 class="subheader"><%$err%></h2>
 % }
-<h4>Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A>
-<& SELF:back &></h4>
+<h2 class="subheader">Log Entries for <A HREF="device.html?ip=<%$arg_ip |u%>&port=<% $arg_port|u%>"><%$arg_ip%>/<%$arg_port%></A>
+<& SELF:back &></h2>
 % if (@$queue) {
-<h4>Queued Actions for <%$arg_ip%>/<%$arg_port%>
-(Check admin daemon status)</h4>
+<h2 class="subheader">Queued Actions for <%$arg_ip%>/<%$arg_port%>
+(Check admin daemon status)</h2>
 <TABLE WIDTH=85% CELLSPACING=0 CELLPADDING=2 BORDER=0>
 <TR>
     <TH>User</TH>
@@ -206,7 +206,7 @@ Log Entires to Show : <SELECT NAME="log_num">
     <OPTION VALUE="<%$num%>" <%$num eq $arg_log_num ? 'SELECTED' : ''%>><%$num%>
 %  }
 </SELECT>
-<INPUT TYPE="SUBMIT" VALUE="Refresh">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh">
 </FORM>
 </%method>
 %#
@@ -251,7 +251,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 </TR>
 <TR CLASS="match-1">
     <TD COLSPAN=2 CLASS="tr-data-1">
-        <INPUT TYPE="submit" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Turn Port <%$arg_cmd eq 'down' ? 'off' : 'on'%>">
         Debug: <INPUT TYPE="checkbox" NAME="debug" VALUE="1">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
     </TD>
@@ -292,7 +292,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 </TR>
 <TR CLASS="match-1">
     <TD COLSPAN=2 CLASS="tr-data-1">
-        <INPUT TYPE="submit" VALUE="Change VLAN">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Change VLAN">
         Debug: <INPUT TYPE="checkbox" NAME="debug" VALUE="1">
         <P><I>Note</I>: This can take up to 1 minute.  Do not hit refresh on your browser.
     </TD>
@@ -305,7 +305,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 %# reasons()
 %#
 <%method reasons>
-<h4>Reason Descriptions</h4>
+<h2 class="subheader">Reason Descriptions</h2>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3>
 <TR>
     <TH>Reason</TH>
@@ -334,7 +334,7 @@ Log Entires to Show : <SELECT NAME="log_num">
 <FORM ACTION="device.html" METHOD="get">
 <INPUT TYPE="hidden" NAME="ip" VALUE="<%$arg_ip |h%>">
 <INPUT TYPE="hidden" NAME="port" VALUE="all">
-<INPUT TYPE="submit" VALUE="Back to Device View">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Back to Device View">
 </FORM>
 </%method>
 %#

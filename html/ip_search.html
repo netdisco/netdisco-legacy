@@ -1,4 +1,4 @@
-<h3>IP Inventory</h3>
+<h1 class="pagehead">IP Inventory</h1>
 <% $err %>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
@@ -50,7 +50,7 @@
         <!-- <%$s2 - $s1%> seconds -->
         <BR>
 % } else {
-    [<A HREF="<%$r->uri|h%>?subnet_show=1">Show Subnets</A>]
+    <A CLASS="navbutton" HREF="<%$r->uri|h%>?subnet_show=1">Show Subnets</A>
     (this can take a *long* time)
 % }
     </TD>
@@ -71,7 +71,7 @@
 </TR>
 <TR>
     <TD COLSPAN=4>
-        <INPUT TYPE="submit" VALUE="Find IPs">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Find IPs">
     </TD>
 </TR>
 </TABLE>
@@ -80,7 +80,7 @@
 Finds IP Addresses used by nodes.
 <BR>To find IP addresses that have never been used in a subnet, select "12 Years" and Check the Checkbox.
 <P>
-<h3>Netbios Inventory</h3>
+<h1 class="pagehead">Netbios Inventory</h1>
 % $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <DIV>
@@ -103,7 +103,7 @@ Finds IP Addresses used by nodes.
     <TD><INPUT TYPE="checkbox" NAME="archive" VALUE=1<%$archive ? ' CHECKED' : ''%>></TD>
 </TR>
 <TR>
-    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Search">
+    <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
         [ <A HREF="<%$r->uri%>">Reset</A> ]
     </TD>
 </TR>
@@ -297,7 +297,7 @@ if ($cmd eq 'nbt'){
 %# show_nbt() - Show results from Netbios Search
 %#
 <%method show_nbt>
-<h4>Results</h4>
+<h2 class="subheader">Results</h2>
 % unless (scalar @$nodes) {
 No Results Found.
 % return; }
@@ -356,7 +356,7 @@ No Results Found.
 %# show_age() - Show results from IP age inventory
 %#
 <%method show_age>
-<H4>Results</H4>
+<h2 class="subheader">Results</h2>
 % unless (scalar @$ips) {
 No Results Found.
 % return; }

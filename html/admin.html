@@ -1,16 +1,16 @@
-<h3>Administration Panel</h3>
+<h1 class="pagehead">Administration Panel</h1>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0>
 <TR>
 <TD>&nbsp;&nbsp;</TD>
 <TD ALIGN=CENTER VALIGN=TOP>
-    <H4><A HREF="admin_dev.html">Device Control</A></H4>
+    <h2 class="subheader"><A HREF="admin_dev.html">Device Control</A></h2>
     <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 style="border: none; vertical-align: middle;"></A>
     <hr class="noshade">
-    <H4><A HREF="admin_user.html">User Control</A></H4>
+    <h2 class="subheader"><A HREF="admin_user.html">User Control</A></h2>
     <A HREF="admin_user.html"><IMG SRC="admin_chimp.gif" ALT="User Admin" HEIGHT=127 WIDTH=80 style="border: thin solid; vertical-align: middle;"></A>
     <hr class="noshade">
 
-    <h4>Maintenance</h4>
+    <h2 class="subheader">Maintenance</h2>
     <FORM ACTION="admin_dev.html" METHOD=POST> 
     <DIV>
     <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
@@ -29,8 +29,8 @@
         <TD>
             Debug :
             <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
-            <INPUT TYPE="submit" VALUE="Queue New Job">
-	    [<A HREF="<%$r->uri%>">Reset</A>]
+            <INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
+	    <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
         </TD>
     </TR>
     </TABLE>
@@ -38,14 +38,14 @@
     </FORM>
     <FORM ACTION="admin_dev.html" METHOD=GET>
     <DIV style="text-align: center">
-    <INPUT TYPE=SUBMIT VALUE="View Job Queue">
+    <INPUT TYPE="SUBMIT" CLASS="navbutton" VALUE="View Job Queue">
     </DIV>
     </FORM>
 
 </TD>
 <TD CLASS="match-1">&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 <TD>
-    <H4>Admin Log</H4>
+    <h2 class="subheader">Admin Log</h2>
     <& SELF:show_log &>
     <P>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
@@ -65,8 +65,8 @@
 %}
         </SELECT>
         </span>
-        <INPUT TYPE="submit" VALUE="Refresh Log">
-        [<A HREF="<%$r->uri%>">Reset</A>] 
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Log">
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A> 
     </DIV>
     </FORM>
 </TD></TR>

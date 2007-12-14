@@ -1,20 +1,20 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <& SELF:matches &>
-<h3>Device Search</h3>
+<h1 class="pagehead">Device Search</h1>
 
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box" style="padding: 0 8px 0 8px;">
 <TR>
-    <TD COLSPAN=4><h4>Search All</h4></TD>
+    <TD COLSPAN=4><h2 class="subheader">Search All</h2></TD>
 </TR>
 <TR>
     <TD colspan=4>
         <INPUT TYPE="text" size=30 maxlength=255 NAME="text" VALUE="<%$text%>">
-        <INPUT TYPE="submit" VALUE="Search All">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search All">
         <span class="small">(non-exact)</span>
     </TD>
 </TR> 
 <TR>
-    <TD COLSPAN=4><h4>Advanced Search</h4></TD>
+    <TD COLSPAN=4><h2 class="subheader">Advanced Search</h2></TD>
 </TR>
 <TR>
     <TD> IP: </TD>
@@ -73,7 +73,7 @@
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
+    <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
     <TD VALIGN=TOP>Match Scope: </TD>
     <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
         <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
@@ -83,24 +83,24 @@
 </TR>
 </TABLE>
 </FORM>
-<h4>Specific Searches</h4>
+<h2 class="subheader">Specific Searches</h2>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
     <DT>
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Broken Topology Links">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="IP Phones discovered through SNMP">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Devices without DNS entries">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Aliases (IPs) without DNS entries">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Devices orphaned by missing topology info">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Ports with multiple nodes attached.">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Device Ports that are blocking.">
-    <DD><INPUT TYPE="submit" name="specific" VALUE="Ports Administratively disabled">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Broken Topology Links">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="IP Phones discovered through SNMP">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Devices without DNS entries">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Device Aliases (IPs) without DNS entries">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Devices orphaned by missing topology info">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Device Ports with multiple nodes attached.">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Device Ports that are blocking.">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="Ports Administratively disabled">
 </DL>
 </FORM>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
     <DT>
-    <DD><INPUT TYPE="submit" name="specific" VALUE="SSID Search">
+    <DD><INPUT TYPE="submit" CLASS="navbutton" name="specific" VALUE="SSID Search">
         <B>SSID:</B><INPUT TYPE="text" size=30 maxlength=255 NAME="ssid" VALUE="<%$ssid%>">
         <INPUT TYPE="radio" NAME="ssidbcast" value="1" <% defined $ssidbcast && $ssidbcast  ? ' CHECKED' : ''%>>Broadcast
         <INPUT TYPE="radio" NAME="ssidbcast" value="0" <% defined $ssidbcast && !$ssidbcast ? ' CHECKED' : ''%>>Stealth
@@ -108,7 +108,7 @@
 </DL>
 </FORM>
 
-<h4>Hints</h4>
+<h2 class="subheader">Hints</h2>
 <UL class="square">
     <LI>Matches on <span class="u">DNS</span> or <span class="u">IP</span> may be matching aliases <i>inside</i> those devices.
         Check inside the device for the matching entries.
@@ -495,7 +495,7 @@ my $time2 = time;
 %#
 <%method matches >
 %return unless defined $matches;
-<h3><%$title%></h3>
+<h1 class="pagehead"><%$title%></h1>
 % unless (scalar @$matches) {
     No Results Found.
 %    return;

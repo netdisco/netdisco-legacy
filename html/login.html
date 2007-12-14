@@ -1,9 +1,9 @@
-<h3>Enter Login Information</h3>
+<h1 class="pagehead">Enter Login Information</h1>
 % if ($err) {
-<H4><%$err%></H4>
+<h2 class="subheader"><%$err%></h2>
 %}
 % if ($m->session->{_login_msg}) {
-<H4><%$m->session->{_login_msg}%></H4>
+<h2 class="subheader"><%$m->session->{_login_msg}%></h2>
 % }
 <FORM ACTION="<%$r->uri%>" METHOD="POST" NAME="loginForm">
 <DIV>
@@ -19,12 +19,12 @@
     <TD><INPUT TYPE="PASSWORD" NAME="pw" size=10 MAXLENGTH=30 AUTOCOMPLETE=off></TD>
 </TR>
 <TR>
-    <TD COLSPAN=2><INPUT TYPE="submit" VALUE="Log On"></TD>
+    <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="Log On"></TD>
 </TR>
 </TABLE>
 </DIV>
 </FORM>
-<h4>Note</h4>
+<h2 class="subheader">Note</h2>
 <UL>
     <LI>Sessions Last for <%$session_time%> minutes.
     <LI>Administrator: If you are having login problems (Appears to accept password but still sends you back to the 

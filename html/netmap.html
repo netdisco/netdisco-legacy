@@ -1,5 +1,5 @@
 % unless ($ok) {
-<H3>Map data missing</h3>
+<h1 class="pagehead">Map data missing</h1>
 
 Have you run <B><TT>netdisco -g</TT></B> yet?
 <P>
@@ -20,7 +20,7 @@ administrative rights.
 <IMG SRC="<% $mapfile %>" ISMAP USEMAP="#netmap" style="border: none;" alt="Network Map">
 <BR>Map Data is <%$map_days%> days old.
 % }
-<h4>Key</h4>
+<h2 class="subheader">Key</h2>
 <TABLE BORDER=0>
 % for(my $i = 0; $i <= $#{$left_key} || $i <= $#{$right_key}; $i++) {
 <tr>

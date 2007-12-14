@@ -1,4 +1,4 @@
-<h3>Netdisco Statistics</h3>
+<h1 class="pagehead">Netdisco Statistics</h1>
 <UL>
     <LI><% $device_count %> devices with <% $device_port_count %> interfaces
         using <% $device_count + $device_ip_count %> IPs
@@ -18,7 +18,7 @@ Statistics took <%$time9 - $time1 %> seconds to process.
 <% $time8-$time7 %>
 <% $time9-$time8 %>
 -->
-<h3>Glossary</h3>
+<h1 class="pagehead">Glossary</h1>
 <UL>
     <LI><B>Devices</B> - Switch, Router, ...
     <LI><B>Device Interface</B> - Port
@@ -51,7 +51,7 @@ Statistics took <%$time9 - $time1 %> seconds to process.
 </%init>
 <%method about_box>
 % my $pg_ver = sql_scalar('device',['version()']);
-<h3>About Netdisco</h3>
+<h1 class="pagehead">About Netdisco</h1>
 <TABLE BORDER=0 CLASS="box">
 <TR>
     <TD ROWSPAN=6>&nbsp;</TD>

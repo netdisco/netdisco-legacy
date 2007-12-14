@@ -16,34 +16,34 @@
     </A><BR>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/netmap.html">Network Map</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/netmap.html">Network Map</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
     <FORM ACTION="<%$path%>/device.html" METHOD=GET>
     <div>
-    [<A HREF="<%$path%>/device_search.html">Device Search</A>]<BR>
+    <A CLASS="navbutton" HREF="<%$path%>/device_search.html">Device Search</A><BR>
     <INPUT TYPE="text" size=15 maxlength=255 NAME="ip" TITLE="Enter the DNS or IP of a device and hit return.">
     </div>
     </FORM>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/device_inv.html">Device Inventory</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/device_inv.html">Device Inventory</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
     <FORM ACTION="<%$path%>/node.html" METHOD=GET>
     <div>
-    [<A HREF="<%$path%>/node.html">Node Search</A>]<BR>
+    <A CLASS="navbutton" HREF="<%$path%>/node.html">Node Search</A><BR>
     <INPUT TYPE="text" size=15 maxlength=255 NAME="node" TITLE="IP, DNS, MAC, NetBios  * and ? are wildcards.">
     </div>
     </FORM>
     </li>
 % if ($port_info) {
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/jack_search.html" TITLE="Search Pinnacles Database">Jack Search</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/jack_search.html" TITLE="Search Pinnacles Database">Jack Search</A>
     </li>
 % }
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Report</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Report</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
      <FORM ACTION="<%$path%>/device_search.html" METHOD=GET>
@@ -53,27 +53,27 @@
      </FORM>
     </li>
 %#    <li CLASS="sidebar-<% ++$odd%2 %>">
-%#    [<A HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>]
+%#    <A CLASS="navbutton" HREF="<%$path%>/traceroute.html">Layer 2 Traceroute</A>
 %#    </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/duplex.html">Duplex Mismatch Finder</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/duplex.html">Duplex Mismatch Finder</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space or Netbios Domains">Node Inventory</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space or Netbios Domains">Node Inventory</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/log.html">Backend Log</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/log.html">Backend Log</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/doc">Documentation</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/doc">Documentation</A>
     </li>
 % if ($admin and $secure) {
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/admin.html">Administration Panel</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/admin.html">Administration Panel</A>
     </li>
 % }
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    [<A HREF="<%$path%>/stats.html">About</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/stats.html">About</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
 % if ($secure and $netdisco::CONFIG{secure_server} ) {
@@ -83,18 +83,18 @@
 % }
 
 % if ($user) {
-    User <TT><%$user%></TT> [<A HREF="<%$path%>/logout.html">Logout</A>]
+    User <TT><%$user%></TT> <A CLASS="navbutton" HREF="<%$path%>/logout.html">Logout</A>
 %   if ($useuserdb) {
-    <BR>[<A HREF="<%$path%>/change_pw.html">Change Password</A>]
+    <BR><A CLASS="navbutton" HREF="<%$path%>/change_pw.html">Change Password</A>
 %   } else {
-    <BR>[<A HREF="<%$path%>/login.html">Netdisco Login</A>]
+    <BR><A CLASS="navbutton" HREF="<%$path%>/login.html">Netdisco Login</A>
 %   }
 % } else {
 %   if ($netdisco::CONFIG{apache_auth}) {
-    [<A HREF="<%$path%>/apache_login.html">Login</A>]
-    <BR>[<A HREF="<%$path%>/login.html">Netdisco Login</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/apache_login.html">Login</A>
+    <BR><A CLASS="navbutton" HREF="<%$path%>/login.html">Netdisco Login</A>
 %   } else {
-    [<A HREF="<%$path%>/login.html">Login</A>]
+    <A CLASS="navbutton" HREF="<%$path%>/login.html">Login</A>
 %   }
 %}
     </li>

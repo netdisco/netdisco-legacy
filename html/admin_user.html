@@ -1,4 +1,4 @@
-<h3>Admin Panel - User Control</h3>
+<h1 class="pagehead">Admin Panel - User Control</h1>
 <& SELF:error &>
 % if ($cmd eq 'Delete' and !$confirm) {
 <& SELF:confirm_del &>
@@ -162,7 +162,7 @@ if ($cmd eq 'Delete'){
  
 </%init>
 <%method list_users>
-<h4>Existing Users</h4>
+<h2 class="subheader">Existing Users</h2>
 <TABLE WIDTH="100%" CELLSPACING=0 BORDER=0>
 <TR>
     <TH>User</TH>
@@ -203,8 +203,8 @@ if ($cmd eq 'Delete'){
         <FORM ACTION="<%$r->uri%>" METHOD=POST>
         <DIV>
         <INPUT TYPE="hidden" NAME="user" VALUE="<%$user_entry->{username}|h%>">
-        <INPUT TYPE="submit" NAME="cmd" VALUE="Delete">
-        <INPUT TYPE="submit" NAME="cmd" VALUE="Edit">
+        <INPUT TYPE="submit" CLASS="navbutton" NAME="cmd" VALUE="Delete">
+        <INPUT TYPE="submit" CLASS="navbutton" NAME="cmd" VALUE="Edit">
         </DIV>
         </FORM>
     </TD>
@@ -215,7 +215,7 @@ if ($cmd eq 'Delete'){
 </%method>
 <%method add_user>
 % my $user = ($action eq 'Change') ? $user_hash{$arg_user} : undef;
-<h4><%$action%> User</h4>
+<h2 class="subheader"><%$action%> User</h2>
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$action%>">
@@ -263,9 +263,9 @@ if ($cmd eq 'Delete'){
     <TD COLSPAN=3>
         <P> 
         <P> 
-        <INPUT TYPE="submit" VALUE="<%$action%> User">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="<%$action%> User">
 % if ($action eq 'Change') {
-        [<A HREF="<%$r->uri%>">Don't Change</A>]
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Don't Change</A>
 % }
     </TD>
 </TR>
@@ -284,8 +284,8 @@ $action => 'Add'
 Confirm Deletion of <%$arg_user |h%> : 
 <INPUT TYPE="checkbox" NAME="confirm" VALUE="1">
 <BR>
-<INPUT TYPE="submit" VALUE="Delete <%$arg_user|h%>">
-[<A HREF="<%$r->uri%>">Cancel</A>]
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Delete <%$arg_user|h%>">
+<A CLASS="navbutton" HREF="<%$r->uri%>">Cancel</A>
 </DIV>
 </FORM> 
 </%method>
@@ -301,7 +301,7 @@ $users = sql_rows('users',['username','password','extract(epoch from creation) a
 </%method>
 <%method error>
 % return unless $err;
-<h3><%$err%></h3>
+<h1 class="pagehead"><%$err%></h1>
 </%method>
 <%method title>
 - Admin Panel - Users \

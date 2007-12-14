@@ -8,25 +8,24 @@
  * border order: top right bottom left
  */
 
-/*
- *  GLOBAL STYLES - All Pages
- *
- */
+/****************************************************************
+ *  GLOBAL STYLES - All Pages                                   *
+ ****************************************************************/
 TABLE {
     border-spacing: 0px;
     border-collapse: collapse;
     border-style: none;
     border-color: black;
 }
-TH { 
-    font-size:12pt; 
+TH {
+    font-size:12pt;
     font-weight: normal;
     border-spacing: 0px;
     border-collapse: collapse;
     border-style: none;
 }
-TD { 
-    font-size:10pt; 
+TD {
+    font-size:10pt;
     border-spacing: 0px;
     border-collapse: collapse;
     border-style: none;
@@ -34,10 +33,36 @@ TD {
 
 A          { text-decoration:none; color:#000099; }
 IMG        { border: none; }
-H1         { padding: 0px; margin: 0px; }
-H3         { font-size:12pt; text-indent:5px;
-             background-color:#191970; color:#f5deb3; margin:5px 0px 5px 0px; }
-H4         { font-size:11pt; margin-bottom:5px; }
+H1 {
+    font-size:150%;
+    text-indent:5px;
+    background-color:#191970;
+    color:#f5deb3;
+    padding:5px 5px 3px 5px;
+    margin:0px 0px 3px 0px;
+}
+H2 {
+    font-size:125%;
+    text-indent:5px;
+    color:#000099;
+    padding:5px 5px 3px 5px;
+    margin:10px 0px 3px 0px;
+}
+H3 {
+    font-size:100%;
+    text-indent:5px;
+    background-color:#191970;
+    color:#f5deb3;
+    padding:5px 5px 3px 5px;
+    margin:0px 0px 3px 0px;
+}
+H4 {
+    font-size:85%;
+    text-indent:5px;
+    color:#000099;
+    padding:2px 4px 2px 4px;
+    margin:0px 0px 3px 0px;
+}
 INPUT.text { font-size:9pt; }
 FORM       { margin-bottom:0; margin-top:0; }
 UL,DL,OL   { margin-top:0; margin-bottom:0; }
@@ -69,7 +94,7 @@ ul.square  { list-style-type:square; }
     font-weight:bold;
     background-color:#D0BDBE;
     padding: 2px;
-    border:1px solid #7B6F5A; 
+    border:1px solid #7B6F5A;
 }
 
 .smlbutton {
@@ -80,7 +105,7 @@ ul.square  { list-style-type:square; }
     background-color:#D0BDBE;
     padding: 0px;
     margin: 0px;
-    border:1px solid #7B6F5A; 
+    border:1px solid #7B6F5A;
 }
 
 .topbutton {
@@ -94,7 +119,7 @@ ul.square  { list-style-type:square; }
     border:1px solid #7B6F5A;
 }
 
-.navbar { 
+.navbar {
     /* eg. [Device Details] [Hide Ports] ... */
     background-color: #f6e3Be;
     width:98%;
@@ -110,7 +135,7 @@ ul.square  { list-style-type:square; }
     padding-left: 10px;
     padding-bottom: 2px;
     padding-top: 2px;
-    font-weight:bold; 
+    font-weight:bold;
     font-size:120%;
     letter-spacing: 110%;
     margin-bottom: 5px;
@@ -121,80 +146,82 @@ ul.square  { list-style-type:square; }
     font-weight:bold;
 }
 
-.subheader { 
+.subheader {
     /* eg. "Device Details */
     font-weight:bold;
-    font-size:115%;
-    margin-left:20px;
+    font-size:110%;
+    letter-spacing: 110%;
+    margin-left:15px;
+    margin-bottom: 5px;
+    margin-top: 10px;
 }
 
-/*
- * AUTOHANDLER
- *      Keep Footer and Header onscreen and scroll content
- */
-
+/****************************************************************
+ *  AUTOHANDLER                                                 *
+ *      Keep Footer and Header onscreen and scroll content      *
+ ****************************************************************/
 body {
   margin:0;
   border:0;
   padding:0;
-  height:100%; 
-  max-height:100%; 
-  background:#fff; 
-  font-family:arial, verdana, sans-serif; 
+  height:100%;
+  max-height:100%;
+  background:#fff;
+  font-family:arial, verdana, sans-serif;
   font-size:76%;
-  overflow: hidden; 
+  overflow: hidden;
   }
 
 /* for internet explorer */
 * html body {
-  padding:70px 0 30px 0; 
+  padding:70px 0 30px 0;
   }
 
 #content {
   font-family: Treuchet MS, Helvetica, sans-serif;
   font-size: 10pt;
-  position:fixed; 
+  position:fixed;
   top:71px;
   left:0;
-  bottom:31px; 
-  right:0; 
-  overflow:auto; 
+  bottom:31px;
+  right:0;
+  overflow:auto;
   background:#F5DEB3;
   padding:20px;
   }
 
 * html #content {
-  height:100%; 
-  width:100%; 
+  height:100%;
+  width:100%;
   }
 
 #topbar {
-  position:absolute; 
-  top:0; 
-  left:0; 
-  width:100%; 
-  height:70px; 
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:70px;
   overflow:auto;
   font-size:14pt;
-  background-image: url('corner-tl.png'); 
-  background-color:#8b7e66; 
+  background-image: url('corner-tl.png');
+  background-color:#8b7e66;
   background-repeat: no-repeat;
-  color:#eed8ae; 
+  color:#eed8ae;
   border-bottom:1px solid #000;
   }
 * html #topbar {height:71px;}
 
 #botbar  {
-  position:absolute; 
-  bottom:0; 
+  position:absolute;
+  bottom:0;
   left:0;
-  width:100%; 
-  height:30px; 
-  overflow:auto; 
-  text-align:right; 
+  width:100%;
+  height:30px;
+  overflow:auto;
+  text-align:right;
   background:#8b7e66;
-  color:#eed8ae;  
-  font-size:8pt; 
+  color:#eed8ae;
+  font-size:8pt;
   border-top:1px solid #000;
   }
 * html #botbar  {height:30px;}
@@ -205,16 +232,14 @@ table.topbar TD.search { text-align:center; }
 table.topbar TD.navtop { text-align:right; vertical-align:bottom; white-space: nowrap; }
 table.topbar TD.navbot { text-align:right; vertical-align:top; white-space: nowrap; padding-top: 5px; }
 
-
 table.botbar { border-spacing: 0px; border-style: none; width:98%; height:100%; vertical-align: bottom; }
 table.botbar TD.ver   { text-align:left; }
 table.botbar TD.nav   { text-align:center; }
 table.botbar TD.login { text-align:right; }
 
-/*
- * DEVICE.HTML
- *
- */
+/****************************************************************
+ *  DEVICE.HTML                                                 *
+ ****************************************************************/
 .port-up     { color:black; }
 .port-down   { color:#a0a0a0; }
 .port-off    { color:red; }
@@ -223,14 +248,15 @@ table.botbar TD.login { text-align:right; }
 .ip-phone    { color: white; background-color:blue; }
 .device-link { color:blue; }
 
-table.dev-ports {
+table.dev-ports, table.inv-main, table.port-rep {
     border-width: 1px 2px 2px 1px;
     border-spacing: 0px;
     border-style: solid solid solid solid;
     border-color: black black black black;
 }
 
-table.dev-ports th {
+table.dev-ports th, table.inv-main th,
+table.port-rep th {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -240,7 +266,8 @@ table.dev-ports th {
     color: black;
 }
 
-table.dev-ports TD.ports-0 {
+table.dev-ports TD.ports-0, table.inv-main td.match-0,
+table.port-rep td.match-0 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -250,7 +277,8 @@ table.dev-ports TD.ports-0 {
     text-align: center;
 }
 
-table.dev-ports TD.ports-1 {
+table.dev-ports TD.ports-1, table.inv-main td.match-1,
+table.port-rep td.match-1 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -260,18 +288,18 @@ table.dev-ports TD.ports-1 {
     text-align: center;
 }
 
-table.dev-key, table.dev-view, table.node-search {
+table.dev-key, table.dev-view, table.node-search, table.port-key {
     border-style: solid solid solid solid;
     border-width: 1px 1px 1px 1px;
     border-color: #191512;
     background-color: #ffe7ba;
     margin-bottom:15px;
 }
-table.dev-key th, table.dev-view th, table.node-search th { 
-    border: none; padding-left: 3px; text-align:right; 
+table.dev-key th, table.dev-view th, table.node-search th, table.port-key th {
+    border: none; padding-left: 3px; text-align:right;
 }
-table.dev-key td, table.dev-view td, table.node-search td { 
-    border: none; padding-left: 5px; padding-right:10px; 
+table.dev-key td, table.dev-view td, table.node-search td, table.port-key td {
+    border: none; padding-left: 5px; padding-right:10px;
 }
 
 table.dev-details {
@@ -309,15 +337,33 @@ table.dev-addr {
 
 table.dev-addr TD { border-style: none; }
 
-/*
- * NODE.HTML
- *
- */
+/****************************************************************
+ *  NODE.HTML                                                   *
+ ****************************************************************/
+/* table.node_search    -> alised */
+/* table.node_search th -> alised */
+/* table.node_search td -> alised */
 
-/* table node_search alised to stuff in device */
-
-/*
- * NETMAP.HTML
- *
- */
+/****************************************************************
+ *  NETMAP.HTML                                                 *
+ ****************************************************************/
 td.mapkey  { background-color:black; }
+
+/****************************************************************
+ *  DEVICE_INV.HTML                                             *
+ ****************************************************************/
+/* table.inv-main            -> aliased */
+/* table.inv-main tr         -> aliased */
+/* table.inv-main td.match-0 -> aliased */
+/* table.inv-main td.match-1 -> aliased */
+
+/****************************************************************
+ *  PORT_REPORT.HTML                                            *
+ ****************************************************************/
+/* table.port-key            -> aliased */
+/* table.port-key tr         -> aliased */
+/* table.port-key td         -> aliased */
+/* table.port-rep            -> aliased */
+/* table.port-rep tr         -> aliased */
+/* table.port-rep td.match-0 -> aliased */
+/* table.port-rep td.match-1 -> aliased */

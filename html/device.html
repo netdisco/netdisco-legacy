@@ -288,16 +288,14 @@ if (defined $device) {
 %#
 <%method port_view>
 <div id="port_view" class="hidden">
-<A NAME="port_view" class="subheader">Change View</A>
-<BR>
-<FORM ACTION="<%$r->uri%>" METHOD="GET">
-<DIV>
-<INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
+<h2 class="subheader"><A NAME="port_view">Change View</A></h2>
+<FORM ACTION="<%$r->uri%>" METHOD="GET"><DIV>
+    <INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
 % if ($arg_ports eq 'all') {
-<INPUT TYPE="hidden" NAME="ports" VALUE="all">
+    <INPUT TYPE="hidden" NAME="ports" VALUE="all">
 % } else {
 %   foreach my $p (@arg_port) {
-<INPUT TYPE="hidden" NAME="port" VALUE="<%$p|h%>">
+    <INPUT TYPE="hidden" NAME="port" VALUE="<%$p|h%>">
 %   }
 %}
 <TABLE class="dev-view">
@@ -353,15 +351,14 @@ if (defined $device) {
     <TD COLSPAN=3><INPUT TYPE="submit" VALUE="Update View" CLASS="navbutton"></TD>
 </TR>
 </TABLE>
+</DIV></FORM>
 </DIV>
-</FORM>
-</div>
 </%method>
 %#
 %# show_device() - Display device Info.
 %#
 <%method show_device>
-<A NAME="details"><SPAN CLASS="subheader">Device Details</SPAN></A>
+<h2 CLASS="subheader"><A NAME="details">Device Details</A></h2>
 <TABLE CLASS="dev-details">
 <TR>
     <TH>Name</TH>
@@ -723,7 +720,7 @@ foreach my $port (sort sort_port @$db_ports){
 %#
 <%method port_key>
 <div id="port_key" class="hidden">
-<A NAME="port_key" class="subheader">Key</A>
+<h2 class="subheader"><A NAME="port_key">Key</A></h2>
 <BR>
 <TABLE class="dev-key">
 <TR>

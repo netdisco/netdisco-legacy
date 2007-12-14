@@ -1,13 +1,13 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
-<h3>L2 Trace Route</h3>
+<h1 class="pagehead">L2 Trace Route</h1>
 <%$err%>
 <& SELF:results &>
 From: <INPUT TYPE="text" NAME="from" VALUE="<%$from%>">
 To: <INPUT TYPE="text" NAME="to" VALUE="<%$to%>">
 <BR>
-<INPUT TYPE="submit" Value="Trace Route">
+<INPUT TYPE="submit" CLASS="navbutton" Value="Trace Route">
 <A HREF="<%$r->uri%>">[Clear]</A>
-<h4>Hints</h4>
+<h2 class="subheader">Hints</h2>
 <UL>
     <LI>L2 Traceroute only finds a <i>Possible</i> route through the
         network, using Dykstra's shortest path algorithm.  The 
@@ -143,7 +143,7 @@ if (defined $from{type} and defined $to{type}) {
 </%init>
 <%method results>
 %return unless (length($sentfrom) and length($sentto));
-<h4> Route </h4>
+<h2 class="subheader"> Route </h2>
 <%perl>
 unless (defined $from{type}){
     $m->out("No matching device or node found for $sentfrom.<BR>\n");

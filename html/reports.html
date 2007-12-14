@@ -3,7 +3,7 @@
 % } else {
 %  $m->comp('SELF:pickreport');
 % }
-<h3><%$title{$report}%></h3>
+<h1 class="pagehead"><%$title{$report}%></h1>
 % if ($report && (!defined($results) || @$results == 0)) {
 No results returned.
 % } else {
@@ -43,14 +43,14 @@ my $odd = 1;
 );
 </%init>
 <%method pickreport>
-<h3>Pick a Report</h3>
+<h1 class="pagehead">Pick a Report</h1>
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <SELECT NAME="report">
 % foreach my $key (sort keys %title) {
 <OPTION VALUE="<%$key%>"><%$title{$key}%></OPTION>
 % }
 </SELECT>
-<INPUT TYPE="SUBMIT" VALUE="View Report">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="View Report">
 </FORM>
 </%method>
 <%method report_radio_channels>

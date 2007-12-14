@@ -1,17 +1,17 @@
-<h3>Administration Panel</h3>
+<h1 class="pagehead">Administration Panel</h1>
 <& SELF:err &>
 % if ($need_confirm) {
 <& SELF:confirm &> 
 % } else { 
 <& SELF:dev_control &>
 % }
-<h4>Job Queue</h4>
+<h2 class="subheader">Job Queue</h2>
 <FORM ACTION="<% $r->uri %>" METHOD=GET> 
 <DIV>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
 <& SELF:list_queue &>
-<INPUT TYPE="submit" VALUE="Refresh Queue Listing">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Queue Listing">
 Finished Jobs: <SELECT NAME="old_jobs">
 % foreach my $num (qw/1 3 5 10 20 30 50 100/) {
     <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
@@ -23,7 +23,7 @@ Ignore Actions of type:
     <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
 % }
 </SELECT>
-[<A HREF="<%$r->uri%>">Reset</a>]
+<A CLASS="navbutton" HREF="<%$r->uri%>">Reset</a>
 </DIV>
 </FORM>
 <%args>
@@ -251,14 +251,14 @@ foreach my $item (@$queue){
 %#
 <%method err>
 % return unless $err;
-<h3><%$err%></h3>
+<h1 class="pagehead"><%$err%></h1>
 </%method>
 %#
 %# confirm() - Creates a confirmation page for certain actions
 %#
 <%method confirm>
 % my $act = $actions{$arg_act}->[0];
-<h3>Confirm <%$act%> <% $arg_dev ? "of $arg_dev" : ''%></h3>
+<h1 class="pagehead">Confirm <%$act%> <% $arg_dev ? "of $arg_dev" : ''%></h1>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
@@ -294,7 +294,7 @@ Restrict <%$act%> to
 <INPUT TYPE="checkbox" NAME="debug" VALUE="yes"<%$arg_debug? ' CHECKED' : ''%>>
 Debug Output
 <P>
-<INPUT TYPE="submit" VALUE="<%$act%><% $arg_dev ? "- $arg_dev" : '' %>">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="<%$act%><% $arg_dev ? "- $arg_dev" : '' %>">
 </DIV>
 </FORM>
 </%method>
@@ -302,7 +302,7 @@ Debug Output
 %# dev_control() - Prints out the device control menu form.
 %#
 <%method dev_control>
-<h4>Device Control</h4>
+<h2 class="subheader">Device Control</h2>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
@@ -330,8 +330,8 @@ Debug Output
 </TR>
 <TR> 
     <TD COLSPAN=2>
-        <INPUT TYPE="submit" VALUE="Queue New Job">
-        [<A HREF="<%$r->uri%>">Reset</A>]
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
     </TD>
     <TD COLSPAN=2>
         Debug :
@@ -343,7 +343,7 @@ Use this box to control devices that are already in Netdisco's database.
 </DIV>
 </FORM>
 
-<h4>Discover Devices</h4>
+<h2 class="subheader">Discover Devices</h2>
 <FORM ACTION="<% $r->uri %>" METHOD=POST> 
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
@@ -359,8 +359,8 @@ Use this box to control devices that are already in Netdisco's database.
     </TD>
 </TR>
 <TR> 
-    <TD><INPUT TYPE="submit" VALUE="Queue New Job">
-        [<A HREF="<%$r->uri%>">Reset</A>]
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
     </TD>
     <TD>Debug :
         <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>

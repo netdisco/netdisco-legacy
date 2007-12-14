@@ -1,8 +1,8 @@
-<h3><%$user%> Logged Out</h3>
+<h1 class="pagehead"><%$user%> Logged Out</h1>
 % my $page = $netdisco::CONFIG{apache_auth} ? 'apache_login' : 'login';
 <FORM ACTION="<% $page %>.html" METHOD=GET>
 <DIV>
-<INPUT TYPE="submit" VALUE="Log Back In">
+<INPUT TYPE="submit" CLASS="navbutton" VALUE="Log Back In">
 </DIV>
 </FORM>
 <%init>

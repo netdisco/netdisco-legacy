@@ -1,9 +1,9 @@
-<h3>Duplex Mismatch Finder</h3>
+<h1 class="pagehead">Duplex Mismatch Finder</h1>
 <& SELF:results &>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DIV>
-<h4>Search</h4>
-<INPUT TYPE="submit" name="search" value="Search for Duplex Mismatches between device ports">
+<h2 class="subheader">Search</h2>
+<INPUT TYPE="submit" CLASS="navbutton" name="search" value="Search for Duplex Mismatches between device ports">
 <P>
 This search could take a while.
 </DIV>
@@ -32,7 +32,7 @@ if (defined $search and $search =~ /duplex/i){
 % if ($results eq 'none'){
 No Duplex Mismatches found.
 % return;}
-<h4>Search Results</h4>
+<h2 class="subheader">Search Results</h2>
 <TABLE CELLSPACING=0 CELLPADDING=2 BORDER=0 WIDTH="75%">
 <TR>
     <TH>Device / Port</TH>
