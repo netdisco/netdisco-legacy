@@ -539,7 +539,7 @@ command line.
 
 It is not necessary to do this after every change.  This is only a convenience switch.
 
-=item -u || --user [user] [password] [port_control?] [admin?]
+=item -u || --user [user] [password] [port_control?] [admin?] ["full name"]
 
 Add or Change a User.  Supply all four arguments (user pw port_control admin) for 
 command-line control, or supply less for interactive prompts.
