@@ -253,6 +253,7 @@ table.dev-ports, table.inv-main, table.port-rep {
     border-spacing: 0px;
     border-style: solid solid solid solid;
     border-color: black black black black;
+    margin-bottom: 15px;
 }
 
 table.dev-ports th, table.inv-main th,
@@ -356,6 +357,16 @@ td.mapkey  { background-color:black; }
 /* table.inv-main tr         -> aliased */
 /* table.inv-main td.match-0 -> aliased */
 /* table.inv-main td.match-1 -> aliased */
+table.inv-cols {
+    padding-bottom: 20px;
+}
+table.inv-cols tr  {
+    vertical-align:top;
+}
+table.inv-cols td  {
+    padding-right:20px;
+}
+
 
 /****************************************************************
  *  PORT_REPORT.HTML                                            *

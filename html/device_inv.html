@@ -62,24 +62,27 @@
     </TD>
 </TR>
 </TABLE>
-<P>
-<h2 class="subheader"><A NAME="model">By Model</A></h2>
-<TABLE class="inv-main">
-<TR>
-    <TH>Vendor</TH>
-    <TH>Model</TH>
-    <TH>Count</TH>
-</TR>
-<%perl>
-$count = 0; $odd = 1;
-foreach my $row (sort 
-    {
-        # Sort by vendor then model
-        return $a->{vendor} cmp $b->{vendor} if $a->{vendor} ne $b->{vendor};
-        return lc($a->{model}) cmp lc($b->{model});
-    } @$model_count
-                ) {
 
+<h2 class="subheader"><A NAME="model">By Model</A></h2>
+<TABLE CLASS="inv-cols">
+<TR>
+% my @m = sort {
+%        # Sort by vendor then model
+%        return $a->{vendor} cmp $b->{vendor} if $a->{vendor} ne $b->{vendor};
+%        return lc($a->{model}) cmp lc($b->{model});
+%    } @$model_count;
+% $count = 0; $odd = 1;
+% my $m_half = int(scalar @m / 2);
+% foreach my $h (0,$m_half) {
+    <TD>
+        <TABLE class="inv-main">
+        <TR>
+            <TH>Vendor</TH>
+            <TH>Model</TH>
+            <TH>Count</TH>
+        </TR>
+<%perl>
+foreach my $row (@m[$h .. $m_half+$h]) {
         # Change class if we change vendor
         if ($old_vendor ne $row->{vendor}){
             $odd++;
@@ -87,88 +90,76 @@ foreach my $row (sort
         }
         $count += $row->{count};
 </%perl>
-<TR>
-    <TD class="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=show&amp;os=show&amp;os_ver=show"><%$row->{vendor} || 'Unknown'|h%></A></TD>
-    <TD class="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and&amp;os=show&amp;os_ver=show"><%$row->{model} || 'Unknown'|h%></A></TD>
-    <TD class="match-<%$odd%2%>"><%$row->{count}%></TD>
-</TR>
-%                  }
-<TR>
-    <TD class="match-<%$odd%2%>">&nbsp;</TD>
-    <TD class="match-<%$odd%2%>">Total:</TD>
-    <TD class="match-<%$odd%2%>"><%$count%></TD>
-</TR>
-</TABLE>
+        <TR>
+            <TD class="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=show&amp;os=show&amp;os_ver=show"><%$row->{vendor} || 'Unknown'|h%></A></TD>
+            <TD class="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and&amp;os=show&amp;os_ver=show"><%$row->{model} || 'Unknown'|h%></A></TD>
+            <TD class="match-<%$odd%2%>"><%$row->{count}%></TD>
+        </TR>
+% }
+        </TABLE>
+    </TD>
+% }
+</TR></TABLE>
+Total: <%$count%>
 
 <h2 class="subheader"><A NAME="os">By OS</A></h2>
-
-<TABLE CLASS="inv-main">
+<TABLE CLASS="inv-cols">
 <TR>
-    <TH>OS</TH>
-    <TH>Version</TH>
-    <TH>Count</TH>
-</TR>
+% @m = sort {
+%   # Sort by OS then Version
+%   return $a->{os} cmp $b->{os} if $a->{os} ne $b->{os};
+%   return $a->{os_ver} cmp $b->{os_ver};
+% } @$os_count;
+% $count = 0; $odd = 1;
+% $m_half = int(scalar @m / 2);
+% foreach my $h (0,$m_half) {
+    <TD>
+        <TABLE CLASS="inv-main">
+        <TR>
+            <TH>OS</TH>
+            <TH>Version</TH>
+            <TH>Count</TH>
+        </TR>
 <%perl>
 $count = 0; $odd = 1;
-foreach my $row (sort 
-    {
-        # Sort by OS then Version
-        return $a->{os} cmp $b->{os} if $a->{os} ne $b->{os};
-        return $a->{os_ver} cmp $b->{os_ver};
-    } @$os_count ) {
-
-
+foreach my $row (@m[$h .. $m_half+$h]) {
     if ($old_vendor ne $row->{os}) { 
         $odd++;
         $old_vendor = $row->{os};
     }
     $count += $row->{count};
 </%perl>
-<TR>
-    <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' |h%></A></TD>
-    <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;os_ver=<%$row->{os_ver}||'IS NULL'|u%>&amp;boolean=and&amp;models=show&amp;vendors=show"><% $row->{os_ver} || 'Unknown' |h%></a></TD>
-    <TD CLASS="match-<%$odd%2%>"><% $row->{count} %></TD>
-</TR>
+        <TR>
+            <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' |h%></A></TD>
+            <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;os_ver=<%$row->{os_ver}||'IS NULL'|u%>&amp;boolean=and&amp;models=show&amp;vendors=show"><% $row->{os_ver} || 'Unknown' |h%></a></TD>
+            <TD CLASS="match-<%$odd%2%>"><% $row->{count} %></TD>
+        </TR>
 % }
-<TR>
-    <TD CLASS="match-<%$odd%2%>">&nbsp;</TD>
-    <TD CLASS="match-<%$odd%2%>">Total:</TD>
-    <TD CLASS="match-<%$odd%2%>"><%$count%></TD>
-</TR>
-</TABLE>
+        </TABLE>
+    </TD>
+% }
+</TR></TABLE>
+Total: <%$count%>
 
 <h2 class="subheader"><A NAME="location">By Location</A></h2>
 % if ($show_loc) {
 <& SELF:show_loc &>
 % } else {
-<FORM ACTION="<%$r->uri%>#location" METHOD="GET">
-<DIV>
-<INPUT TYPE="hidden" NAME="show_loc" VALUE=1>
-<INPUT TYPE="SUBMIT" VALUE="Inventory by Location" CLASS="navbutton">
-</DIV>
-</FORM>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_loc=1#location">Inventory by Location</A>
 % }
+
 <h2 class="subheader"><A NAME="ssid">Wireless SSID Inventory</A></h2>
 % if ($show_ssid) {
 <& SELF:show_ssid &>
 % } else {
-<FORM ACTION="<%$r->uri%>#ssid" METHOD="GET">
-<DIV>
-<INPUT TYPE="hidden" NAME="show_ssid" VALUE=1>
-<INPUT TYPE="SUBMIT" VALUE="Wireless SSID Inventory" CLASS="navbutton">
-</DIV>
-</FORM>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_ssid=1#ssid">Wireless SSID Inventory</a>
 % }
+
 <h2 class="subheader"><A NAME="vlan">VLAN Inventory</A></h2>
 % if ($show_vlan) {
 <& SELF:show_vlan &>
 % } else {
-<FORM ACTION="<%$r->uri%>#vlan" METHOD="GET">
-<DIV>
-<INPUT TYPE="hidden" NAME="show_vlan" VALUE=1>
-<INPUT TYPE="SUBMIT" VALUE="VLAN Inventory" CLASS="navbutton">
-</DIV>
-</FORM>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_vlan=1#vlan">Retreive VLAN Inventory</A>
 % }
 <%args>
 $cmd      => undef
@@ -180,12 +171,18 @@ $show_loc => 0
 $show_ssid => 0
 $show_vlan => 0
 </%args>
+%#
+%#
+%#
 <%shared>
 my $age = [];
 my $domain = $netdisco::CONFIG{domain};
 my $odd = 1;
 my ($arg_cmd,$arg_age_type,$count,$arg_show_loc);
 </%shared>
+%#
+%#
+%#
 <%init>
 $arg_cmd = $cmd; $arg_age_type = $age_type; $arg_show_loc = $show_loc;
 my $old_vendor = '';
@@ -318,9 +315,7 @@ $odd++;
     <TD CLASS="match-<%$odd%2%>"><%$row->{broadcast} ? "Broadcast" : "Stealth"%></TD>
     <TD CLASS="match-<%$odd%2%>"><%$row->{count}%></TD>
 </TR>
-<%perl>
-}
-</%perl>
+% } 
 </TABLE>
 <A HREF="<%$r->uri%>" CLASS="navbutton">Hide</A>
 </%method>
@@ -328,31 +323,44 @@ $odd++;
 %# show_vlan() - Inventory based on VLAN
 %#
 <%method show_vlan>
-<TABLE BORDER=0 CELLSPACING=0 CLASS="box" WIDTH="100%">
-<TR>
-    <TH>VLAN ID</TH>
-    <TH>VLAN Name</TH>
-    <TH>Count</TH>
-</TR>
 <%perl>
 my $vlan_count = sql_rows('device_vlan',['vlan','description','count(vlan)'],
                         undef,undef,'group by vlan,description');
+my @m = sort { 
+        $a->{vlan} <=> $b->{vlan} || 
+        $a->{description} cmp $b->{description} 
+    } @$vlan_count;
 $count = 0; $odd = 1; my $old_vlan = -1;
-foreach my $row (sort { $a->{vlan} <=> $b->{vlan} || $a->{description} cmp $b->{description} } @$vlan_count) {
-    if ($row->{vlan} != $old_vlan) {
-	$old_vlan = $row->{vlan};
-	$odd++;
-    }
 </%perl>
-<TR CLASS="match-<%$odd%2%>">
-    <TD><%$row->{vlan}%></TD>
-    <TD><%$row->{description}%></TD>
-    <TD><%$row->{count}%></TD>
-</TR>
-<%perl>
-}
-</%perl>
-</TABLE>
+<TABLE CLASS="inv-cols">
+<TR>
+% my $m_half = int(scalar @m / 2);
+% foreach my $h (0,$m_half) {
+    <TD>
+        <TABLE CLASS="inv-main">
+        <TR>
+            <TH>VLAN ID</TH>
+            <TH>VLAN Name</TH>
+            <TH>Count</TH>
+        </TR>
+% foreach my $row (@m[$h .. $m_half+$h]) {
+%    # Change color if we change VLANs
+%    if ($row->{vlan} != $old_vlan) {
+%        $old_vlan = $row->{vlan};
+%        $odd++;
+%    }
+        <TR CLASS="match-<%$odd%2%>">
+            <TD><%$row->{vlan}%></TD>
+            <TD><%$row->{description}%></TD>
+            <TD><%$row->{count}%></TD>
+        </TR>
+% }
+        </TABLE>
+    </TD>
+% }
+</TR></TABLE>
+Total: <%scalar @m%>
+
 <A HREF="<%$r->uri%>" CLASS="navbutton">Hide</A>
 </%method>
 %#
