@@ -248,7 +248,8 @@ table.botbar TD.login { text-align:right; }
 .ip-phone    { color: white; background-color:blue; }
 .device-link { color:blue; }
 
-table.dev-ports, table.inv-main, table.port-rep {
+table.dev-ports, table.inv-main, 
+table.port-rep,  table.log-ent {
     border-width: 1px 2px 2px 1px;
     border-spacing: 0px;
     border-style: solid solid solid solid;
@@ -257,7 +258,7 @@ table.dev-ports, table.inv-main, table.port-rep {
 }
 
 table.dev-ports th, table.inv-main th,
-table.port-rep th {
+table.port-rep th,  table.log-ent th {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -268,7 +269,7 @@ table.port-rep th {
 }
 
 table.dev-ports TD.ports-0, table.inv-main td.match-0,
-table.port-rep td.match-0 {
+table.port-rep td.match-0,  table.log-ent td.match-0 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -276,30 +277,35 @@ table.port-rep td.match-0 {
     padding: 1px 1px 1px 1px;
     background-color: #ffe7ba;
     text-align: center;
+    vertical-align: top;
 }
 
 table.dev-ports TD.ports-1, table.inv-main td.match-1,
-table.port-rep td.match-1 {
+table.port-rep td.match-1,  table.log-ent td.match-1 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
     border-color: gray gray gray gray;
-    padding: 2px 1px 1px 1px;
+    padding: 2px 1px 1px 2px;
     background-color: #eed8ae;
     text-align: center;
+    vertical-align: top;
 }
 
-table.dev-key, table.dev-view, table.node-search, table.port-key {
+table.dev-key,  table.dev-view, table.node-search, 
+table.port-key, table.log-key  {
     border-style: solid solid solid solid;
     border-width: 1px 1px 1px 1px;
     border-color: #191512;
     background-color: #ffe7ba;
     margin-bottom:15px;
 }
-table.dev-key th, table.dev-view th, table.node-search th, table.port-key th {
+table.dev-key  th, table.dev-view th, table.node-search th, 
+table.port-key th, table.log-key  th {
     border: none; padding-left: 3px; text-align:right;
 }
-table.dev-key td, table.dev-view td, table.node-search td, table.port-key td {
+table.dev-key  td, table.dev-view td, table.node-search td, 
+table.port-key td, table.log-key  td {
     border: none; padding-left: 5px; padding-right:10px;
 }
 
@@ -378,3 +384,35 @@ table.inv-cols td  {
 /* table.port-rep tr         -> aliased */
 /* table.port-rep td.match-0 -> aliased */
 /* table.port-rep td.match-1 -> aliased */
+
+/****************************************************************
+ *  LOG.HTML                                                    *
+ ****************************************************************/
+/* table.log-ent tr         -> aliased */
+/* table.log-ent td.match-0 -> aliased */
+/* table.log-ent td.match-1 -> aliased */
+table.log-ent td.entry-0 {
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 0px;
+    border-style: dotted;
+    border-color: gray gray gray gray;
+    padding: 1px 1px 1px 5px;
+    background-color: #ffe7ba;
+    text-align: left;
+    vertical-align: top;
+    white-space: pre;
+}
+table.log-ent td.entry-1 {
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 0px;
+    border-style: dotted;
+    border-color: gray gray gray gray;
+    padding: 1px 1px 1px 5px;
+    background-color: #eed8ae;
+    text-align: left;
+    vertical-align: top;
+    white-space: pre;
+}
+/* table.log-key            -> aliased */
+/* table.log-key tr         -> aliased */
+/* table.log-key td         -> aliased */

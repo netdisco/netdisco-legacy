@@ -1,7 +1,7 @@
 <h1 class="pagehead">Log Entries</h1>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DIV>
-<TABLE CELLSPACING=0 CELLPADDING=3 WIDTH="100%" BORDER=0>
+<TABLE CLASS="log-ent">
 <TR>
     <TH>Class</TH>
     <TH>Entry</TH>
@@ -34,34 +34,47 @@ foreach my $class (sort keys %log_sort){
             $entry = join(' ',@ret);
         }
         my $details = $logfiles->{$l->{id}};
+        $odd++;
 </%perl>
-<TR CLASS="match-<%++$odd%2%>">
-    <TD><% $l->{class} %></TD>
-    <TD><% $entry %></TD>
-    <TD><% $logfile ? "<INPUT TYPE=CHECKBOX NAME=\"log\" VALUE=\"$l->{id}\">" : '&nbsp;'%></TD>
-    <TD><% $time %></TD>
+<TR>
+    <TD CLASS="match-<%$odd%2%>"><SPAN STYLE="white-space:nowrap"><% $l->{class} %></SPAN></TD>
+    <TD CLASS="match-<%$odd%2%>"><% $entry %></TD>
+    <TD CLASS="match-<%$odd%2%>">
+        <A CLASS="navbutton" HREF="<%$r->uri%>?log=<%$l->{id}%>&<%$r->args%>">X</A>
+    </TD>
+    <TD CLASS="match-<%$odd%2%>"><SPAN STYLE="white-space:nowrap"><% $time |h %></span></TD>
 </TR>
 % if ($details){
-<TR CLASS="match-<%$odd%2%>">
-    <TD COLSPAN=4 ALIGN=LEFT><PRE><%$details |h%></PRE></TD>
+<TR>
+    <TD CLASS="match-<%$odd%2%>">&nbsp;</TD>
+    <TD CLASS="entry-<%$odd%2%>" COLSPAN=3><%$details |h%></TD>
 </TR>
 % }
 %   }
 %}
 </TABLE>
 <h2 class="subheader">Entry Types to Show</h2>
+<TABLE class="log-key">
+<TR>
+    <TD>
 % foreach my $c (keys %$db_classes){
-<%$c%>:<INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>> &nbsp;
+        <%$c%>:<INPUT TYPE="checkbox" NAME="classes" VALUE="<%$c%>" <% grep(/^$c$/,@classes) ? 'CHECKED': ''%>> &nbsp;
 %}
-<BR>
-Number of Entries per category:
-<SELECT NAME="number">
+    </TD>
+</TR>
+<TR>
+    <TD>Number of Entries per category:
+        <SELECT NAME="number">
 % foreach my $num (1,5,10,20,30,40,50,60) {
-    <OPTION VALUE="<%$num%>" <% $number eq $num ? 'SELECTED' : '' %>><%$num%>
+            <OPTION VALUE="<%$num%>" <% $number eq $num ? 'SELECTED' : '' %>><%$num%>
 %}
-</SELECT>
-<BR>
-<INPUT TYPE="submit" CLASS="navbutton" VALUE="Show Entries">
+        </SELECT>
+    </TD>
+</TR>
+<TR>
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Show Entries"></TD>
+</TR>
+</TABLE>
 </DIV>
 </FORM>
 <%args>
