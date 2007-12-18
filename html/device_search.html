@@ -2,7 +2,7 @@
 <& SELF:matches &>
 <h1 class="pagehead">Device Search</h1>
 
-<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 CLASS="box" style="padding: 0 8px 0 8px;">
+<TABLE CLASS="devs-search">
 <TR>
     <TD COLSPAN=4><h2 class="subheader">Search All</h2></TD>
 </TR>
@@ -73,7 +73,10 @@
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="Search"> [ <A href="<%$r->uri%>">Reset</A> ]</TD>
+    <TD COLSPAN=2>
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
+        <A class="navbutton" href="<%$r->uri%>">Reset</A>
+    </TD>
     <TD VALIGN=TOP>Match Scope: </TD>
     <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
         <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
@@ -83,7 +86,7 @@
 </TR>
 </TABLE>
 </FORM>
-<h2 class="subheader">Specific Searches</h2>
+<h2 class="subheader"><A NAME="reports">Device Reports</A></h2>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
     <DT>
@@ -268,7 +271,7 @@ if ($specific =~ /alias/i){
                        );
     my $matches_blocking = sql_rows('device_port p, device d',
                         ['d.ip','d.dns','p.port','p.up_admin','stp'],
-                        {'d.ip' => \'p.ip', 'stp' => 'blocking', 'up' => 'up'}
+                        {'d.ip' => \'p.ip', 'stp' => [['blocking','broken']], 'up' => '!down'}
                        );
 
     push (@$matches,@$matches_blocking);
