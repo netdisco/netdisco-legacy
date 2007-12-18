@@ -389,13 +389,13 @@ if (defined $device) {
 <TR>
     <TH>Timestamps</TH>
     <TD>
-        <span class="category">uptime</span> <% $m->comp('SELF:uptime', uptime => $device->{uptime})%> 
-        <span class="category">discover</span> <% scalar localtime($device->{last_discover}) %>
+        <span class="category">uptime</span> <% $m->comp('SELF:uptime', uptime => $device->{uptime})%><BR/>
+        <span class="category">discover</span> <% scalar localtime($device->{last_discover}) %><BR/>
 %   if (defined $device->{last_arpnip}) {
-        <span class="category">arpnip</span> <% scalar localtime $device->{last_arpnip}%>  
+        <span class="category">arpnip</span> <% scalar localtime $device->{last_arpnip}%><br/>
 % }
 %   if (defined $device->{last_macsuck}) {
-        <span class="category">macsuck</span> <% scalar localtime $device->{last_macsuck}%>  
+        <span class="category">macsuck</span> <% scalar localtime $device->{last_macsuck}%><br/>
 % }
 
     </TD>
@@ -440,13 +440,15 @@ foreach my $item (sort keys %device_info) {
         my @vals;
         foreach my $alias (sort { sort_ip($a->{alias}, $b->{alias}) } @$val){
             my $ip = $alias->{alias};
-            my $dns = $alias->{dns};
-            $dns = defined $dns ? $dns :
-                    '[No DNS]';
-            $dns =~ s/\Q$domain\E//;
+            my $d = $alias->{dns};
+            my $dns = '[No DNS]';
+            if (defined $d) {
+                $d =~ s/\Q$domain\E//;
+                $dns = "<A HREF=\"node.html?node=$alias->{dns}\">$d</A>"
+            }
             my $port = $alias->{port};
             my $subnet = $alias->{subnet};
-            push (@vals, "<TR><TD><A HREF=\"node.html?node=$ip\">$ip</a></TD><TD><A HREF=\"node.html?node=$dns\">$dns</A></TD><TD>$port</TD><TD>$subnet</TD></TR>\n");
+            push (@vals, "<TR><TD><A HREF=\"node.html?node=$ip\">$ip</a></TD><TD>$dns</TD><TD>$port</TD><TD>$subnet</TD></TR>\n");
         }
         $val = "<TABLE CLASS=\"dev-addr\">\n";
         $val .= join("",@vals);
