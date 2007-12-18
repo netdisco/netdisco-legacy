@@ -47,7 +47,7 @@ foreach my $class (sort keys %log_sort){
 % if ($details){
 <TR>
     <TD CLASS="match-<%$odd%2%>">&nbsp;</TD>
-    <TD CLASS="entry-<%$odd%2%>" COLSPAN=3><%$details |h%></TD>
+    <TD CLASS="entry-<%$odd%2%>" COLSPAN=3><PRE><%$details |h%></PRE></TD>
 </TR>
 % }
 %   }
