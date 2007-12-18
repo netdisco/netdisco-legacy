@@ -4,23 +4,23 @@
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <TABLE CLASS="node-search">
 <TR>
-    <TH>MAC, Hostname, IP, NetBIOS:</TH>
-    <TD><INPUT TYPE="text" name="node" maxlength=255 size=30 VALUE="<%$node%>">
-        <BR><span class="smaller"><B>*</B> and <B>?</B> are wildcards.</span>
+    <TD>MAC, Hostname, IP, NetBIOS:</TD>
+    <TD><INPUT TYPE="text" name="node" maxlength=255 size=30 VALUE="<%$node || $m->session->{_s_term}  |h%>">
+        <BR><span class="smaller"><B>*</B> and <B>?</B> can be used as a wildcard for MAC addresses</span>
     </TD>
 </TR>
 <TR>
-    <TH>Time Stamps: </TH>
+    <TD>Time Stamps: </TD>
     <TD> <INPUT TYPE="radio" NAME="dates" VALUE="1" <%$dates ? 'CHECKED' : '' %>>On
          <INPUT TYPE="radio" NAME="dates" VALUE="0" <%$dates ? '' : 'CHECKED' %>>Off 
     </TD>
 </TR>
 <TR>
-    <TH>Archived Data: </TH>
+    <TD>Archived Data: </TD>
     <TD><INPUT TYPE="checkbox" NAME="archive" VALUE="1" <%$archive ? 'CHECKED' : '' %>></TD>
 </TR>
 <TR>
-    <TH>Show Vendor : </TH>
+    <TD>Show Vendor : </TD>
     <TD> <INPUT TYPE="radio" NAME="showoui" VALUE="1" <%$showoui ? 'CHECKED' : ''%>>On
          <INPUT TYPE="radio" NAME="showoui" VALUE="0" <%$showoui ? '' : 'CHECKED' %>>Off
     </TD>
@@ -35,28 +35,30 @@
 </TABLE>
 </FORM>
 
-<h1 class="pagehead">Advanced Node Search</h1>
+<h1 class="pagehead">Vendor / Organizationally Unique Identifier (OUI) Search</h1>
 
 % if ($expandoui){
 <& SELF:ouiform &>
 % } else {
-<h2 class="subheader">Search on Vendor or OUI</h2>
-<DL>
-    <DD><A HREF="<%$r->uri%>?expandoui=1">Click Here to Search on Vendor or OUI</a>.
-    <BR>* <SPAN CLASS="small">Can be slow to load.</SPAN>
-</DL>
+<A class="navbutton" HREF="<%$r->uri%>?expandoui=1">Search on Vendor / OUI</a>
+<BR><SPAN CLASS="small">* Can be slow to load</SPAN>
 % }
 
-<h2 class="subheader">Specific Searches</h2>
-<DL>
-    <DD>
-        <A HREF="<%$r->uri%>?specific=wireless" class="navbutton">Search for possible Wireless Access Points (APs)</A>
-        <BR>These aren't guranteed to be wireless access points, they just have MACs that fall into 
+<h1 class="pagehead"><A NAME="reports">Node Reports</A></h1>
+<TABLE CLASS="node-search">
+<TR>
+    <TH><A HREF="<%$r->uri%>?specific=wireless" class="navbutton">Possible Wireless Access Points (WAP)</A></TH>
+    <TD>These aren't guranteed to be wireless access points, they just have MACs that fall into 
             the right range.  Also remember people can hide them under fake MAC addresses as well.
-        <BR>
-    <DD>
-        <A HREF="<%$r->uri%>?specific=multips" class="navbutton">Search for nodes with multiple active IP addresses</A>
-</DL>
+    </TD>
+</TR>
+<TR>
+    <TH><A HREF="<%$r->uri%>?specific=multips" class="navbutton">Nodes with multiple active IP addresses</A></TH>
+    <TD>List all the nodes that are using more than one IP, sorted by worst offender. This report is good
+        for finding nodes that are randomly changing IP addresses or abusing DHCP leases.
+    </TD>
+</TR>
+</TABLE>
 <%args>
 $node      => ''
 $dates     => 1
@@ -599,7 +601,7 @@ No results found.  Try checking Archived Data.
 %  }
 % }
 % return; }
-<TABLE cellspacing=0 cellpadding=4 border=0 width="100%">
+<TABLE class="node-search">
 <TR>
 % foreach my $c (@cols){
     <TH><%$c->[1]%></TH>
@@ -662,7 +664,7 @@ foreach my $match (@sorted_matches) {
 </TR>
 % }
 </TABLE>
-% $m->out("* - Denotes archived data.<BR>") if $arg_archive;
+% $m->out('<span class="small">* Denotes archived data</span><BR>') if $arg_archive;
 Matched <% scalar $odd %> nodes.
 </%method>
 %#
@@ -733,10 +735,9 @@ $match
 %#
 <%method ouiform>
 <& SELF:init_ouis &>
-<h2 class="subheader">Search on Vendor or Organizationally Unique Identifier (OUI)</h2>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <INPUT TYPE="hidden" NAME="expandoui" VALUE=1>
-<TABLE CLASS="node-oui">
+<TABLE CLASS="node-search">
 <TR>
     <TH>Vendor:</TH>
     <TD><SELECT MULTIPLE NAME="vendors" SIZE=5>
@@ -778,7 +779,7 @@ $match
 <%method oui_matches>
 % return unless scalar @search;
 <h2 class="subheader">OUI Matches</h2>
-<TABLE WIDTH="100%" CELLSPACING=0 CELLPADDING=2 BORDER=0>
+<TABLE CLASS="node-search">
 <TR>
     <TH>OUI</TH>
     <TH>Count</TH>
@@ -787,6 +788,7 @@ $match
 <%perl>
 # Grab Counts
 my %ouicount;
+$odd = 0;
 foreach my $search (@search){
     $ouicount{$search} = sql_scalar('node',['count(distinct(mac))'],
                                            {'mac' => "$search\%" });
