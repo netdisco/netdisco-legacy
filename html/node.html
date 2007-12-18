@@ -6,13 +6,14 @@
 <TR>
     <TD>MAC, Hostname, IP, NetBIOS:</TD>
     <TD><INPUT TYPE="text" name="node" maxlength=255 size=30 VALUE="<%$node || $m->session->{_s_term}  |h%>">
-        <BR><span class="smaller"><B>*</B> and <B>?</B> can be used as a wildcard for MAC addresses</span>
+        <BR><span class="smaller"><B>*</B> and <B>?</B> can be used as a wildcard for MAC addresses, IP addresses, and Netbios names
+        <BR>Wildcards do not work on hostnames</span>
     </TD>
 </TR>
 <TR>
     <TD>Time Stamps: </TD>
     <TD> <INPUT TYPE="radio" NAME="dates" VALUE="1" <%$dates ? 'CHECKED' : '' %>>On
-         <INPUT TYPE="radio" NAME="dates" VALUE="0" <%$dates ? '' : 'CHECKED' %>>Off 
+         <INPUT TYPE="radio" NAME="dates" VALUE="0" <%$dates ? '' : 'CHECKED' %>>Off
     </TD>
 </TR>
 <TR>
@@ -48,7 +49,7 @@
 <TABLE CLASS="node-search">
 <TR>
     <TH><A HREF="<%$r->uri%>?specific=wireless" class="navbutton">Possible Wireless Access Points (WAP)</A></TH>
-    <TD>These aren't guranteed to be wireless access points, they just have MACs that fall into 
+    <TD>These aren't guranteed to be wireless access points, they just have MACs that fall into
             the right range.  Also remember people can hide them under fake MAC addresses as well.
     </TD>
 </TR>
@@ -97,7 +98,7 @@ my $vendors = {
             'VMWare' => qr/vmware/i,
             '[No OUI]' => qr/\[NA\]/,
             'Avaya'  => qr/avaya/i,
-              }; 
+              };
 
 my %sort_type = ('mac' => 'MAC Address',
                  'dev' => 'Device Name',
@@ -279,7 +280,7 @@ if ($node){
     push (@cols,['match','Match'],['type','Device or Node']);
     push (@cols,['time_first','First Seen']) if $arg_dates;
     push (@cols,['time_last','Last Seen']) if $arg_dates;
-    
+
     $m->flush_buffer;
 
     $node =~ s/^\s+//;
@@ -288,17 +289,17 @@ if ($node){
     if ($node =~ /^${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2} ${hex}{2}$/){
         $node =~ s/\s+/:/g;
     }
-    my $is_mac = &is_mac($node);
     my $wildhex = "[0-9a-fA-F?]";
     my $is_partial_mac = ($node =~ /^([?*]+)?(${wildhex}{2}:)+(${wildhex}{2})([?*]+)?$/);
     my $could_be_partial_mac = ($node =~ /^${hex}+$/ && length($node) < 13 && (length($node) % 2) == 0);
+    my $is_mac = is_mac($node) || $is_partial_mac || $could_be_partial_mac;
 
     # Save search terms to session, change topbar
     $m->session->{_s_term} = $node;
     $m->session->{_s_type} = 'node';
 
     # Search by MAC Address
-    if ($is_mac or $is_partial_mac or $could_be_partial_mac) {
+    if ($is_mac) {
         my $mac = $node;
         if ($could_be_partial_mac) {
             # An even number of hex digits - turn it into a partial mac
@@ -316,7 +317,7 @@ if ($node){
         my $ports = sql_rows('node',
                     ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                     $where
-                    );   
+                    );
 
         foreach my $port (@$ports) {
             $port->{type} = 'port';
@@ -329,16 +330,16 @@ if ($node){
         my $nbnames = sql_rows('node_nbt',
                 ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                 $where
-                );   
+                );
 
         foreach my $node_nbt (@$nbnames) {
             $node_nbt->{type} = 'nbname';
             $node_nbt->{oui}  = substr($node_nbt->{mac},0,8);
             push (@$matches,$node_nbt);
         }
-    
+
         # Check the posibilty that this could be a switch port's MAC
-        my $switch_ports = sql_rows('device_port', 
+        my $switch_ports = sql_rows('device_port',
                 ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
                 {'mac' => $node});
 
@@ -352,40 +353,43 @@ if ($node){
             push (@$matches,$sp);
         }
 
-	if (@$switch_ports == 0) {
-	    # It could also be a device's base address
-	    my $device = sql_rows('device',
-		    ['ip','mac','dns','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
-		    {'mac' => $node});
+        if (@$switch_ports == 0) {
+            # It could also be a device's base address
+            my $device = sql_rows('device',
+                ['ip','mac','dns','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
+                {'mac' => $node});
 
-	    foreach my $dev (@$device) {
-		$dev->{type}   = 'devmac';
-		$dev->{active} = 1;
-		$dev->{oui}    = substr($dev->{mac},0,8);
-		$dev->{dev}    = $dev->{ip};
-		$dev->{host}   = $dev->{dns};
-		$dev->{host}   =~ s/\Q$domain\E//;
-		push (@$matches,$dev);
-	    }
-	}
+            foreach my $dev (@$device) {
+                $dev->{type}   = 'devmac';
+                $dev->{active} = 1;
+                $dev->{oui}    = substr($dev->{mac},0,8);
+                $dev->{dev}    = $dev->{ip};
+                $dev->{host}   = $dev->{dns};
+                $dev->{host}   =~ s/\Q$domain\E//;
+                push (@$matches,$dev);
+            }
+        }
 
-	# If there are no matches, at least return the vendor info.
-	if (!@$matches) {
-	    my $oui = lc(substr($node, 0, 8));
-	    unless ( defined $ouis->{$oui} ){
-		$ouis->{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
-	    }
-	}
+        # If there are no matches, at least return the vendor info.
+        if (!@$matches) {
+            my $oui = lc(substr($node, 0, 8));
+            unless ( defined $ouis->{$oui} ){
+                $ouis->{$oui} = sql_scalar('oui',['company'],{'oui' => $oui});
+            }
+        }
     }
-
-    my $realip = &getip($node);
-    # Search by HOST 
-    if (!$is_mac and defined $realip) {
-        my $hostname = &hostname($node);
-        $hostname =~ s/\Q$domain\E//;
-
-        # see if this is a listed device or one of its aliases.
-        my $device = root_device($realip);
+    # Match by DNS/IP Address
+    else {
+        my $realip;
+        my $device;
+        if (defined getip($node)) {
+            $realip = getip($node);
+            # see if this is a listed device or one of its aliases.
+            $device = root_device($realip);
+        } else {
+            # Assume a search string 
+            $realip = sql_match($node);
+        }
 
         # Find MACs associated with this IP
         my $where = { 'ip'=>$realip};
@@ -394,11 +398,12 @@ if ($node){
                     ['mac','ip','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                     $where
                            );
-
         my @foundmacs = ();
 
         # Add info to each entry
         foreach my $node_ip (@$macs){
+            my $hostname = hostname($node_ip->{ip});
+            $hostname =~ s/\Q$domain\E//;
             $node_ip->{host} = $hostname;
             $node_ip->{type} = $device ? 'dev' : 'host_ip';
             $node_ip->{dev}  = $device;
@@ -415,7 +420,7 @@ if ($node){
             my $ports = sql_rows('node',
                         ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                         $where
-                            );   
+                            );
             foreach my $port (@$ports) {
                 $port->{type} = 'port';
                 $port->{switchname} = sql_scalar('device',['dns'],{'ip'=>$port->{switch}});
@@ -430,7 +435,7 @@ if ($node){
             my $nbnames = sql_rows('node_nbt',
                 ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                 $where
-                );   
+                );
 
             foreach my $node_nbt (@$nbnames) {
                $node_nbt->{type} = 'nbname';
@@ -452,7 +457,7 @@ if ($node){
             push (@$matches,$entry);
         }
     }
-    
+
     # Search by NetBIOS Name
     unless ($is_mac) {
         # Find MACs associated with this NetBIOS Name or User
@@ -481,7 +486,7 @@ if ($node){
             my $ports = sql_rows('node',
                     ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                     $where
-                        );   
+                        );
             foreach my $port (@$ports) {
                 $port->{type} = 'port';
                 $port->{switchname} = sql_scalar('device',['dns'],{'ip'=>$port->{switch}});
@@ -493,7 +498,7 @@ if ($node){
            $m->comp('SELF:add_node_ips','where'=>$where);
         }
     }
-    
+
     $ran_query++;
 }
 
@@ -511,11 +516,11 @@ if ($specific eq 'multips') {
 
     # select n.mac,n.switch,n.port,count(distinct(i.ip)),d.dns
     # from node_ip i, node n left join device d on d.ip = n.switch
-    # where n.mac = i.mac and i.active = true and n.active = true 
+    # where n.mac = i.mac and i.active = true and n.active = true
     # group by n.mac, n.switch, n.port,d.dns
-    # having count(distinct(i.ip)) > 1 
+    # having count(distinct(i.ip)) > 1
     # order by count desc;
-    
+
     $matches = sql_rows('node_ip i, node n left join device d on d.ip = n.switch',
                         ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))'],
                         {'n.mac' => \'i.mac', 'i.active' => 1, 'n.active' => 1},
@@ -537,7 +542,7 @@ foreach my $vendor_search (@vendors){
     foreach my $oui (keys %$ouis){
         my $company = $ouis->{$oui};
         if ($company =~ m/$regex/){
-            push(@search,$oui) 
+            push(@search,$oui)
         }
     }
 }
@@ -554,7 +559,7 @@ if (scalar @search){
         my $length = length($search);
         # add to queue matching length
         push @{$search_length{$length}},lc($search);
-    } 
+    }
 
     # New method using substr() and IN (list) for speed
     foreach my $length (keys %search_length){
@@ -569,7 +574,7 @@ if (scalar @search){
         push @$matches, @$submatch;
     }
 
-    # don't list OUI matches for wireless 
+    # don't list OUI matches for wireless
     if ($specific eq 'wireless'){
         @search = ();
     }
@@ -611,7 +616,7 @@ No results found.  Try checking Archived Data.
 my @sorted_matches; $odd=0;my $group;
 if ($arg_sort eq 'dev'){
     # sort by dns/ip then by port
-    @sorted_matches = sort { ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch}) 
+    @sorted_matches = sort { ($a->{dns}||$a->{switch}) cmp ($b->{dns}||$b->{switch})
                              or &sort_port } @$matches;
     $group = 'switch';
 } elsif ($arg_sort eq 'oui'){
@@ -712,7 +717,7 @@ $match
     <BR><%$match->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$match->{ip}|u%>"><%$match->{ip}|h%></A>\
 %} else {
     <% $match->{type} %>\
-%} 
+%}
 </%method>
 %#
 %# init_ouis() - Populate %$ouis
@@ -743,7 +748,7 @@ $match
     <TD><SELECT MULTIPLE NAME="vendors" SIZE=5>
 %       foreach my $vendor (sort keys %$vendors){
             <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@arg_vendors) ? 'SELECTED' : ''%>><%$vendor%>
-%       } 
+%       }
         </SELECT>
     </TD>
     <TH>OUI:</TH>
@@ -751,8 +756,8 @@ $match
 %       foreach my $oui (sort keys %$ouis){
 %           next if $ouis->{$oui} eq '[NA]';
             <OPTION VALUE="<%$oui%>" <% grep(/^$oui$/,@arg_oui) ? 'SELECTED' : ''%>><%$oui%> : <%$ouis->{$oui}%>
-%       } 
-        
+%       }
+
         </SELECT></TD>
 </TR>
 <TR>
