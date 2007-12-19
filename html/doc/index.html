@@ -1,4 +1,11 @@
-<h4>Files</h4>
+<& /stats.html:about_box &>
+<h2 class="subheader">Links</h2>
+<A href="http://netdisco.org">Netdisco.org</a> - The home of Netdisco.
+<BR>
+<A HREF="http://snmp-info.sourceforge.net">SNMP::Info</a> - A Key component of Netdisco.
+<BR>
+
+<h1 class="pagehead"><A HREF=".">Documentation</A></H1>
 %foreach my $file (sort @files){
 %   $file =~ s/$dir\///;
 %   next if $file eq 'index.html';
@@ -7,12 +14,6 @@
 <A HREF="<%$file%>"><%$name%></A><BR>
 %}
 
-<& /stats.html:about_box &>
-<h4>Links</h4>
-<A href="http://netdisco.org">Netdisco.org</a> - The home of Netdisco.
-<BR>
-<A HREF="http://snmp-info.sourceforge.net">SNMP::Info</a> - A Key component of Netdisco.
-<BR>
 <A HREF="http://www.masonhq.com"><IMG SRC="<%$path%>/powered_by_mason.jpg" WIDTH=88 HEIGHT=31 style="border: none;" ALT="Powered by Mason"></A>
 <img WIDTH="88" HEIGHT="31" src="<%$path%>/vcss.gif" alt="Valid CSS" style="border: none;">
 <img WIDTH="88" HEIGHT="31" src="<%$path%>/valid-html401.png" alt="Valid HTML 4.01" style="border: none;">

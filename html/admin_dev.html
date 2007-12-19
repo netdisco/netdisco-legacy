@@ -1,29 +1,44 @@
 <h1 class="pagehead">Administration Panel</h1>
 <& SELF:err &>
 % if ($need_confirm) {
-<& SELF:confirm &> 
-% } else { 
+<& SELF:confirm &>
+% } else {
 <& SELF:dev_control &>
 % }
 <h2 class="subheader">Job Queue</h2>
-<FORM ACTION="<% $r->uri %>" METHOD=GET> 
+<FORM ACTION="<% $r->uri %>" METHOD=GET>
 <DIV>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
 <INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
 <& SELF:list_queue &>
-<INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Queue Listing">
-Finished Jobs: <SELECT NAME="old_jobs">
+
+<TABLE CLASS="adm-search">
+<TR>
+    <TH>Finished Jobs:</TH>
+    <TD><SELECT NAME="old_jobs">
 % foreach my $num (qw/1 3 5 10 20 30 50 100/) {
-    <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
+        <OPTION VALUE="<%$num%>"<% $num eq $old_jobs ? ' SELECTED': ''%>><%$num%>
 % }
-</SELECT>
-Ignore Actions of type: 
-<SELECT NAME="act_ignore" SIZE=3 MULTIPLE>
+        </SELECT>
+    </TD>
+</TR>
+<TR>
+    <TH>Ignore Actions<BR>of Type:</TH>
+    <TD>
+        <SELECT NAME="act_ignore" SIZE=3 MULTIPLE>
 % foreach my $act (sort @$action_types) {
-    <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
+            <OPTION VALUE="<%$act|h%>"<% grep(/^$act$/,@act_ignore) ? ' SELECTED' : ''%>><%$act%>
 % }
-</SELECT>
-<A CLASS="navbutton" HREF="<%$r->uri%>">Reset</a>
+        </SELECT>
+    </TD>
+</TR>
+<TR>
+    <TH>&nbsp;</TH>
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Queue Listing">
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</a>
+    </TD>
+</TR>
+</TABLE>
 </DIV>
 </FORM>
 <%args>
@@ -43,7 +58,7 @@ $port     => ''
 <%shared>
 my $user      = $m->session->{user};
 my $domain    = $netdisco::CONFIG{domain};
-my %actions = ( 
+my %actions = (
             # action       => [longname, confirm action,show]
              'discover'    => ['Discover Device',0,0],
              'discover_run'=> ['Discover Whole Network Starting from Device',1,0],
@@ -75,7 +90,7 @@ $m->comp('admin.html:force_secure_admin');
 
 # Move args to shared space for methods
 $arg_dev = $dev; $arg_act = $action;
-$arg_debug = $debug; $arg_discover = $discover; 
+$arg_debug = $debug; $arg_discover = $discover;
 @act_ignore = @act_ignore_default unless scalar @act_ignore ;
 %logs = map {$_ => 1} @logs;
 
@@ -95,11 +110,11 @@ if ($dev){
     $arg_dev = $dev;
     $arg_dev_text = $dev_text if defined $dev;
     $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
-} 
+}
 
 # Confirm Given Action if required
 if ($cmd eq 'add' and $actions{$action}->[1] and $confirm ne 'ok') {
-    $need_confirm++;    
+    $need_confirm++;
 }
 
 # Maintenance Commands from admin.html
@@ -121,20 +136,20 @@ if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/ and !$need_confirm
     my $layers = $db_dev->{layers};
 
     if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
-        $err .= "Device does not support mac_sucking.<BR>\n"; 
+        $err .= "Device does not support mac_sucking.<BR>\n";
         $action = undef;
         $arg_dev = $dev = undef;
     }
 
     if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
-        $err .= "Device does not support arp_niping .<BR>\n"; 
+        $err .= "Device does not support arp_niping .<BR>\n";
         $action = undef;
         $arg_dev = $dev = undef;
     }
 
     # Add Entry to Queue
     $commit++ unless $err;
-} 
+}
 
 # Delete
 if ($cmd eq 'add' and $action eq 'delete' and $confirm eq 'ok'){
@@ -166,11 +181,11 @@ if ($cmd eq 'add' and $action =~ /^nodes/ and $confirm eq 'ok'){
             $err .= "$actions{$action}->[0] - $dev - Port $port not found!<BR>\n";
             $action = undef;
             $arg_dev = $dev = undef;
-        } else { 
-            # Restict to Port 
-           $subaction = $port->{port}; 
-        }   
-    }  
+        } else {
+            # Restict to Port
+           $subaction = $port->{port};
+        }
+    }
 
     $commit++ unless $err;
 }
@@ -259,7 +274,7 @@ foreach my $item (@$queue){
 <%method confirm>
 % my $act = $actions{$arg_act}->[0];
 <h1 class="pagehead">Confirm <%$act%> <% $arg_dev ? "of $arg_dev" : ''%></h1>
-<FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<FORM ACTION="<% $r->uri %>" METHOD=POST>
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
 <INPUT TYPE="hidden" NAME="dev" VALUE="<%$arg_dev|h%>">
@@ -276,8 +291,8 @@ Check to Confirm - <%$act%>
 %#
 %# Delete Device - Checkbox to Delete Nodes too
 % if ($arg_act eq 'delete'){
-<INPUT TYPE="checkbox" NAME="nodes" VALUE="ok"> Delete Nodes Too. 
-% } 
+<INPUT TYPE="checkbox" NAME="nodes" VALUE="ok"> Delete Nodes Too.
+% }
 %# Delete Nodes - Ability to select port
 % if ($arg_act =~ /^nodes/) {
 %   my $ports = sql_rows('device_port',['port'],{'ip'=>$arg_dev});
@@ -286,7 +301,7 @@ Restrict <%$act%> to
     <OPTION VALUE="" SELECTED>All Ports
 %   foreach my $row (sort {$a->{port} cmp $b->{port}} @$ports){
 %       my $port = $row->{port};
-   <OPTION VALUE="<%$port|h%>"><%$port|h%> 
+   <OPTION VALUE="<%$port|h%>"><%$port|h%>
 %   }
 </SELECT>
 %}
@@ -303,16 +318,15 @@ Debug Output
 %#
 <%method dev_control>
 <h2 class="subheader">Device Control</h2>
-<FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<FORM ACTION="<% $r->uri %>" METHOD=POST>
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
-<TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
+<TABLE CLASS="adm-search">
 <TR>
-    <TD><% $arg_dev ? '&nbsp;' : 'Choose Device :'%></TD>
+    <TH><% $arg_dev ? '&nbsp;' : 'Choose Device :'%></TH>
     <TD><% $arg_dev ? '&nbsp;' : $m->comp('SELF:list_dev')%></TD>
-    <TD ROWSPAN=2>Action : </TD>
-    <TD ROWSPAN=2>
-        <SELECT NAME="action" SIZE=4>
+    <TH>Action:</TH>
+    <TD><SELECT NAME="action" SIZE=4>
 % foreach my $c (sort keys %actions){
 %   next unless $c;
 %   next unless $actions{$c}->[2];
@@ -322,63 +336,61 @@ Debug Output
     </TD>
 </TR>
 <TR>
-    <TD>Enter Device : </TD>
-    <TD>
-        <INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text">
+    <TH>Enter Device:</TH>
+    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_dev%>" NAME="dev_text">
         <% defined $arg_dev_text ? "<BR><span class=\"small\"><TT>($arg_dev_text)</TT></span>" : '' %>
     </TD>
+    <TH>Debug:</TH>
+    <TD><INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>></TD>
 </TR>
-<TR> 
-    <TD COLSPAN=2>
+<TR>
+    <TD>&nbsp;</TD>
+    <TD COLSPAN=3>
         <INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
         <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
-    </TD>
-    <TD COLSPAN=2>
-        Debug :
-        <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
+        <BR><SPAN CLASS="small">Use this box to control devices that are already in Netdisco's database.</SPAN>
     </TD>
 </TR>
 </TABLE>
-Use this box to control devices that are already in Netdisco's database.
 </DIV>
 </FORM>
 
 <h2 class="subheader">Discover Devices</h2>
-<FORM ACTION="<% $r->uri %>" METHOD=POST> 
+<FORM ACTION="<% $r->uri %>" METHOD=POST>
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
-<TABLE CELLSPACING=0 CELLPADDING=3 CLASS="box" border=0>
+<TABLE CLASS="adm-search">
 <TR>
-    <TD>Enter Device : <INPUT TYPE="TEXT" VALUE="<%$arg_discover%>" NAME="discover" TITLE="IP or Host Name">
-    </TD>
-    <TD><SELECT NAME="action" SIZE=1>
+    <TH>Enter Device:</TH>
+    <TD><INPUT TYPE="TEXT" VALUE="<%$arg_discover%>" NAME="discover" TITLE="IP or Host Name">
+        <SELECT NAME="action" SIZE=1>
 % foreach my $c (qw/discover discover_new discover_run/){
             <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
 % }
         </SELECT>
     </TD>
 </TR>
-<TR> 
-    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
+<TR>
+    <TH>Debug:</TH>
+    <TD><INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
         <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
-    </TD>
-    <TD>Debug :
-        <INPUT TYPE="checkbox" NAME="debug" VALUE="yes" <%$arg_debug ? 'CHECKED' : ''%>>
+        <BR>
+        <SPAN CLASS="small">Use this box to add new devices to the network, or to re-add devices after deletion.</SPAN>
     </TD>
 </TR>
 </TABLE>
-Use this box to add new devices to the network, or to re-add devices after deletion.
 </DIV>
 </FORM>
 </%method>
 %#
-%# list_dev() - Create <SELECT> list for devices 
+%# list_dev() - Create <SELECT> list for devices
 %#
 <%method list_dev>
 <SELECT NAME="dev" SIZE=8>
 % foreach my $dev (sort {$a->{dns} cmp $b->{dns}} @$devices){
 %   my $view = defined $dev->{dns} ? $dev->{dns} : $dev->{ip};
-%   $view =~ s/\Q$domain\E//; 
+%   $view =~ s/\Q$domain\E//;
             <OPTION VALUE="<%$dev->{ip}|h%>"><%$view%>
 %}
         </SELECT>
@@ -388,53 +400,52 @@ Use this box to add new devices to the network, or to re-add devices after delet
 %#
 <%method list_queue>
 % return unless scalar @$queue;
-<TABLE WIDTH="100%" CELLSPACING=0 CELLPADDING=2 BORDER=0> 
-  <TR>
-    <TH>Job</TH>
-    <TH>Action</TH>
-    <TH>Time</TH>
-    <TH>Status</TH>
-    <TH>View<BR>Log</TH>
+<TABLE CLASS="adm-q">
+    <TR>
+        <TH>Job</TH>
+        <TH>Action</TH>
+        <TH>Time</TH>
+        <TH>Status</TH>
+        <TH>View<BR>Log</TH>
 % if (scalar keys %logs){
-    <TH>Log</TH>
+        <TH>Log</TH>
 %}
-  </TR>
+    </TR>
 <%perl>
+$odd = 1;
 foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
     my $act    = $job->{action};
     my $entered = scalar localtime($job->{entered});
     my $start   = defined $job->{started} ? scalar localtime($job->{started}) : undef;
     my $end   = defined $job->{finished} ? scalar localtime($job->{finished}) : undef;
-    my $time  = (defined $job->{started} and defined $job->{finished}) ?
-        $job->{finished} - $job->{started} : undef;
-    my $timestamp = defined $time ?
-         sprintf("Ended: %s<BR> %-2.2f min.",$end,$time/60) 
-         : undef;
+    my $time  = (defined $job->{started} and defined $job->{finished}) ?  $job->{finished} - $job->{started} : undef;
+    my $timestamp = defined $time ?  sprintf("Ended: %s<BR> %-2.2f min.",$end,$time/60) : undef;
     $timestamp = "Start: $start" if (! defined $timestamp and defined $start);
     $timestamp = "Queued: $entered" if (! defined $timestamp and ! defined $start);
     my $status = $job->{status};
     my $dev    = $job->{device};
     my $id     = $job->{job};
     $act .= " (<A HREF=\"device.html?ip=$dev\">$dev</A>)" if $dev;
+    $odd++;
 </%perl>
-  <TR CLASS="match-<% ++$odd%2 %>">
-    <TD><%$id%> - <%$job->{username}%></TD>
-    <TD><%$act%></TD>
-    <TD><%$timestamp%></TD>
-    <TD><%$status%></TD>
-    <TD><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
+    <TR>
+        <TD CLASS="match-<%$odd%2%>"><%$id%> - <%$job->{username}%></TD>
+        <TD CLASS="match-<%$odd%2%>"><%$act%></TD>
+        <TD CLASS="match-<%$odd%2%>"><%$timestamp%></TD>
+        <TD CLASS="match-<%$odd%2%>"><%$status%></TD>
+        <TD CLASS="match-<%$odd%2%>"><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
 % if (scalar keys %logs) {
-    <TD>
+        <TD CLASS="match-<%$odd%2%>">
 %   if (defined $logs{$id} and !defined $job->{log}) {
-    [ No Log Available ]
+            [ No Log Available ]
 %   } elsif (defined $logs{$id} and defined $job->{log}) {
-    <TEXTAREA COLS=50 ROWS=6 WRAP=OFF><%$job->{log}|h%></TEXTAREA>
+            <TEXTAREA COLS=50 ROWS=6 WRAP=OFF><%$job->{log}|h%></TEXTAREA>
 %   } else {
-    &nbsp;
+            &nbsp;
 %   }
-    </TD>
+        </TD>
 % }
-  </TR>
+    </TR>
 % }
 </TABLE>
 </%method>

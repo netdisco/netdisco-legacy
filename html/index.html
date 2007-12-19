@@ -1,71 +1,21 @@
 <h1 class="pagehead">Intro</h1>
 Netdisco is an Open Source web-based network management tool.  
 <div class="box" style="float: right; width: 45%;">
-    <B>New in 0.95</B>:
+    <B>New in 0.96</B>:
     <HR class="noshade">
         <div>
         New Features:<BR>
         <pre class="featurebox">
-[]        Apache-based HTTP authentication added.
-[]        Apache2 + mod_perl2 support from Manuel Bouyer
-[1107564] Disable BULKWALK on a per device or per device type basis:
-          bulkwalk_no, arpnip_no, macsuck_no, discover_no use same syntax, see README
-[1111654] Allow wrap in config file with \ char
-[969117]  Automatically reloads config file in web front end when it changes.
-[1392968] The map key is now automatically derived from configuration (i.e., entries in node_map)
-[1107578] Port Control via VLANs
-[744598]  Inventory by subnet - IP Inventory feature improved to dump whole subnets
-[1107579] The map can be clustered by device Location fields.  Thanks to Bjorn Isaksson for the patch.
-[1393653] Modules for optional features (e.g., NBT) are now loaded when needed, not at startup.
-[1116552] The devices in the "Choose Device" box on the Admin Panel
-          are now listed in numerical order by IP address, to make
-          it easier to find the one you're looking for.
-[1116547] Contact field is now searched in the device search.  New backend
-          database field time_recent in node database, for nodes that move around a lot,
-          it's the last time this node moved *back* to this device (time_first is the
-          first time ever).  Add macsuck_only, arpnip_only, discover_only limits Get
-          SSIDs and channel from wireless base station ports, and display SSID in device
-          port, add SSID inventory and SSID search
-[1462199] Add SNMP timeout parameter to create_device()
-[1492791] Added options snmp_force_v*
-[]        pg_all, pg_run, pg_init, pg_back unified into single sql/pg script
-          This script parses netdisco.conf for database settings.
-[]        Add graph_png option to use png output from graphviz
-</pre>
+HEY CHANGE THIS BEFORE RELEASE
+        </pre>
         <BR>New Devices Supported:<BR>
         <pre class="featurebox">
-Foundry EdgeIron
-Nortel Passport/Accelar 1100 and 1200 series
-Nortel Passport/Accelar 8100 series
-Nortel Ethernet Routing Switch/Passport 1500 series
-Extreme Alpine and Summit switches
-Aruba wireless switches
-Nortel 2700 series (Airespace) wireless switches
-Nortel/Bay/Synoptics System 3000 and 281X hubs
-Juniper</pre>
+HEY CHANGE THIS BEFORE RELEASE
+        </pre>
         <BR>Bugs Fixed:<BR>
         <pre class="featurebox">
-[1094208] "problemnode" attribute on network map was being overriden by default color settings.
-[1100029] Nbtwalk whole network bug - would die if couldn't connect to a node.
-[1107565] Log file was trying to be written not in batch mode.
-[1109221] node_nbt table not created in 0.94
-[1107568] Netdisco will not work with new version of Graph.pm (0.5x) (Stéphane Bernaud)
-[1242746] The port lastchange time was incorrectly calculated and
-          could be off by the time between the device discovery and
-          the web page view (up to a day, with the default crontab).
-[1407942] IP Inventory needs to cross-reference device and device_ip
-[]        nbtwalk would crash at the end if there are no nodes to visit.
-[]        Device Inventory by Age wouldn't show the DNS name
-[1085591] Loading the "Search on Vendor or OUI" list could take a long time if your database was full of bogus nodes
-[]        Nightly backup would crash with a million archived values in node_ip
-[]        Database clean (-K or part of -B) would delete nodes on ports
-          that appeared to be uplink ports except the neighbor wasn't in
-          netdisco.
-[]        Devices discovered from topo file were required to be in database
-[1580283] Workaround for buggy Net-SNMP perl connectors: turn off
-          bulkwalk if a buggy version is detected.
-[]        Don't work with undefined values if no link speed defined.
-[]        Print errors that would have been absorbed by eval.</pre>
+HEY CHANGE THIS BEFORE RELEASE
+        </pre>
     <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
         </div>
 </div>

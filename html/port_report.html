@@ -4,7 +4,7 @@
     <INPUT TYPE="hidden" NAME="cmd" VALUE="search">
 <TABLE class="port-key">
 <TR>
-    <TD>Reason:</TD>
+    <TH>Reason:</TH>
     <TD>
         <SELECT NAME="reason" MULTIPLE>
             <OPTION VALUE=""<% (scalar @reason and grep(/\S+/,@reason)) ? '' : ' SELECTED'%>>All Reasons
@@ -15,34 +15,33 @@
     </TD>
 </TR>
 <TR>
-    <TD>Text Search:
+    <TH>Text Search:</TD>
+    <TD><INPUT TYPE="text" NAME="text" VALUE="<%$text|h%>">
         <BR><span class="small">eg. <i>blaster</i>, <i>nachi</i></span>
     </TD>
-    <TD><INPUT TYPE="text" NAME="text" VALUE="<%$text|h%>"></TD>
 </TR>
 <TR>
-    <TD>Action Type:
-        <BR><span class="small">Limit search to the enabling or disabling of ports.</span>
-    </TD>
+    <TH>Action Type:
+    </TH>
     <TD>
         <INPUT TYPE="radio" NAME="dir" VALUE="enable"<%$dir eq 'enable' ? ' CHECKED' : ''%>>Port Enable
         <INPUT TYPE="radio" NAME="dir" VALUE="disable"<%$dir eq 'disable' ? ' CHECKED' : ''%>>Port Disable
         <INPUT TYPE="radio" NAME="dir" VALUE="vlan"<%$dir eq 'vlan' ? ' CHECKED' : ''%>>VLAN Switch
         <INPUT TYPE="radio" NAME="dir" VALUE=""<%$dir eq '' ? ' CHECKED' : ''%>>All
+        <BR><span class="small">Limit search to the enabling or disabling of ports.</span>
     </TD>
 </TR>
 <TR>
-    <TD>Report Type:
-        <BR><span class="small">Choose to see a list of log entries, or to see currently disabled ports that
-        <i>also</i> have log entries.</span>
-    </TD>
+    <TH>Report Type:</TH>
     <TD>
         <INPUT TYPE="radio" NAME="type" VALUE=""<%$type eq '' ? ' CHECKED' : ''%>>Historical Log Entries&nbsp;
         <INPUT TYPE="radio" NAME="type" VALUE="now"<%$type eq 'now' ? ' CHECKED' : ''%>>Current Only <span class="smaller">(slow)</span>&nbsp;
+        <BR><span class="small">Choose to see a list of log entries, or to see currently disabled ports that
+        <i>also</i> have log entries.</span>
     </TD>
 </TR>
 <TR>
-    <TD>User:</TD>
+    <TH>User:</TH>
     <TD><SELECT NAME="user" MULTIPLE SIZE=4>
             <OPTION VALUE=""<%grep(/\S+/, @user) ? '' : ' SELECTED'%>>All Users
 % foreach my $user (sort keys %$db_users) {
@@ -52,7 +51,7 @@
     </TD>
 </TR>
 <TR>
-    <TD>Sort By:</TD>
+    <TH>Sort By:</TH>
     <TD>
         <SELECT NAME="sort" SIZE=3>
 % foreach (qw/Date User Reason Port/){
@@ -62,7 +61,7 @@
     </TD>
 </TR>
 <TR>
-    <TD>Time Frame:</TD>
+    <TH>Time Frame:</TH>
     <TD>
         <INPUT TYPE="radio" NAME="timeframe" VALUE=""<%$timeframe eq '' ? ' CHECKED' : ''%>          >All&nbsp;
         <INPUT TYPE="radio" NAME="timeframe" VALUE="today"<%$timeframe eq 'today' ? ' CHECKED' : ''%>>Today
@@ -83,7 +82,8 @@
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2 ALIGN=CENTER>
+    <TD>&nbsp;</TD>
+    <TD>
         <INPUT TYPE=SUBMIT VALUE="Generate Report" CLASS="navbutton"> 
         <A CLASS="navbutton" href="<%$r->uri%>">Reset</A>
     </TD>

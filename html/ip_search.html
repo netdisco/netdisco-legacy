@@ -1,14 +1,19 @@
-<h1 class="pagehead">IP Inventory</h1>
 <% $err %>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
+<h1 class="pagehead">Report IP Inventory</h1>
+<h2 class="subheader">Finds IP Addresses used by nodes</h2>
 <FORM ACTION="<%$r->uri%>" METHOD="GET">
 <DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="age">
-<TABLE CLASS="box" BORDER=0>
+<TABLE CLASS="ips-search">
 <TR>
-    <TD>Show :</TD>
-    <TD><INPUT TYPE="radio" name="type" value="all" <%$type eq 'all' ? ' CHECKED' : ''%>>All Entries</TD>
-    <TD> <INPUT TYPE="radio" name="type" value="age" <%$type eq 'age' ? ' CHECKED' : ''%>>Search by Age </TD>
+    <TH>Show:</TH>
+    <TD><INPUT TYPE="radio" name="type" value="all" <%$type eq 'all' ? ' CHECKED' : ''%>>All Entries
+        <INPUT TYPE="radio" name="type" value="age" <%$type eq 'age' ? ' CHECKED' : ''%>>Search by Age
+    </TD>
+</TR>
+<TR>
+    <TH>Age:</TH>
     <TD>IPs not used in
         <SELECT NAME="age_val">
 % for (1..12) {
@@ -20,29 +25,27 @@
             <OPTION VALUE="<%$_%>"<%$age_mul eq $_ ? ' SELECTED' : ''%>><%$_%>
 % }
         </SELECT>
+    <BR><SPAN CLASS="smaller">To find IP addresses that have never been used in a subnet, select "12 Years" and Check "IPs never discovered"</span>
     </TD>
 </TR>
-<TR> <TD COLSPAN=4><hr class="noshade"></TD> </TR>
 <TR>
-    <TD>Sort By :</TD>
+    <TH>Sort By:</TH>
     <TD><SELECT NAME="sort" SIZE=1>
 %       foreach my $s (sort @sorts){
             <OPTION VALUE="<%$s%>" <% $sort eq $s ? 'SELECTED' : ''%>><%$s%>
-%       } 
+%       }
         </SELECT>
     </TD>
-    <TD>&nbsp;</TD>
-    <TD>&nbsp;</TD>
 </TR>
 <TR>
-    <TD VALIGN=TOP>Subnet :</TD>
+    <TH VALIGN=TOP>Subnet:</TH>
     <TD>
         <INPUT TYPE="text" SIZE=20 NAME="subnet" VALUE="<%$subnet|h%>" TITLE="CIDR Format : 192.168.0.0/24">
-        <BR><span class="smaller">(CIDR Format : <tt>192.168.0.0/24</tt>)</span>
+        <span class="smaller">(CIDR Format : <tt>192.168.0.0/24</tt>)</span>
         <BR>
 % if (@$subnets) {
         <SELECT NAME="subnet_select">
-        <OPTION VALUE="">[Use text field]
+        <OPTION VALUE="">Enter above or select here
 %  foreach (@$subnets) {
         <OPTION VALUE="<%$_|h%>"<%$subnet eq $_ ? ' SELECTED' : ''%>><%$_%>
 %  }
@@ -51,43 +54,40 @@
         <BR>
 % } else {
     <A CLASS="navbutton" HREF="<%$r->uri|h%>?subnet_show=1">Show Subnets</A>
-    (this can take a *long* time)
+    <SPAN CLASS="smaller">(this can take a <i>long</i> time on big installs)</span>
 % }
     </TD>
-    <TD>List IPs<BR>Never Discovered :</TD>
-    <TD><INPUT TYPE="checkbox" NAME="never" VALUE=1<%$never ? ' CHECKED' : ''%>></TD>
 </TR>
 <TR>
-    <TD>Resolve IPs:</TD>
-    <TD><INPUT TYPE="radio" NAME="dns" VALUE=1<%$dns ? ' CHECKED': ''%>>On
-        <INPUT TYPE="radio" NAME="dns" VALUE=0<%!$dns ? ' CHECKED': ''%>>Off</TD>
-    <TD>Limit :</TD>
-    <TD><SELECT NAME="max" SIZE=1>
+    <TH>Options</TH>
+    <TD>List IPs never discovered <INPUT TYPE="checkbox" NAME="never" VALUE=1<%$never ? ' CHECKED' : ''%>><BR>
+        Resolve IPs
+            <INPUT TYPE="radio" NAME="dns" VALUE=1<%$dns ? ' CHECKED': ''%>>On
+            <INPUT TYPE="radio" NAME="dns" VALUE=0<%!$dns ? ' CHECKED': ''%>>Off<BR>
+        Limit
+            <SELECT NAME="max" SIZE=1>
 % for (qw/16 48 96 256 512 1024 4096 100000/){
-        <OPTION VALUE="<%$_%>"<%$max eq $_ ? ' SELECTED' : ''%>><%$_%>
+                <OPTION VALUE="<%$_%>"<%$max eq $_ ? ' SELECTED' : ''%>><%$_%>
 %}
-        </SELECT>
+            </SELECT>
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=4>
-        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Find IPs">
-    </TD>
+    <TD>&nbsp;</TD>
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Find IPs"></TD>
 </TR>
 </TABLE>
 </DIV>
 </FORM>
-Finds IP Addresses used by nodes.
-<BR>To find IP addresses that have never been used in a subnet, select "12 Years" and Check the Checkbox.
 <P>
 <h1 class="pagehead">Netbios Inventory</h1>
 % $m->comp('SELF:show_nbt') if $cmd eq 'nbt';
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="nbt">
-<TABLE CLASS="box" BORDER=0>
+<TABLE CLASS="ips-search">
 <TR>
-    <TD>Domain:</TD>
+    <TH>Domain:</TH>
     <TD><SELECT NAME="domain" MULTIPLE SIZE=8>
         <OPTION VALUE="all"<%!scalar(@domain) ? ' SELECTED' : ''%>>[All]
         <OPTION VALUE="blank" <%grep(/^\Qblank\E$/,@domain)?' SELECTED':''%>>(Blank Domain)
@@ -99,12 +99,12 @@ Finds IP Addresses used by nodes.
     </TD>
 </TR>
 <TR>
-    <TD>Archive Data:</TD>
+    <TH>Archive Data:</TH>
     <TD><INPUT TYPE="checkbox" NAME="archive" VALUE=1<%$archive ? ' CHECKED' : ''%>></TD>
 </TR>
 <TR>
     <TD COLSPAN=2><INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
-        [ <A HREF="<%$r->uri%>">Reset</A> ]
+        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
     </TD>
 </TR>
 </TABLE>
@@ -156,7 +156,7 @@ delete $nbt_domains->{''};
 my $s1 = time;
 if ($subnet_show) {
     #BROKEN ON NEWNOC maxb 4/27 -- takes too long at 96 seconds
-    $subnets = active_subnets();  
+    $subnets = active_subnets();
 }
 my $s2 = time;
 
@@ -191,7 +191,7 @@ if ($cmd eq 'age'){
                      'node_nbt.domain','node_nbt.nbname',
                      'node_nbt.active as nbtactive'],
                     { 'node_ip.ip' => \\"<< inet $safenet" }
-                   ); 
+                   );
 
 
     # Add all the device / aliases in subnet
@@ -217,15 +217,15 @@ if ($cmd eq 'age'){
         # First entry
         unless (defined $seen{$ip} ){
            $am_newest++;
-        } 
-    
+        }
+
         # Active entries, but dont overwrite device entries
         #   note that devs and aliases come first
         elsif ($r->{active} and !$seen{$ip}->{active}) {
            $am_newest++;
         }
 
-        # newest archived data 
+        # newest archived data
         elsif ( $r->{time_last} > $seen{$ip}->{time_last} ) {
            $am_newest++;
         }
@@ -301,7 +301,7 @@ if ($cmd eq 'nbt'){
 % unless (scalar @$nodes) {
 No Results Found.
 % return; }
-<TABLE BORDER=0 CELLSPACING=0 WIDTH="100%">
+<TABLE CLASS="ips-res">
     <TR>
         <TH>Domain</TH>
         <TH>Count</TH>
@@ -323,7 +323,7 @@ No Results Found.
 </TABLE>
 <% scalar(keys %$domain_count) %> Domains.
 <P>
-<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0>
+<TABLE CLASS="ips-res">
     <TR>
         <TH>Domain</TH>
         <TH>Node</TH>
@@ -333,8 +333,8 @@ No Results Found.
         <TH>Last Seen</TH>
     </TR>
 % my $last_domain = '';
-% foreach my $n (sort {($a->{domain} cmp $b->{domain}) or 
-%                      (lc($a->{nbname}) cmp lc($b->{nbname}) )} 
+% foreach my $n (sort {($a->{domain} cmp $b->{domain}) or
+%                      (lc($a->{nbname}) cmp lc($b->{nbname}) )}
 %                @$nodes){
     <TR CLASS="match-<%++$odd%2%>">
         <TD><%$last_domain ne $n->{domain} ? $m->interp->apply_escapes($n->{domain}, 'h') : '&nbsp;'%></TD>
@@ -360,7 +360,7 @@ No Results Found.
 % unless (scalar @$ips) {
 No Results Found.
 % return; }
-<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0>
+<TABLE CLASS="ips-res">
     <TR>
         <TH>Node</TH>
 % if ($arg_dns) {
@@ -385,6 +385,7 @@ if (scalar @rows > $arg_max) {
     splice(@rows,$arg_max);
     $m->out("Found ".scalar(@$ips) ." matching IPs.  Only showing $arg_max.<BR>\n");
 }
+$odd = 1;
 foreach my $row (@rows){
     my $ip = $row->{ip};
     my $dns = $row->{dns};
@@ -395,11 +396,12 @@ foreach my $row (@rows){
     my $d = $row->{domain};
     my $nbname = $row->{nbname};
     my $nbtactive = $row->{nbtactive};
+    $odd++;
 </%perl>
-<TR CLASS="match-<%++$odd%2%>">
-    <TD><A HREF="node.html?node=<%$ip|u%><%!$active ? '&archive=1' : ''%>"><%$ip%></A><%!$active ? '*' : ''%></TD>
+<TR>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="node.html?node=<%$ip|u%><%!$active ? '&archive=1' : ''%>"><%$ip%></A><%!$active ? '*' : ''%></TD>
 % if ($arg_dns) {
-    <TD>
+    <TD CLASS="match-<%$odd%2%>">
 %  if ($dns) {
 <A HREF="node.html?node=<%$dns|u%><%!$active ? '&archive=1' : ''%>"><%$dns%></A><%!$active ? '*' : ''%>
 %  } else {
@@ -408,7 +410,7 @@ foreach my $row (@rows){
     </TD>
 % }
 % if ($have_nbt_names) {
-    <TD>
+    <TD CLASS="match-<%$odd%2%>">
 %  if ($nbname) {
 \\<%$d%>\<%$nbname%><%!$nbtactive ? '*' : ''%>
 %  } else {
@@ -416,8 +418,8 @@ foreach my $row (@rows){
 %  }
     </TD>
 % }
-    <TD><%$age%><%!$active ? '*' : ''%></TD>
-    <TD><%$time_first%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$age%><%!$active ? '*' : ''%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$time_first%></TD>
 </TR>
 %}
 </TABLE>

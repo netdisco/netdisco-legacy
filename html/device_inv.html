@@ -7,9 +7,9 @@
 <A class="navbutton" HREF="#vlan">VLAN</a>
 <h2 class="subheader"><A NAME="age">By Age</A></h2>
 % $m->comp('SELF:show_age') if $cmd eq 'age';
-<TABLE BORDER=0>
+<TABLE CLASS="inv-main">
 <TR>
-    <TD>Find Devices </TD>
+    <TH>Find Devices:</TH>
     <TD>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
     <DIV>
@@ -39,7 +39,7 @@
     </TD>
 </TR>
 <TR>
-    <TD>Find Devices </TD>
+    <TH>Find Devices:</TH>
     <TD>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
     <DIV>

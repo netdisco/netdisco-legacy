@@ -26,10 +26,10 @@
             <DIV>
                 <INPUT TYPE="text" SIZE=30 NAME="s" MAXLENGTH=255 VALUE="<%$s_term|h%>">
                 <BR>
-                <INPUT TYPE="submit" class="topbutton" VALUE="Search">
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="device"<%$s_type eq 'device'? ' CHECKED' : ''%>>Device
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="node"<%$s_type eq 'node'? ' CHECKED' : ''%>>Node
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="vlan"<%$s_type eq 'vlan'? ' CHECKED' : ''%>>VLAN
+                <INPUT TYPE="submit" class="topbutton" VALUE="Search">
             </DIV>
             </FORM>
         </TD>

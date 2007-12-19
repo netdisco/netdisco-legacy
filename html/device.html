@@ -177,7 +177,8 @@ if ($ip) {
         my $addresses = $port_addresses->{$port} || [];
         foreach my $alias ( sort {sort_ip($a->{alias},$b->{alias})} @$addresses ) {
                 my $alias_ip = $alias->{alias};
-                my $alias_subnet = $alias->{subnet};
+                my $s = $alias->{subnet};
+                my $alias_subnet = defined $s ? "<A HREF=\"ip_search.html?subnet=$s\">$s</A>" : '';
                 my $dns = $alias->{dns} || '';
                 $dns =~ s/\Q$domain\E//;
                 my $alias_ip_anch = 'a_' . $alias_ip;
@@ -447,7 +448,8 @@ foreach my $item (sort keys %device_info) {
                 $dns = "<A HREF=\"node.html?node=$alias->{dns}\">$d</A>"
             }
             my $port = $alias->{port};
-            my $subnet = $alias->{subnet};
+            my $s = $alias->{subnet};
+            my $subnet = defined $s ? "<A HREF=\"ip_search.html?subnet=$s\">$s</A>" : '';
             push (@vals, "<TR><TD><A HREF=\"node.html?node=$ip\">$ip</a></TD><TD>$dns</TD><TD>$port</TD><TD>$subnet</TD></TR>\n");
         }
         $val = "<TABLE CLASS=\"dev-addr\">\n";

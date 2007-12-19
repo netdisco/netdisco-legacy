@@ -52,17 +52,20 @@ if ($cmd eq 'change'){
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
 <DIV>
 <INPUT TYPE="hidden" NAME="cmd" VALUE="change">
-<TABLE>
+<TABLE CLASS="adm-search">
 <TR>
-    <TD>Enter New Password :</TD>
+    <TH>Enter New Password:</TH>
     <TD><INPUT TYPE="PASSWORD" NAME="pw1" SIZE=10 MAXLENGTH=30></TD>
 </TR>
 <TR>
-    <TD>Enter Password Again:</TD>
+    <TH>Enter Password Again:</TH>
     <TD><INPUT TYPE="PASSWORD" NAME="pw2" SIZE=10 MAXLENGTH=30></TD>
 </TR>
+<TR>
+    <TH>&nbsp;</TH>
+    <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Change Password for <%$user|h%>"></TD>
+</TR>
 </TABLE>
-<INPUT TYPE="submit" CLASS="navbutton" VALUE="Change Password for <%$user|h%>">
 </DIV>
 </FORM>
 </%method>

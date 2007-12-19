@@ -1,7 +1,6 @@
 <h1 class="pagehead">Administration Panel</h1>
 <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0>
 <TR>
-<TD>&nbsp;&nbsp;</TD>
 <TD ALIGN=CENTER VALIGN=TOP>
     <h2 class="subheader"><A HREF="admin_dev.html">Device Control</A></h2>
     <A HREF="admin_dev.html"><IMG SRC="admin_plug.gif" ALT="Device Admin" WIDTH=158 HEIGHT=131 style="border: none; vertical-align: middle;"></A>
@@ -14,23 +13,22 @@
     <FORM ACTION="admin_dev.html" METHOD=POST> 
     <DIV>
     <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="add">
-    <TABLE CELLSPACING=2 CELLPADDING=3 CLASS="box" border=0>
+    <TABLE CLASS="adm-search">
     <TR>
-        <TD>Action :
-            <SELECT NAME="action" SIZE=3>
+        <TH>Action:</TH>
+        <TD><SELECT NAME="action" SIZE=3>
 % foreach my $c (sort keys %actions){
 %     next unless $c;
-                <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
+            <OPTION VALUE="<%$c|h%>"><%$actions{$c}->[0]%>
 % }
-            </SELECT>
-        </TD>
+            </SELECT></TD>
     </TR>
     <TR> 
+        <TH>Debug:</TH>
         <TD>
-            Debug :
             <INPUT TYPE="checkbox" NAME="debug" VALUE="yes">
             <INPUT TYPE="submit" CLASS="navbutton" VALUE="Queue New Job">
-	    <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
+            <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A>
         </TD>
     </TR>
     </TABLE>
@@ -50,23 +48,29 @@
     <P>
     <FORM ACTION="<%$r->uri%>" METHOD=GET>
     <DIV>
-        <span class="nobr">
-        <span class="u">Type:</span> <SELECT MULTIPLE NAME="type" SIZE=4>
+    <TABLE CLASS="adm-search">
+        <TR>
+            <TH>Type:</TH>
+            <TD><SELECT MULTIPLE NAME="type" SIZE=4>
 % foreach my $this_event (sort keys %$events) {
-                   <OPTION VALUE="<%$this_event%>" <% grep(/^$this_event$/,@type) ? 'SELECTED' : ''%>><%$log_events{$this_event} || $this_event%>
+                <OPTION VALUE="<%$this_event%>" <% grep(/^$this_event$/,@type) ? 'SELECTED' : ''%>><%$log_events{$this_event} || $this_event%>
 % }
-               </SELECT>
-        </span> &nbsp;&nbsp;
-        <span class="nobr">
-        <span class="u">Entries</span>:
-        <SELECT NAME="entries" SIZE=3>
+                </SELECT></TD>
+        </TR><TR>
+            <TH>Entries:</TH>
+            <TD><SELECT NAME="entries" SIZE=3>
 % foreach (qw/All 10 20 50 100 200 500/){
-            <OPTION VALUE="<% $_|h %>"<% $_ eq $entries ? ' SELECTED' : ''%>><%$_|h%>
+                <OPTION VALUE="<% $_|h %>"<% $_ eq $entries ? ' SELECTED' : ''%>><%$_|h%>
 %}
-        </SELECT>
-        </span>
-        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Log">
-        <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A> 
+                </SELECT>
+            </TD>
+        </TR>
+        <TR><TD>&nbsp;</TD>
+            <TD><INPUT TYPE="submit" CLASS="navbutton" VALUE="Refresh Log">
+                <A CLASS="navbutton" HREF="<%$r->uri%>">Reset</A> 
+            </TD>
+        </TR>
+    </TABLE>
     </DIV>
     </FORM>
 </TD></TR>

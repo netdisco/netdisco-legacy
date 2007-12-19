@@ -249,7 +249,9 @@ table.botbar TD.login { text-align:right; }
 .device-link { color:blue; }
 
 table.dev-ports, table.inv-main, 
-table.port-rep,  table.log-ent {
+table.port-rep,  table.log-ent, 
+table.devs-data, table.ips-res,
+table.adm-q {
     border-width: 1px 2px 2px 1px;
     border-spacing: 0px;
     border-style: solid solid solid solid;
@@ -258,7 +260,9 @@ table.port-rep,  table.log-ent {
 }
 
 table.dev-ports th, table.inv-main th,
-table.port-rep th,  table.log-ent th {
+table.port-rep  th, table.log-ent  th,
+table.devs-data th, table.ips-res  th,
+table.adm-q     th {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -268,8 +272,10 @@ table.port-rep th,  table.log-ent th {
     color: black;
 }
 
-table.dev-ports TD.ports-0, table.inv-main td.match-0,
-table.port-rep td.match-0,  table.log-ent td.match-0 {
+table.dev-ports td.ports-0, table.inv-main td.match-0,
+table.port-rep  td.match-0, table.log-ent  td.match-0,
+table.devs-data td.match-0, table.ips-res  td.match-0,
+table.adm-q     td.match-0 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -280,8 +286,10 @@ table.port-rep td.match-0,  table.log-ent td.match-0 {
     vertical-align: top;
 }
 
-table.dev-ports TD.ports-1, table.inv-main td.match-1,
-table.port-rep td.match-1,  table.log-ent td.match-1 {
+table.dev-ports td.ports-1, table.inv-main td.match-1,
+table.port-rep  td.match-1, table.log-ent  td.match-1,
+table.devs-data td.match-1, table.ips-res  td.match-1,
+table.adm-q     td.match-1 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -292,23 +300,27 @@ table.port-rep td.match-1,  table.log-ent td.match-1 {
     vertical-align: top;
 }
 
-table.dev-key,  table.dev-view, table.node-search,
-table.port-key, table.log-key,  table.devs-search  {
+table.dev-key,    table.dev-view, table.node-search,
+table.port-key,   table.log-key,  table.devs-search,
+table.ips-search, table.adm-search {
     border-style: solid solid solid solid;
     border-width: 1px 1px 1px 1px;
     border-color: #191512;
     background-color: #ffe7ba;
     margin-bottom:15px;
 }
-table.dev-key  th, table.dev-view th, table.node-search th, 
-table.port-key th, table.log-key  th, table.devs-search th {
+table.dev-key    th, table.dev-view   th, table.node-search th, 
+table.port-key   th, table.log-key    th, table.devs-search th,
+table.ips-search th, table.adm-search th {
     border: none;
     text-align:right;
     padding: 10px 5px 5px 5px;
     vertical-align:top;
+    font-size:110%;
 }
-table.dev-key  td, table.dev-view td, table.node-search td, 
-table.port-key td, table.log-key  td, table.devs-search td {
+table.dev-key    td, table.dev-view   td, table.node-search td, 
+table.port-key   td, table.log-key    td, table.devs-search td,
+table.ips-search td, table.adm-search td {
     border: none;
     padding: 2px 10px 2px 5px;
     vertical-align:middle;
@@ -352,9 +364,13 @@ table.dev-addr TD { border-style: none; }
 /****************************************************************
  *  DEVICE_SEARCH.HTML                                          *
  ****************************************************************/
-/* table.devs_search    -> alised */
-/* table.devs_search th -> alised */
-/* table.devs_search td -> alised */
+/* table.devs_search          -> alised */
+/* table.devs_search th       -> alised */
+/* table.devs_search td       -> alised */
+/* table.devs_data            -> alised */
+/* table.devs_data th         -> alised */
+/* table.devs_data td.match-0 -> alised */
+/* table.devs_data td.match-1 -> alised */
 
 
 /****************************************************************
@@ -430,3 +446,31 @@ table.log-ent td.entry-1 {
 /* table.log-key            -> aliased */
 /* table.log-key tr         -> aliased */
 /* table.log-key td         -> aliased */
+
+/****************************************************************
+ *  IP_SEARCH.HTML                                              *
+ ****************************************************************/
+/* table.ips-search    -> aliased */
+/* table.ips-search tr -> aliased */
+/* table.ips-search td -> aliased */
+/* table.ips-res            -> aliased */
+/* table.ips-res tr         -> aliased */
+/* table.ips-res td.match-0 -> aliased */
+/* table.ips-res td.match-1 -> aliased */
+
+/****************************************************************
+ *  ADMIN.HTML, ADMIN_USER.HTML, ADMIN_DEV.HTML, CHANGE_PW.HTML *
+ ****************************************************************/
+/* table.adm-search            -> aliased */
+/* table.adm-search tr         -> aliased */
+/* table.adm-search td         -> aliased */
+table.adm-search td.note {
+    border: none;
+    padding: 2px 10px 2px 5px;
+    vertical-align:middle;
+    font-size:85%;
+}
+/* table.adm-q                 -> aliased */
+/* table.adm-q      tr         -> aliased */
+/* table.adm-q      td.match-0 -> aliased */
+/* table.adm-q      td.match-1 -> aliased */

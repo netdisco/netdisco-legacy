@@ -163,7 +163,7 @@ if ($cmd eq 'Delete'){
 </%init>
 <%method list_users>
 <h2 class="subheader">Existing Users</h2>
-<TABLE WIDTH="100%" CELLSPACING=0 BORDER=0>
+<TABLE CLASS="adm-q">
 <TR>
     <TH>User</TH>
     <TH>Port<BR>Control</TH>
@@ -178,28 +178,17 @@ if ($cmd eq 'Delete'){
 %   my $last_on =  $user_entry->{last_on} ?
 %                   scalar(localtime($user_entry->{last_on})) 
 %                   : 'Never logged in';
-<TR CLASS="match-<% ++$odd % 2 %>">
-    <TD>
-        <B><%$user_entry->{username}%></B>
-    </TD>
-    <TD>
-        <%$user_entry->{port_control} ? 'Yes' : 'No'%>
-    </TD>
-    <TD>
-        <%$user_entry->{admin} ? 'Yes' : 'No'%>
-    </TD>
-    <TD>
-        <%$user_entry->{ldap} ? 'Yes' : 'No'%>
-    </TD>
-    <TD>
-        <%$user_entry->{fullname} |h%>
-    </TD>
-    <TD>
-        <%$user_entry->{note} |h%>
-    </TD>
-    <TD><span class="nobr"><%scalar localtime($user_entry->{creation})%></span><BR>
+%   $odd++;
+<TR>
+    <TD CLASS="match-<%$odd%2%>"><B><%$user_entry->{username}%></B></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$user_entry->{port_control} ? 'Yes' : 'No'%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$user_entry->{admin} ? 'Yes' : 'No'%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$user_entry->{ldap} ? 'Yes' : 'No'%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$user_entry->{fullname} |h%></TD>
+    <TD CLASS="match-<%$odd%2%>"><%$user_entry->{note} |h%></TD>
+    <TD CLASS="match-<%$odd%2%>"><span class="nobr"><%scalar localtime($user_entry->{creation})%></span><BR>
         <span class="nobr"><%$last_on%></span></TD>
-    <TD>
+    <TD CLASS="match-<%$odd%2%>">
         <FORM ACTION="<%$r->uri%>" METHOD=POST>
         <DIV>
         <INPUT TYPE="hidden" NAME="user" VALUE="<%$user_entry->{username}|h%>">
@@ -219,50 +208,49 @@ if ($cmd eq 'Delete'){
 <FORM ACTION="<%$r->uri%>" METHOD=POST>
 <DIV>
 <INPUT TYPE="HIDDEN" NAME="cmd" VALUE="<%$action%>">
-<TABLE CLASS="box" CELLSPACING=0 CELLPADDING=3 BORDER=0>
+<TABLE CLASS="adm-search">
 <TR>
-    <TD>Username:</TD>
+    <TH>Username:</TH>
 % if ($action eq 'Add') {
     <TD><INPUT TYPE="text" NAME="user" SIZE="20" MAXLENGTH="50"></TD>
-    <TD>Lower case, alphanumeric only.</TD>
+    <TD CLASS="note">Lower case, alphanumeric only.</TD>
 % } else {
     <TD><INPUT TYPE="HIDDEN" NAME="user" VALUE="<%$arg_user|h%>"><%$arg_user%></TD>
-    <TD>&nbsp;</TD>
+    <TD CLASS="note">&nbsp;</TD>
 % }
 </TR>
 <TR>
-    <TD>Password:</TD>
+    <TH>Password:</TH>
     <TD><INPUT TYPE="password" NAME="pw" SIZE="20" MAXLENGTH="50"></TD>
-    <TD>Case Sensitive.</TD>
+    <TD CLASS="note">Case Sensitive.</TD>
 </TR>
 <TR>
-    <TD>LDAP:</TD>
+    <TH>LDAP:</TH>
     <TD><INPUT NAME="ldap" TYPE="checkbox" VALUE="1" <%$user->{ldap} ? 'CHECKED' : ''%>></TD>
-    <TD>Use LDAP for Login</TD>
+    <TD CLASS="note">Use LDAP for Login</TD>
 </TR>
 <TR>
-    <TD>Full Name:</TD>
+    <TH>Full Name:</TH>
     <TD><INPUT TYPE="text" NAME="fullname" SIZE=35 MAXLENGTH=255 VALUE="<%$user->{fullname} |h%>"></TD>
-    <TD>(optional)</TD>
+    <TD CLASS="note">(optional)</TD>
 </TR>
 <TR>
-    <TD>Note:</TD>
+    <TH>Note:</TH>
     <TD><INPUT TYPE="text" NAME="note" SIZE=35 MAXLENGTH=255 VALUE="<%$user->{note} |h%>"></TD>
-    <TD>(optional)</TD>
+    <TD CLASS="note">(optional)</TD>
 </TR>
 <TR>
-    <TD>Port Control:</TD>
+    <TH>Port Control:</TH>
     <TD><INPUT NAME="port" TYPE="checkbox" VALUE="1" <%$user->{port_control} ? 'CHECKED' : ''%>></TD>
-    <TD>Gives user ability to turn non-uplink ports on and off.</TD>
+    <TD CLASS="note">Gives user ability to turn non-uplink ports on and off.</TD>
 <TR>
-    <TD>Admin : </TD>
+    <TH>Admin:</TH>
     <TD><INPUT NAME="admin" TYPE="checkbox" VALUE="1" <%$user->{admin} ? 'CHECKED' : ''%>></TD>
-    <TD>Gives user ability to control device and users.</TD>
+    <TD CLASS="note">Gives user ability to control device and users.</TD>
 </TR>
 <TR>
-    <TD COLSPAN=3>
-        <P> 
-        <P> 
+    <TH>&nbsp;</TH>
+    <TD COLSPAN=2>
         <INPUT TYPE="submit" CLASS="navbutton" VALUE="<%$action%> User">
 % if ($action eq 'Change') {
         <A CLASS="navbutton" HREF="<%$r->uri%>">Don't Change</A>

@@ -86,7 +86,7 @@
 </TR>
 </TABLE>
 </FORM>
-<h2 class="subheader"><A NAME="reports">Device Reports</A></h2>
+<h1 class="pagehead"><A NAME="reports">Device Reports</A></h1>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
     <DT>
@@ -503,14 +503,14 @@ my $time2 = time;
     No Results Found.
 %    return;
 % }
- <TABLE cellspacing=0 cellpadding=3 WIDTH="100%">
+<TABLE CLASS="devs-data">
     <TR>
         <TH>Device</TH>
 %    foreach my $col (sort keys %$where){
 %       my $colview = $col;
 %       $colview =~ s/^[^.]+\.//;
 %       $colview = $colview eq 'count' ? 'Number of Active<BR>Nodes Connected' : $colview;
-    <TH><%$colview%></TH>
+        <TH><%$colview%></TH>
 %    }
     </TR>
 <%perl>
@@ -525,10 +525,9 @@ foreach my $result (@sort_matches){
    $dns = defined $dns ? $dns : $ip;
    $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
    $dns .= " ($port)" if defined $port;
-   $count++;
 </%perl>
-    <TR CLASS="match-<% $count % 2%>">
-    <TD><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&amp;port=' : ''%><% $port|u %>"><% $dns %></A></TD>
+    <TR>
+        <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&amp;port=' : ''%><% $port|u %>"><% $dns %></A></TD>
 <%perl>
     foreach my $col (sort keys %$where){
         # Trim off table name for column
@@ -540,14 +539,12 @@ foreach my $result (@sort_matches){
             $val = "<A HREF=\"node.html?node=$val\">$val</A>";
         }
 </%perl>
-   <TD><%$val%></TD>
+       <TD CLASS="match-<%$count%2%>"><%$val%></TD>
 %    }
     </TR>
-%}
-  </TABLE>
-<P>
+% $count++; }
+</TABLE>
 <% $count %> matches.
-<P>
 </%method>
 %#
 %# title()
