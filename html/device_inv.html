@@ -121,13 +121,15 @@ Total: <%$count%>
             <TH>Count</TH>
         </TR>
 <%perl>
-$count = 0; $odd = 1;
+$odd = 1;
 foreach my $row (@m[$h .. $m_half+$h]) {
     if ($old_vendor ne $row->{os}) { 
         $odd++;
         $old_vendor = $row->{os};
     }
     $count += $row->{count};
+    # need either os or os_ver defined
+    next unless defined $row->{os} or defined $row->{os_ver};
 </%perl>
         <TR>
             <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' |h%></A></TD>
