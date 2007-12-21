@@ -17,25 +17,25 @@
     <TD COLSPAN=4><h2 class="subheader">Advanced Search</h2></TD>
 </TR>
 <TR>
-    <TD> IP: </TD>
+    <TH>IP:</TH>
     <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="ip" VALUE="<%$ip%>"></TD>
-    <TD>Location:</TD>
+    <TH>Location:</TH>
     <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="loc" VALUE="<%$loc%>"></TD>
 </TR>
 <TR>
-    <TD> DNS: </TD>
+    <TH>DNS:</TH>
     <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="dns" VALUE="<%$dns%>"> </TD>
-    <TD>Description: </TD>
+    <TH>Description:</TH>
     <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="desc" VALUE="<%$desc%>"> </TD>
 </TR>
 <TR>
-    <TD> Vendor:</TD>
+    <TH>Vendor:</TH>
     <TD><SELECT MULTIPLE NAME="vendors" size=<%scalar(keys %$vendors) > $winsize ? $winsize : scalar(keys %$vendors)%>>
 %       foreach my $vendor (sort keys %$vendors){
             <OPTION VALUE="<%$vendor%>" <% grep(/^$vendor$/,@vendors) ? 'SELECTED' : ''%>><%$vendor%>
 %       } 
         </SELECT></TD>
-    <TD> Model:</TD>
+    <TH>Model:</TH>
     <TD><SELECT MULTIPLE NAME="models" SIZE=5>
 %       foreach my $model (sort {lc($a) cmp lc($b)} keys %$models){
             <OPTION VALUE="<%$model%>" <% grep(/^$model$/,@models) ? 'SELECTED': ''%>><%$model%>
@@ -43,46 +43,51 @@
         </SELECT></TD>
 </TR>
 <TR>
-    <TD> Layer:</TD>
-    <TD><SELECT MULTIPLE NAME="layers" size=<%$winsize%>>
+    <TH>Layer:</TH>
+    <TD><SPAN CLASS="small">
 %   foreach (1..7){ my $num=$_;
-            <OPTION VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'SELECTED' : ''%>><%$num%>
+        <INPUT NAME="layers" TYPE="checkbox" VALUE="<%$num%>" <% grep(/^$num$/,@layers) ? 'CHECKED' : ''%>><%$num%>
 %   }
-        </SELECT>
-    </TD>
-    <TD>OS:</TD>
-    <TD VALIGN=TOP>
-        <span class="u">type</span> <SELECT MULTIPLE NAME="os" SIZE=<%scalar(keys %$oses) > $winsize ? $winsize : scalar(keys %$oses)%>>
+    </SPAN></TD>
+    <TH>OS:</TH>
+    <TD><SELECT MULTIPLE NAME="os" SIZE=<%scalar(keys %$oses) > $winsize ? $winsize : scalar(keys %$oses)%>>
 % foreach my $this_os (sort keys %$oses) {
-                   <OPTION VALUE="<%$this_os%>" <% grep(/^$this_os$/,@os) ? 'SELECTED' : ''%>><%$this_os%>
+            <OPTION VALUE="<%$this_os%>" <% grep(/^$this_os$/,@os) ? 'SELECTED' : ''%>><%$this_os%>
 % }
-               </SELECT>
-        <span class="u">version</span> <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
+        </SELECT>
+        <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
 % foreach my $this_os_ver (sort keys %$os_vers) {
-                      <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
+            <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
 % }
-                  </SELECT>
+        </SELECT>
     </TD>
 </TR>
 <TR>
-    <TD> sysName: </TD>
+    <TH>sysName:</TH>
     <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="name" VALUE="<%$name%>"></TD>
-    <TD VALIGN=TOP> Exact Match: </TD>
+    <TH>Exact Match:</TH>
     <TD><INPUT TYPE="radio" NAME="exact" VALUE="1"<% $exact ? 'CHECKED' : ''%>>On
         <INPUT TYPE="radio" NAME="exact" VALUE="0"<% !$exact ? 'CHECKED' : ''%>>Off
     </TD>
 </TR>
 <TR>
-    <TD COLSPAN=2>
-        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
-        <A class="navbutton" href="<%$r->uri%>">Reset</A>
-    </TD>
-    <TD VALIGN=TOP>Match Scope: </TD>
+    <TH>VLAN:</TH>
+    <TD><INPUT TYPE="text" size=3 maxlength=5 NAME="vlan" VALUE="<%$vlan%>"></TD>
+    <TH>Match Scope:</TH>
     <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
         <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
         <BR>
         <span class="small"><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</span>
     </TD>
+</TR>
+<TR>
+    <TD>&nbsp;</TD>
+    <TD>
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
+        <A class="navbutton" href="<%$r->uri%>">Reset</A>
+    </TD>
+    <TD>&nbsp;</TD>
+    <TD>&nbsp;</TD>
 </TR>
 </TABLE>
 </FORM>
@@ -156,7 +161,10 @@ my $os_vers = sql_column('device',['distinct(os_ver)','true']);
 
 $arg_exact = $exact;
 
-# Specific Searches
+# Hack for VLANs - make it a specific search
+if (length $vlan and !defined $specific) {
+    $specific = 'vlan';
+}
 
 #   Clear non-specific terms
 if (defined $specific and length($specific)){
@@ -244,19 +252,19 @@ if ($specific =~ /alias/i){
 } elsif ($specific =~ /vlan/i){
     $title = "Device ports carrying Vlan $vlan";
     $where->{type}++;
-    $where->{name}++;
+    $where->{description}++;
     $where->{speed}++;
     $matches = sql_rows(
-        'device_port_vlan v, device d, device_port p',
-        ['d.ip','d.dns','v.port','p.name','p.speed'],
+        'device_port_vlan v, device_vlan dv, device d, device_port p',
+        ['d.ip','d.dns','v.port','p.name','p.speed','dv.description'],
         {'d.ip' => \'v.ip', 'v.ip' => \'p.ip',
-            'v.port' => \'p.name', 'v.vlan' => \"$vlan"}
+            'v.port' => \'p.name', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
     );
     map {$_->{type} = 'Trunk'} @$matches;
     my $matches_access = sql_rows(
-        'device_port p, device d',
-        ['d.ip','d.dns','p.port','p.speed'],
-        {'d.ip' => \'p.ip', 'p.vlan' => \"$vlan"}
+        'device_port p, device d, device_vlan dv',
+        ['d.ip','d.dns','p.port','p.speed','dv.description'],
+        {'d.ip' => \'p.ip', 'p.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
     );
     map {$_->{type} = 'Access'} @$matches_access;
     push (@$matches, @$matches_access);
