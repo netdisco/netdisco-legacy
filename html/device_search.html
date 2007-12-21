@@ -91,6 +91,13 @@
 </TR>
 </TABLE>
 </FORM>
+<h2 class="subheader">Hints</h2>
+<UL class="square">
+    <LI>Matches on <span class="u">DNS</span>,<span class="u">IP</span>, or All may be matching addresses <i>inside</i> those devices.
+        Check inside the device for the matching entries.
+    <LI>If you want to find blank entries, search on "is null" or conversely "is not null"
+    <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
+</UL>
 <h1 class="pagehead"><A NAME="reports">Device Reports</A></h1>
 <FORM ACTION="<%$r->uri%>" METHOD="get">
 <DL>
@@ -116,13 +123,6 @@
 </DL>
 </FORM>
 
-<h2 class="subheader">Hints</h2>
-<UL class="square">
-    <LI>Matches on <span class="u">DNS</span> or <span class="u">IP</span> may be matching aliases <i>inside</i> those devices.
-        Check inside the device for the matching entries.
-    <LI>If you want to find blank entries, search on "is null" or conversely "is not null"
-    <LI>You can select multiple for Model,Vendor,Layer, and OS by holding down CTRL as you click.
-</UL>
 <!-- took <%$time2 - $time1%> seconds to load -->
 <%args>
 @models   => ()
