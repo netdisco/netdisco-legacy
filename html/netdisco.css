@@ -310,7 +310,7 @@ table.ips-search, table.adm-search {
     margin-bottom:15px;
 }
 table.dev-key    th, table.dev-view   th, table.node-search th, 
-table.port-key   th, table.log-key    th, table.devs-search th,
+table.port-key   th, table.log-key    th,
 table.ips-search th, table.adm-search th {
     border: none;
     text-align:right;
@@ -319,7 +319,7 @@ table.ips-search th, table.adm-search th {
     font-size:110%;
 }
 table.dev-key    td, table.dev-view   td, table.node-search td, 
-table.port-key   td, table.log-key    td, table.devs-search td,
+table.port-key   td, table.log-key    td, table.devs-search td, 
 table.ips-search td, table.adm-search td {
     border: none;
     padding: 2px 10px 2px 5px;
@@ -364,13 +364,19 @@ table.dev-addr TD { border-style: none; }
 /****************************************************************
  *  DEVICE_SEARCH.HTML                                          *
  ****************************************************************/
-/* table.devs_search          -> alised */
-/* table.devs_search th       -> alised */
-/* table.devs_search td       -> alised */
-/* table.devs_data            -> alised */
-/* table.devs_data th         -> alised */
-/* table.devs_data td.match-0 -> alised */
-/* table.devs_data td.match-1 -> alised */
+/* table.devs-search          -> alised */
+/* table.devs-search td       -> alised */
+table.devs-search th {
+    border: none;
+    text-align:right;
+    padding: 10px 5px 5px 5px;
+    vertical-align:middle;
+    font-size:110%;
+}
+/* table.devs-data            -> alised */
+/* table.devs-data th         -> alised */
+/* table.devs-data td.match-0 -> alised */
+/* table.devs-data td.match-1 -> alised */
 
 
 /****************************************************************
