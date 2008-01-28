@@ -930,6 +930,13 @@ database.
     cd /usr/local/netdisco
     netdisco -O
 
+If you run into errors because of UTF-8 or other exotic characters
+in oui.txt you may need to add this line to F<netdisco.conf>.
+
+    db_Pg_env = PGCLIENTENCODING => iso8859-1
+
+You may also try changing the above from C<iso8859-1> to C<UTF-8>.
+
 =over
 
 =item [10.1] Updating oui.txt (Optional)
