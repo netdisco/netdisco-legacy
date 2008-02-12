@@ -70,7 +70,7 @@ SNMP:
 
 oui:
 	echo "Downloading oui.txt from ieee.org"
-	wget http://standards.ieee.org/regauth/oui/oui.txt
+	wget -N http://standards.ieee.org/regauth/oui/oui.txt
 	./netdisco -O
 
 .PHONY: back docs $(SNMPLIBS) api_doc count snmp oui
