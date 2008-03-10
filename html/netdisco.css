@@ -95,6 +95,7 @@ ul.square  { list-style-type:square; }
     background-color:#D0BDBE;
     padding: 2px;
     border:1px solid #7B6F5A;
+    border-width: 1px 2px 2px 1px;
 }
 
 .smlbutton {

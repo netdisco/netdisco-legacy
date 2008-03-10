@@ -83,6 +83,7 @@
         </TR>
 <%perl>
 foreach my $row (@m[$h .. $m_half+$h]) {
+	next unless defined($row);
         # Change class if we change vendor
         if ($old_vendor ne $row->{vendor}){
             $odd++;
@@ -122,10 +123,12 @@ Total: <%$count%>
         </TR>
 <%perl>
 $odd = 1;
+my $old_os = '';
 foreach my $row (@m[$h .. $m_half+$h]) {
-    if ($old_vendor ne $row->{os}) { 
+    next unless defined($row);
+    if ($old_os ne $row->{os}) { 
         $odd++;
-        $old_vendor = $row->{os};
+        $old_os = $row->{os};
     }
     $count += $row->{count};
     # need either os or os_ver defined
@@ -147,21 +150,21 @@ Total: <%$count%>
 % if ($show_loc) {
 <& SELF:show_loc &>
 % } else {
-<A CLASS="navbutton" HREF="<%$r->uri%>?show_loc=1#location">Inventory by Location</A>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_loc=1#location">Show Inventory by Location</A>
 % }
 
 <h2 class="subheader"><A NAME="ssid">Wireless SSID Inventory</A></h2>
 % if ($show_ssid) {
 <& SELF:show_ssid &>
 % } else {
-<A CLASS="navbutton" HREF="<%$r->uri%>?show_ssid=1#ssid">Wireless SSID Inventory</a>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_ssid=1#ssid">Show Wireless SSID Inventory</a>
 % }
 
 <h2 class="subheader"><A NAME="vlan">VLAN Inventory</A></h2>
 % if ($show_vlan) {
 <& SELF:show_vlan &>
 % } else {
-<A CLASS="navbutton" HREF="<%$r->uri%>?show_vlan=1#vlan">Retreive VLAN Inventory</A>
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_vlan=1#vlan">Show VLAN Inventory</A>
 % }
 <%args>
 $cmd      => undef
@@ -352,7 +355,7 @@ $count = 0; $odd = 1; my $old_vlan = -1;
 %        $odd++;
 %    }
         <TR CLASS="match-<%$odd%2%>">
-            <TD><A HREF="device_search.html?specific=vlan&vlan=<%$row->{vlan}%>"><%$row->{vlan} |h%></A></TD>
+            <TD><A HREF="device_search.html?specific=vlan_dev&vlan=<%$row->{vlan}%>" TITLE="All devices with this VLAN"><%$row->{vlan} |h%></A> [<A HREF="device_search.html?vlan=<%$row->{vlan}|u%>&amp;specific=vlan" TITLE="All ports with this vlan">ports</A>]</TD>
             <TD><%$row->{description}%></TD>
             <TD><%$row->{count}%></TD>
         </TR>
