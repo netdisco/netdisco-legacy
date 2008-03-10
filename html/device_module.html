@@ -2,7 +2,7 @@
 <p>Note: this is a development view.  It will hopefully change substantially
 before it gets any links to it.  Plus this means I can say you aren't allowed
 to laugh at how useless it looks.</p>
-<ul>
+<ul class="mktree" id="modules">
 % foreach my $item (@{$modules{root}}) {
 <& SELF:dump_module, id=>$item &>
 % }
@@ -63,9 +63,9 @@ if ($ip) {
 	    # (HP may have gotten this wrong, but that's
 	    # reality...)
 	    if ($module->{pos}) {
-		${$modules{$module->{parent}}{children}}[$module->{pos}] = $module->{index};
+		${$modules{$module->{parent}}{children}{$module->{class}}}[$module->{pos}] = $module->{index};
 	    } else {
-		push(@{$modules{$module->{parent}}{children}}, $module->{index});
+		push(@{$modules{$module->{parent}}{children}{$module->{class}}}, $module->{index});
 	    }
 	} else {
 	    push(@{$modules{root}}, $module->{index});
@@ -102,7 +102,7 @@ $id
 %  if ($mod->{serial}) {
 [serial: <%$mod->{serial}%>]
 %  }
-/ <% $mod->{type} %> / <% $mod->{model} %>
+/ <% $mod->{type} %> / <% $mod->{vendor} %> <% $mod->{model} %>
 %  if ($mod->{fru}) {
 <b>[FRU]</b>
 %  }
@@ -111,10 +111,20 @@ $id
 %  #print join(" | ", keys %$mod);
 %  if ($modules{$id}{children}) {
 <ul>
-%  foreach my $kid (@{$modules{$id}{children}}) {
-%    if (defined($kid)) {
-       <& SELF:dump_module, id=>$kid &>
+%  my @kidtypes = keys %{$modules{$id}{children}};
+%  foreach my $kidtype (@kidtypes) {
+%#%    if (@kidtypes > 1) {
+%#       <li><% $kidtype %>s
+%#       <ul>
+%#%    }
+%    foreach my $kid (@{$modules{$id}{children}{$kidtype}}) {
+%      if (defined($kid)) {
+         <& SELF:dump_module, id=>$kid &>
+%      }
 %    }
+%#%    if (@kidtypes > 1) {
+%#       </ul></li>
+%#%    }
 %  }
 </ul>
 %  }
