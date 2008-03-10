@@ -1,0 +1,3279 @@
+<%args>
+$ip
+$typ	=> 'image';
+</%args>
+<%init>
+use GD;
+</%init>
+<%shared>
+    my %fp = ('cevChassis29408TF'     => { 
+		  IMAGE =>  "c29408tf.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '76',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '99',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '122',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '145',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '168',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '191',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '214',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '237',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'mtrj',
+			  X_POS  => '305',
+			  Y_POS  => '50',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '342',
+			  Y_POS  => '50',
+		      },
+		  }, 
+	      }, 
+              'cevChassis29408TT'     => { 
+                  IMAGE =>  "c29408tt.gif",
+                  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '76',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '99',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '122',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '145',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '168',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '191',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '214',
+			  Y_POS  => '50',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '237',
+			  Y_POS  => '50',
+		      },
+                      "GigabitEthernet0/1" => { 
+                          ORIENT => "orient_down",
+                          TYPE   => 'tx',
+			  X_POS  => '342',
+                          Y_POS  => '50',
+                      },
+                  }, 
+              }, 
+	      'cevChassisCat295024G'     => { 
+		  IMAGE =>  "c295024g.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '87',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '87',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '107',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '107',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '127',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '127',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '147',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '147',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '167',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '167',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '187',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '187',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '250',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '250',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '270',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '270',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '290',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '290',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '310',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '310',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '330',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '330',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '350',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '350',
+			  Y_POS  => '41',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'gbic',
+			  X_POS  => '471',
+			  Y_POS  => '42',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'gbic',
+			  X_POS  => '586',
+			  Y_POS  => '42',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat2950t24'     => { 
+		  IMAGE =>  "c295024t.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '77',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '97',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '117',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '137',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '157',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '177',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '197',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '217',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '244',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '264',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '284',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '304',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '324',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '344',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '364',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '384',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '411',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '431',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '451',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '471',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '491',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '511',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '531',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '551',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '593',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '615',
+			  Y_POS  => '45',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat356024PS'     => { 
+		  IMAGE =>  "c356024_2p.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '115',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '115',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '135',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '135',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '155',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '155',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '175',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '175',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '195',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '195',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '215',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '215',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '296',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '296',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '316',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '316',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '336',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '336',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '356',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '356',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '376',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '376',
+			  Y_POS  => '41',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '396',
+			  Y_POS  => '25',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '396',
+			  Y_POS  => '41',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '549',
+			  Y_POS  => '38',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '592',
+			  Y_POS  => '38',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat356048PS'     => { 
+		  IMAGE =>  "c356048_4p.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/25" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/27" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/29" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/30" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/31" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/32" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/33" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/34" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/35" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/36" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/37" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/38" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/39" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/40" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/41" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/42" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/43" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/44" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/45" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/46" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/47" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/48" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '47',
+		      },
+		      "GigabitEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '610',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '610',
+			  Y_POS  => '47',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat3560G48PS'     => { 
+		  IMAGE =>  "c3560g48_4p.gif",
+		  PORTS => {
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/25" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/27" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/29" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/30" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/31" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/32" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/33" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/34" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/35" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/36" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/37" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/38" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/39" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/40" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/41" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/42" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/43" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/44" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/45" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/46" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/47" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet0/48" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/49" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/50" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '47',
+		      },
+		      "GigabitEthernet0/51" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '614',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/52" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '614',
+			  Y_POS  => '47',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat3750Ge12Sfp'     => { 
+		  IMAGE =>  "c3750g_12s.gif",
+		  PORTS => {
+		      "GigabitEthernet1/0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '319',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '341',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '363',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '385',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '420',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '442',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '464',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '486',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '521',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '543',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/11" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '565',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '587',
+			  Y_POS  => '40',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat295012'     => { 
+		  IMAGE =>  "c295012.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '77',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '97',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '117',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '137',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '157',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '177',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '197',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '217',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '245',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '265',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '285',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '305',
+			  Y_POS  => '45',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat295024sx'   => {
+		  IMAGE =>  "c295024sx.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '77',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '97',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '117',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '137',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '157',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '177',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '197',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '217',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '244',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '264',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '284',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '304',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '324',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '344',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '364',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '384',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '411',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '431',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '451',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '471',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '491',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '511',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '531',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '551',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '585',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '625',
+			  Y_POS  => '44',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat295024'     => { 
+		  IMAGE =>  "c295024.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '77',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '97',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '117',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '137',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '157',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '177',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '197',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '217',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '244',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '264',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '284',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '304',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '324',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '344',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '364',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '384',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '411',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '431',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '451',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '471',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '491',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '511',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '531',
+			  Y_POS  => '45',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '551',
+			  Y_POS  => '45',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat375024TS'     => { 
+		  IMAGE =>  "c3750g_24_4.gif",
+		  PORTS => {
+		      "GigabitEthernet1/0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '128',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '128',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '148',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '148',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '168',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '168',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '188',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '188',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '208',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '208',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '228',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '228',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '302',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '302',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '322',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '322',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '342',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '342',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '362',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '362',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '382',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '382',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '402',
+			  Y_POS  => '40',
+		      },
+		      "GigabitEthernet1/0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '402',
+			  Y_POS  => '56',
+		      },
+		      "GigabitEthernet1/0/25" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '498',
+			  Y_POS  => '55',
+		      },
+		      "GigabitEthernet1/0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '520',
+			  Y_POS  => '55',
+		      },
+		      "GigabitEthernet1/0/27" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '542',
+			  Y_POS  => '55',
+		      },
+		      "GigabitEthernet1/0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '564',
+			  Y_POS  => '55',
+		      },
+		  }, 
+	      }, 
+	      'cevChassisCat3750G24PS'     => {
+                  IMAGE =>  "c3750g24_4p.gif",
+		  PORTS => {
+		      "GigabitEthernet1/0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '440',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '440',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '460',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '460',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '480',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '480',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '500',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '500',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '520',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '520',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '540',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '540',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/25" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '584',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet1/0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '584',
+			  Y_POS  => '48',
+		      },
+		      "GigabitEthernet1/0/27" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '621',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet1/0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '621',
+			  Y_POS  => '48',
+		      },
+		  }, 
+              },
+              'cevChassisCat3750G48PS'     => { 
+                  IMAGE =>  "c375048_4p.gif",
+		  PORTS => {
+		      "GigabitEthernet1/0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/25" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/27" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/29" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/30" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/31" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/32" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/33" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/34" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/35" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/36" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/37" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/38" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/39" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/40" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/41" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/42" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/43" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/44" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/45" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/46" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/47" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '28',
+		      },
+		      "GigabitEthernet1/0/48" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet1/0/49" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet1/0/50" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '47',
+		      },
+		      "GigabitEthernet1/0/51" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '610',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet1/0/52" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '610',
+			  Y_POS  => '47',
+		      },
+		  }, 
+              }, 
+              'cevChassisCat3560G24PS'     => { 
+                  IMAGE =>  "c356024g_4p.gif",
+		  PORTS => {
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/25" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '578',
+			  Y_POS  => '47',
+		      },
+		      "GigabitEthernet0/27" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '614',
+			  Y_POS  => '26',
+		      },
+		      "GigabitEthernet0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'sfp',
+			  X_POS  => '614',
+			  Y_POS  => '47',
+		      },
+		  }, 
+              }, 
+	      #XXX all port locations need to be adjusted
+              'cevChassisCat3560E24PD' => {
+                  IMAGE =>  "c3580_24_PoE.gif",
+                  PORTS => {
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '288',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '308',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '328',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '348',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '368',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '388',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '45',
+		      },
+		      "GigabitEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '29',
+		      },
+		      "GigabitEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '45',
+		      },
+		      # Gig 0/25-28 overlap with Te0/1 and Te0/2.
+		      # This code doesn't handle that kind of overlap.
+		      "TenGigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'xenpak',
+			  X_POS  => '578',
+			  Y_POS  => '26',
+		      },
+		      "TenGigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'xenpak',
+			  X_POS  => '578',
+			  Y_POS  => '47',
+		      },
+                  }
+              },
+              'catalyst355048'     => { 
+                  IMAGE =>  "c355048.gif",
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '72',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '92',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '112',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/9" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/10" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '152',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/11" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/12" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '172',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/13" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/14" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '192',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/15" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/16" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '212',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/17" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/18" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '238',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/19" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/20" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '258',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/21" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/22" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '278',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/23" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/24" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '298',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/25" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/26" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '318',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/27" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/28" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '338',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/29" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/30" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '358',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/31" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/32" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '378',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/33" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/34" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '404',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/35" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/36" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '424',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/37" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/38" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '444',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/39" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/40" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '464',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/41" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/42" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '484',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/43" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/44" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '504',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/45" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/46" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '524',
+			  Y_POS  => '44',
+		      },
+		      "FastEthernet0/47" => { 
+			  ORIENT => 'orient_up',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '28',
+		      },
+		      "FastEthernet0/48" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '544',
+			  Y_POS  => '44',
+		      },
+		      "GigabitEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'gbic',
+			  X_POS  => '586',
+			  Y_POS  => '12',
+		      },
+		      "GigabitEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'gbic',
+			  X_POS  => '586',
+			  Y_POS  => '48',
+		      },
+		  },
+	      },
+	      'cevChassisCat35608PC' => {
+		  IMAGE => 'c3560_8_1.gif',
+		  PORTS => {
+		      "FastEthernet0/1" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '113',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/2" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '132',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/3" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '151',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/4" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '170',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/5" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '189',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/6" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '208',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/7" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '227',
+			  Y_POS  => '57',
+		      },
+		      "FastEthernet0/8" => { 
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '246',
+			  Y_POS  => '57',
+		      },
+		      # This port is either SFP or tx, depending.
+		      # The device_module table can tell us, but
+		      # there's no current provision for this kind
+		      # of lookup.
+		      "GigabitEthernet0/1" => {
+			  ORIENT => 'orient_down',
+			  TYPE   => 'tx',
+			  X_POS  => '398',
+			  Y_POS  => '56',
+		      },
+		  },
+	      },
+        );
+my %portimgs = (
+		'mtrj' => {
+		    'orient_down' => {
+			'up'=> 'fx_green.gif',
+			'down'=> 'fx_gray.gif',
+		    },
+		},
+		'tx' => {
+		    'orient_down' => {
+			'up'=> 'green.gif',
+			'down'=> 'gray.gif',
+		    },
+		    
+		    'orient_up' => {
+			'up' => 'inv_green.gif',
+			'down' => 'inv_gray.gif',
+		    },
+		},
+		'sfp' => {
+		    'orient_down' => {
+			'up'=> 'sfp_green.gif',
+			'down'=> 'sfp_gray.gif',
+			'empty'=> 'sfp_empty.gif',
+		    },
+		},
+		'gbic' => {
+		    'orient_down' => {
+			'up' => 'gbic_lx_green.gif',
+			'down' => 'gbic_lx_gray.gif',
+		    },
+		},
+		'xenpak' => {
+		    'orient_down' => {
+			'up' => '10gb_sfp_type1_green.gif',
+			'down' => '10gb_sfp_type1_gray.gif',
+			'empty' => '10gb_sfp_empty_gray.gif',
+		    },
+		}
+		);
+
+</%shared>
+
+
+%#
+%# FrontPanel Image
+%#
+<%perl>
+
+#my $myimage = $m->cache( { namespace  => 'FrontpanelImage' } )->get($ip);
+#my $myimage = $m->cache->get($ip);
+my $myimage;
+
+# build the datastructure
+# Find the chassis image
+# NOTE: actually need a list of chassis for stacked devices
+my $chassisid = sql_scalar('device_module',['index'],{'ip'=>$ip,'class'=>'chassis'});
+my $chassistype = sql_scalar('device_module',['type'],{'ip'=>$ip,'index'=>$chassisid});
+my $fpimgpath = $netdisco::CONFIG{fp_imagedir};
+
+if (! defined $fpimgpath )
+{
+    $m->print("<!-- no front panel because no fp_imagedir in netdisco.conf -->");
+    return;
+}
+
+if (! defined $fp{$chassistype} )
+{
+    $m->print("<!-- chassis $chassistype not in fp database -->");
+    #if the chassis is not in the fp database, exit now and waste no more time
+    return;
+}
+
+my $chassisimage = $fpimgpath . "/" . $fp{$chassistype}{IMAGE};
+if (! -r $chassisimage )
+{
+    $m->print("<!-- chassis $chassistype is in the database but $chassisimage does not exist or is not readable -->");
+    return;
+}
+
+my $ports = sql_rows('device_port',['*'],{'ip'=>$ip}) || [];         
+#my $ports = sql_rows('device_port',['*'],{'ip'=>$ip}) || [];
+my $port;
+
+# If the port is in the fp database, add the image and coordinates
+foreach $port (@$ports)
+{
+    if (defined($port->{port}) && defined($fp{$chassistype}{PORTS}{$port->{port}}{TYPE})   )
+    {
+        my $type;
+	my $module;
+	if($port->{type} eq 'e1000Empty') {
+	    $type='empty';
+	} elsif ($port->{type} eq 'e1000BaseT') {
+            if ($port->{up} eq 'up') {
+                $type='tx-up';
+	    } else {
+                if ($port->{up_admin} eq 'up') {
+                    $type='tx-down';
+                } else {
+                    $type='tx-off';
+                }
+            }
+	} elsif ($port->{type} eq 'e1000BaseSX' || $port->{type} eq 'e1000BaseLX' || $port->{type} eq 'other') {
+            if ($port->{up} eq 'up') {
+                $type='sfp-up';
+	    } else {
+                if ($port->{up_admin} eq 'up') {
+                    $type='sfp-down';
+                } else {
+                    $type='sfp-off';
+                }
+            }
+	} elsif ($port->{type} eq 'ethernet-csmacd') {
+	    $module=sql_hash('device_module',['type','parent'],{ ip=>$ip, name=>$port, class=>'port'});
+	    if ($module->{type} eq 'cevPortCatEthernet') {
+	    }
+        }
+	$port->{IMAGE} = $portimgs{$fp{$chassistype}{PORTS}{$port->{port}}{TYPE}}{$fp{$chassistype}{PORTS}{$port->{port}}{ORIENT}}{($port->{type} eq 'e1000Empty') ? "empty" : $port->{up}};
+        $port->{X_POS} = $fp{$chassistype}{PORTS}{$port->{port}}{X_POS};
+        $port->{Y_POS} = $fp{$chassistype}{PORTS}{$port->{port}}{Y_POS};
+    }
+}
+
+if ($typ eq "map")
+{
+</%perl>
+<HR>
+<IMG SRC="frontpanel.html?ip=<%$ip |u%>" USEMAP="#FrontPanel" TITLE="<%$ip |u%>" ALT="Front Panel">
+<map id="FrontPanel" name="FrontPanel">
+<%perl>
+    foreach $port (@$ports)
+    {
+        if (defined($fp{$chassistype}{PORTS}{$port->{port}}{TYPE}))
+        {
+	    my $odd;
+            my $html_port = $m->interp->apply_escapes($port->{port}, 'u');
+	    next unless $port->{IMAGE};	# protect against misconfigured database
+	    my $img_file = $fpimgpath . "/" . $port->{IMAGE};
+	    next unless (-r $img_file);
+	    my $portimage = GD::Image->newFromGif($img_file);
+            my ($portwidth,$portheight) = $portimage->getBounds();
+</%perl>
+<area href="device.html?ip=<% $ip %>&amp;port=<% $port->{port} |u %>"
+ shape="rect" coords="<% $port->{X_POS} %>,<% $port->{Y_POS} %>,<% $port->{X_POS} + $portwidth %>,<% $port->{Y_POS} + $portheight %>" alt="<% $port->{port} %>"
+%	    if (defined($netdisco::CONFIG{fp_overlib}) && $netdisco::CONFIG{fp_overlib} == 'true') {
+ onmouseover="return overlib('<table width=200 cellspacing=0 cellpadding=3 border=0><colgroup><col width=50><col width=*></colgroup>\
+<tr class=match-<% ++$odd % 2 %>><td align=right>Descr<td align=left>&nbsp;<% $port->{name}|h %></td></tr>\
+<tr class=match-<% ++$odd % 2 %>><td align=right>VLAN<td align=left>&nbsp;<% $port->{vlan} %></td></tr>\
+<tr class=match-<% ++$odd % 2 %>><td align=right>Speed<td align=left>&nbsp;<% $port->{speed} %></td></tr>\
+<tr class=match-<% ++$odd % 2 %>><td align=right>Duplex<td align=left>&nbsp;<% $port->{duplex} %>/<% $port->{duplex_admin} %></td></tr>\
+%		if ($port->{type} eq 'e1000Empty'){
+<tr class=match-<% ++$odd % 2 %>><td align=right>SFP<td align=left>&nbsp;Empty</td></tr>\
+%		}
+%		if ($port->{remote_ip}) {
+%		    # there's logic in device.html to deal with this well
+ <tr class=match-<% ++$odd % 2 %>><td align=right>Neighbor</td><td align=left>&nbsp;<% $port->{remote_ip} %></td></tr>\
+%		}
+</table>',DELAY,250,CAPTION,'<% $port->{port} %>',CAPTIONSIZE,'12pt',CAPCOLOR,'#f5deb3',BGCOLOR,'#191970');"
+ onmouseout="return nd();"
+%            }
+>
+%        }
+%    }
+</map>
+<HR>
+<%perl>
+} else {
+    # create image
+    
+    # Start with the chassis as the base
+    my $gd = GD::Image->newFromGif($chassisimage);
+    
+    foreach my $port (@$ports)
+    {
+        if ($port->{port} && defined($fp{$chassistype}{PORTS}{$port->{port}}{TYPE}))
+        {
+            
+            my $portimage = GD::Image->newFromGif($fpimgpath . "/" . $port->{IMAGE});
+            my ($portwidth,$portheight) = $portimage->getBounds();
+            
+            $gd->copy($portimage,$port->{X_POS},$port->{Y_POS},0,0,$portwidth,$portheight);
+        }
+    }
+    $myimage=$gd->gif();
+    	
+    # Actually I would like to set this to one day and use a conditional expiration if the switch has been refreshed
+    #$m->cache( { namespace  => 'FrontpanelImage' } )->set($ip, $myimage, '5 min');
+    #$m->cache->set($ip, $myimage, '5 min');
+    
+    ## Set content type
+    $r->content_type("image/gif");
+    $m->clear_buffer;
+    # Output the image 
+    $m->print($myimage);
+    #$m->abort;
+}
+</%perl>
