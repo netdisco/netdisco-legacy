@@ -574,7 +574,7 @@ foreach my $port (sort sort_port @$db_ports){
 </SPAN></TD>
 % }
 % # Connected Devices Column
-        <TD CLASS="<%$rowclass%>" ALIGN=LEFT>
+        <TD CLASS="<%$rowclass%> connected">
 <%perl>
     # CDP speaking device connected
     if (defined $remote_ip) {
