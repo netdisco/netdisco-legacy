@@ -1413,8 +1413,7 @@ See L<bulkwalk_no> for syntax.
 =item snmpforce_v3
 
 LIST:STRING.   A comma separated list of devices.  Forces matching
-devices to use SNMPv3.  SNMPv3 is not fully supported yet but
-could probably be made to work.
+devices to use SNMPv3.
 
 See L<bulkwalk_no> for syntax.
 
@@ -1430,6 +1429,55 @@ retry, Default 1000000 micro-seconds = 1 second.
 =item snmpretries
 
 INT. Settings for 'Retries' field passed to SNMP::Session
+
+=item v3_users
+
+LIST.  The users to try for SNMPv3 (like L<community> for SNMPv1/SNMPv2)
+
+=item v3_users_rw
+
+LIST.  The users to try for SNMPv3 read-write access.
+
+=item v3_user
+STRING.  Colon seperated values: user:auth/enc[:authproto:authpass[:privproto:privpass]]
+
+user is the SNMPv3 username, as listed in v3_users or v3_users_rw.
+
+auth/enc specifies what levels of authorization/privacy you are configuring.
+The possible values are:
+
+=over
+
+=item none
+
+only use noAuthNoPriv, the user has no authorization or privacy configured.
+
+=item auth
+
+Use authNoPriv - authorization but no privacy.
+
+=item enc
+
+Use authPriv - authorization and privacy for all requests.
+
+=item auth,enc
+
+Use authNoPriv for read and authPriv for write.
+
+=back
+
+authproto is the authorization protocol, and can be any that the underlying
+library supports, e.g., SHA or MD5.
+
+authpass is the authorization pass phrase.
+
+privproto is the privacy proto, e.g., DES or AES.
+
+privpass is the privacy pass phrase.
+
+No support is currently provided for providing hexadecimal keys directly.
+Such support might use the prefix "0x" to identify a hex key, so be careful
+how you choose your pass phrases.
 
 =back
 

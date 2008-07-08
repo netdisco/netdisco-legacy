@@ -316,6 +316,7 @@ sub config {
                         macsuck_no arpnip_no discover_no
                         macsuck_only arpnip_only discover_only
                         snmpforce_v1 snmpforce_v2 snmpforce_v3 db_tables
+                        v3_users v3_users_rw
                         ldap_server /;
 
     # these will make a reference to a hash:
@@ -328,8 +329,12 @@ sub config {
     # Multiple arrays
     my @array_refs_mult = qw/node_map/;
 
+    # Reference to a hash; each line is an entry in the hash,
+    #  with format key:value
+    my @hash_refs_mult = qw/v3_user/;
+
     # Add custom types from caller outside netdisco
-    foreach my $type qw(booleans array_refs hash_refs array_refs_mult) {
+    foreach my $type qw(booleans array_refs hash_refs array_refs_mult hash_refs_mult) {
 	eval "push(\@$type, \@{\$args{config}{\$type}});";
     }
 
@@ -340,6 +345,9 @@ sub config {
     # Clear out config values where can build up
     foreach my $a (sort @array_refs_mult) {
         $CONFIG{$a} = [];
+    }
+    foreach my $a (@hash_refs_mult) {
+        $CONFIG{$a} = {};
     }
 
     while(my $config = shift @configs){
@@ -433,6 +441,13 @@ sub config {
             my $oldvalue = $CONFIG{$var};
             push (@$oldvalue, $value);
             $value = $oldvalue;
+        }
+
+        # Multiple hash refs
+        if (grep /^\Q$var\E$/,@hash_refs_mult) {
+            my ($key, $val) = split(/\s*:\s*/, $value, 2);
+            $value = $CONFIG{$var};
+            $value->{$key} = $val;
         }
 
         # Comma separated lists that map to defined hash keys.

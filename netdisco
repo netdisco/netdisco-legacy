@@ -24,7 +24,7 @@ use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h/;  # for Admin Daemon
 use Compress::Zlib;
 use netdisco qw/:all/;  
-tryuse('SNMP::Info', ver => '1.07', die => 1);
+tryuse('SNMP::Info', ver => '1.09', die => 1);
 
 $| = 1;
 
@@ -1183,7 +1183,7 @@ If C<VersionForce> is true, no fallback to snmpv1 will happen.
 
 sub create_device {
     my %args = @_;
-    return undef unless defined $args{DestHost} and defined $args{Community};
+    return undef unless defined $args{DestHost} and (defined $args{Community} || defined($args{SecLevel}));
 
     # Default Values
     $args{Debug}         = $DEBUG;
@@ -1210,13 +1210,16 @@ sub create_device {
     delete $args{Class}        if exists $args{Class};
     delete $args{VersionForce} if exists $args{VersionForce};
    
-    my $print_comm = $args{Community};
+    my $print_comm = $args{Community} || $args{SecName} || "?";
     # If it's vlan, do last letter @ vlan
     if ($print_comm =~ /\@/){
         $print_comm =~ s/^.*(.\@\d+)$/$1/;  # VLAN Comm
     } else {
         # else do last letter
         $print_comm = substr($print_comm,-1,1);
+    }
+    if ($args{Context}) {
+        $print_comm .= "/" . $args{Context};
     }
     printf("  create_device(%s,%s,%s,%s,bw:%s)\n",
            $args{DestHost},$print_comm, $version_force ? "$args{Version}*" : $args{Version}, 
@@ -1507,30 +1510,7 @@ sub get_device {
         printf("  get_device(%s) - Connecting using cached info: %s/%s/%s\n",$hostname,$dev_ip,substr($comm,-1,1),$version)
             if $DEBUG;
 
-        my %args = ('DestHost'  => $dev_ip,
-                    'Community' => $comm,
-                    'Version'   => $version, 
-                   );
-
-        # Check for bulkwalk disabling
-        $args{BulkWalk} = 0 if in_device($row,$CONFIG{bulkwalk_no});
-
-        # Check for forced SNMP Verison
-        if (in_device($row,$CONFIG{snmpforce_v1}) ) {
-            print "  Forcing SNMPv1 by config file.\n";
-            $args{Version}      = 1;
-            $args{VersionForce} = 1;
-        }
-        if (in_device($row,$CONFIG{snmpforce_v2}) ) {
-            print "  Forcing SNMPv2c by config file.\n";
-            $args{Version}      = 2;
-            $args{VersionForce} = 1;
-        }
-        if (in_device($row,$CONFIG{snmpforce_v3}) ) {
-            print "  Forcing SNMPv3 by config file.\n";
-            $args{Version}      = 3;
-            $args{VersionForce} = 1;
-        }
+        my %args = get_snmp_args($row, $version, $comm);
 
         $device = create_device(%args);
                                
@@ -1548,37 +1528,23 @@ sub get_device {
 
     # Stored community not available, or didn't work. 
     if (!defined $device){
+        my ($version) = check_snmp_version($hostname);
 
-        my %args = ('DestHost'  => $hostname);
-
-        # Check for bulkwalk disabling
-        my $no_bw = in_device($hostname,$CONFIG{bulkwalk_no});
-        $args{BulkWalk} = 0 if $no_bw;
-
-        # Check for forced SNMP Verison
-        if (in_device($hostname,$CONFIG{snmpforce_v1}) ) {
-            print "  Forcing SNMPv1 by config file.\n" if $DEBUG;
-            $args{Version}      = 1;
-            $args{VersionForce} = 1;
-        }
-        if (in_device($hostname,$CONFIG{snmpforce_v2}) ) {
-            print "  Forcing SNMPv2c by config file.\n" if $DEBUG;
-            $args{Version}      = 2;
-            $args{VersionForce} = 1;
-        }
-        if (in_device($hostname,$CONFIG{snmpforce_v3}) ) {
-            print "  Forcing SNMPv3 by config file.\n" if $DEBUG;
-            $args{Version}      = 3;
-            $args{VersionForce} = 1;
+        my $list;
+        if ($version == 3) {
+            # XXX should get_community do this instead?
+            $list = $CONFIG{v3_users};
+        } else {
+            $list = get_community('ro',$hostname);
         }
 
         # Try each community string
-        foreach my $config_comm (@{get_community('ro',$hostname)}) {
+        foreach my $config_comm (@{$list}) {
 
             # Don't bother retrying the failed one.
             next if (defined $comm and ($config_comm eq $comm));
 
-            $args{Community} = $config_comm;
+            my %args = get_snmp_args($hostname, $version, $config_comm);
 
             $device = create_device(%args);
 
@@ -1598,6 +1564,106 @@ sub get_device {
     return $device;
 }
 
+=item check_snmp_version(device,[version])
+
+Check for a forced SNMP version by the configuration file arguments
+snmpforce_v1, snmpforce_v2, snmpforce_v3
+=cut
+
+sub check_snmp_version {
+    my($device,$version) = @_;
+    my $versionForce;
+    my $dev_ip;
+    if (ref($device)) {
+        $dev_ip = $device->{ip};
+    } else {
+        $dev_ip = $device;
+    }
+
+    if (!defined($version)) {
+        $version = $CONFIG{snmpver};
+    }
+    $versionForce = 0;
+
+    # Check for forced SNMP Verison
+    if (in_device($device,$CONFIG{snmpforce_v1}) ) {
+        print "! [$dev_ip]  Forcing SNMPv1 by config file.\n";
+        $version      = 1;
+        $versionForce = 1;
+    }
+    if (in_device($device,$CONFIG{snmpforce_v2}) ) {
+        print "! [$dev_ip]  Forcing SNMPv2c by config file.\n";
+        $version      = 2;
+        $versionForce = 1;
+    }
+    if (in_device($device,$CONFIG{snmpforce_v3}) ) {
+        print "! [$dev_ip]  Forcing SNMPv3 by config file.\n";
+        $version      = 3;
+        $versionForce = 1;
+    }
+    return ($version, $versionForce);
+}
+
+=item get_snmp_args(device,version,comm/user,rw)
+
+Returns the args used to connect to device with version
+
+=cut
+
+sub get_snmp_args {
+    my($device,$version,$user,$rw) = @_;
+    my $dev_ip;
+    if (ref($device)) {
+        $dev_ip = $device->{ip};
+    } else {
+        $dev_ip = $device;
+    }
+    my %args = ('DestHost' => $dev_ip,
+                'Version' => $version);
+    # Check for bulkwalk disabling
+    $args{BulkWalk} = 0 if in_device($device,$CONFIG{bulkwalk_no});
+
+    my($forceversion, $force) = check_snmp_version($device);
+    if ($force) {
+        $args{Version} = $forceversion;
+        $args{VersionForce} = 1;
+    } else {
+        $args{Version} = $version;
+    }
+
+    my %l2a = qw(none noAuthNoPriv auth authNoPriv enc authPriv priv authPriv);
+    my %pref = qw(noAuthNoPriv 0 authNoPriv 1 authPriv 2);
+    my %rpref = reverse %pref;
+    if ($args{Version} == 3) {
+        my $v3user = $CONFIG{v3_user}{$user};
+        return () unless defined($v3user);
+        my ($levels, $authproto, $authpass, $privproto, $privpass) = split(/\s*:\s*/, $v3user);
+        my @levels = split(/\s*,\s*/, $levels);
+        @levels = map {$l2a{$_} || $_} @levels;
+        my @prefs = sort map {$pref{$_}} @levels;
+        my $level;
+        if ($rw) {
+            $level = $rpref{$prefs[$#prefs]};
+        } else {
+            $level = $rpref{$prefs[0]};
+        }
+        $args{SecName} = $user;
+        $args{SecLevel} = $level;
+        if ($level =~ /^auth/) {
+            $args{AuthProto} = $authproto;
+            $args{AuthPass} = $authpass;
+        }
+        if ($level eq 'authPriv') {
+            $args{PrivProto} = $privproto;
+            $args{PrivPass} = $privpass;
+        }
+    } else {
+        $args{Community} = $user;
+    }
+
+    return %args;
+}
+
 =item get_device_rw(device[,version])
 
 Returns a SNMP::Info object for a given device, using the Read-Write Community
@@ -1608,18 +1674,21 @@ Returns undef or -1 on error.
 =cut
 
 sub get_device_rw {
-    my ($host,$ver) = @_;
+    my ($hostname,$ver) = @_;
     my $device;
 
-    # Check for bulkwalk disabling
-    my $no_bw = in_device($host,$CONFIG{bulkwalk_no});
+    my ($version) = check_snmp_version($hostname, $ver);
 
-    foreach my $comm (@{get_community('rw',$host)}) {
-        %args = ('DestHost'  => $host,
-                 'Community' => $comm,
-                 'Version'   => $ver
-                );
-        $args{BulkWalk} = 0 if $no_bw;
+    my $list;
+    if ($version == 3) {
+        # XXX should get_community do this instead?
+        $list = $CONFIG{v3_users};
+    } else {
+        $list = get_community('rw',$hostname);
+    }
+
+    foreach my $comm (@{$list}) {
+        %args = get_snmp_args($hostname, $version, $comm, 1);
         
         $device = create_device(%args);
 
@@ -1835,7 +1904,6 @@ sub macsuck{
         my $ver      = $device->snmp_ver();
         my $comm     = $device->snmp_comm();
         my $obj      = $device->class();
-        my $bulkwalk = $device->bulkwalk();
 
         # Get list of VLANs currently in use by ports
         my %vlans;
@@ -1843,6 +1911,16 @@ sub macsuck{
             my $vlan = $i_vlan->{$key};
             $vlans{$vlan}++;
         }
+
+        # Create a separate SNMP session to talk to the device
+        # for each VLAN.  We update the session using
+        # update() to change the community string
+        # (or context) to "connect" to each VLAN.
+        my %args = get_snmp_args($hostname, $ver, $comm);
+        $args{VersionForce} = 1;        # use exactly this version
+                                        # since we know it works
+        $args{Class} = $obj;
+        my $vlan_device = create_device(%args);
     
         # For each VLAN, connect and then macsuck
         foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
@@ -1870,21 +1948,16 @@ sub macsuck{
                 next;
             }
 
+            unless (defined $vlan_device && $vlan_device != -1){
+                print "[$hostname] Could not connect for VLANs!\n";
+            }
+
             print "[$hostname] VLAN:$vlan_name ($vlan) :\n";
 
-            # feeding all the connect info as a speedup, instead of
-            #   retrying all the versions and communities
-            my %args = ('DestHost'  => $hostname,
-                        'Community' => $comm . '@' . $vlan,
-                        'Version'   => $ver,
-                        'Class'     => $obj,
-                       );
-            $args{BulkWalk} = $bulkwalk if defined $bulkwalk;
-            my $vlan_device = create_device(%args);
-
-            unless (defined $vlan_device && $vlan_device != -1){
-                print "[$hostname] VLAN:$vlan_name ($vlan) !\n";
-                next;
+            if ($ver == 3) {
+                $vlan_device->update(Context => "vlan-$vlan");
+            } else {
+                $vlan_device->update(Community => $comm . '@' . $vlan);
             }
             $nodes += walk_fwtable($vlan_device,\%dbports,$interfaces,$fw_cache);
         }
@@ -2194,7 +2267,7 @@ sub port_control {
     }
 
     # SNMP connect
-    my $snmp_ver = $db_dev->{snmp_ver} || 2;
+    my $snmp_ver = $db_dev->{snmp_ver} || $CONFIG{snmpver} || 2;
     my $device = get_device_rw($ip,$snmp_ver);
 
     unless (defined $device){
