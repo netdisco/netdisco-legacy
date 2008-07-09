@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+#
+#
+use Digest::MD5;
+use Digest::SHA1;
+
+if (@ARGV != 2) {
+    die "usage: $0 [MD5|SHA] 'pass phrase'\n";
+}
+
+$alg = $ARGV[0];
+$phrase = $ARGV[1];
+
+if ($alg eq 'MD5') {
+    $hash = Digest::MD5->new();
+} elsif ($alg eq 'SHA') {
+    $hash = Digest::SHA1->new();
+} else {
+    die "Unknown hash algorithm $alg\n"
+}
+
+$len = 0;
+$total = 1048576;
+while ($len + length($phrase) < $total) {
+    $hash->add( $phrase );
+    $len += length( $phrase );
+}
+if ($len != $total) {
+    $hash->add( substr( $phrase, 0, $total - $len ) );
+}
+print $hash->hexdigest(), "\n";
