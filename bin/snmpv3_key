@@ -1,26 +1,42 @@
 #!/usr/bin/perl
 #
+# Implement the algorithm in Appendix A of RFC 3414, to
+# a) generate a master key from a passphrase, and
+# b) generate a localized key from said master key, optionally
+#    generating an engineid.
+#
+# This script is useful when configuring SNMP agents
+# which can only be configured with a key (master or
+# localized) but you want to use a passphrase.
 #
 use Digest::MD5;
 use Digest::SHA1;
 
-if (@ARGV != 2) {
-    die "usage: $0 [MD5|SHA] 'pass phrase'\n";
+use strict;
+
+if (@ARGV < 2 || @ARGV > 3) {
+    die "usage: $0 [MD5|SHA] 'pass phrase' [engineid|'generate']\n";
 }
 
-$alg = $ARGV[0];
-$phrase = $ARGV[1];
+my $alg = $ARGV[0];
+my $phrase = $ARGV[1];
+my $engineid = $ARGV[2] || '';
 
-if ($alg eq 'MD5') {
-    $hash = Digest::MD5->new();
-} elsif ($alg eq 'SHA') {
-    $hash = Digest::SHA1->new();
-} else {
-    die "Unknown hash algorithm $alg\n"
+sub hasher($) {
+    my $alg = shift;
+
+    if ($alg eq 'MD5') {
+	return Digest::MD5->new();
+    } elsif ($alg eq 'SHA') {
+	return Digest::SHA1->new();
+    } else {
+	die "Unknown hash algorithm $alg\n"
+    }
 }
 
-$len = 0;
-$total = 1048576;
+my $hash = hasher($alg);
+my $len = 0;
+my $total = 1048576;
 while ($len + length($phrase) < $total) {
     $hash->add( $phrase );
     $len += length( $phrase );
@@ -28,4 +44,27 @@ while ($len + length($phrase) < $total) {
 if ($len != $total) {
     $hash->add( substr( $phrase, 0, $total - $len ) );
 }
-print $hash->hexdigest(), "\n";
+my $master_key = $hash->digest();
+print "Master key: ", map {sprintf("%02x", $_)} unpack("C*", $master_key);
+print "\n";
+
+if ($engineid) {
+    my $enginestr;
+    if ($engineid eq 'generate') {
+	$engineid = '';
+	for (1..20) { # why 20? dunno.
+	    $engineid .= sprintf("%02x", rand(256) )
+	}
+    }
+    if ($engineid =~ /^(?:0x)?((?:[\da-f]{2})+)$/) {
+	$enginestr = pack("H*", $1);
+    } else {
+	die "Can't parse Engine ID $engineid\n";
+    }
+    $hash = hasher($alg);
+    $hash->add( $master_key );
+    $hash->add( $enginestr );
+    $hash->add( $master_key );
+    print "Engine ID: ", $engineid, "\n";
+    print "Localized key: ", $hash->hexdigest(), "\n";
+}
