@@ -1979,6 +1979,11 @@ sub sql_query {
                 } elsif (ref $value eq 'ARRAY'){
                     # Let's not modify passed argument.
                     my @val_copy = @$value;
+		    # Empty list?  Instead of forming a malformed
+		    # query, just return nothing.
+		    if (!@val_copy) {
+			return undef;
+		    }
                     $con = 'IN';
                     my $newvalue = "(";
                     foreach my $inval (@val_copy){
