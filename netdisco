@@ -563,6 +563,13 @@ sub topo_load_file {
                 print "    Can't resolve $to in $line!\n";
                 next;
             }
+
+            # Resolve the destination to the canonical IP if it's
+            # in our database.
+            my $root_ip = root_device($to_ip);
+            if ($root_ip) {
+                $to_ip = $root_ip;
+            }
         
             # Save Link info both directions
             push (@{$DeviceTopo{$dev}},   {'from' => $dev,  'from_port' => $from_port, 'from_name' => $from, 'to' => $to_ip, 'to_port' => $to_port,   'to_name' => $to});
@@ -1714,7 +1721,10 @@ sub get_subnets {
 
     my $ip_netmask   = $device->ip_netmask();
 
-    sql_begin();
+    # We need to lock the table, because multiple processes
+    # could update the same row when discovering different
+    # devices.
+    sql_begin(['subnets']);
     foreach my $ip (keys %$ip_netmask){
         next if $ip eq '0.0.0.0';
         # Local Host
