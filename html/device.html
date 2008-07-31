@@ -626,11 +626,14 @@ foreach my $port (sort sort_port @$db_ports){
 
     # Show SSIDs
     my $portssids = $port->{ssids} || [];
+    my $ssidbr = defined($remote_ip);
     foreach my $ssid (@$portssids) {
         my $id = $ssid->{ssid};
         my $bcast = $ssid->{broadcast} ? "(B)" : "";
+        $m->out("<BR>\n") if $ssidbr;
+        $ssidbr = 1;
 </%perl>
-        <BR>SSID: <%$id%> <%$bcast%>
+        SSID: <%$id%> <%$bcast%>
 <%perl>
     }
 
