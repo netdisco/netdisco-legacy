@@ -592,6 +592,13 @@ sub topo_load_file {
             } else {
                 #print "    $line ($dev)\n" if $DEBUG;
             }
+            # Resolve the destination to the canonical IP if it's
+            # in our database.
+            my $root_ip = root_device($dev);
+            if ($root_ip) {
+                $dev = $root_ip;
+            }
+        
             $DeviceTopo{$dev} = [] unless defined $DeviceTopo{$dev};
         }
     }
