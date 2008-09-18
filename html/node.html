@@ -522,10 +522,10 @@ if ($specific eq 'multips') {
     # order by count desc;
 
     $matches = sql_rows('node_ip i, node n left join device d on d.ip = n.switch',
-                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))'],
+                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))','n.oui'],
                         {'n.mac' => \'i.mac', 'i.active' => 1, 'n.active' => 1},
                         undef,
-                        'group by n.mac, n.switch, n.port, d.dns having count(distinct(i.ip)) > 1'
+                        'group by n.mac, n.switch, n.port, d.dns, n.oui having count(distinct(i.ip)) > 1'
                        );
     $ran_query++;
 }
