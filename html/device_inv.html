@@ -73,7 +73,7 @@
 %    } @$model_count;
 % $count = 0; $odd = 1;
 % my $m_half = int(scalar @m / 2);
-% foreach my $h (0,$m_half) {
+% foreach my $h (0,1) {
     <TD>
         <TABLE class="inv-main">
         <TR>
@@ -82,7 +82,7 @@
             <TH>Count</TH>
         </TR>
 <%perl>
-foreach my $row (@m[$h .. $m_half+$h]) {
+foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
 	next unless defined($row);
         # Change class if we change vendor
         if ($old_vendor ne $row->{vendor}){
@@ -113,7 +113,7 @@ Total: <%$count%>
 % } @$os_count;
 % $count = 0; $odd = 1;
 % $m_half = int(scalar @m / 2);
-% foreach my $h (0,$m_half) {
+% foreach my $h (0,1) {
     <TD>
         <TABLE CLASS="inv-main">
         <TR>
@@ -124,7 +124,7 @@ Total: <%$count%>
 <%perl>
 $odd = 1;
 my $old_os = '';
-foreach my $row (@m[$h .. $m_half+$h]) {
+foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
     next unless defined($row);
     if ($old_os ne $row->{os}) { 
         $odd++;
@@ -340,7 +340,7 @@ $count = 0; $odd = 1; my $old_vlan = -1;
 <TABLE CLASS="inv-cols">
 <TR>
 % my $m_half = int(scalar @m / 2);
-% foreach my $h (0,$m_half) {
+% foreach my $h (0,1) {
     <TD>
         <TABLE CLASS="inv-main">
         <TR>
@@ -348,7 +348,7 @@ $count = 0; $odd = 1; my $old_vlan = -1;
             <TH>VLAN Name</TH>
             <TH>Count</TH>
         </TR>
-% foreach my $row (@m[$h .. $m_half+$h]) {
+% foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
 %    # Change color if we change VLANs
 %    if ($row->{vlan} != $old_vlan) {
 %        $old_vlan = $row->{vlan};
