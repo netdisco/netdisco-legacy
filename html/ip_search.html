@@ -176,7 +176,7 @@ if ($cmd eq 'age'){
     if ($type eq 'age') {
         $age_val = 2 unless $age_val =~ m/^\d+$/;
         $age_mul =~ s/[^a-z ]+//g;
-        @col = ("(age(now(),time_last) >= interval '$age_val $age_mul') as is_old");
+        @col = ("(age(now(),node_ip.time_last) >= interval '$age_val $age_mul') as is_old");
     }
 
     $subnet .= '/24' unless $subnet =~ /\//;
@@ -195,7 +195,7 @@ if ($cmd eq 'age'){
 
 
     # Add all the device / aliases in subnet
-    $col[0] =~ s/time_last/last_discover/;
+    $col[0] =~ s/node_ip\.time_last/last_discover/;
     my $devs_seen = sql_rows('device', ['age(now(),last_discover) as age',
                                         'extract(epoch from creation) as time_first','true as active',
                                         'extract(epoch from last_discover) as time_last','ip', @col],
