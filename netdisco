@@ -981,7 +981,7 @@ sub parse_oui {
     sql_do(qq/DELETE FROM oui WHERE true/);
     print "Schlopping contents of oui.txt to database.\n";
     my %OUI;
-    open (OUI, "<$oui_file") or die "Can't open OUI. $!\n";
+    open (OUI, '<:encoding(iso-8859-1)', $oui_file) or die "Can't open OUI: $!\n";
     while (my $line = <OUI>){
         chomp $line;
         if ($line =~ /^(.{2}-.{2}-.{2})\s+\(hex\)\s+(.*)\s*$/i){

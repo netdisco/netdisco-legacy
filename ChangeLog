@@ -41,6 +41,7 @@ Features:
     + []        Allow override of the Net-SNMP bugginess detection
                 introduced in 0.95 with "bulkwalk_off: false" (Stefan Radman)
     + [ 1850405 ] Adding Users via CLI - no "Full Name" option
+    + [ 2076970 ] Import oui.txt as ISO-8859-1 (dwpoon)
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
