@@ -313,7 +313,7 @@ sub config {
 
     # these will make array refs of their comma separated lists
     my @array_refs = qw/community community_rw mibdirs bulkwalk_no
-                        macsuck_no arpnip_no discover_no
+                        macsuck_no arpnip_no discover_no ignore_interfaces
                         macsuck_only arpnip_only discover_only
                         snmpforce_v1 snmpforce_v2 snmpforce_v3 db_tables
                         v3_users v3_users_rw

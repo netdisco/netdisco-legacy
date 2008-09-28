@@ -2553,6 +2553,11 @@ sub store_interfaces {
             $DEBUG and print "  Ignoring $if (no port mapping)\n";
             next;
         }
+        if (defined $CONFIG{ignore_interfaces} and
+            (scalar (grep {$port =~ m/$_/} @{$CONFIG{ignore_interfaces}}) > 0) ) {
+            $DEBUG and print "  Ignoring $if ($port) (requested in configuration)\n";
+            next;
+        }
         $store{type}  = $i_type->{$if};
         if(exists $i_ignore->{$if}) {
             $DEBUG and print "  Ignoring $if ($port) ($store{type})\n";

@@ -1093,6 +1093,18 @@ to avoid discovering user devices.
 See L<bulkwalk_no> for syntax, except that only hostnames, IP addresses
 and subnets are valid.
 
+=item ignore_interfaces
+
+LIST:STRING  If present, device ports matching any of the items in this list
+will be ignored by the discovery process. Note this may have side effects -
+connected devices and nodes on those ports will in turn also not be
+discovered.
+
+Each item in the list is separated by a comma and may be a Perl regular
+expression. A useful example for this option might be:
+
+ EOBC,unrouted VLAN,StackPort,Control Plane Interface,SPAN (S|R)P Interface,StackSub
+
 =item ignore_private_nets
 
 Not fully implemented.

@@ -43,6 +43,7 @@ Features:
     + [ 1850405 ] Adding Users via CLI - no "Full Name" option
     + [ 2076970 ] Import oui.txt as ISO-8859-1 (dwpoon)
     + [ 2081320 ] Search by Age fails to limit the search (dwpoon)
+    + []        Add ignore_interfaces configuration option
 
 Bugfixes:
     * [1605351] admin_dev.html could take a long time to load.
