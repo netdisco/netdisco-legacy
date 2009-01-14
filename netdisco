@@ -2164,17 +2164,27 @@ sub dispatcher {
             }
             while (1) {
 		set_status("worker %d looking for %s job", $i + 1, $action);
-		# I wanted to do "FOR UPDATE LIMIT 1", to limit how many rows get
-		# locked, but postgresql doesn't permit this, so we just lock
-		# the whole table while we're looking for a row.
-                sql_begin(['process']);
+		# Limit how many rows get locked, use offset to try and prevent
+                # collision.  Don't use ORDER BY as we want unordered data to
+                # spread requests across network.
+                sql_begin();
+                my $sql = qq/LIMIT 1 OFFSET $i FOR UPDATE/;
                 my $dev = sql_hash('process',['controller','action','device'],
                         {'controller' => $controller,
                          'action' => $action,
-                         'status' => 'queued'}, 0, 'LIMIT 1');
+                         'status' => 'queued'}, 0, $sql);
                 if (!defined($dev)) {
                     sql_commit();
-                    last;
+                    # We may get no rows because FOR UPDATE is applied after
+                    # LIMIT 1, so check to see if there are still jobs before
+                    # ending.  This is more load on DB but prevents blocking
+                    # other workers on fast running jobs like nbtstat
+                    my $njobs = sql_scalar('process',['count(*)'],
+                                { controller => $controller,
+                                action => $action,
+                                status => 'queued' });
+                    last if ($njobs == 0);
+                    next;
                 }
                 insert_or_update('process', $dev, { 'status' => 'running' });
                 sql_commit();
