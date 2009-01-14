@@ -212,8 +212,8 @@ sub add_nbt {
 
     # Set the active flag to false to archive all other instances
     #   of this MAC address
-    sql_do(sprintf("UPDATE node_nbt SET active = 'f' WHERE mac=%s",
-            $dbh->quote($mac)));
+    #sql_do(sprintf("UPDATE node_nbt SET active = 'f' WHERE mac=%s",
+    #        $dbh->quote($mac)));
 
     # Add this entry to node_nbt table. 
     insert_or_update('node_nbt', { 'mac' => $mac },
