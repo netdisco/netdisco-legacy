@@ -258,7 +258,7 @@ if ($specific =~ /alias/i){
         'device_port_vlan v, device_vlan dv, device d, device_port p',
         ['d.ip','d.dns','v.port','p.name','p.speed','dv.description'],
         {'d.ip' => \'v.ip', 'v.ip' => \'p.ip',
-            'v.port' => \'p.name', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
+            'v.port' => \'p.port', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
     );
     map {$_->{type} = 'Trunk'} @$matches;
     my $matches_access = sql_rows(
