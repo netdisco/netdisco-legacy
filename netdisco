@@ -3725,8 +3725,12 @@ sub nightly {
     &netbios_dump("netbios/$month");
 
     print "  Running Database Vacuum...\n";
-    foreach my $db (@{$CONFIG{db_tables}}) {
-        $db =~ s/\.sql$//;
+    my $dbh = dbh();
+    # Get all tables in public schema, do not place name of the schema before
+    # the table name.  This should be all tables for which netdisco user has
+    # permission
+    my @tables = $dbh->tables( '', 'public', '%', 'TABLE', {pg_noprefix => 1} );
+    foreach my $db ( @tables ) {
         sql_vacuum("$db",'print'=>1);
     }
 
