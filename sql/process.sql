@@ -7,5 +7,6 @@ CREATE TABLE process (
     device      inet not null,
     action      text not null,    -- arpnip, macsuck, nbtstat, discover
     status      text,    	  -- queued, running, skipped, done, error, timeout, nocdp, nosnmp
-    count       integer
+    count       integer,
+    creation    TIMESTAMP DEFAULT now()
     );

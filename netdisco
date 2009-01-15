@@ -3296,16 +3296,17 @@ sub dev_dump {
 
 =item expire_data(type,days,archive_only)
 
-C<type> can be : node,device
+C<type> can be : node,device,process
 
 C<days> is a positive integer number of days in which an entry
 has not been updated.
 
 C<archive_only> for node only.
 
-Removes devices and nodes that haven't been updated in C<days> days.
-Called from nightly() and controlled through the C<expire_*> directives
-in the config file.
+Removes devices and nodes that haven't been updated in C<days> days or
+processes created C<days> days ago.  Process table clean up is for crashed or
+improperly terminated jobs still in the table.  Called from nightly() and
+controlled through the C<expire_*> directives in the config file.
 
 Cheers to Brian Wilson for his patch for the start of this feature.
 
@@ -3315,8 +3316,8 @@ sub expire_data {
     my ($type, $days, $archive_only) = @_;
     $archive_only ||=0;
 
-    unless (defined $type and $type =~ /^(node|device)$/i){
-        print "expire_data : Data type (1st argument) must be either node or device.\n";
+    unless (defined $type and $type =~ /^(node|device|process)$/i){
+        print "expire_data : Data type (1st argument) must be either node, device, or process.\n";
         return;
     }
     
@@ -3363,6 +3364,14 @@ sub expire_data {
         
         $rows = sql_do($sql);
         print "Deleted $rows rows from node_nbt.\n";
+    }
+
+    if ($type eq 'process'){
+        my $sql = qq/DELETE FROM process WHERE AGE(creation) > INTERVAL '$days days'/;
+        
+        my $rows = '';
+        $rows = sql_do($sql);
+        print "Deleted $rows rows from process table.\n";
     }
 }
 
@@ -3705,7 +3714,16 @@ sub nightly {
         print "  expire_nodes: Deleting Nodes older than $CONFIG{expire_nodes} days old.\n\n";
         expire_data('node',$CONFIG{expire_nodes});
     }
-    
+
+    # Remove processes which are stale from crashed or improperly terminated
+    # jobs which were created X days ago
+    if (defined $CONFIG{expire_processes} and $CONFIG{expire_processes} =~ /^\d+$/
+        and $CONFIG{expire_processes} > 0) 
+    {
+        print "  expire_processes: Deleting processes created over $CONFIG{expire_processes} day(s) ago.\n\n";
+        expire_data('process',$CONFIG{expire_processes});
+    }
+
     # This will clean all node entries on unused ports and uplinks etc. Also runs expire_ips()
     &db_clean;
 
