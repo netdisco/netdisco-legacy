@@ -309,7 +309,7 @@ sub config {
                       port_info secure_server graph_clusters graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
                       bulkwalk_off vlanctl apache_auth nonincreasing store_modules
-                     /;
+                      vacuum_no/;
 
     # these will make array refs of their comma separated lists
     my @array_refs = qw/community community_rw mibdirs bulkwalk_no
@@ -2093,6 +2093,8 @@ sub sql_vacuum{
     my $table = shift;
     my %opts  = @_;
     my $print = (defined $opts{print} and $opts{print}) ? 1 : 0;
+    
+    return 1 if $CONFIG{'vacuum_no'};
 
     # no rated r allowed
     if ($DB eq 'Pg'){
