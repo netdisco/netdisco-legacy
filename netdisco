@@ -2168,7 +2168,8 @@ sub dispatcher {
                 # collision.  Don't use ORDER BY as we want unordered data to
                 # spread requests across network.
                 sql_begin();
-                my $sql = qq/LIMIT 1 OFFSET $i FOR UPDATE/;
+                my $offset = $i;
+                my $sql = qq/LIMIT 1 OFFSET $offset FOR UPDATE/;
                 my $dev = sql_hash('process',['controller','action','device'],
                         {'controller' => $controller,
                          'action' => $action,
@@ -2184,6 +2185,7 @@ sub dispatcher {
                                 action => $action,
                                 status => 'queued' });
                     last if ($njobs == 0);
+                    $offset = 0 if ($njobs < $offset);
                     next;
                 }
                 insert_or_update('process', $dev, { 'status' => 'running' });
