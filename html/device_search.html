@@ -249,9 +249,8 @@ if ($specific =~ /alias/i){
                         {'d.ip' => \'p.ip', 'up_admin' => 'down'}
                        );
 
-} elsif ($specific =~ /vlan/i){
-    $title = "Device ports carrying Vlan $vlan";
-    $where->{type}++;
+} elsif ($specific =~ /vlan$/i){
+    $title = "Device Ports Carrying VLAN $vlan";
     $where->{description}++;
     $where->{speed}++;
     $matches = sql_rows(
@@ -260,14 +259,18 @@ if ($specific =~ /alias/i){
         {'d.ip' => \'v.ip', 'v.ip' => \'p.ip',
             'v.port' => \'p.port', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
     );
-    map {$_->{type} = 'Trunk'} @$matches;
-    my $matches_access = sql_rows(
-        'device_port p, device d, device_vlan dv',
-        ['d.ip','d.dns','p.port','p.speed','dv.description'],
-        {'d.ip' => \'p.ip', 'p.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
+
+} elsif ($specific =~ /vlan_dev/i){
+    $title = "Devices Carrying VLAN $vlan";
+    $where->{vendor}++;
+    $where->{model}++;
+    $where->{os}++;
+    $where->{description}++;
+    $matches = sql_rows(
+        'device d, device_vlan dv',
+        ['d.ip','d.dns','d.vendor','d.model','d.os','dv.description'],
+        {'d.ip' => \'dv.ip', 'dv.vlan' => \"$vlan"}
     );
-    map {$_->{type} = 'Access'} @$matches_access;
-    push (@$matches, @$matches_access);
 
 } elsif ($specific =~ /blocking/i){
     $title = 'Device ports that are blocking';
@@ -518,7 +521,7 @@ my $time2 = time;
 %       my $colview = $col;
 %       $colview =~ s/^[^.]+\.//;
 %       $colview = $colview eq 'count' ? 'Number of Active<BR>Nodes Connected' : $colview;
-        <TH><%$colview%></TH>
+        <TH><%ucfirst($colview)%></TH>
 %    }
     </TR>
 <%perl>
