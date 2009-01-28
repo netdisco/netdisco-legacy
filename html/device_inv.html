@@ -72,8 +72,10 @@
 %        return lc($a->{model}) cmp lc($b->{model});
 %    } @$model_count;
 % $count = 0; $odd = 1;
-% my $m_half = int(scalar @m / 2);
-% foreach my $h (0,1) {
+% my $number = scalar @m;
+% my $part2 = [splice(@m, int($number/2),$number)];
+% my $part1 = [splice(@m, 0, int($number/2))];
+% foreach my $part ($part1,$part2) {
     <TD>
         <TABLE class="inv-main">
         <TR>
@@ -82,7 +84,7 @@
             <TH>Count</TH>
         </TR>
 <%perl>
-foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
+foreach my $row (@$part) {
 	next unless defined($row);
         # Change class if we change vendor
         if ($old_vendor ne $row->{vendor}){
@@ -112,8 +114,10 @@ Total: <%$count%>
 %   return $a->{os_ver} cmp $b->{os_ver};
 % } @$os_count;
 % $count = 0; $odd = 1;
-% $m_half = int(scalar @m / 2);
-% foreach my $h (0,1) {
+% $number = scalar @m;
+% $part2 = [splice(@m, int($number/2),$number)];
+% $part1 = [splice(@m, 0, int($number/2))];
+% foreach my $part ($part1,$part2) {
     <TD>
         <TABLE CLASS="inv-main">
         <TR>
@@ -124,7 +128,7 @@ Total: <%$count%>
 <%perl>
 $odd = 1;
 my $old_os = '';
-foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
+foreach my $row (@$part) {
     next unless defined($row);
     if ($old_os ne $row->{os}) { 
         $odd++;
