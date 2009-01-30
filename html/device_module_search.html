@@ -1,0 +1,233 @@
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<& SELF:matches &>
+<h1 class="pagehead">Device Module Search</h1>
+
+<TABLE CLASS="devs-search">
+<TR>
+    <TD COLSPAN=4><h2 class="subheader">Search All</h2></TD>
+</TR>
+<TR>
+    <TD colspan=4>
+        <INPUT TYPE="text" size=30 maxlength=255 NAME="text" VALUE="<%$text%>">
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search All">
+        <span class="small">(non-exact)</span>
+    </TD>
+</TR> 
+<TR>
+    <TD COLSPAN=4><h2 class="subheader">Advanced Search</h2></TD>
+</TR>
+<TR>
+    <TH>IP:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="ip" VALUE="<%$ip%>"></TD>
+    <TH>DNS:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="dns" VALUE="<%$dns%>"> </TD>
+</TR>
+<TR>
+    <TH>Description:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="desc" VALUE="<%$desc%>"> </TD>
+    <TH>Name:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="mname" VALUE="<%$mname%>"> </TD>
+</TR>
+
+<TR>
+    <TH>Type:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="type" VALUE="<%$type%>"> </TD>
+    <TH>Model:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="model" VALUE="<%$model%>"> </TD>
+</TR>
+<TR>
+    <TH>Serial:</TH>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="name" VALUE="<%$serial%>"></TD>
+    <TH>Class:</TH>
+    <TD><SELECT MULTIPLE NAME="classes" size=<%scalar(keys %$classes) > $winsize ? $winsize : scalar(keys %$classes)%>>
+%       foreach my $class (sort keys %$classes){
+            <OPTION VALUE="<%$class%>" <% grep(/^$class$/,@classes) ? 'SELECTED' : ''%>><%$class%>
+%       } 
+        </SELECT></TD>
+</TR>
+<TR>
+    <TH>Exact Match:</TH>
+    <TD><INPUT TYPE="radio" NAME="exact" VALUE="1"<% $exact ? 'CHECKED' : ''%>>On
+        <INPUT TYPE="radio" NAME="exact" VALUE="0"<% !$exact ? 'CHECKED' : ''%>>Off
+    </TD>
+    <TH>Match Scope:</TH>
+    <TD><INPUT TYPE="radio" NAME="boolean" VALUE="or"<% $boolean eq 'or' ? 'CHECKED' : ''%>>Match Any
+        <INPUT TYPE="radio" NAME="boolean" VALUE="and"<% $boolean eq 'and' ? 'CHECKED' : ''%>>Match All
+        <BR>
+        <span class="small"><B>*</B> and <B>?</B> are wildcards.  Non-exact assumes you want *<i>search</i>*</span>
+    </TD>
+</TR>
+<TR>
+    <TD>&nbsp;</TD>
+    <TD>
+        <INPUT TYPE="submit" CLASS="navbutton" VALUE="Search">
+        <A class="navbutton" href="<%$r->uri%>">Reset</A>
+    </TD>
+    <TD>&nbsp;</TD>
+    <TD>&nbsp;</TD>
+</TR>
+</TABLE>
+</FORM>
+<h2 class="subheader">Hints</h2>
+<UL class="square">
+    <LI>Matches on <span class="u">DNS</span>,<span class="u">IP</span>, or All may be matching addresses <i>inside</i> those devices.
+    <LI>If you want to find blank entries, search on "is null" or conversely "is not null"
+    <LI>You can select multiple for Class by holding down CTRL as you click.
+</UL>
+
+<%args>
+@classes  => ()
+$ip       => ''
+$text     => ''
+$dns      => ''
+$mname     => ''
+$desc     => ''
+$type     => ''
+$model    => ''
+$serial   => ''
+$boolean  => 'and'
+$exact    => 0
+</%args>
+<%shared>
+my $matches = undef;
+my $where = {};
+my $arg_exact;
+my $winsize = 5;    # max size for select boxes.
+my $title = 'Search Results';     # Search Result Title
+</%shared>
+<%init>
+
+my $classes = sql_column('device_module',['distinct(class)', 'true']); 
+
+$arg_exact = $exact;
+
+# Search on all text fields
+if (length($text)) {
+    my $match = sql_match($text,0);
+    push(@{$where->{'d.ip/i.alias'}},  $match);
+    push(@{$where->{'d.dns/i.dns'}},  $match);
+    push(@{$where->{'dm.name'}}, $match);
+    push(@{$where->{'dm.description'}}, $match);
+    push(@{$where->{'dm.type'}}, $match);
+    push(@{$where->{'dm.serial'}}, $match);
+    push(@{$where->{'dm.model'}}, $match);
+    push(@{$where->{'dm.class'}}, $match);
+    $boolean = 'or';
+}
+
+# Generalized Search Terms
+
+# Search on Class
+foreach my $class (@classes){
+    next unless defined $class and length($class);
+    push (@{$where->{'dm.class'}},$class);
+}
+
+# Search on Description
+if (length($desc)){
+    my $match = sql_match($desc,$exact);
+    push(@{$where->{'dm.description'}}, $match);
+}
+
+# Search on Name
+if (length($mname)){
+    my $match = sql_match($mname,$exact);
+    push(@{$where->{'dm.name'}}, $match);
+}
+
+# Search on Type
+if (length($type)){
+    my $match = sql_match($type,$exact);
+    push(@{$where->{'dm.type'}}, $match);
+}
+
+# Search on Model
+if (length($model)){
+    my $match = sql_match($model,$exact);
+    push(@{$where->{'dm.model'}}, $match);
+}
+
+# Search on DNS entry
+if (length($dns)){
+    my $match = sql_match($dns,$exact);
+    push(@{$where->{'d.dns/i.dns'}}, $match);
+}
+
+# Search on Serial
+if (length($serial)){
+    my $match = sql_match($serial,$exact);
+    push(@{$where->{'dm.serial'}}, $match);
+}
+
+# Search on IP
+if (length($ip)){
+    my $match = sql_match($ip,$exact);
+    push(@{$where->{'d.ip/i.alias'}}, $match);
+}
+
+# Run Query
+if (scalar keys %$where){
+
+    $matches = sql_rows('device d left join device_ip i on d.ip = i.ip join device_module dm on dm.ip = d.ip',
+                        ['distinct(d.ip)','d.dns','dm.description',
+                         'dm.name', 'dm.type', 'dm.hw_ver', 'dm.fw_ver',
+                         'dm.sw_ver', 'dm.serial', 'dm.model'],
+                        $where,
+                        $boolean eq 'or');
+}
+
+</%init>
+%#
+%# matches()  - Display search results stored in @$matches.
+%#
+<%method matches >
+%return unless defined $matches;
+<h1 class="pagehead"><%$title%></h1>
+% unless (scalar @$matches) {
+    No Results Found.
+%    return;
+% }
+<TABLE CLASS="devs-data">
+    <TR>
+        <TH>Device</TH>
+        <TH>Description</TH>
+        <TH>Name</TH>
+        <TH>Type</TH>
+        <TH>Model</TH>
+        <TH>Serial</TH>
+        <TH>HW<br />Version</TH>
+        <TH>SW<br />Version</TH>
+        <TH>FW<br />Version</TH>
+    </TR>
+<%perl>
+my $count=0;
+my @sort_matches = sort {$a->{dns} cmp $b->{dns}} @$matches;
+foreach my $result (@sort_matches){
+   my $ip =  $result->{ip};
+   my $dns = $result->{dns};
+   $dns = defined $dns ? $dns : $ip;
+   $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
+</%perl>
+    <TR>
+        <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%>"><% $dns %></A></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{description}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{name}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{type}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{model}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{serial}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{hw_ver}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{sw_ver}%></TD>
+        <TD CLASS="match-<%$count%2%>"><%$result->{fw_ver}%></TD>
+    </TR>
+% $count++; }
+</TABLE>
+<% $count %> matches.
+</%method>
+%#
+%# title()
+%#
+<%method title>
+- Device Module Search\
+</%method>
+%# $Id$
+%# vim:syntax=mason

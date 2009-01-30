@@ -4,6 +4,7 @@
 <& SELF:page_nav    &>
 <& SELF:show_ports  &>
 <& SELF:show_device &>
+<& SELF:show_module &>
 % }
 <%args>
 $ip         => ''   # Can be IP or hostname
@@ -63,6 +64,7 @@ my $port_control = ($port_ctl and $secure);
 my $vlan_ctl     = ($port_ctl and $secure and $vlanctl);
 my $port_info    = (defined $netdisco::CONFIG{port_info} and $netdisco::CONFIG{port_info} =~ /(1|t|T|y|Y)/) ? 1 : 0;
 my $admin        = defined $m->session->{user_admin} and $m->session->{user_admin} ? 1 : 0;
+my %modules = {};
 </%shared>
 %#
 %#
@@ -226,6 +228,25 @@ if ($ip) {
         $m->comp('SELF:poe_stats', poe => $poe);
     }
 
+    # Get modules
+    my $modules = sql_rows('device_module',['*'],{'ip'=>$devip},0,'order by parent,pos,index') || [];
+    foreach my $module (@$modules) {
+	$modules{$module->{index}}{module} = $module;
+	if ($module->{parent}) {
+	    # this is wrong.  a given parent can
+	    # have multiple items at a single pos value.
+	    # (HP may have gotten this wrong, but that's
+	    # reality...)
+	    if ($module->{pos}) {
+		${$modules{$module->{parent}}{children}{$module->{class}}}[$module->{pos}] = $module->{index};
+	    } else {
+		push(@{$modules{$module->{parent}}{children}{$module->{class}}}, $module->{index});
+	    }
+	} else {
+	    push(@{$modules{root}}, $module->{index});
+	}
+    }
+
     # Resolve IPs of connected nodes to host names
     if ($node_ip eq 'on' and $node_dns eq 'on'){
         # TODO: Insert code here ?
@@ -269,6 +290,7 @@ if (defined $device) {
 <%method page_nav>
 <div class="navbar">
 <A class="navbutton" HREF="#details">Device Details</A>
+<A class="navbutton" HREF="#modules">Device Modules</A>
 % unless ($arg_ports eq 'all') {
 <A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=all">Show All Ports</A>
 % }
@@ -485,6 +507,73 @@ if (defined $log and length($log)){
 %}
 </TABLE>
 <& SELF:page_nav &>
+</%method>
+%#
+%# show_module() - Display device modules.
+%#
+<%method show_module>
+<h2 CLASS="subheader"><A NAME="modules">Device Modules</A></h2>
+<ul class="mktree" id="modules">
+% foreach my $item (@{$modules{root}}) {
+<& SELF:dump_module, id=>$item &>
+% }
+</ul>
+<& SELF:page_nav &>
+</%method>
+%#
+%# dump_module() - Create device module list.
+%#
+<%method dump_module>
+<%args>
+$id
+</%args>
+<li>
+<%perl>
+  return if ($id eq 'root');
+  if (!defined($modules{$id})) {
+	print "can't get module $id\n";
+	return;
+  }
+  my $mod = $modules{$id}{module};
+</%perl>
+<% $mod->{description} %>
+%  if ($mod->{name}) {
+(<% $mod->{name} %>)
+% }
+%  if ($mod->{port}) {
+(<% $mod->{port} %>)
+%  }
+%  for my $f qw(fw hw sw) {
+%    if ($mod->{"${f}_ver"}) {
+[<%$f%>: <%$mod->{"${f}_ver"}%>]
+%    }
+%  }
+%  if ($mod->{serial}) {
+[serial: <%$mod->{serial}%>]
+%  }
+%  if ($mod->{type}) {
+/ <% $mod->{type} %>
+% }
+%  if ($mod->{model}) {
+/ <% $mod->{model} %>
+% }
+%  if ($mod->{fru}) {
+<b>[FRU]</b>
+%  }
+%# // <i><% $mod->{class} %></i>
+%  if ($modules{$id}{children}) {
+<ul>
+%  my @kidtypes = keys %{$modules{$id}{children}};
+%  foreach my $kidtype (@kidtypes) {
+%    foreach my $kid (@{$modules{$id}{children}{$kidtype}}) {
+%      if (defined($kid)) {
+         <& SELF:dump_module, id=>$kid &>
+%      }
+%    }
+%  }
+</ul>
+%  }
+</li>
 </%method>
 %#
 %# port_header() - Prints out the header block depending on the columns selected

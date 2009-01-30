@@ -11,10 +11,12 @@
 % }
 <& SELF:title &> </TITLE>
 <LINK REL="stylesheet" HREF="<%$path%>/netdisco.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="stylesheet" HREF="<%$path%>/mktree.css" TYPE="text/css" MEDIA="screen">
 <& SELF:html_head &>
 % if (defined($netdisco::CONFIG{fp_overlib}) && $netdisco::CONFIG{fp_overlib} == 'true') { 
 	<script type="text/javascript" src="overlib_mini.js"><!-- overLIB (c) Erik Bosrup --></script>
-% } 
+% }
+<script type="text/javascript" src="<%$path%>/mktree.js"></script>
 </HEAD>
 <BODY>
 % if (defined($netdisco::CONFIG{fp_overlib}) && $netdisco::CONFIG{fp_overlib} == 'true') { 
@@ -43,6 +45,7 @@
             ADVANCED SEARCH:
             <A class="topbutton" HREF="<%$path%>/netmap.html">NetMap</A> 
             <A class="topbutton" HREF="<%$path%>/device_search.html">Device</A> 
+            <A class="topbutton" HREF="<%$path%>/device_module_search.html">Module</A> 
             <A class="topbutton" HREF="<%$path%>/node.html">Node</A>
 % if ($netdisco::CONFIG{traceroute}) {
             <A class="topbutton" HREF="<%$path%>/traceroute.html">TraceRoute</A>
