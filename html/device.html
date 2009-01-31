@@ -36,7 +36,7 @@ my %port_cols = (
                  'name'  =>  ['Name',1],
                  'mac'   =>  ['Port MAC',0],
                  'mtu'   =>  ['MTU',0],
-                 'vlan'  =>  ['VLAN',1],
+                 'vlan'  =>  ['Native<br>VLAN',1],
                  'lastchange' => ['Last Change',0],
                  'stp' => ['Spanning Tree',0],
                 );
@@ -161,12 +161,16 @@ if ($ip) {
             {'switch' => $switch, 'port' => $port } );
         $portreq->{macs} = (defined $nodes and scalar @$nodes) ? $nodes : undef;
 
-        # Get SSIDs
         # Get Power info
         $portreq->{power} = sql_hash('device_port_power',['*'],{'ip'=>$switch,'port'=>$port});
 
+        # Get SSIDs
         my $ssids = sql_rows('device_port_ssid',['*'],{'ip'=>$switch,'port'=>$port});
         $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
+
+        # Get VLANs
+        my $vlans = sql_rows('device_port_vlan',['*'],{'ip'=>$switch,'port'=>$port});
+        $portreq->{vlans} = (defined $vlans and scalar @$vlans) ? $vlans : undef;
 
         # Save MAC addresses for IP lookup
         foreach my $node (@$nodes){
@@ -587,6 +591,7 @@ $id
 %   next unless $on;
     <TH><%$desc%></TH>
 %}
+    <TH>VLAN <BR>Membership</TH>
     <TH>Connected<BR>Devices<% $arg_age eq 'on' ? '<BR><span class="smaller">(Last Seen)</span>' : ''%></TH>
 %# if ($port_control) {
     <TH>Port<BR>Control</TH>
@@ -661,7 +666,24 @@ foreach my $port (sort sort_port @$db_ports){
 &nbsp; \
 % } 
 </SPAN></TD>
+<%perl>
+ }
+    # VLAN Column
+    my $portvlans = $port->{vlans} || [];
+    my @vlan_ids;
+    foreach my $vlan (@$portvlans) {
+        my $id  = $vlan->{vlan};
+        push (@vlan_ids, $id);
+    }
+    my $vlan_ids = join(',', sort @vlan_ids);
+</%perl>
+        <TD CLASS="<%$rowclass%>"><SPAN CLASS="<%$class%>"> \
+% if (defined $vlan_ids) {
+<% $vlan_ids |h %> \
+% } else {
+&nbsp; \
 % }
+</SPAN></TD>
 % # Connected Devices Column
         <TD CLASS="<%$rowclass%> connected">
 <%perl>
