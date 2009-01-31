@@ -172,9 +172,12 @@ sub init {
     open (ALL,">pg_all.input") or die "Can't create pg_all.input for output. $!\n";
 
     # Cat all tables into one big file
-    foreach my $f (@{$CONFIG{db_tables}}) {
+    opendir(SQLDIR, "$Dir/sql") or die "Can't open $Dir/sql: $!";
+    while( defined (my $f = readdir SQLDIR) ) {
+        next if $f =~ /^\.\.?$/ or $f =~ /^upgrade-.*\.sql$/;
+	next unless $f =~ /\.sql$/;
         print "[ $f ]\n";
-        open (F, "<$f") or die "Can't read $f. $!\n";
+        open (F, "<$Dir/sql/$f") or die "Can't read $f. $!\n";
         while (<F>) {
             print ALL;
         }
