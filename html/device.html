@@ -169,8 +169,19 @@ if ($ip) {
         $portreq->{ssids} = (defined $ssids and scalar @$ssids) ? $ssids : undef;
 
         # Get VLANs
-        my $vlans = sql_rows('device_port_vlan',['*'],{'ip'=>$switch,'port'=>$port});
-        $portreq->{vlans} = (defined $vlans and scalar @$vlans) ? $vlans : undef;
+        my $vlans = sql_rows('device_port_vlan',['vlan'],
+            {'ip'=>$switch,'port'=>$port});
+        my $dev_vlans = sql_rows('device_vlan',['vlan'],
+            {'ip'=>$switch});
+
+        if (scalar @$vlans == scalar @$dev_vlans) {
+            $portreq->{vlans} .= 'All';
+        }   
+        elsif (scalar @$vlans != 0) {
+            $portreq->{vlans} .= 
+                (join ',', sort {$a <=> $b} map {$_->{'vlan'}} @$vlans);
+        }
+        #$portreq->{vlans} =~ s{^\d+}{$1, };
 
         # Save MAC addresses for IP lookup
         foreach my $node (@$nodes){
@@ -669,17 +680,17 @@ foreach my $port (sort sort_port @$db_ports){
 <%perl>
  }
     # VLAN Column
-    my $portvlans = $port->{vlans} || [];
-    my @vlan_ids;
-    foreach my $vlan (@$portvlans) {
-        my $id  = $vlan->{vlan};
-        push (@vlan_ids, $id);
-    }
-    my $vlan_ids = join(',', sort @vlan_ids);
+    my $vlan_ids = $port->{vlans} || '';
+    # munging any col with HTML is done after escaping...
+    HTML::Mason::Escapes::html_entities_escape( \$vlan_ids );
+
+    # vlan col needs wrapping with <BR>
+    $vlan_ids =~ s/(\d+,\d+,\d+,)/$1<BR>/g;
+    $vlan_ids =~ s{(\d+)}{<A HREF="device_search.html?specific=vlan&vlan=$1">$1</A>}g;
 </%perl>
         <TD CLASS="<%$rowclass%>"><SPAN CLASS="<%$class%>"> \
 % if (defined $vlan_ids) {
-<% $vlan_ids |h %> \
+<% $vlan_ids %> \
 % } else {
 &nbsp; \
 % }
