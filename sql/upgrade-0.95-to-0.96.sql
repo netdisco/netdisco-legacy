@@ -38,6 +38,10 @@ CREATE TABLE device_module (
     last_discover TIMESTAMP
     );
 
+--
+-- Earlier versions of device_module didn't have the index
+ALTER TABLE device_module ADD PRIMARY KEY(ip,index);
+
 -- Create process table - Queue to coordinate between processes in multi-process mode.
 CREATE TABLE process (
     controller  integer not null, -- pid of controlling process

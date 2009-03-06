@@ -18,5 +18,6 @@ CREATE TABLE device_module (
     model         text,
     fru           boolean,
     creation      TIMESTAMP DEFAULT now(),
-    last_discover TIMESTAMP
+    last_discover TIMESTAMP,
+    PRIMARY KEY(ip,index)
     );
