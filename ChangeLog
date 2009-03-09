@@ -45,6 +45,7 @@ Features:
     + []        Add ignore_interfaces configuration option
 
 Bugfixes:
+    * [2565682] Handle xxxx-xxxx-xxxx MAC address format (J R Binks)
     * [1605351] admin_dev.html could take a long time to load.
                 (only partially fixed)
     * []        Fix RFC1918 range (and abstract into netdisco.pm)

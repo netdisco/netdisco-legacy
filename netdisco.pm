@@ -788,6 +788,8 @@ sub is_mac{
     return 1 if ($mac =~ /^${hex}{6}[:-]{1}${hex}{6}$/);
     #'0800.2b01.0203'
     return 1 if ($mac =~ /^${hex}{4}\.${hex}{4}\.${hex}{4}$/);
+    #'0800-2b01-0203' c/o http://sites.google.com/site/jrbinks/code/netdisco/mac-patches
+    return 1 if ($mac =~ /^${hex}{4}-${hex}{4}-${hex}{4}$/);
     # '08-00-2b-01-02-03','08:00:2b:01:02:03'
     return 1 if ($mac =~ /^${hex}{2}-${hex}{2}-${hex}{2}-${hex}{2}-${hex}{2}-${hex}{2}$/);
     return 1 if ($mac =~ /^${hex}{2}:${hex}{2}:${hex}{2}:${hex}{2}:${hex}{2}:${hex}{2}$/);
