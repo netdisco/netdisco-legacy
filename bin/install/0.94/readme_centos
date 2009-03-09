@@ -1,0 +1,49 @@
+$Id$
+
+ 
+Netdisco CentOS Install Script
+
+This script will install Netdisco on a stock CentOS release 4.2
+installation using apache2 and mod_perl2.
+ 
+ 
+UNSUPPORTED -  Please use at your own risk.   
+Parts of this script were originally contributed by Kaven Rousseau and was modified for CentOS by Walter Gould.
+ 
+ 
+ 
+ 
+Please read the below items that will help you to run this script and get netdisco installed:
+ 
+ 
+ 1)  This script uses CPAN (Comprehensive Perl Archive Network) to install the needed perl modules.
+     If you have not used CPAN before on the machine you are about to install netdisco on, CPAN will walk
+     you through a few steps in order to configure itself. There is one option that will help you in
+     installing the perl modules.  It is the 'prerequisites_policy'.  Set the 'prerequisites_policy'
+     option to 'follow' during CPAN configuration.
+ 
+ 
+ 2)  During the installation of one of the perl modules, you are asked for the path of httpd and
+     of apxs.  On CentOS - both the httpd and apxs binaries are located in /usr/sbin.
+ 
+ 
+ 3)  During the installation of another of the perl modules, you will be asked if you want to
+     'Skip the test suite?'  You should answer 'Yes' to this.  If not, the test will fail and
+     the module will fail to install properly.
+ 
+ 
+ 4)  Make sure that 'selinux' is disabled or configured properly in order to allow netdisco
+     to run properly.  This script assumes that selinux has been disabled.
+ 
+ 
+ 5)  Towards the end of the install script, netdisco attempts to discover devices on your
+     network.  Please be patient and allow time for it to discover the devices on your network.
+     It may take some time for the discovery process to complete.
+ 
+ 
+ 6)  Sometimes for whatever unkown reason - either httpd or postgresql fails to restart
+     properly at the end of the install process.  If this appears to happen, you may need
+     to manually restart these after the script has finished.  Do a 'ps -ef | grep httpd'
+     or a 'ps -ef | grep postgresql' to see if they are running.  To start them you can
+     run '/etc/init.d/httpd start' or '/etc/init.d/postgresql start'.
+

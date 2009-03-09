@@ -1,0 +1,65 @@
+$Id$
+ 
+Netdisco CVS Fedora Install Script
+
+This script will install Netdisco CVS on a stock Fedora Core 4
+installation using apache2 and mod_perl2.
+ 
+
+UNSUPPORTED -  Please use at your own risk.   
+This script was contributed by Kaven Rousseau and was modified for Fedora by Walter Gould.
+ 
+ 
+ 
+ 
+Please read the below items that will help you to run this script and get netdisco installed:
+ 
+ 
+ 1)  This script uses CPAN (Comprehensive Perl Archive Network) to install the needed perl modules.
+     If you have not used CPAN before on the machine you are about to install netdisco on, CPAN will walk
+     you through a few steps in order to configure itself. There is one option that will help you in
+     installing the perl modules.  It is the 'prerequisites_policy'.  Set the 'prerequisites_policy'
+     option to 'follow' during CPAN configuration.
+ 
+ 
+ 2)  Perl Module oddities:
+
+    a)  During the installation of one of the perl modules, you are asked for the path of httpd and
+        of apxs.  On Fedora Core 4 - both the httpd and apxs binaries are located in /usr/sbin.
+ 
+ 
+    b)  During the installation of another of the perl modules, you will be asked if you want to
+        'Skip the test suite?'  You should answer 'Yes' to this.  If not, the test will fail and
+        the module will fail to install properly.
+ 
+ 
+    c) If you are asked the location of the apache source during one of the perl modules installation,
+       you can simply type 'q' as there is no apache source.  It is wanting to install mod_perl 1, and 
+       we do not want mod_perl 1 installed as we are using mod_perl2 for this installation.  
+
+
+    d) Quite often the Graph perl module does not install and has to be compiled manually. It will be
+       download into the directory that the install script resides.  cd into the Graph dir and run 
+       'perl Makefile.PL && make && make install'.   
+       Note to Walter - find out why this happens and fix it. 
+
+
+ 3)  Make sure that 'selinux' is DISABLED or configured properly in order to allow netdisco
+     to run properly.  This script assumes that selinux has been disabled.
+ 
+ 
+ 4)  Towards the end of the install script, netdisco attempts to discover devices on your
+     network.  Please be patient and allow time for it to discover the devices on your network.
+     It may take some time for the discovery process to complete.
+ 
+ 
+ 5)  Sometimes for whatever unkown reason - either httpd or postgresql fails to restart
+     properly at the end of the install process.  If this appears to happen, you may need
+     to manually restart these after the script has finished.  Do a 'ps -ef | grep httpd'
+     or a 'ps -ef | grep postgresql' to see if they are running.  To start them you can
+     run '/etc/init.d/httpd start' or '/etc/init.d/postgresql start'.
+ 
+ 
+ 
+ 
+

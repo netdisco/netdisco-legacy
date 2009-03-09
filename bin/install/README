@@ -1,0 +1,15 @@
+Netdisco INSTALL Scripts
+
+Hand-Crafted by Walter Gould
+
+http://www.auburn.edu/~gouldwp/netdisco/
+
+"The below scripts will automate a Netdisco apache2 and mod_perl2 installation.
+There may some instances where the script(s) do not produce the desired results
+and you may have to manually tweak things to get disco working properly.
+Please use at your own risk - the below scripts are unsupported.   Hopefully,
+they will help to speed up the installation and lessen your work and/or
+frustration.   As time permits, I will add new scripts as new versions are
+released.   If you have modified one of the below scripts to work with a
+distribution that is not listed, and would like to make it available, please
+contact me."

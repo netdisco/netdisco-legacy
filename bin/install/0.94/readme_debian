@@ -1,0 +1,61 @@
+$Id$
+
+     Netdisco Debian Install Script
+
+     This script will install Netdisco on a stock Debian
+     installation using apache2 and mod_perl2.
+
+
+     UNSUPPORTED -  Please use at your own risk.   
+
+
+     This script was originally contributed by Kaven Rousseau and
+     has been modified by Walter Gould for a Debian installation.
+
+
+
+
+
+
+Please read (and possibly print) the below items that will help you to run this script and get netdisco installed:
+
+
+1)  This script uses CPAN (Comprehensive Perl Archive Network) to install the needed perl modules.
+    If you have not used CPAN before on the machine you are about to install netdisco on, CPAN will walk
+    you through a few steps in order to configure itself. There is one option that will help you in
+    installing the perl modules.  It is the 'prerequisites_policy'.  Set the 'prerequisites_policy'
+    option to 'follow' during CPAN configuration.  If CPAN asks if you would like to configure it a
+    second time during the installation of the perl modules, just reply 'no'.
+
+
+2)  You need to ensure that iptables is not blocking udp port 161 and tcp ports 80 and/or 443.
+    Otherwise, it will appear that netdisco is not working, when really it is your firewall that is the culprit.
+
+
+3)  This script was tested on Debian 3.1R2 using a 2.6 kernel, Apache 2.xx and mod_perl 2.02.
+
+
+4)  During the installation of the Apache::Test perl module, you are asked for the paths of the httpd
+    and of apxs binaries.  The httpd (or apache2) binary, as it is called on Debian, is located in /usr/sbin.
+    The apxs (or apxs2) binary is located in /usr/bin/.
+
+
+5)  If you are asked for the location of the apache source, just type 'q' as apache was not compiled from source.
+
+
+6)  Towards the end of the install script, netdisco attempts to discover devices on your
+    network.  Please be patient and allow time for it to discover the devices on your network.
+    It may take some time for the discovery process to complete.
+
+
+7)  Sometimes - either apache or postgresql fails to restart properly at the end of the
+    install process.  If this appears to happen, you may need to manually restart these
+    after the script has finished.  Do a 'ps -ef | grep apache2' or a 'ps -ef | grep postgresql'
+    to see if they are running.  To start them you can run '/etc/init.d/apache2 start'
+    or '/etc/init.d/postgresql start'.
+
+
+8)  Configuring apache to use mod_ssl on Debian is beyond the scope of this script.  However, the libapache-mod-ssl
+    package will be installed below - you just need to configure apache and mod_ssl to jive together.
+    The below url is a decent How To to get mod_ssl working with apache2 on Debian:
+    http://www.michaellewismusic.com/forum/viewtopic.php?t=1475
