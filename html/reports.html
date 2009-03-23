@@ -40,6 +40,7 @@ my $odd = 1;
 	dns_mismatch => "Device Name / DNS mismatches",
 	ap_clients => "Clients per Access Point",
 	poe_status => "PoE Status",
+	radio_mac_location => "Radio MAC address and location",
 );
 </%init>
 <%method pickreport>
@@ -96,9 +97,10 @@ $results = [ sort { $a->{name} cmp $b->{name} } @$results ];
 <%perl>
 $columns = [
 	[ 'Device Name', 'name' ],
-	[ 'DNS Name', 'dns' ]
+	[ 'DNS Name', 'dns' ],
+	[ 'IP Address', 'ip' ]
 	   ];
-my $alldev = sql_rows('device', ['name', 'dns']);
+my $alldev = sql_rows('device', ['name', 'dns', 'ip']);
 $results = [];
 foreach my $dev (@$alldev) {
 	my $name = $dev->{name};
@@ -177,6 +179,18 @@ foreach my $poe (@$results) {
 	$poe->{$k} = $poe->{stats}->{$k};
     }
 }
+</%perl>
+</%method>
+<%method report_radio_mac_location>
+<%perl>
+$columns = [
+	[ 'MAC', 'mac' ],
+	[ 'Location', 'location' ],
+	   ];
+$results = sql_rows('device d, device_port p',
+	[ 'p.mac', 'd.location' ],
+	{ 'd.ip' => \'p.ip', 'p.port' => '%Dot11Radio%' }, 0,
+	'order by d.location, p.mac');
 </%perl>
 </%method>
 <%method title>
