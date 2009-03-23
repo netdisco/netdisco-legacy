@@ -59,6 +59,7 @@
             <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of Netbios Domains">SMB</A>
             <A class="topbutton" HREF="<%$path%>/log.html" TITLE="Backend Log">Log</A>
             <A class="topbutton" HREF="<%$path%>/duplex.html" TITLE="Duplex Mismatch Finder">Duplex</A>
+            <A class="topbutton" HREF="<%$path%>/reports.html" TITLE="More reports">More</A>
         </TD></TR>
 % } else {
 	<TD COLSPAN=2 ROWSPAN=2>
