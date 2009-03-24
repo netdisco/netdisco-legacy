@@ -648,7 +648,8 @@ foreach my $port (sort sort_port @$db_ports){
     #   where your ISP might squawk CDP, but we don't have SNMP.  We don't want to
     #   allow people to turn those off.
     my $is_uplink   = (defined $remote_ip and !(defined $remote_type and $remote_type =~ /ip.phone/i)) ? 1 : 0;
-    my $class = $up eq 'down' ? 'port-down' : 'port-up';
+    my $class = ($up eq 'down' or $up eq 'notPresent') ?
+						'port-down' : 'port-up';
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking, but not down
     $class    = ($up ne 'down' and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
@@ -768,8 +769,6 @@ foreach my $port (sort sort_port @$db_ports){
 <%perl>
     }
 
-    $m->out("<BR>\n") if ((defined $remote_ip or defined $port->{ssids}) and defined $port->{macs});
-
     # Show connected nodes
     my $seen_macs=0;
     my $portnodes = $port->{macs} || [];
@@ -785,6 +784,7 @@ foreach my $port (sort sort_port @$db_ports){
 
         # Show Archived Data?
         next unless ($active or $arg_arch eq 'on');
+        $m->out("<BR>\n") if ((defined $remote_ip or @$portssids) and $seen_macs == 0);
         $seen_macs++;
 </%perl>
         <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR>

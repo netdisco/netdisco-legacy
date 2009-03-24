@@ -105,3 +105,20 @@ CREATE TABLE device_port_power (
     class       text,   -- Detected class
     PRIMARY KEY(port,ip)
 );
+
+CREATE TABLE device_port_wireless (
+    ip          inet,   -- ip of device
+    port        text,   -- Unique identifier of Physical Port Name
+    channel     integer,-- 802.11 channel number
+    power       integer -- transmit power in mw
+);
+
+CREATE INDEX idx_device_port_wireless_ip_port ON device_port_wireless(ip,port);
+
+--
+-- device_port_ssid lost its channel column, it moved to device_port_wireless
+--
+-- Migrate any existing data
+INSERT INTO device_port_wireless ( ip,port,channel )  ( SELECT ip,port,channel FROM device_port_ssid WHERE channel IS NOT NULL );
+
+ALTER TABLE device_port_ssid DROP channel;

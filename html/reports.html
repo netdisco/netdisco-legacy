@@ -1,7 +1,6 @@
+% $m->comp('SELF:pickreport');
 % if ($report && defined($title{$report})) {
 %  $m->comp('SELF:report_' . $report);
-% } else {
-%  $m->comp('SELF:pickreport');
 % }
 <h1 class="pagehead"><%$title{$report}%></h1>
 % if ($report && (!defined($results) || @$results == 0)) {
@@ -35,8 +34,7 @@ my $odd = 1;
 <%init>
 %title = (
 	device_inventory => "Device Inventory",
-#	radio_channels => "Access Point SSID and Channels",
-#	radio_power => "Access Point Channels and Power",
+	radio_power => "Access Point Channels and Power",
 	dns_mismatch => "Device Name / DNS mismatches",
 	ap_clients => "Clients per Access Point",
 	poe_status => "PoE Status",
@@ -53,31 +51,6 @@ my $odd = 1;
 </SELECT>
 <INPUT TYPE="submit" CLASS="navbutton" VALUE="View Report">
 </FORM>
-</%method>
-<%method report_radio_channels>
-<%perl>
-$columns = [
-	[ 'Name', 'name' ],
-	[ 'Location', 'location' ],
-	[ 'Port', 'port' ],
-	[ 'SSID', 'ssid' ],
-	[ 'Channel', 'channel' ],
-	[ 'Tx Power (mW)', 'power' ],
-	[ 'Tx Power (dBm)', 'power2' ]
-	   ];
-$results = sql_rows('device d, device_port_ssid s',
-	[ 'd.name', 'd.location', 's.port', 's.ssid', 's.channel', 's.power' ],
-	{ 'd.ip' => \'s.ip' });
-$results = [ sort sortnameport @$results ];
-foreach $r (@$results) {
-	next unless defined($r->{power}) && $r->{power};
-	$r->{power2} = sprintf("%.1f", 10.0*CORE::log($r->{power})/CORE::log(10));
-}
-
-sub sortnameport {
-	$a->{name} cmp $b->{name} or sort_port($a,$b);
-}
-</%perl>
 </%method>
 <%method report_device_inventory>
 <%perl>
@@ -140,9 +113,9 @@ $columns = [
 	[ 'Tx Power (mW)', 'power' ],
 	[ 'Tx Power (dBm)', 'power2' ]
 	   ];
-$results = sql_rows('device d, device_port_ssid s',
-	[ 'distinct d.name', 'd.model', 'd.location', 's.port', 's.channel', 's.power' ],
-	{ 'd.ip' => \'s.ip' });
+$results = sql_rows('device d, device_port_wireless w',
+	[ 'distinct d.name', 'd.model', 'd.location', 'w.port', 'w.channel', 'w.power' ],
+	{ 'd.ip' => \'w.ip' });
 $results = [ sort sortportname @$results ];
 foreach $r (@$results) {
 	next unless defined($r->{power}) && $r->{power};
@@ -188,7 +161,7 @@ $columns = [
 	[ 'Location', 'location' ],
 	   ];
 $results = sql_rows('device d, device_port p',
-	[ 'p.mac', 'd.location' ],
+	[ 'distinct p.mac', 'd.location' ],
 	{ 'd.ip' => \'p.ip', 'p.port' => '%Dot11Radio%' }, 0,
 	'order by d.location, p.mac');
 </%perl>

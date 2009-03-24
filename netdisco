@@ -2600,10 +2600,11 @@ sub store_interfaces {
 
     # Get SSIDs for wireless interfaces
     my $ssidlist = $device->i_ssidlist();
-    my ($ssidbcast, $channel) = (undef, undef);
+    my ($ssidbcast, $channel, $power) = (undef, undef, undef);
     if (defined($ssidlist)) {
         $ssidbcast = $device->i_ssidbcast();
         $channel = $device->i_80211channel();
+        $power = $device->dot11_cur_tx_pwr_mw();
     }
 
     sql_begin();
@@ -2623,8 +2624,22 @@ sub store_interfaces {
         $store{port}         = $port;
         $store{ssid}         = $ssidlist->{$ssididx};
         $store{broadcast}    = $ssidbcast->{$ssididx};
-        $store{channel}      = $channel->{$if};
         insert_or_update('device_port_ssid', { 'ip' => $ip, 'port' => $store{port}, 'ssid' => $store{ssid} }, 
+                         \%store );
+    }
+    foreach my $channelidx (keys %$channel) {
+        my $if = $channelidx;
+        my %store = ();
+        my $port = $interfaces->{$if};
+        unless (defined $port and length($port)) {
+            $DEBUG and print "\n  Ignoring $if (no port mapping)\n";
+            next;
+        }
+        $store{ip}           = $ip;
+        $store{port}         = $port;
+        $store{channel}      = $channel->{$if};
+        $store{power}        = $power->{$if};
+        insert_or_update('device_port_wireless', { 'ip' => $ip, 'port' => $store{port} },
                          \%store );
     }
 
