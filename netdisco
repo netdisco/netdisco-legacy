@@ -2002,7 +2002,7 @@ sub wireless_client_info {
     my $ip = shift;
 
     my $cd11_txrate = $device->cd11_txrate();
-    return unless $cd11_txrate and @$cd11_txrate;
+    return unless $cd11_txrate and %$cd11_txrate;
 
     my $cd11_rateset = $device->cd11_rateset();
     my $cd11_uptime = $device->cd11_uptime();
