@@ -1221,6 +1221,12 @@ BOOLEAN.  Set to false to skip the module inventory on device discovery.
 The module inventory can double the device discovery time so if you
 aren't using the information you can skip it.
 
+=item store_wireless_clients
+
+BOOLEAN.  Set to false to skip the wireless client information
+gathering.  This is captured at macsuck time, so if you aren't using
+the information you can skip it.
+
 =item topofile
 
 FILE. Full path of the file that contains manual topology information.  Defaults to
@@ -1546,6 +1552,12 @@ BOOLEAN.  Turns on the C<Port Info> and C<Jack Search> features.
 BOOLEAN. If a secure server is present. 
 
 Requires web login, password changing and all admin functions to be run in secure space.
+
+=item traceroute
+
+BOOLEAN.  If the traceroute button should be present in the top bar.  The
+L2 Traceroute function has limits and may be slow on large networks, so the
+link to it can be disabled.
 
 =item web_console_models
 
@@ -1940,7 +1952,11 @@ ports.
 
 =item device_port_ssid
 
-Holds SSID and channel information for wireless access points.
+Holds SSID information for wireless access points.
+
+=item device_port_wireless
+
+Holds channel and power information for wireless access points.
 
 =item log
 
@@ -1958,6 +1974,24 @@ L<MacSucker>
 Maps a MAC Address to an IP address.  Has no notion of where this node was seen.   Keeps
 time stamps of when this is from.  Data comes from L<ArpNipper>.  Archived data is similar
 to the L<node> table, where ``active'' is set to false for archived data.
+
+=item node_nbt
+
+Maps a MAC address to an IP address and its NetBIOS information, including NBT name,
+domain, and user.  Archived data is similar
+to the L<node> table, where ``active'' is set to false for archived data.
+
+=item node_wireless
+
+Holds information about the a wireless station's radio -- maximum possible rate,
+current transmit rate, signal strength and quality, and rx/tx packets and bytes.
+This table has no archived data; it only contains the most recent sample for a
+given MAC address.
+
+=item process
+
+This table is used to coordinate the work of multiple child processes when performing
+parallel work.
 
 =item sessions
 

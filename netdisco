@@ -1981,7 +1981,9 @@ sub macsuck{
     }
     mac_savecache($fw_cache,\%dbports);
 
-    wireless_client_info($device, $ip);
+    if (!defined($CONFIG{'store_wireless_client'}) || $CONFIG{'store_wireless_client'}) {
+	wireless_client_info($device, $ip);
+    }
 
     # Log This
     my $started = localtime($time1);  my $time2 = time;

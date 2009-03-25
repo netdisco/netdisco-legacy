@@ -309,7 +309,7 @@ sub config {
                       port_info secure_server graph_clusters graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
                       bulkwalk_off vlanctl apache_auth nonincreasing store_modules
-                      vacuum_no/;
+                      vacuum_no store_wireless_client/;
 
     # these will make array refs of their comma separated lists
     my @array_refs = qw/community community_rw mibdirs bulkwalk_no
