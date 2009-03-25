@@ -257,6 +257,7 @@ my %MatchMAP = ('ip'      => 'MAC -> IP',
                 'swport'  => 'Switch Port',
                 'alias'   => 'Device IP w/out MAC',
                 'nbname'  => 'NetBIOS',
+		'wireless'=> 'Wireless Info',
                );
 my $hex = "[0-9a-fA-F]";
 </%shared>
@@ -312,11 +313,14 @@ if ($node){
             $mac =~ s/:$/*/;
             $mac =~ s/^/*/;
         }
-        my $where = { 'mac' => $is_mac ? $node : sql_match($mac,0) };
+        my $where = { 'mac' => is_mac($node) ? $node : sql_match($mac,0) };
         $where->{'active'} = 1 unless $arg_archive;
 
         # Lookup IPs associated with this MAC
         $m->comp('SELF:add_node_ips','where'=>$where);
+
+        # Lookup wireless info associated with this MAC
+        $m->comp('SELF:add_node_wireless','where'=>$where);
 
         # Lookup what switch ports this MAC was seen at.
         my $ports = sql_rows('node',
@@ -435,6 +439,9 @@ if ($node){
 
             # Get additional/other IPs for each MAC
             $m->comp('SELF:add_node_ips','where'=>$where);
+
+	    # Lookup wireless info associated with this MAC
+	    $m->comp('SELF:add_node_wireless','where'=>$where);
 
             # Lookup NetBIOS names.
             my $nbnames = sql_rows('node_nbt',
@@ -720,6 +727,11 @@ $match
 %} elsif ($type eq 'nbname') {
     \\<A HREF="ip_search.html?domain=<%$match->{domain}|u%>&cmd=nbt" TITLE="Devices in this Domain"><%$match->{domain}%></A>\<A HREF="node.html?node=<% $match->{nbname} |u %>"><%$match->{nbname}%></A>
     <BR><%$match->{nbuser} || '[No User]'%>@<A HREF="node.html?node=<%$match->{ip}|u%>"><%$match->{ip}|h%></A>\
+%} elsif ($type eq 'wireless') {
+    MaxRate: <% $match->{maxrate} %>Mbps TxRate: <% $match->{txrate} %>Mbps<br>
+    SigStr: <% $match->{sigstrength} %> SigQual: <% $match->{sigqual} %><br>
+    Rx: <% $match->{rxpkt} %> pkts, <% $match->{rxbyte} %> bytes<br>
+    Tx: <% $match->{txpkt} %> pkts, <% $match->{txbyte} %> bytes<br>
 %} else {
     <% $match->{type} %>\
 %}
@@ -850,6 +862,25 @@ foreach my $node_ip (@$ips){
 }
 
 
+</%perl>
+</%method>
+%#
+%# add_node_wireless(\%where) - Adds to @$matches all of the wireless
+%#                              info for the matching mac
+<%method add_node_wireless>
+<%args>
+$where
+</%args>
+<%perl>
+# Look up wireless info associated with this mac
+my $wireless = sql_rows('node_wireless',
+		['*','extract(epoch from time_last) as time_last', 'extract(epoch from time_last) - uptime as time_first'],
+		{ 'mac' => $where->{'mac'} }
+		);
+foreach my $wl (@$wireless) {
+    $wl->{type} = 'wireless';
+    push (@$matches, $wl);
+}
 </%perl>
 </%method>
 %#

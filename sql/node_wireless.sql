@@ -13,7 +13,7 @@ CREATE TABLE node_wireless (
     txpkt       integer, -- transmitted packets
     rxbyte      bigint,  -- received bytes
     txbyte      bigint,  -- transmitted bytes
-    last_seen   TIMESTAMP,
+    time_last   timestamp default now(),
     PRIMARY KEY(mac)
 );
 

@@ -52,6 +52,9 @@ CREATE TABLE process (
     creation    TIMESTAMP DEFAULT now()
     );
 
+-- Earlier versions of the process table didn't have the creation timestamp
+ALTER TABLE process ADD creation TIMESTAMP DEFAULT now();
+
 --
 -- Add ldap to users table
 ALTER TABLE users ADD ldap boolean;
@@ -137,6 +140,6 @@ CREATE TABLE node_wireless (
     txpkt       integer, -- transmitted packets
     rxbyte      bigint,  -- received bytes
     txbyte      bigint,  -- transmitted bytes
-    last_seen   TIMESTAMP,
+    time_last   timestamp default now(),
     PRIMARY KEY(mac)
 );

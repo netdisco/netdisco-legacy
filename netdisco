@@ -2030,7 +2030,7 @@ sub wireless_client_info {
 	$store{txpkt} = $cd11_txpkt->{$key};
 	$store{rxbyte} = $cd11_rxbyte->{$key};
 	$store{txbyte} = $cd11_txbyte->{$key};
-	$store{last_seen} = 'now';
+	$store{time_last} = scalar(localtime);
 	insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
     }
 }
