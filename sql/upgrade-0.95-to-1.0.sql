@@ -122,3 +122,21 @@ CREATE INDEX idx_device_port_wireless_ip_port ON device_port_wireless(ip,port);
 INSERT INTO device_port_wireless ( ip,port,channel )  ( SELECT ip,port,channel FROM device_port_ssid WHERE channel IS NOT NULL );
 
 ALTER TABLE device_port_ssid DROP channel;
+
+
+--
+-- node_wireless, for client association information
+CREATE TABLE node_wireless (
+    mac         macaddr,
+    uptime      integer,
+    maxrate     integer, -- can be 0.5 but we ignore that for now
+    txrate      integer, -- can be 0.5 but we ignore that for now
+    sigstrength integer, -- signal strength (-db)
+    sigqual     integer, -- signal quality
+    rxpkt       integer, -- received packets
+    txpkt       integer, -- transmitted packets
+    rxbyte      bigint,  -- received bytes
+    txbyte      bigint,  -- transmitted bytes
+    last_seen   TIMESTAMP,
+    PRIMARY KEY(mac)
+);

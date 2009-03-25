@@ -1981,11 +1981,58 @@ sub macsuck{
     }
     mac_savecache($fw_cache,\%dbports);
 
+    wireless_client_info($device, $ip);
+
     # Log This
     my $started = localtime($time1);  my $time2 = time;
     insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$started});
     print " Saw : ",$nodes, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
     return $nodes;
+}
+
+=item wireless_client_info
+
+Walks Cisco dot11 client associations, if present, and stores per-client
+association information.
+
+=cut
+
+sub wireless_client_info {
+    my $device = shift;
+    my $ip = shift;
+
+    my $cd11_txrate = $device->cd11_txrate();
+    return unless $cd11_txrate and @$cd11_txrate;
+
+    my $cd11_rateset = $device->cd11_rateset();
+    my $cd11_uptime = $device->cd11_uptime();
+    my $cd11_sigstrength = $device->cd11_sigstrength();
+    my $cd11_sigqual = $device->cd11_sigqual();
+    my $cd11_mac = $device->cd11_mac();
+    my $cd11_port = $device->cd11_port();
+    my $cd11_rxpkt = $device->cd11_rxpkt();
+    my $cd11_txpkt = $device->cd11_txpkt();
+    my $cd11_rxbyte = $device->cd11_rxbyte();
+    my $cd11_txbyte = $device->cd11_txbyte();
+
+    sql_begin();
+    foreach my $key (keys %$cd11_txrate) {
+	my $txrates = $cd11_txrate->{$key};
+	my $rates = $cd11_rateset->{$key};
+	my %store = ();
+	$store{mac} = $cd11_mac->{$key};
+	$store{txrate} = int($txrates->[$#$txrates]);
+	$store{maxrate} = int($rates->[$#$rates]);
+	$store{uptime} = $cd11_uptime->{$key};
+	$store{sigstrength} = $cd11_sigstrength->{$key};
+	$store{sigqual} = $cd11_sigqual->{$key};
+	$store{rxpkt} = $cd11_rxpkt->{$key};
+	$store{txpkt} = $cd11_txpkt->{$key};
+	$store{rxbyte} = $cd11_rxbyte->{$key};
+	$store{txbyte} = $cd11_txbyte->{$key};
+	$store{last_seen} = 'now';
+	insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
+    }
 }
 
 =item mac_savecache({},{})
