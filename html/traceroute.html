@@ -85,7 +85,7 @@ if ($to and &is_mac($to)){
         $to{type} = 'device';
     } else {
     # Check if node
-        my $devmac = sql_scalar('node_ip',['mac'],{ 'ip'=>$to{ip} } );
+        my $devmac = sql_scalar('node_ip',['mac'],{ 'ip'=>$to{ip},'active'=>1 } );
         my $dev = sql_hash('node',['mac','switch','port'],{'mac'=>$devmac,'active'=>1});
         if (defined $dev){
             $to{mac}      = $devmac;
