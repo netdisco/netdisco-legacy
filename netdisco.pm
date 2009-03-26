@@ -183,15 +183,15 @@ sub add_node {
     my $oui = substr($mac,0,8);
     # Set the active flag to false to archive all other instances
     #   of this mac address
-    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND NOT (switch = '$ip' AND port = '$port')/);
+    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND active AND NOT (switch = '$ip' AND port = '$port')/);
 
     # Add this entry to node table. 
     my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port );
-    my %set = ('time_last' => scalar(localtime), 'active' => 1, 'oui' => $oui);
+    my %set = ('time_last' => 'now', 'active' => 1, 'oui' => $oui);
     # if there was another node, set time_recent too.
     # NOTE: $other might be "0E0", so be careful how you test it.
     if ($other != 0) {
-	$set{time_recent} = scalar(localtime);
+        $set{time_recent} = 'now';
     }
     insert_or_update('node', \%hash, { %set, %hash });
 }
@@ -588,20 +588,18 @@ sub in_device {
     return 0 unless defined $to_match;
     return 0 unless defined $device;
 
-    my ($ip,$model,$vendor);
+    my ($ip,$terms);
 
 
     # First Argument:
     # Passed a sql_hash from the device table
     if (ref($device) eq 'HASH'){
         $ip     = $device->{ip};
-        $model  = $device->{model};
-        $vendor = $device->{vendor};
+        $terms  = $device;
     # Passed as simple hostname/IP
     } else {
         $ip     = getip($device);
-        $model  = '';
-        $vendor = '';
+        $terms  = {};
     }
 
     # Second Argument:
@@ -610,14 +608,9 @@ sub in_device {
         $term =~ s/\s*$//;
         # Check for device types
         if ($term =~ /(.*)\s*:\s*(.*)/){
-            my $attrib = $1; my $match = $2;
+            my $attrib = lc($1); my $match = $2;
 
-            if (lc($attrib) eq 'model'){
-                return 1 if $model =~ /^$match$/;
-            }
-            elsif (lc($attrib) eq 'vendor'){
-                return 1 if $vendor =~ /^$match$/;
-            }
+            return 1 if $terms->{$attrib} && $terms->{$attrib} =~ /^$match$/;
             
         # Blanket wildcard
         } elsif ($term eq '*') {
