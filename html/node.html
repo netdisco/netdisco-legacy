@@ -657,7 +657,6 @@ foreach my $match (@sorted_matches) {
     <TD>\
 %        if ($col eq 'mac' and $last_match->{mac} ne $match->{mac}) {
         <A HREF="node.html?node=<% $match->{mac} |u %><% $active ? '': '&archive=1' %>"><%$match->{mac}%></A>\
-        <% $active ? '' : '<SUP>*</SUP>' %>\
 %     } elsif ($col eq 'oui' and ($last_match->{mac} ne $match->{mac})){
         <%$match->{oui}|h%>\
 %     } elsif ($col eq 'match') {
@@ -735,6 +734,7 @@ $match
 %} else {
     <% $match->{type} %>\
 %}
+<% $match->{active} ? '' : '<SUP>*</SUP>' %>\
 </%method>
 %#
 %# init_ouis() - Populate %$ouis
@@ -879,6 +879,7 @@ my $wireless = sql_rows('node_wireless',
 		);
 foreach my $wl (@$wireless) {
     $wl->{type} = 'wireless';
+    $wl->{active} = 1;
     push (@$matches, $wl);
 }
 </%perl>
