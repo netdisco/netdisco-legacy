@@ -1209,6 +1209,14 @@ INT. SNMP Port to list in nmis_dump file.  Default C<161>
 
 =back
 
+=item node_monitor_email
+
+STRING.  If set, consult the node_monitor table for MAC addresses that are being
+monitored after every macwalk.  If any of the monitored MAC addresses appear or
+move, send an email to the node_monitor_email setting and any cc address listed
+in the database.  Note that the node_monitor table must currently be maintained
+via raw sql access, there is no admin page for it.
+
 =item reverse_sysname
 
 BOOLEAN.  Turn this on to have Netdisco do a reverse lookup of the sysName.0 field to use
@@ -1974,6 +1982,12 @@ L<MacSucker>
 Maps a MAC Address to an IP address.  Has no notion of where this node was seen.   Keeps
 time stamps of when this is from.  Data comes from L<ArpNipper>.  Archived data is similar
 to the L<node> table, where ``active'' is set to false for archived data.
+
+=item node_monitor
+
+Lists MAC addresses that are to be monitored for presence on the network; if one
+appears or moves at the end of a macwalk, send email to L<node_monitor_email>
+and the CC field in the node_monitor_table, if set.
 
 =item node_nbt
 

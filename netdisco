@@ -2023,6 +2023,8 @@ sub wireless_client_info {
 	my $rates = $cd11_rateset->{$key};
 	my %store = ();
 	$store{mac} = $cd11_mac->{$key};
+	next unless defined($store{mac}); # There can sometimes be more rows in the txrate and
+					  # rateset columns than all others, so avoid getting NULLs
 	$store{txrate} = int($txrates->[$#$txrates]);
 	$store{maxrate} = int($rates->[$#$rates]);
 	$store{uptime} = $cd11_uptime->{$key};
@@ -2112,7 +2114,55 @@ sub macwalk {
 
     sql_vacuum('node','print'=>1);
 
+    send_monitor_email();
+
     &end;
+}
+
+=item send_monitor_email()
+
+If there is an email address configured in netdisco.conf under
+node_monitor_email, look for any rows in the node_monitor table
+that are being monitored and if the mac address has arrived or
+moved, send the appropriate email.  This function only works
+immediately after macsuck; if another macsuck happens in between
+this will not detect the arrival.  Therefore, this function
+is only ever called from the end of F<macwalk>.
+
+=cut
+
+sub send_monitor_email {
+    my $node_monitor_email = $CONFIG{node_monitor_email};
+    if (defined $node_monitor_email) {
+	# time_recent == time_last gets us to trigger exactly when the
+	# device [re-]arrives in the network.
+        my $alerts = sql_rows('node_monitor nm, node n, device d, device_port dp',
+		[ 'nm.why', 'nm.cc', 'nm.date',
+		  'n.mac', 'n.switch', 'n.port',
+		  'd.name', 'd.location',
+		  'dp.name as portname' ],
+		{ 'nm.mac' => \'n.mac', 'nm.active' => 't',
+		  'd.ip' => \'n.switch',
+		  'dp.ip' => \'n.switch', 'dp.port' => \'n.port',
+		  'd.last_macsuck' => \\'<= n.time_last',
+		  'n.time_recent' => \'n.time_last' } );
+	foreach my $alert (@$alerts) {
+	    my $body = <<"end_body";
+........ n e t d i s c o .........
+  Node    : $alert->{mac} ($alert->{why})
+  When    : $alert->{date}
+  Switch  : $alert->{name} ($alert->{switch})
+  Port    : $alert->{port} ($alert->{portname})
+  Location: $alert->{location}
+
+end_body
+	    my $to = $node_monitor_email;
+	    if ($alert->{cc}) {
+		$to .= "," . $alert->{cc};
+	    }
+	    &mail($to,"Saw mac $alert->{mac} ($alert->{why}) on $alert->{name} $alert->{port}",$body);
+	}
+    }
 }
 
 =item set_status()

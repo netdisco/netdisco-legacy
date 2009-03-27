@@ -143,3 +143,14 @@ CREATE TABLE node_wireless (
     time_last   timestamp default now(),
     PRIMARY KEY(mac)
 );
+
+--
+-- node_monitor, for lost/stolen device monitoring
+CREATE TABLE node_monitor (
+    mac         macaddr,
+    active      boolean,
+    why         text,
+    cc          text,
+    date        TIMESTAMP DEFAULT now(),
+    PRIMARY KEY(mac)
+);
