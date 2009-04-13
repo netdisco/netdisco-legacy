@@ -6,7 +6,7 @@ CREATE TABLE device_port_ssid (
     ip          inet,   -- ip of device
     port        text,   -- Unique identifier of Physical Port Name
     ssid        text,   -- An SSID that is valid on this port.
-    broadcast   boolean,-- Is it broadcast?
+    broadcast   boolean -- Is it broadcast?
 );
 
 CREATE INDEX idx_device_port_ssid_ip_port ON device_port_ssid(ip,port);
