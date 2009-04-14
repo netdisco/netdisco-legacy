@@ -2766,6 +2766,11 @@ sub store_vlans {
 
     my %v_seen = ();
     sql_begin();
+
+    print "[$ip]   Scrubbing VLANs from device_port_vlan table... ";
+    my $deleted_vlan_ports = sql_do(qq/DELETE FROM device_port_vlan WHERE ip = '$ip'/);
+    print  ($deleted_vlan_ports ? " $deleted_vlan_ports removed\n" : " 0 removed\n");
+
     foreach my $if (keys %$i_vlan_membership) {
         my $port = $interfaces->{$if};
 	next unless defined($port);
@@ -2784,7 +2789,10 @@ sub store_vlans {
 		port => $port, vlan => $vlan}, \%store);
 	}
     }
-    sql_commit();
+
+    print "[$ip]   Scrubbing VLANs from device_vlan table... ";
+    my $deleted_vlans = sql_do(qq/DELETE FROM device_vlan WHERE ip = '$ip'/);
+    print  ($deleted_vlans ? " $deleted_vlans removed\n" : " 0 removed\n");
 
     my $v_ncount = 0;
     my $v_name = $device->v_name();
@@ -2813,6 +2821,8 @@ sub store_vlans {
 	insert_or_update('device_vlan', {ip => $ip,
 	    vlan => $vlan}, \%store);
     }
+
+    sql_commit();
     print "[$ip]   $v_count VLAN Interfaces, $v_ncount names.\n";
 }
 
