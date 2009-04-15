@@ -163,13 +163,13 @@ $arg_exact = $exact;
 
 # Hack for VLANs - make it a specific search
 if (length $vlan and !defined $specific) {
-    $specific = 'vlan';
+    $specific = 'vlan_dev';
 }
 
 #   Clear non-specific terms
 if (defined $specific and length($specific)){
     @models = @layers = @vendors = undef;
-    $ip = $text = $name = $desc = $loc = undef;
+    $text = $name = $desc = $loc = undef;
 }
 
 if ($specific =~ /alias/i){
@@ -249,18 +249,8 @@ if ($specific =~ /alias/i){
                         {'d.ip' => \'p.ip', 'up_admin' => 'down'}
                        );
 
-} elsif ($specific =~ /vlan$/i){
-    $title = "Device Ports Carrying VLAN $vlan";
-    $where->{description}++;
-    $where->{speed}++;
-    $matches = sql_rows(
-        'device_port_vlan v, device_vlan dv, device d, device_port p',
-        ['d.ip','d.dns','v.port','p.name','p.speed','dv.description'],
-        {'d.ip' => \'v.ip', 'v.ip' => \'p.ip',
-            'v.port' => \'p.port', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
-    );
-
 } elsif ($specific =~ /vlan_dev/i){
+    $vlan =~ s/[^\d]//g; # untaint the vlan passed to us
     $title = "Devices Carrying VLAN $vlan";
     $where->{vendor}++;
     $where->{model}++;
@@ -268,8 +258,21 @@ if ($specific =~ /alias/i){
     $where->{description}++;
     $matches = sql_rows(
         'device d, device_vlan dv',
-        ['d.ip','d.dns','d.vendor','d.model','d.os','dv.description'],
+        ['d.ip','d.dns','d.vendor','d.model','d.os','dv.description','dv.vlan'],
         {'d.ip' => \'dv.ip', 'dv.vlan' => \"$vlan"}
+    );
+
+} elsif ($specific =~ /vlan/i){
+    $vlan =~ s/[^\d]//g; # untaint the vlan passed to us
+    $dns  =~ s/[^-.A-Za-z0-9]//g; # untaint the dns passed to us
+    $title = (($ip && $dns) ? "Ports on Device $dns" : "Device Ports") ." Carrying VLAN $vlan";
+    $where->{description}++;
+    $where->{speed}++;
+    $matches = sql_rows(
+        'device_port_vlan v, device_vlan dv, device d, device_port p',
+        ['d.ip','d.dns','v.port','p.name','p.speed','dv.description'],
+        {'d.ip' => \'v.ip', 'v.ip' => \'p.ip', (($ip && $dns) ? ('p.ip' => $ip) : ()),
+            'v.port' => \'p.port', 'v.vlan' => \"$vlan", 'dv.ip' => \'p.ip', 'dv.vlan' => \"$vlan"}
     );
 
 } elsif ($specific =~ /blocking/i){
@@ -443,7 +446,7 @@ if (length($desc)){
 }
 
 # Search on DNS entry
-if (length($dns)){
+if (!$specific and length($dns)){
     my $match = sql_match($dns,$exact);
     push(@{$where->{'d.dns/i.dns'}}, $match);
 }
@@ -455,7 +458,7 @@ if (length($name)){
 }
 
 # Search on IP
-if (length($ip)){
+if (!$specific and length($ip)){
     my $match = sql_match($ip,$exact);
     push(@{$where->{'d.ip/i.alias'}}, $match);
     push(@show_cols,'d.name');
@@ -533,12 +536,18 @@ foreach my $result (@sort_matches){
    my $ip =  $result->{ip};
    my $dns = $result->{dns};
    my $port = $result->{port};
+   my $vlan = $result->{vlan};
    $dns = defined $dns ? $dns : $ip;
    $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
    $dns .= " ($port)" if defined $port;
 </%perl>
     <TR>
-        <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&amp;port=' : ''%><% $port|u %>"><% $dns %></A></TD>
+% if (defined $vlan) { # set up by specific=vlan_dev
+        <TD CLASS="match-<%$count%2%>"><A HREF="device_search.html?specific=vlan&vlan=<%$vlan|u%>&ip=<%$ip|u%>&dns=<%$dns|u%>"><% $dns %></A></TD>
+% }
+% else { # general case
+        <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&port=' : ''%><% $port|u %>"><% $dns %></A></TD>
+% }
 <%perl>
     foreach my $col (sort keys %$where){
         # Trim off table name for column
