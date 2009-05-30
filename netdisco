@@ -1566,6 +1566,9 @@ sub get_device {
                 $device = undef;
                 last;
             } elsif (defined $device){
+                # refresh the db with new data
+                print "! Storing device details back to database - new community string found.\n";
+                store_device($device);
                 last;
             }
         }
