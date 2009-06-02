@@ -138,7 +138,7 @@ ul.square  { list-style-type:square; }
     padding-top: 2px;
     font-weight:bold;
     font-size:120%;
-    letter-spacing: 110%;
+    letter-spacing: .075em;
     margin-bottom: 5px;
     margin-top: 5px;
 }
@@ -151,7 +151,7 @@ ul.square  { list-style-type:square; }
     /* eg. "Device Details */
     font-weight:bold;
     font-size:110%;
-    letter-spacing: 110%;
+    letter-spacing: .075em;
     margin-left:15px;
     margin-bottom: 5px;
     margin-top: 10px;
