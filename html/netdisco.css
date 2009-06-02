@@ -239,6 +239,18 @@ table.botbar TD.nav   { text-align:center; }
 table.botbar TD.login { text-align:right; }
 
 /****************************************************************
+ *  INDEX.HTML
+ ****************************************************************/
+div.featurebox {
+    height: 100px;
+    overflow: auto;
+    border: 1px solid #666;
+    background-color: #FBEFDA;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+/****************************************************************
  *  DEVICE.HTML                                                 *
  ****************************************************************/
 .port-up     { color:black; }
