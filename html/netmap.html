@@ -1,27 +1,45 @@
-% unless ($ok) {
-<h1 class="pagehead">Map data missing</h1>
-
-Have you run <B><TT>netdisco -g</TT></B> yet?
-<P>
-<% $mapfile %> : <% $have_image ? "OK" : "unaccessible" %>.<BR>
-netmap.map : <% $have_map ? "OK" : $! %>.
-<P>
-You can also do this from the <A HREF="admin.html">Admin Panel</A> if you have
-administrative rights.
 %#
-% } else {
+%# NAVBAR
 %#
-%#
-<MAP NAME="netmap">
-% foreach my $line (@map){
-    <%$line%>
+<FORM ACTION="<%$r->uri%>" METHOD="GET"><DIV class="navbar">
+<SELECT class="navbutton" NAME="t" SIZE=1>
+% foreach my $tt (@types_on) { 
+    <OPTION VALUE="<%$tt%>" <% $tt eq $arg_t ? 'SELECTED' : ''%>><%$tt%>
 % }
-</MAP>
-<IMG SRC="<% $mapfile %>" ISMAP USEMAP="#netmap" style="border: none;" alt="Network Map">
-<BR>Map Data is <%$map_days%> days old.
+</SELECT>
+% if ($arg_t eq 'svg') {
+<SELECT class="navbutton" NAME="w" SIZE=1>
+% foreach my $ww (@w_opts) { 
+    <OPTION VALUE="<%$ww%>" <% $ww eq $arg_w ? 'SELECTED' : ''%>><%$ww%>
 % }
-<h2 class="subheader">Key</h2>
-<TABLE BORDER=0>
+</SELECT>
+<SELECT class="navbutton" NAME="a" SIZE=1>
+% foreach my $aa (@a_opts) { 
+    <OPTION VALUE="<%$aa|h%>" <% $aa eq $arg_a ? 'SELECTED' : ''%>><%$aa|h%>
+% }
+</SELECT>
+% }
+<input class="navbutton" type="submit" value="Update">
+<A class="navbutton" HREF="<%$r->uri%>">Reset</A>
+<A class="navbutton" HREF="javascript:tlgo('key_view')">Toggle Key</A>
+</div></FORM>
+%#
+%# MAP
+%#
+%if ($arg_t eq 'svg' and $enabled{svg}) {
+%   $m->comp("SELF:netmap_svg", f => $netdisco::CONFIG{graph_svg});
+%} elsif ($enabled{$arg_t}) {
+%   $m->comp("SELF:netmap_img", f => $netdisco::CONFIG{"graph_$arg_t"});
+%} else {
+<h1>Network Map not enabled</h1>
+Please edit <tt>netdisco.conf</tt> and run <tt>netdisco -g</tt>.
+%}
+%#
+%# KEY
+%#
+<div id="key_view" class="hidden">
+%#<h2 class="subheader">Key</h2>
+<TABLE BORDER=0 class="box">
 % for(my $i = 0; $i <= $#{$left_key} || $i <= $#{$right_key}; $i++) {
 <tr>
 %  if (defined($left_key->[$i])) {
@@ -39,29 +57,49 @@ administrative rights.
 </tr>
 % }
 </TABLE>
+</div>
+<%args>
+$w => 1024
+$a => '16:9' # laptop
+$t => ''
+</%args>
+<%shared>
+my ($arg_w,$arg_a,$arg_t,$arg_h);
+my @types = qw/map png gif svg/;
+my @types_on = ();
+my %enabled = ();
+my %exists  = ();
+my $dir;
+</%shared>
 <%init>
-my $comp = $m->current_comp;
-my $dir  = $comp->source_dir;
-my $have_map = open (MAP, "< $dir/netmap.map");
-my (@map, $map_age, $secs_per_day, $map_days);
-
-my $mapfile = 'netmap.gif';
-if (defined $netdisco::CONFIG{graph_png} and $netdisco::CONFIG{graph_png}){
-    $mapfile = 'netmap.png';
+if ($t eq '') {
+    $t = $netdisco::CONFIG{graph_default} || 'svg';
 }
-my $have_image = -r "$dir/$mapfile";
+$arg_w = $w; $arg_a = $a; $arg_t = $t;
+$dir = $m->current_comp->source_dir;
 
-my $ok = ($have_map && $have_image);
-
-if ($ok){ 
-    @map = (<MAP>);
-    close (MAP);
-    $map_age = (stat("$dir/$mapfile"))[9];
-    $map_age = time - $map_age;
-    $secs_per_day = 60*60*24;
-    $map_days = sprintf("%-2.2f", $map_age/$secs_per_day);
+# Width / Height handling (SVG only)
+my @w_opts = qw/400 600 800 1024 1200 1400/;
+my @a_opts = qw/4:3 3:2 16:9/;
+$arg_h = (9/16)*$arg_w;
+if ($arg_a =~ /^(\d+):(\d+)$/) {
+    $arg_h = ($2/$1)*$arg_w;
 }
 
+#
+# Check for each type being enabled and created
+#
+foreach my $type (@types) {
+    my $file = $netdisco::CONFIG{"graph_$type"};
+    $file =~ s,^.*/,,g; # strip path
+    $enabled{$type} = defined $file;
+    push(@types_on,$type) if $enabled{$type} and $type ne 'map';
+    next unless $enabled{$type};
+    my $path = "$dir/$file";
+    $exists{$type} = -r $path ? $file : 0;
+}
+
+# Key creation
 my $right_key = [
  [ '<span style="color:green;">--------</span>', 'Green Lines - WAN' ],
  [ '<span style="color:#f5deb3;">-------</span>', 'Thin lines - 10Mbps' ],
@@ -97,6 +135,134 @@ push(@{$left_key}, [ '<span style="color:' . $problem . ';">[bad-dev]</span>',
 			$colorname . ' Box - Device unaccessable' ]);
 
 </%init>
+%#
+%# netmap_map()
+%#
+<%method netmap_map>
+<%perl>
+return unless $enabled{'map'};
+unless ($exists{'map'}) {
+    $m->comp("SELF:no_file", f => $netdisco::CONFIG{graph_map});
+    return;
+}
+my (@map, $map_age, $secs_per_day, $map_days);
+open (MAP, "< $exists{'map'}");
+@map = (<MAP>);
+close (MAP);
+</%perl>
+<MAP NAME="netmap">
+% foreach my $line (@map){
+    <%$line%>
+% }
+</MAP>
+</%method>
+%#
+%# netmap_img()
+%#
+<%method netmap_img>
+<& SELF:netmap_map &>
+% my $file = $exists{$arg_t};
+% unless ($file) {
+%   $m->comp('SELF:no_file', f=>$netdisco::CONFIG{"graph_$arg_t"});
+%   return;  
+% }
+<IMG SRC="<% $file %>" ISMAP USEMAP="#netmap" style="border: none;" alt="Network Map">
+<BR><%$file%> is <&SELF:file_age_days, f=>"$dir/$file"&> days old.
+</%method>
+%#
+%# netmap_svg()
+%#
+<%method netmap_svg>
+<%args>
+$f => ''
+</%args>
+<applet code="net.claribole.zgrviewer.ZGRApplet.class" archive="svg/zvtm-0.9.8.jar,svg/zgrviewer-0.8.2.jar" 
+    width="<%$arg_w|h%>" height="<%$arg_h|h%>">
+    <param name="type" value="application/x-java-applet;version=1.4" />  
+    <param name="width" value="800" />  
+    <param name="height" value="600" />  
+    <param name="svgURL" value="<%$f|h%>" />
+    <param name="title" value="Interactive Network Map" />
+    <param name="showNavControls" value="true" />
+%#  <param name="centerOnLabel" value="main_router">
+    <param name="appletBackgroundColor" value="#8b7E66" />
+    <param name="graphBackgroundColor" value="#000" />
+    <param name="cursorColor" value="#FFF">
+    <param name="highlightColor" value="red">
+    <param name="antialiased" value="true">
+</applet>
+<UL>
+    <LI>Drag with left mouse button to pan.
+    <LI>Hold shift and vertically drag with left mouse button to zoom in/out smoothly.
+    <LI>Click a node with left mouse button to zoom on that node.
+    <LI>Double-click with left mouse button or single-click with middle mouse button to load the URL associated with a node in a separate browser window.
+    <LI>Use arrow keys to pan the view.
+    <LI>Use page keys to zoom in/out (animated transitions)
+    <LI>Use +/- keys to zoom in/out (no transition, better adapted to the case when users hold the keys down for repeated zooming steps)
+    <LI>Move the mouse cursor in the top-left region of the graph window to make the multi-scale tool palette appear. 
+</UL>
+</%method>
+%#
+%# no_file( f=>file )
+%#
+<%method no_file>
+<%args>
+$f => ''
+</%args>
+<h1>Error</h1>
+File <%$f|h%> not accessable.  Please run <tt>netdisco -g</tt>
+or use the <a href="admin.html">Admin Panel</A>.
+</%method>
+%#
+%# file_age_days(f => file)
+%#
+<%method file_age_days>
+<%args>
+$f => undef
+</%args>
+<%perl>
+return -1 unless -r $f;
+my $secs_per_day = 60*60*24;
+my $age = (stat($f))[9];
+$age = time - $age;
+my $days = sprintf("%-2.2f", $age/$secs_per_day);
+</%perl>
+<%$days|h%>\
+</%method>
+%#
+%# Add javascript routines to header
+%#      tl(layer) - Toggles Layer visibility
+%#     tlgo(layer,[anchor]) - Toggles layer and goes to anchor,
+%#                            default anchor is same as layer
+%#
+<%method html_head>
+<script type="text/javascript">
+function tl ( whichLayer ) {
+    var elem, vis;
+    if ( document.getElementById ) elem = document.getElementById( whichLayer );
+    else if ( document.all )       elem = document.all[whichLayer];
+    else if ( document.layers )    elem = document.layers[whichLayer];
+
+    vis = elem.style;
+
+    // safari bug -- if hidden doesn't have any properties, so we know it's hidden.
+    if (vis == undefined) {
+        elem.setStyle('display', 'block');
+        return;
+    }
+
+    if (vis.display==''&&elem.offsetWidth!=undefined&&elem.offsetHeight!=undefined)
+        vis.display = (elem.offsetWidth!=0&&elem.offsetHeight!=0)?'block':'none';
+    vis.display = (vis.display==''||vis.display=='block')?'none':'block';
+}
+
+function tlgo ( whichLayer, anchor ) {
+    if (anchor == undefined) anchor = whichLayer;
+    tl(whichLayer);
+    location.href="#"+anchor;
+}
+</script>
+</%method>
 <%method title>
 - Network Map \
 </%method>
