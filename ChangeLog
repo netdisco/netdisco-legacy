@@ -2,12 +2,10 @@
 # netdisco.org
 # $Id$
 
-0.96 ()
-
+1.0 () == 0.96 ()
 Features:
     + []        Partial MAC search on an even number of hex digits
-    + [1553561] (Optionally) display node NetBIOS info on device view
-                   page
+    + [1553561] (Optionally) display node NetBIOS info on device view page
     + [1107583] Use SQL transactions when bulk updating tables.
                 Based on Daniel Weber's work; updated partially
                 from experience in parallel arpnip+macsuck.
@@ -17,10 +15,8 @@ Features:
     + []        Record device's SNMP::Info class for debugging
     + [1603913] Record module info from Entity MIB.
                 (not yet in web front end)
-    + [1364276] Multi-process parallel mode for macwalk, arpwalk
-                   and nbtwalk.
-    + [1641944] LDAP authentication based on contributions from Bernhard
-                Augenstein.
+    + [1364276] Multi-process parallel mode for macwalk, arpwalk and nbtwalk.
+    + [1641944] LDAP authentication based on contributions from Bernhard Augenstein.
                 Multiple root devices for -r.
                 External program to get community.
                 NetBIOS search node also matches usernames.
@@ -43,6 +39,7 @@ Features:
     + [ 1850405 ] Adding Users via CLI - no "Full Name" option
     + [ 2081320 ] Search by Age fails to limit the search (dwpoon)
     + []        Add ignore_interfaces configuration option
+    + [1811821] Add ZGRViewer SVG File netmap support
 
 Bugfixes:
     * [2565682] Handle xxxx-xxxx-xxxx MAC address format (J R Binks)
