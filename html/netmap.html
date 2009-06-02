@@ -65,16 +65,13 @@ $t => ''
 </%args>
 <%shared>
 my ($arg_w,$arg_a,$arg_t,$arg_h);
-my @types = qw/map png gif svg/;
+my @types = qw/map png gif svg jpg jpeg/;
 my @types_on = ();
 my %enabled = ();
 my %exists  = ();
 my $dir;
 </%shared>
 <%init>
-if ($t eq '') {
-    $t = $netdisco::CONFIG{graph_default} || 'svg';
-}
 $arg_w = $w; $arg_a = $a; $arg_t = $t;
 $dir = $m->current_comp->source_dir;
 
@@ -84,6 +81,15 @@ my @a_opts = qw/4:3 3:2 16:9/;
 $arg_h = (9/16)*$arg_w;
 if ($arg_a =~ /^(\d+):(\d+)$/) {
     $arg_h = ($2/$1)*$arg_w;
+}
+
+# Hack for default graph
+my $default = $netdisco::CONFIG{graph};
+my $def_ext;
+if (defined $default) {
+    $def_ext = $default;
+    $def_ext =~ s/^.*\.([^\.]+)$/$1/;
+    $netdisco::CONFIG{"graph_$def_ext"} = $netdisco::CONFIG{graph};
 }
 
 #
@@ -97,6 +103,12 @@ foreach my $type (@types) {
     next unless $enabled{$type};
     my $path = "$dir/$file";
     $exists{$type} = -r $path ? $file : 0;
+}
+
+# Select one as default if we haven't selected one
+if ($t eq '' or !grep(/^\Q$t\E$/,@types_on)) {
+    $t = $netdisco::CONFIG{graph_default} || $def_ext || $types_on[0] || 'svg';
+    $arg_t = $t;
 }
 
 # Key creation
