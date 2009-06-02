@@ -27,7 +27,7 @@
 %# MAP
 %#
 %if ($arg_t eq 'svg' and $enabled{svg}) {
-%   $m->comp("SELF:netmap_svg", f => $netdisco::CONFIG{graph_svg});
+%   $m->comp("SELF:netmap_svg", f => $exists{svg});
 %} elsif ($enabled{$arg_t}) {
 %   $m->comp("SELF:netmap_img", f => $netdisco::CONFIG{"graph_$arg_t"});
 %} else {
@@ -176,6 +176,12 @@ close (MAP);
 <%args>
 $f => ''
 </%args>
+<%perl>
+unless ($exists{'svg'}) {
+    $m->comp("SELF:no_file", f => $netdisco::CONFIG{graph_svg});
+    return;
+}
+</%perl>
 <applet code="net.claribole.zgrviewer.ZGRApplet.class" archive="svg/zvtm-0.9.8.jar,svg/zgrviewer-0.8.2.jar" 
     width="<%$arg_w|h%>" height="<%$arg_h|h%>">
     <param name="type" value="application/x-java-applet;version=1.4" />  
@@ -210,7 +216,7 @@ $f => ''
 $f => ''
 </%args>
 <h1>Error</h1>
-File <%$f|h%> not accessable.  Please run <tt>netdisco -g</tt>
+File <%$f|h%> is not accessable.  Please run <tt>netdisco -g</tt>
 or use the <a href="admin.html">Admin Panel</A>.
 </%method>
 %#
