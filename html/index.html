@@ -1,48 +1,129 @@
-<h1 class="pagehead">Intro</h1>
-Netdisco is an Open Source web-based network management tool.  
-<div class="box" style="float: right; width: 45%;">
-    <B>New in 0.96</B>:
+<div class="newbox">
+    <B>New in 1.0</B>:
     <HR class="noshade">
-        <div>
-        New Features:<BR>
-        <pre class="featurebox">
-HEY CHANGE THIS BEFORE RELEASE
-        </pre>
-        <BR>New Devices Supported:<BR>
-        <pre class="featurebox">
-HEY CHANGE THIS BEFORE RELEASE
-        </pre>
-        <BR>Bugs Fixed:<BR>
-        <pre class="featurebox">
-HEY CHANGE THIS BEFORE RELEASE
-        </pre>
-    <P>See <A HREF="doc/ChangeLog.txt">ChangeLog</A> for more details and credits.
-        </div>
+    Features (<A HREF="doc/ChangeLog.txt">details</A>):
+    <div class="featurebox">
+    <UL>
+        <LI>Data-collection using multiple parallel processes allows
+            for an enormous speed-up in discoveries, macsucks and arpnips.
+        <LI>Java-Based Network Map Viewer w/ Search
+        <LI>SQL Transactions for better data reliability and performance
+        <LI>Display of NetBIOS information in port view
+        <LI>LDAP Authentication
+        <LI>Device Module Support
+        <LI>Large improvements in VLAN support
+        <LI>Power-over-Ethernet (PoE) data collection
+        <LI>Web Interface Enhancements
+    </UL>
+    </div>
+
+    Device Support since <A HREF="http://snmp-info.sourceforge.net/DeviceMatrix.html">SNMP::Info</A> 1.04
+    (<A HREF="http://snmp-info.cvs.sourceforge.net/viewvc/snmp-info/snmp-info/ChangeLog?view=markup">details</A>)
+    <div class="featurebox">
+    version 2.00 (08/01/08)
+    <UL>
+        <LI>Alcatel-Lucent OmniSwitch via L3::AlcatelLucent
+        <LI>Alcatel-Lucent Service Router via L3::Timetra
+        <LI>Alcatel-Lucent OmniAccess via L2::Aruba
+    </UL>
+
+    <BR>version 1.09 (07/22/08)
+    <UL>
+        <LI>HP ProCurve Foundry OEM switches, such as the 9300
+              series, in new class L3::HP9300
+        <LI>CISCO-PAE-MIB in CiscoPortSecurity (Kesy)
+        <LI>D-Link devices through L3::Dell
+        <LI>Linksys SRW2048 through L3::Dell
+        <LI>IBM BladeCenter 4-Port GB Ethernet Switch Module through L3::Dell
+        <LI>newer Nortel Alteon switches and Nortel BladeCenter Switch Modules in L3::AlteonAD
+        <LI>Cisco 1250 series through L2::Aironet
+        <LI>Updates to fan, power supply, and serial number methods in L2::HP (Jeroen van Ingen)
+        <LI>Use Cisco Client Association MIBs for Aironet client reporting via fw_mac
+        <LI>Support VLANs on Aironet
+        <LI>Get the proper radio MAC address from aironet in MBSS mode
+        <LI>Additional wireless statistics from Aironet
+        <LI>Infrastructure for SNMPv3 support:
+            <UL>
+                <LI>Save the SecName passed into the constructor
+                <LI>Create an update() function, which replaces the underlying
+                  SNMP session using different parameters.
+                <LI> Return the SecName instead of community from snmp_comm() when using SNMPv3.
+            </UL>
+        <LI>L2::HP now isa Layer3 instead of Layer2 to support arpnip (Dudley Freeman)
+        <LI>Silence warnings from Cisco devices which don't return values for extended VLAN range (1024-4096)
+        <LI>set_i_pvid(), set_i_vlan(), set_add_i_vlan_tagged(),
+            set_remove_i_vlan_tagged() removed from Bridge and HP classes due to
+            incompatibility across devices.
+        </LI>
+
+    <BR>version 1.05 (11/25/07)
+    <UL>
+        <LI>LLDP in new class LLDP (contributions from Bernhard Augenstein)
+        <LI>Added device specific support for LLDP in L2::HP, L2::Baystack, L3::Enterasys and L3::Foundry
+        <LI>Enterasys devices as new class L3::Enterasys 
+        <LI>Dell PowerConnect switches as new class L3::Dell
+        <LI>Generic routers running Microsoft Windows OS as new class L3::Microsoft (begemot)
+        <LI>Sun routers as new class L3::Sun (begemot)
+        <LI>Juniper NetScreen devices as new class L3::Netscreen (Kent Hamilton)
+        <LI>Cyclades terminal servers as new class L1::Cyclades
+        <LI>Cisco (Airespace) wireless controllers as new class L2::Airespace
+        <LI>Nortel Ethernet Routing Switch 2500 series and Business Ethernet Switches (David Siebörger)
+        <LI>Update of L3::Foundry to support all Foundry devices including newer switches.  Depreciate L2::Foundry.
+        <LI>Added generic device type detection using IANA assigned enterpise number extracted from sysObjectID
+        <LI>Added ifDiscards and other missing entries from IF-MIB::ifEntry (Greg King)
+        <LI>Added CGESM devices to L2::C2900 class (Alexander Hartmaier)
+        <LI>New class IEEE802dot11 class for generic standards based wireless AP support to include i_ssidlist()and i_80211channel() methods.
+        <LI>L2::Orinoco inherits from new IEEE802dot11 for i_ssidlist()and i_80211channel() support. 
+        <LI>Add loop detect option and code for getnext table column walks.
+        <LI>Add Layer3::NetSNMP for Net-SNMP-based hosts, part of SF patch 1557529 (Bradley Baetz).
+        <LI>Add EIGRP Neighbor Tables to L3::Cisco SF Patch 1577927 (Andrew Herrick)
+        <LI>Additions to CiscoQOS and CiscoStats (Alexander Hartmaier)
+        <LI>Emulate ENTITY-MIB Physical Table methods for devices which don't
+              have ENTITY-MIB support in Airespace, Bayhub, Baystack, BayRS,
+              NortelStack, and Passport classes.
+        <LI>Enable use of MIB Leaf node names in SNMP sets.
+        <LI>Add POWER-ETHERNET-MIB and CISCO-POWER-ETHERNET-EXT-MIB support.
+        <LI>Correct port numbering for Nortel 8110, 1100, 1150 in L3:Passport (Reported by David Pinkoski)
+        <LI>Clear attribute cache on sucessful SNMP set.
+        <LI>Report bridge groups (VLANs) in L2::C1900.
+        <LI>Turn on bulkwalk for C6500.  Users with buggy OS versions can turn it off when creating the object.
+    </UL>
+    </div>
+
+    Bug Fixes (<A HREF="doc/ChangeLog.txt">details</A>):
+    <div class="featurebox">
+    <UL>
+        <LI>Handle new MAC address formats
+        <LI>Improved RFC1918 IP range handling
+        <LI>Auto-reload of config daemon on config file change
+        <LI>Topology file fix for ports w/ # character
+        <LI>Improvements for newer versions of PostgreSQL
+        <LI>Better support for device aliases in -M / -A / -d
+    </UL>
+    </div>
 </div>
+<div class="overview">
+<h1 class="pagehead">Overview</h1>
+Netdisco is an Open Source web-based network management tool.  
 <P>
 Here are some of the favorite uses for this tool:
 <UL>
-    <LI>Find a Switch Port from a MAC or IP address and the reverse.
-    <LI>Administratively disable a Switch Port while leaving an audit
-	trail.<BR>
-	<span class="small">(Required ReadWrite SNMP passwords to be configured)</span>
-    <LI>Quickly provide configuration information for network devices.
-    <LI>Inventory your network hardware by model, vendor and IOS.
-    <LI>Control your IP address space; know who uses what IP and when.
-    <LI>Historical data: know what IP and MAC addresses
-	that are in use, <i>and were in use</i> on what ports.
-    <LI>Pretty pictures of your network.
+    <LI><b>Locate</b> a machine on the network by MAC or IP and show the switch port it lives at.
+    <LI><b>Turn Off</b> a switch port while leaving an audit trail.  Admins log why a port was shut down.
+    <LI><b>Inventory</b> your network hardware by model, vendor, switch-card, firmware and operating system.
+    <LI><b>Report</b> on IP address and switch port usage: historical and current.
+    <LI><b>Pretty pictures</b> of your network.
 </UL>
 <P>
 Things connected to the network are divided into two categories: 
 <UL>
-    <LI><span class="u">Devices</span> - Network appliances such as routers, switches,
+    <LI><b>Devices</b> - Network appliances such as routers, switches,
 	and hubs that support SNMP.  Each device has multiple
 	interfaces (ports) and can have IPs assigned to those
 	interfaces.  
-    <LI><span class="u">Nodes</span> - Anything on the network that has a MAC address that isn't a device.
-	Printers, Computers, Servers, Devices for which we don't have SNMP access.
-	<P>See <A HREF="doc/README.html#glossary">the glossary</a> for more details.
+    <LI><b>Nodes</b> - Anything on the network that has a MAC address that is not a device:
+	printers, computers, servers, IP phones, and any device that we do not have SNMP access to.
+	<P>See <A HREF="doc/README.html#glossary">the Glossary</a> for more details.
 </UL>
 <br style="clear: both;">
 
@@ -51,35 +132,32 @@ If you have problems with Netdisco you should :
 
 <OL>
     <LI>Talk to your Network Administrator who installed Netdisco
-    <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A>
+    <LI><A HREF="http://sourceforge.net/project/showfiles.php?group_id=80033">Check for a Newer Release</A> of Netdisco
+        and SNMP::Info.
     <LI><A HREF="http://sourceforge.net/tracker/?group_id=80033&amp;atid=558508">Check for Bugs</A>
     <LI><A HREF="http://sourceforge.net/search/?group_id=80033&amp;type_of_search=mlists">Search the Mailing List Archives</A>
     <LI><A HREF="http://lists.sourceforge.net/lists/listinfo/netdisco-users">Ask a Question on the Mailing List</A>
 </OL>
-<h1 class="pagehead">Register</h1>
+<h1 class="pagehead">Development</h1>
 <P>
 The developers are now maintaining a registry of Netdisco installs.  This is
 mainly for morale boosting purposes, but also helps us direct feature requests
 to our target audience.  One drawback of the Source Forge system is that we
 have no idea how many people are using the software compared to the number of
 downloads.  
-<P>
 Please spend a minute to let us know you're using Netdisco at 
 <A HREF="http://netdisco.org/register.html" onclick="window.open(this.href,'netdiscoregister'); return false">http://netdisco.org/register.html</A>.
 
 <P>
 <hr class="halfwidth">
 <A HREF="http://netdisco.org">Netdisco</a> is an Open Source project 
-headed up by developers Eric Miller, Bill Fenner, Oliver Gorwits and Max Baker.
-<BR>
-Originally created at <a href="http://www.ucsc.edu">UCSC</a>
-and now hosted by <A HREF="http://sourceforge.net/projects/netdisco">Source Forge</A>.
+headed up by developers Eric Miller, Bill Fenner, Oliver Gorwits and Max Baker,
+originally created at <a href="http://www.ucsc.edu">UCSC</a>
 
-<%method html_head>
-<STYLE TYPE="text/css">
-pre.featurebox { width: 99%; height: 5em; overflow: auto; background-color: white; color: black; border: 2px inset; }
-</STYLE>
-</%method>
-%# TODO - Autoparse the changelog
+All bug reports, bug patches, feature enhancements and requests and issues are
+served through <A HREF="http://sourceforge.net/projects/netdisco">Source Forge</A>
+and our mailing lists.  New developers and maintainers are always welcome.
+</div>
+
 %# $Id$
 %# vim:syntax=mason
