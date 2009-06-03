@@ -3,6 +3,7 @@ $ip
 $typ	=> 'image';
 </%args>
 <%init>
+# TODO : Get this out of here, big memory hog
 use GD;
 </%init>
 <%shared>
@@ -3277,3 +3278,5 @@ if ($typ eq "map")
     #$m->abort;
 }
 </%perl>
+%# $Id$
+%# vim:syntax=mason

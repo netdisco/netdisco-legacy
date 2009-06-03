@@ -61,6 +61,7 @@ This MAC address hasn't been seen on any ports.
 % }
 % }
 <%init>
+# TODO: Get this out of here, big memory hog
 use Data::Dumper;
 my $arp;
 my $ports;
@@ -70,3 +71,5 @@ $arp = sql_hash('node_ip', ['mac','ip','time_first'], { ip => $r->connection->re
 <%method title>
 - Debugging Info
 </%method>
+%# $Id$
+%# vim:syntax=mason
