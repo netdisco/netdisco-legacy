@@ -132,7 +132,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =cut
 
-$VERSION = '0.96-cvs';
+$VERSION = '1.0-RC1';
 
 =back
 
