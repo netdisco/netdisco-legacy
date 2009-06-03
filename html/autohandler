@@ -2,7 +2,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <TITLE>n e t  d i s c o \
 % if (defined $netdisco::CONFIG{customer}) {
@@ -11,6 +10,7 @@
 <& SELF:title &> </TITLE>
 <LINK REL="stylesheet" HREF="<%$path%>/netdisco.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="stylesheet" HREF="<%$path%>/mktree.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="SHORTCUT ICON" HREF="<%$path%>/netdisco.ico">
 <& SELF:html_head &>
 % if (defined($netdisco::CONFIG{fp_overlib}) && $netdisco::CONFIG{fp_overlib} == 'true') { 
 	<script type="text/javascript" src="overlib_mini.js"><!-- overLIB (c) Erik Bosrup --></script>
