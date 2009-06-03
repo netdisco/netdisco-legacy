@@ -1,5 +1,4 @@
 #! /usr/bin/perl -w
-
 # Copyright (c) 2008, Andrew Harris, Tomorrow Communications Ltd
 # All rights reserved.
 #
@@ -71,6 +70,16 @@ Sam Stickland (sam@spacething.org):
                     continue
                 }
 
+If you are already a rancid user, you can use the '-f' command
+line arg or set $rcfilearg in the script to point to your existing rancid
+.cloginrc, but make sure your netdisco user can read it.
+
+If you are using minimally privileged user in rancid, you will need to
+permit the user to run "show names".  e.g., For a rancid user of priv
+level 7, add the following to the config:
+
+  privilege cmd level 7 mode exec command names
+
 There are a few variables near the type of the script (netdisco location,
 clogin location and model types) that may need customising for your
 installation.
@@ -83,25 +92,43 @@ Finally, schedule firewall_arp to run in your crontab. ie.
 =cut
 
 use strict;
+use Getopt::Std;
+use lib qw(/usr/local/netdisco/);
+use netdisco qw/:all/;
+
+our($opt_h, $opt_v, $opt_f);
 
 # Change this to the location of clogin
 my $clogin = "/usr/local/rancid/bin/clogin";
+
 # Models to collect for, % represents SQL wildcard
 my $models = ['%PIX%', '%ASA%', '%WsSvcFwm%', '%6500Firewall%'];
 
-use lib qw(/usr/local/netdisco/);
-use netdisco qw/:all/;
 &netdisco::config('/usr/local/netdisco/netdisco.conf');
 netdisco::dbh();
+getopts('hvf:');
+
+if ( $opt_h ) {
+  die "Usage: firewall_arp [ -h ] [ -f /path/to/.cloginrc ] [ -v ]\n"
+}
+
+# if you are already a rancid user, you may wish to point to an existing
+# .cloginrc; otherwise leave as "".  Or use '-f' to pass the path on
+# the command line.
+my $rcfilearg = "";
+#my $rcfilearg = "-f /home/netman/.cloginrc";
+if ( $opt_f ) {
+  $rcfilearg = "-f $opt_f";
+}
 
 # Cisco firewall types
 my $where = {'model' => $models};
 
 my $devices = netdisco::sql_rows('device',['ip', 'name'], $where, 1);
 foreach my $deviceRow (@$devices) {
-  print "Processing " . $deviceRow->{name} . " (" . $deviceRow->{ip} . ")\n";
+  stdoutprint("Processing " . $deviceRow->{name} . " (" . $deviceRow->{ip} . ")\n");
   my $device_ip = $deviceRow->{ip};
-  my @output = `$clogin -t 2 -c "show arp; show names" $device_ip`;
+  my @output = `$clogin $rcfilearg -t 2 -c "show arp; show names" $device_ip`;
 
   # Process local names
   my %namesHash;
@@ -129,15 +156,22 @@ foreach my $deviceRow (@$devices) {
           $ip = $namesHash{$ip};
           # IP Address found and is: $ip
         } else {
-          print "**** Could not process named entry: $line\n";
+          stdoutprint("**** Could not process named entry: $line\n");
           next;
         }
       }
       add_arp($mac, $ip);
-      print ".";
+      stdoutprint(".");
       $added++;
     }
   }
-  print "\n Added $added ARP entries\n\n";
+  stdoutprint("\n Added $added ARP entries\n\n");
 }
 
+sub stderrprint {
+  print STDERR @_;
+}
+
+sub stdoutprint {
+  print STDOUT @_ if ( defined $opt_v );
+}
