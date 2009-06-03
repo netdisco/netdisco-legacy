@@ -1,0 +1,143 @@
+#! /usr/bin/perl -w
+
+# Copyright (c) 2008, Andrew Harris, Tomorrow Communications Ltd
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Tomorrow Communications Ltd nor the names of its
+#       contributors may be used to endorse or promote products derived from
+#       this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+=pod
+
+This script uses RANCID to collect Cisco firewall's ARP tables, and adds them
+to Netdisco. If local names are in use on the device these are correctly parsed
+into IP addresses. Collection is supported via any of RANCID's methods (eg. SSH,
+Telnet, etc.)
+
+RANCID can be found at http://www.shrubbery.net/rancid/
+
+Please read the RANCID documentation for full instructions, but very quickly
+this needs a .cloginrc file in netdisco's home directory with permissions 600
+(chmod .cloginrc 600), along the lines of:
+
+add user * rancid
+add password * password enable_passwd
+add method * ssh telnet
+
+This will login first using SSH, then Telnet. If you have problems with non-SSH
+devices not timing out properly then consider the following patch to clogin by
+Sam Stickland (sam@spacething.org):
+
+--- bin/clogin      2008-12-04 17:12:23.000000000 +0000
++++ bin/clogin  2008-12-04 17:14:41.000000000 +0000
+@@ -336,7 +336,8 @@
+                send_user "\nError: TIMEOUT reached\n"
+                catch {close}; wait
+                if { $in_proc} {
+-                   return 1
++#                  return 1
++                   continue
+                } else {
+                    continue
+                }
+@@ -344,7 +345,8 @@
+                send_user "\nError: EOF received\n"
+                catch {close}; wait
+                if { $in_proc} {
+-                   return 1
++#                  return 1
++                   continue
+                } else {
+                    continue
+                }
+
+There are a few variables near the type of the script (netdisco location,
+clogin location and model types) that may need customising for your
+installation.
+
+Finally, schedule firewall_arp to run in your crontab. ie.
+
+# Arp Nip every hour on the half hour
+30 * * * *  /usr/local/netdisco/netdisco -b -a; /usr/local/netdisco/bin/firewall_arp
+
+=cut
+
+use strict;
+
+# Change this to the location of clogin
+my $clogin = "/usr/local/rancid/bin/clogin";
+# Models to collect for, % represents SQL wildcard
+my $models = ['%PIX%', '%ASA%', '%WsSvcFwm%', '%6500Firewall%'];
+
+use lib qw(/usr/local/netdisco/);
+use netdisco qw/:all/;
+&netdisco::config('/usr/local/netdisco/netdisco.conf');
+netdisco::dbh();
+
+# Cisco firewall types
+my $where = {'model' => $models};
+
+my $devices = netdisco::sql_rows('device',['ip', 'name'], $where, 1);
+foreach my $deviceRow (@$devices) {
+  print "Processing " . $deviceRow->{name} . " (" . $deviceRow->{ip} . ")\n";
+  my $device_ip = $deviceRow->{ip};
+  my @output = `$clogin -t 2 -c "show arp; show names" $device_ip`;
+
+  # Process local names
+  my %namesHash;
+
+  foreach my $nameentry (@output) {
+    chomp $nameentry;
+    if ($nameentry =~ m/^name (\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b) ([A-z0-9\-\.]+)/) {
+      my ($name_ip, $name_name) = ($1, $2);
+      $namesHash{$name_name} = $name_ip;
+    }
+  }
+
+  my $added = 0;
+
+  foreach my $line (@output) {
+    chomp $line;
+    if ($line =~ m/[A-z0-9\-\.]+ ([A-z0-9\-\.]+) ([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]\.[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]\.[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])/) {
+      # Contains MAC address
+      my ($ip, $mac) = ($1, $2);
+
+      if ( $ip =~ m/\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/) {
+      } else {
+        #  Cannot decipher IP address, using name table for: $ip\n";
+        if(defined($namesHash{$ip})) {
+          $ip = $namesHash{$ip};
+          # IP Address found and is: $ip
+        } else {
+          print "**** Could not process named entry: $line\n";
+          next;
+        }
+      }
+      add_arp($mac, $ip);
+      print ".";
+      $added++;
+    }
+  }
+  print "\n Added $added ARP entries\n\n";
+}
+
