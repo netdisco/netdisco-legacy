@@ -4,18 +4,20 @@ Netdisco INSTALL -- Instructions for setting up the Netdisco application.
 
 =head1 VERSION
 
-Netdisco 0.95
+Netdisco 1.0
 
 =head1 AUTHOR
 
-Developed by team of Open Source authors headed by Eric Miller and Bill Fenner.
-Originally created by Max Baker.  See list at the end of README of all the
-contributors.
+Developed by team of Open Source authors headed by Eric Miller, Bill Fenner,
+and Oliver Gorwits, originally created by Max Baker.  See list at the end of
+README of all the contributors.
 
 Netdisco was created at the University of California, Santa Cruz (UCSC),
 Networking and Technology Services (NTS) department.   UCSC continues to
-support the development of Netdisco by providing development servers and
-financial support.
+support the development of Netdisco by providing development servers and beer.
+
+The Netdisco project is hosted by Source Forge at L<https://sourceforge.net/projects/netdisco>
+and L<https://sourceforge.net/projects/snmp-info>.
 
 =head1 SUPPORT
 
@@ -41,13 +43,14 @@ L<http://lists.sourceforge.net/lists/listinfo/netdisco-users>.
 =item To report a bug
 
 To report bugs, please use the Bug tracker on the Netdisco Source Forge project page at 
-L<http://sourceforge.net/projects/netdisco>.
+L<https://sourceforge.net/tracker2/?group_id=80033&atid=558508>
 
 =item To become a developer
 
-If you would like to help develop Netdisco, or have code to contribute,
-please submit your code to the C<patches> tracker on the Source Forge Page and
-join us on the C<netdisco-devel> mailing list.
+If you would like to help develop Netdisco, or have code to contribute, please
+submit your code to the patches tracker at
+L<https://sourceforge.net/tracker2/?group_id=80033&atid=558510> and join us on
+the C<netdisco-devel> mailing list.
 
 =item To register your install of Netdisco
 
@@ -60,6 +63,32 @@ let us know you're using it at L<http://netdisco.org/register.html>.
 
 =back
 
+=head1 INSTALL FLAVORS
+
+There are three general flavors of installs out there for Netdisco:
+
+=over
+
+=item From Source
+
+The most common way is to install it from source on your machine using an
+install script (see F<bin/install> and
+F<http://www.auburn.edu/~gouldwp/netdisco/>), or manually using this document.
+
+=item From Package
+
+Netdisco is available as a package / port on a few flavors of Linux
+and BSD.  Check your favorite package repository first before 
+going to the trouble of installing it manually.
+
+=item Virtual Machine / VMWARE Applicance
+
+Charles Goldsmith maintains a VMWARE Appliance version of Netdisco
+at L<http://wokka.org/netdisco/>.  This is by far the easiest way
+to get up and running w/ Netdisco. 
+
+=back
+
 =head1 REQUIREMENTS
 
 Netdisco is built using lots of fine Open-Source tools:
@@ -68,7 +97,7 @@ Netdisco is built using lots of fine Open-Source tools:
 
 =item * Perl
 
-5.6.1 and newer advised.   Whatever version that comes with your distro should
+5.8.x and newer advised.   Whatever version that comes with your distro should
 be fine.
 
 =item * Perl Modules
@@ -81,20 +110,18 @@ Listed below
 
 =item * Postgres SQL Server
 
-Version 7.4 or higher required.  Version 8.x suggested.
+Version 8.x or higher suggested.
 
 Reported working for versions 7.2, 7.3, 7.4, 8.0, 8.1
 
 =item * Mason
 
-1.26 or newer required.  1.35 or newer advised, especially
+1.26 or newer required.  1.39 or newer advised, especially
 for Apache2 installs.
 
 =item * Apache
 
-B<Netdisco 0.95 now supports Apache2!>
-
-1.3.x and 2.x supported.
+1.3.x and 2.x supported.  2.x strongly preferred.
 
 =item * mod_perl
 
@@ -115,7 +142,7 @@ Make sure you have mod_perl version 2.02 or later.
 
 =item * GraphViz (Optional)
 
-Version 2.8 or higher recommended.
+Version 2.22 or higher recommended.
 
 =back
 
@@ -231,8 +258,7 @@ Don't forget to logout and login after adding yourself to a group.
 
 =head2 4. Postgres
 
-Netdisco runs Postgres as its database back-end.  mySQL and Oracle
-ports have been rumored but have not yet surfaced.
+Netdisco runs Postgres SQL as its database back-end.
 
 =over
 
@@ -571,7 +597,7 @@ See L<"OS Specific Notes"> below for details.
 =head3 5.3.  MIBs
 
 MIBs that are required for F<SNMP::Info> are included with Netdisco in the
-F<mibs/> directory if you installed the C<netdisco-0.95_with_mibs> package.
+F<mibs/> directory if you installed the C<netdisco-1.0_with_mibs> package.
 
 If you installed the C<netdisco> package B<without> included MIB files, then
 please download the C<netdisco-mibs> package from
@@ -630,13 +656,18 @@ NOTE: You can safely ignore all warnings about C<size too small for label>.
 =item [7.1] Apache2
 
 Using recent versions of Mason and mod_perl, Netdisco runs fine under
-Apache2.   Uncomment the lines at the top of F<netdisco_apache.conf> that
-are related to Apache2.
+Apache2.   
 
 =item [7.2] Apache1
 
+It is strongly advised to use Apache2.   Consider section 7.2 as
+historical.
+
 See the O/S specific notes at the bottom of this document for
 a binary install or install B<Apache 1.3.x From Scratch>:
+
+Comment out the lines at the top of F<netdisco_apache.conf> that
+are related to Apache2.
 
 Install Apache 1.3.x and mod_perl 1.x and mod_ssl
 
@@ -760,23 +791,6 @@ I<netdisco_apache.conf> line.
 Make sure you have this include line for the secure server virtual host
 B<*:443> at the bottom of F<http.conf>.
 
-=item [7.3.4] Apache2 additions
-
-Make sure that something similar to the following C<LoadModule>
-commands are in your F<httpd.conf> or F<netdisco_apache.conf>:
-
-    LoadModule perl_module  libexec/apache2/mod_perl.so
-    LoadModule apreq_module libexec/apache2/mod_apreq2.so
-
-(Note that these should have been done as part of installing mod_perl
-and libapreq2, but not all installations do this).
-
-Make sure the following two lines are included in the top of
-F<netdisco_apache.conf>.
-
-    PerlModule Apache2::compat
-    PerlModule Apache2::Request
-
 =back
 
 =item [7.4]  Mason Data Directory
@@ -791,7 +805,7 @@ run this command as C<root> :
     chown nobody.netdisco /usr/local/netdisco/mason
 
 The name of the user is listed in C<httpd.conf> under the C<User> directive.
-Some distros use the name C<apache> as the web server unix user.
+Some distros use the name C<apache> or C<www> as the web server unix user.
 
 =back
 
@@ -799,7 +813,11 @@ Some distros use the name C<apache> as the web server unix user.
 
 Below is a list of required modules for Netdisco, freely available from
 CPAN L<http://www.cpan.org>.   Many of these modules have prerequisite
-modules.
+modules.  Many of these are available in distros already as packages. 
+
+PLEASE check that you have these in package form first to allow for
+automatic updating of these dependency libraries.   A good place to start is the
+Mason library.
 
 =over
 
@@ -1103,7 +1121,7 @@ way to install Netdisco on FreeBSD.
 
 Install Postgres from ports:
 
-    cd /usr/ports/databases/postgresql81-server
+    cd /usr/ports/databases/postgresql83-server
     make install
 
 Make sure Postgres is configured to start at system startup time by

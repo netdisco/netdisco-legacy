@@ -1,11 +1,11 @@
 =head1 NAME
 
-Netdisco 0.95 - README
+Netdisco 1.0 - README
 
 =head1 AUTHOR
 
 Netdisco is maintained by a team of Open Source developers headed by Eric
-Miller, Bill Fenner and Max Baker.
+Miller, Bill Fenner, Oliver Gorwits, and Max Baker.
 
 =head1 DESCRIPTION
 
@@ -32,8 +32,8 @@ wire-side Wireless Access Point (AP) locator.
 
 Netdisco was created at the University of California, Santa Cruz (UCSC),
 Networking and Technology Services (NTS) department.   UCSC continues to
-support the development of Netdisco by providing development servers and
-financial support.  The Netdisco project is hosted by Source Forge.
+support the development of Netdisco by providing development servers and beer.
+The Netdisco project is hosted by Source Forge.
 
 See L<http://www.netdisco.org>
 
@@ -457,7 +457,8 @@ only import Topology Information.
 
 =item -g || --graph
 
-Graph.  Creates graph -- both GIF and ImageMap.
+Graph.  Creates graph using GraphViz.  Can create image output (png,gif) or 
+vector output (svg).
 
 NOTE: You can safely ignore all warnings about C<size too small for label>.
 
@@ -1684,6 +1685,11 @@ STRING. Background color for the graph.
 
 STRING. Text color for the graph
 
+=item graph_default
+
+STRING. Default type of graph to view in NetMap (svg,gif,png).  Optional,
+defaults to C<svg>.
+
 =item graph_epsilon
 
 INT. Sets the C<epsilon> attribute in C<GraphViz> used to control the graph solver.
@@ -2029,24 +2035,21 @@ User information for web front end.
 I would like to thank the following people for their
 contributions to Netdisco :  
 
-Mark Boolootian (Through who's ideas Netdisco was born and shaped)  (UCSC),
-Jim Warner (UCSC), Mike Hunter (UCB), Brian Wilson (NCSU), Bradley Baetz (bbaetz),
-David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle Co, .ua)
-Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com), A.L.M Buxey
-(Loughborough University, UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov),
-George Pavel (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
-(saintmarys.edu), Revital Shvarzman (York U, Ontario), 
-Walter Gould (Auburn U), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ),
-Dusty Hall (Auburn U), Jon Monroe (center pointe), Eric Miller (jeneric).
-
-As well as these people for their donations :
-
- Richard Silver (East Alabama Medical Center)
- Linda Rosewood (UCSC)
- "6pax4max!","31337" (???)
- Dusty Hall     (Auburn University)
- Walter Gould   (Auburn University)
- Frank Chatham  (Auburn University)
+Mark Boolootian and Jim Warner (Through who's ideas Netdisco was born and
+shaped)  (UCSC) , Mike Hunter (UCB), Brian Wilson (NCSU), Bradley Baetz
+(bbaetz), David Temkin (sig.com), Edson Manners (FSU), Dmitry Sergienko (Trifle
+Co, .ua), Remo Rickli (PSI, Switzerland), Jean-Philippe Luiggi (sagem.com),
+A.L.M Buxey (Loughborough University, UK), Kevin Cheek (UMICH), John Bigrow
+(bnl.gov), George Pavel (llnl.gov), Charles Goldsmith (wokka.org), Douglas M.
+McKeown (saintmarys.edu), Revital Shvarzman (York U, Ontario), Walter Gould
+(Auburn U), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ), Dusty
+Hall (Auburn U), Jon Monroe (center pointe), Eric Miller (jeneric), Bill
+Fenner, Oliver Gorwits (Oxford U), Alexander Barthel
+(http://archiv.tu-chemnitz.de/pub/2005/0045/), Bill Anderson, Carlos Vicente (U
+Oregon),  Alexander Hartmaier (t-systems.at), Justin Hunter (Arizona State U),
+Jethro Binks (U of Strathclyde, Glasgow), Jordi Guijarro (UAB.es), Sam
+Stickland (spacething.org),  Stefan Radman (CTBTO.org), Clint Wise, Max
+Kosmach, Bernhard Augenstein.
 
 And probably lots of other people I forgot to put in here.   Not to mention the 
 authors and communities of all the other software that Netdisco is built upon.
