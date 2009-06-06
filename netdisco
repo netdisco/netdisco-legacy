@@ -2028,8 +2028,10 @@ sub wireless_client_info {
 	$store{mac} = $cd11_mac->{$key};
 	next unless defined($store{mac}); # There can sometimes be more rows in the txrate and
 					  # rateset columns than all others, so avoid getting NULLs
-	$store{txrate} = int($txrates->[$#$txrates]);
-	$store{maxrate} = int($rates->[$#$rates]);
+    my $txrate = defined $txrates->[$#$txrates] ? int($txrates->[$#$txrates]) : undef;
+    my $maxrate = defined $rates->[$#$rates] ? int($rates->[$#$rates]) : undef;
+	$store{txrate} = $txrate;
+	$store{maxrate} = $maxrate;
 	$store{uptime} = $cd11_uptime->{$key};
 	$store{sigstrength} = $cd11_sigstrength->{$key};
 	$store{sigqual} = $cd11_sigqual->{$key};
