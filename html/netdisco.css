@@ -361,6 +361,11 @@ table.ips-search th, table.adm-search th {
     vertical-align:top;
     font-size:110%;
 }
+
+table.node-search th {
+    text-align:center;
+}
+
 table.dev-key    td, table.dev-view   td, table.node-search td, 
 table.port-key   td, table.log-key    td, table.devs-search td, 
 table.ips-search td, table.adm-search td {
