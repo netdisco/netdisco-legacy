@@ -30,6 +30,7 @@ my $results = undef;
 my $columns = [];
 my %title;
 my $odd = 1;
+my $arg_report;
 </%shared>
 <%init>
 %title = (
@@ -41,13 +42,14 @@ my $odd = 1;
 	radio_mac_location => "Radio MAC address and location",
 	radio_speed_ssid => "Wireless client speeds by SSID",
 );
+$arg_report = $report;
 </%init>
 <%method pickreport>
 <h1 class="pagehead">Pick a Report</h1>
 <FORM ACTION="<%$r->uri%>" METHOD=GET>
 <SELECT NAME="report">
 % foreach my $key (sort keys %title) {
-<OPTION VALUE="<%$key%>"><%$title{$key}%></OPTION>
+<OPTION VALUE="<%$key%>"<%$arg_report eq $key ? ' SELECTED' : ''%>><%$title{$key}%></OPTION>
 % }
 </SELECT>
 <INPUT TYPE="submit" CLASS="navbutton" VALUE="View Report">
