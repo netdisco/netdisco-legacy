@@ -524,7 +524,7 @@ if ($specific eq 'wireless') {
 
 # Search for multiple IP per node
 if ($specific eq 'multips') {
-    @cols = (['mac','MAC'],['oui','Vendor'],['location','Location']);
+    @cols = (['mac','MAC'],['oui','Vendor'],['location','Location'],['cnt','IPs']);
 
     # select n.mac,n.switch,n.port,count(distinct(i.ip)),d.dns
     # from node_ip i, node n left join device d on d.ip = n.switch
@@ -534,11 +534,12 @@ if ($specific eq 'multips') {
     # order by count desc;
 
     $matches = sql_rows('node_ip i, node n left join device d on d.ip = n.switch',
-                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip))','n.oui'],
+                        ['n.mac','n.switch','n.port','d.dns','true as active','count(distinct(i.ip)) as cnt','n.oui'],
                         {'n.mac' => \'i.mac', 'i.active' => 1, 'n.active' => 1},
                         undef,
-                        'group by n.mac, n.switch, n.port, d.dns, n.oui having count(distinct(i.ip)) > 1'
+                        'group by n.mac, n.switch, n.port, d.dns, n.oui having count(distinct(i.ip)) > 1 order by cnt desc'
                        );
+    $arg_sort = 'none';
     $ran_query++;
 }
 
@@ -638,6 +639,9 @@ if ($arg_sort eq 'dev'){
                              &sort_port
                            } @$matches;
     $group = 'oui';
+} elsif ($arg_sort eq 'none') {
+    # NOOP
+    @sorted_matches = @$matches;
 } else {
     # by mac
     @sorted_matches = sort {$a->{mac} cmp $b->{mac}} @$matches;
@@ -650,6 +654,7 @@ foreach my $match (@sorted_matches) {
     my $type   = $match->{type};
     my $last_group = $last_match->{$group} || '';
     $odd++ if $last_group ne $match->{$group};
+    $odd++ if $arg_sort eq 'none';
 </%perl>
 <TR CLASS="match-<% $odd % 2 %>">
 %     foreach my $c (@cols) {
@@ -671,6 +676,8 @@ foreach my $match (@sorted_matches) {
 %           my $loc = $match->{dns} || $match->{switch};
 %           $loc =~ s/\Q$domain\E//;
         <A HREF="device.html?ip=<%$match->{switch}%>&amp;port=<%$match->{port}%>"><% $loc %> (<% $match->{port}%>)</A>\
+%     } elsif ($col eq 'cnt') {
+        <% $match->{cnt} |h %>
 %     } else {
         &nbsp;\
 %     }
