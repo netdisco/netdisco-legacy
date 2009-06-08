@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-1.0 () == 0.96 ()
+1.0 ()
 Features:
     + []        Partial MAC search on an even number of hex digits
     + [1553561] (Optionally) display node NetBIOS info on device view page
@@ -68,6 +68,7 @@ Bugfixes:
     * [1470984] Allow -M, -A and -d to use device aliases.
                 This may also resolve the problem that devices get
                 discovered multiple times with different IP addresses.
+    * [1252726] Properly daemonize admin daemon (mknaus)
 
 
 0.95 (11/28/2006)
