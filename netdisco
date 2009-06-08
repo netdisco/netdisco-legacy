@@ -2568,7 +2568,7 @@ sub store_device {
         my $iid  = $ip_index->{$ip};
         my $port = $interfaces->{$iid}; 
         my $dns  = &hostname($ip);
-        my $netmask = $ip_netmask->{$ip};
+        my $netmask = $ip_netmask->{$ip} || '0.0.0.0';
         my $subnet  = $netmask eq '0.0.0.0' ? undef : cidr($ip, $netmask);
 
         insert_or_update('device_ip', {'ip' => $devip,  'alias' => $ip},
