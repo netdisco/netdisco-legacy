@@ -21,7 +21,7 @@ use Getopt::Long;
 use FindBin;             # Add this directory for netdisco.pm
 use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
-use POSIX qw/:errno_h/;  # for Admin Daemon
+use POSIX qw/:errno_h setsid/;  # for Admin Daemon
 use Compress::Zlib;
 use netdisco qw/:all/;  
 tryuse('SNMP::Info', ver => '1.09', die => 1);
@@ -2177,7 +2177,7 @@ Sets $0 to a status string.  Use sprintf-style arguments.
 
 sub set_status($@) {
     my($fmt) = shift;
-    $0 = "netdisco - " . sprintf($fmt, @_);
+    $0 = "netdisco: " . sprintf($fmt, @_);
 }
 
 =item parallel_init()
@@ -4334,7 +4334,6 @@ sub admin_daemon {
     $BatchMode = 1;
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     my $month = sprintf("%d%02d",$year+1900,$mon+1);
-    &batch_mode("logs/$month/daemon",1);
 
     my $end_flag = 0;
 
@@ -4343,19 +4342,38 @@ sub admin_daemon {
         sub {$end_flag++;};
     $SIG{PIPE} = 'IGNORE';
 
-    # Throw Daemon in bg if wanted.
+    print "Starting new admin panel daemon\n";
+    &batch_mode("logs/$month/daemon",1);
+    set_status("admin daemon");
+
+    #
+    # Daemonize
+    #
+    # http://www.unixguide.net/unix/programming/1.7.shtml
+    # perl_networking/source/ch14/Daemon.pm
     if (defined $CONFIG{daemon_bg} and $CONFIG{daemon_bg} ){
-        die "Can't fork: $!\n" unless defined($pid = fork());
-        # Exit parent thread
-        exit if $pid;
-        print "Running Daemon in Background.\n" if $DEBUG;
+        die "Can't fork (1): $!\n" unless defined($pid = fork());
+        exit if $pid; # Exit parent thread
+
+        POSIX::setsid();     # become session leader
+
+        # Fork again so new parent / session group leader can exit
+        die "Can't fork (2): $!\n" unless defined($pid = fork());
+        exit if $pid; # Exit parent thread
+
+        chdir($CONFIG{'home'});
+        umask(0);
+        #STDOUT is taken care of in &batch_mode
+        open(STDIN, "</dev/null");
+        open(STDERR,">/dev/null");
     }
 
     $pid = $$;
-    print "Starting new admin panel daemon ($pid)\n";
 
     # Write out pid file
     &admin_daemon_pid($pid);
+
+    print "PID:$pid\n";
 
     my $poll_interval = $CONFIG{daemon_poll} || 2;
 
@@ -4430,7 +4448,8 @@ sub admin_daemon_job {
     my $debug  = $job->{debug};
     my $subaction = $job->{subaction};
 
-    print "Daemon: Working on job : $id\n" if $DEBUG;
+    printf("Daemon: %s Start Job %s: %s %s %s\n",
+        scalar(localtime),$id,$cmd, defined $dev ? $dev : '', defined $subaction ? $subaction : '');
 
     # init Variables
     %Discovered = ();
@@ -4440,7 +4459,9 @@ sub admin_daemon_job {
     %UnDiscovered = ();
 
     # Set to running
+    sql_begin();
     insert_or_update('admin',{'job'=>$id },{'status'=>'running', 'started' => scalar(localtime)});
+    sql_commit();
 
     # Capture output
     &batch_mode("admin/job-$id");
@@ -4544,9 +4565,14 @@ sub admin_daemon_job {
 
     # Mark job done
     my $status = $job_error ? 'error' : 'done';
+    sql_begin();
     insert_or_update('admin',{'job'=>$id },{'status'=>$status, 
                               'finished' => scalar(localtime), 'log'=>$log}
                     );
+    sql_commit();
+
+    print "Daemon: ".scalar(localtime) . " End Job $id\n";
+
     return undef;
 }
 
