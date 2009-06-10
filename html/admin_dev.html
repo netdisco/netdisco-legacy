@@ -5,13 +5,11 @@
 % } else {
 <& SELF:dev_control &>
 % }
-<h2 class="subheader">Job Queue</h2>
+<& SELF:list_queue &>
+
 <FORM ACTION="<% $r->uri %>" METHOD=GET>
 <DIV>
 <INPUT TYPE="hidden" VALUE="list" NAME="cmd">
-<INPUT TYPE="hidden" VALUE="" NAME="act_ignore">
-<& SELF:list_queue &>
-
 <TABLE CLASS="adm-search">
 <TR>
     <TH>Finished Jobs:</TH>
@@ -51,7 +49,7 @@ $action   => ''
 @logs     => ()
 $nodes    => ''
 $confirm  => ''
-$old_jobs => 3
+$old_jobs => ''
 $port     => ''
 @act_ignore => ()
 </%args>
@@ -76,11 +74,13 @@ my %actions = (
              'clean_alias' => ['Database Cleanup - Aliases [-k]',1,0]
            );
 # Globals
-my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,$arg_dev_text,$arg_discover);
+my ($arg_dev,$arg_debug,$db_dev,$arg_act,$devices,$queue,$subaction,$action_types,$arg_dev_text,$arg_discover,$arg_cmd);
+my $arg_jobs;
 my $need_confirm = 0; my $commit = 0; my $odd = 0;
 my %logs = ();
 my $err =  '';
 my @act_ignore_default = qw/portcontrol test/;
+my @arg_ignore;
 </%shared>
 %#
 %#
@@ -90,6 +90,8 @@ $m->comp('admin.html:force_secure_admin');
 
 # Move args to shared space for methods
 $arg_dev = $dev; $arg_act = $action;
+$arg_cmd = $cmd; @arg_ignore = @act_ignore;
+$arg_jobs = $old_jobs;
 $arg_debug = $debug; $arg_discover = $discover;
 @act_ignore = @act_ignore_default unless scalar @act_ignore ;
 %logs = map {$_ => 1} @logs;
@@ -399,6 +401,7 @@ Debug Output
 %# list_queue() - List jobs in admin queue
 %#
 <%method list_queue>
+<h2 class="subheader">Job Queue</h2>
 % return unless scalar @$queue;
 <TABLE CLASS="adm-q">
     <TR>
@@ -427,19 +430,30 @@ foreach my $job (sort {$b->{entered} <=> $a->{entered} } @$queue){
     my $id     = $job->{job};
     $act .= " (<A HREF=\"device.html?ip=$dev\">$dev</A>)" if $dev;
     $odd++;
+    # TODO: these should probably be url_escape()'d
+    my $args = '';
+    $args .= "&cmd=$arg_cmd" if $arg_cmd ne 'add';
+    $args .= "&old_jobs=$arg_jobs" if $arg_jobs;
+    foreach my $i (@arg_ignore) {
+        $args .= "&act_ignore=$i";
+    }
+    my $log_id = defined $logs{$id} ? '' : $id;
+    my $img    = defined $logs{$id} ? "icon_down.gif" : "icon_note.gif";
 </%perl>
     <TR>
         <TD CLASS="match-<%$odd%2%>"><%$id%> - <%$job->{username}%></TD>
         <TD CLASS="match-<%$odd%2%>"><%$act%></TD>
         <TD CLASS="match-<%$odd%2%>"><%$timestamp%></TD>
         <TD CLASS="match-<%$odd%2%>"><%$status%></TD>
-        <TD CLASS="match-<%$odd%2%>"><INPUT TYPE="checkbox" NAME="logs" VALUE="<%$id%>"<% defined $logs{$id} ? ' CHECKED' : ''%>></TD>
-% if (scalar keys %logs) {
         <TD CLASS="match-<%$odd%2%>">
+            <A HREF="<%$r->uri%>?logs=<%$log_id|u%><%$args%>"><IMG SRC="<%$img%>" class="log"></A>
+        </TD>
+% if (scalar keys %logs) {
+        <TD CLASS="log-<%$odd%2%>">
 %   if (defined $logs{$id} and !defined $job->{log}) {
             [ No Log Available ]
 %   } elsif (defined $logs{$id} and defined $job->{log}) {
-            <TEXTAREA COLS=50 ROWS=6 WRAP=OFF><%$job->{log}|h%></TEXTAREA>
+            <PRE CLASS="log"><%$job->{log}%></PRE>
 %   } else {
             &nbsp;
 %   }
