@@ -438,7 +438,36 @@ table.devs-search th {
 /****************************************************************
  *  NETMAP.HTML                                                 *
  ****************************************************************/
-td.mapkey  { background-color:black; }
+
+table.netmap-svgkey,table.netmap-key {
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+}
+
+table.netmap-svgkey TH, table.netmap-key TH {
+    font-size: 8pt;
+    text-align:left;
+    font-family:arial, verdana, sans-serif;
+    padding: 3px 0px 0px 3px;
+    border-color: black;
+    border-width: 0px 0px 2px 0px;
+    border-style: double;
+    margin: 0px 0px 0px 0px;
+}
+
+table.netmap-svgkey TD, table.netmap-key TD {
+    font-size: 8pt;
+    text-align:left;
+    font-family:arial, verdana, sans-serif;
+    padding: 3px 20px 0px 3px;
+    margin: 0px 0px 0px 0px;
+    vertical-align: top;
+}
+
+table.netmap-key TD.mapkey  {
+    background-color:black; 
+    vertical-align: middle;
+}
 
 /****************************************************************
  *  DEVICE_INV.HTML                                             *
