@@ -1651,7 +1651,7 @@ sub get_snmp_args {
     my %l2a = qw(none noAuthNoPriv auth authNoPriv enc authPriv priv authPriv);
     my %pref = qw(noAuthNoPriv 0 authNoPriv 1 authPriv 2);
     my %rpref = reverse %pref;
-    if ($args{Version} == 3) {
+    if (defined $args{Version} and $args{Version} == 3) {
         my $v3user = $CONFIG{v3_user}{$user};
         return () unless defined($v3user);
         my ($levels, $authproto, $authpass, $privproto, $privpass) = split(/\s*:\s*/, $v3user);
@@ -2637,8 +2637,7 @@ sub store_interfaces {
     
     my $ip = $device->{ip};
     print "[$ip]  Fetching Interface Information\n";
-    my $i_count;
-
+    my $i_count        = 0;
     my $interfaces     = $device->interfaces();
     my $i_type         = $device->i_type();
     my $i_ignore       = $device->i_ignore();
