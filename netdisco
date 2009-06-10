@@ -4252,6 +4252,12 @@ start,stop,restart,status
 sub admin_daemon_ctl {
     my $cmd = shift;
 
+    # TODO : This months thing needs to get pushed into batch_mode()
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    # Allow nightly restart to not barf emails
+    &batch_mode("logs/$month/daemon_ctl",1);
+
     if ($cmd eq 'restart') {
         &admin_daemon_ctl('stop');
         &admin_daemon_ctl('start');
@@ -4284,7 +4290,7 @@ sub admin_daemon_ctl {
             print "Admin daemon is not currently running!\n";
         }
     }
-
+    &end;
 }
 
 =item admin_daemon_status(pid)
