@@ -38,8 +38,8 @@ Please edit <tt>netdisco.conf</tt> and run <tt>netdisco -g</tt>.
 %# KEY
 %#
 <div id="key_view" class="hidden">
-%#<h2 class="subheader">Key</h2>
-<TABLE BORDER=0 class="box">
+<TABLE class="netmap-key">
+<TR><TH COLSPAN=4>Key</TH></TR>
 % for(my $i = 0; $i <= $#{$left_key} || $i <= $#{$right_key}; $i++) {
 <tr>
 %  if (defined($left_key->[$i])) {
@@ -113,38 +113,37 @@ if ($t eq '' or !grep(/^\Q$t\E$/,@types_on)) {
 
 # Key creation
 my $right_key = [
- [ '<span style="color:green;">--------</span>', 'Green Lines - WAN' ],
- [ '<span style="color:#f5deb3;">-------</span>', 'Thin lines - 10Mbps' ],
- [ '<span style="color:#f5deb3;">=======</span>', 'Thick lines - 100Mbps' ],
- [ '<span style="color:cyan;">=======</span>', 'Cyan lines - 1.0 Gbps' ] ];
+ [ '<span style="color:green;">--------</span>', 'WAN' ],
+ [ '<span style="color:#f5deb3;">-------</span>', '10Mbps' ],
+ [ '<span style="color:#f5deb3;">=======</span>', '100Mbps' ],
+ [ '<span style="color:cyan;">=======</span>', '1.0 Gbps' ] ];
 
 my $left_key = [];
 foreach my $map (@{$netdisco::CONFIG{node_map}}) {
         my ($var,$regex,$attr,$val,$name,$label) = split(':',$map);
-	next unless $name && $label;
-	my ($textcolor) = $netdisco::CONFIG{node_fontcolor} || 'white';
-	my ($bracketcolor) = $netdisco::CONFIG{graph_color} || 'white';
+        next unless $name && $label;
+        my ($textcolor) = $netdisco::CONFIG{node_fontcolor} || 'white';
+        my ($bracketcolor) = $netdisco::CONFIG{graph_color} || 'white';
 
-	if ($attr eq 'fillcolor') {
-		$textcolor = $bracketcolor = $val;
-	} elsif ($attr eq 'color') {
-		$bracketcolor = $val;
-	}
-	my($txt) = '<span style="color:' . $bracketcolor . ';">[';
-	if ($textcolor ne $bracketcolor) {
-		$txt .= '</span><span style="color:' . $textcolor . ';">';
-	}
-	$txt .= $name;
-	if ($textcolor ne $bracketcolor) {
-		$txt .= '</span><span style="color:' . $bracketcolor . ';">';
-	}
-	$txt .= ']</span>';
-	push(@{$left_key}, [ $txt, $label ]);
+        if ($attr eq 'fillcolor') {
+                $textcolor = $bracketcolor = $val;
+        } elsif ($attr eq 'color') {
+                $bracketcolor = $val;
+        }
+        my($txt) = '<span style="color:' . $bracketcolor . ';">[';
+        if ($textcolor ne $bracketcolor) {
+                $txt .= '</span><span style="color:' . $textcolor . ';">';
+        }
+        $txt .= $name;
+        if ($textcolor ne $bracketcolor) {
+                $txt .= '</span><span style="color:' . $bracketcolor . ';">';
+        }
+        $txt .= ']</span>';
+        push(@{$left_key}, [ $txt, $label ]);
 }
 my $problem = $netdisco::CONFIG{node_problem} || 'red';
 my $colorname = $problem; $colorname =~ s/^./\U$&/;
-push(@{$left_key}, [ '<span style="color:' . $problem . ';">[bad-dev]</span>',
-			$colorname . ' Box - Device unaccessable' ]);
+push(@{$left_key}, [ '<span style="color:' . $problem . ';">[bad-dev]</span>', 'Device Unaccessable' ]);
 
 </%init>
 %#
@@ -197,8 +196,8 @@ unless ($exists{'svg'}) {
 <applet code="net.claribole.zgrviewer.ZGRApplet.class" archive="svg/zvtm-0.9.8.jar,svg/zgrviewer-0.8.2.jar" 
     width="<%$arg_w|h%>" height="<%$arg_h|h%>">
     <param name="type" value="application/x-java-applet;version=1.4" />  
-    <param name="width" value="800" />  
-    <param name="height" value="600" />  
+    <param name="width" value="<%$arg_w|h%>" />  
+    <param name="height" value="<%$arg_h|h%>" />  
     <param name="svgURL" value="<%$f|h%>" />
     <param name="title" value="Interactive Network Map" />
     <param name="showNavControls" value="true" />
@@ -209,15 +208,32 @@ unless ($exists{'svg'}) {
     <param name="highlightColor" value="red">
     <param name="antialiased" value="true">
 </applet>
+<TABLE class="netmap-svgkey">
+<TR>
+    <TH>Function</TH>
+    <TH>Mouse</TH>
+    <TH>Keyboard</TH>
+</TR>
+<TR>
+    <TD>Zoom</TD>
+    <TD>Mouse Wheel / Shift+Click+Vertical Drag</TD>
+    <TD>+ / -<BR>PageUp / PageDown</TD>
+</TR>
+<TR>
+    <TD>Pan</TD>
+    <TD>Click+Drag</TD>
+    <TD>Arrow Keys</TD>
+</TR>
+<TR>
+    <TD>Open Device</TD>
+    <TD COLSPAN=2>Double-Click / Middle Click</TD>
+</TR>
+<TR>
+    <TD>Tool Pallet</TD>
+    <TD COLSPAN=2>Move to Top-Left corner</TD>
+</TR>
+</TABLE>
 <UL>
-    <LI>Drag with left mouse button to pan.
-    <LI>Hold shift and vertically drag with left mouse button to zoom in/out smoothly.
-    <LI>Click a node with left mouse button to zoom on that node.
-    <LI>Double-click with left mouse button or single-click with middle mouse button to load the URL associated with a node in a separate browser window.
-    <LI>Use arrow keys to pan the view.
-    <LI>Use page keys to zoom in/out (animated transitions)
-    <LI>Use +/- keys to zoom in/out (no transition, better adapted to the case when users hold the keys down for repeated zooming steps)
-    <LI>Move the mouse cursor in the top-left region of the graph window to make the multi-scale tool palette appear. 
 </UL>
 </%method>
 %#
