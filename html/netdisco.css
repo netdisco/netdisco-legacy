@@ -314,7 +314,7 @@ table.adm-q     th {
 table.dev-ports td.ports-0, table.inv-main td.match-0,
 table.port-rep  td.match-0, table.log-ent  td.match-0,
 table.devs-data td.match-0, table.ips-res  td.match-0,
-table.adm-q     td.match-0 {
+table.adm-q     td.match-0, table.adm-q    td.log-0 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -328,7 +328,7 @@ table.adm-q     td.match-0 {
 table.dev-ports td.ports-1, table.inv-main td.match-1,
 table.port-rep  td.match-1, table.log-ent  td.match-1,
 table.devs-data td.match-1, table.ips-res  td.match-1,
-table.adm-q     td.match-1 {
+table.adm-q     td.match-1, table.adm-q    td.log-1 {
     border-width: 1px 1px 1px 1px;
     border-spacing: 0px;
     border-style: dotted;
@@ -528,3 +528,29 @@ table.adm-search td.note {
 /* table.adm-q      tr         -> aliased */
 /* table.adm-q      td.match-0 -> aliased */
 /* table.adm-q      td.match-1 -> aliased */
+
+table.adm-q img.log {
+    margin-top: 10px;
+}
+
+table.adm-q td.log-1, table.adm-q td.log-0 {
+    height:120px;
+    text-align:left;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+}
+table.adm-q pre.log {
+    height: 120px;
+    overflow: auto;
+    font-family: "Consolas",monospace;
+    font-size: 9pt;
+    text-align:left;
+    background-color: #FCF7EC;
+    overflow-x: auto;                       /* Use horizontal scroller if needed; for Firefox 2, not needed in Firefox 3 */
+    white-space: pre-wrap;                  /* css-3 */
+    white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
+    word-wrap: break-word;                  /* Internet Explorer 5.5+ */
+    margin: 0px 0px 0px 0px;
+    padding:5px 5px 3px 5px;
+    white-space : normal;
+}
