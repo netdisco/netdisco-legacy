@@ -17,7 +17,7 @@ PATH=/bin:/usr/bin:/usr/local/bin
 0 1 * * *       /usr/local/netdisco/netdisco -b -B 
 
 # Restart admin panel daemon nightly
-0 2 * * *       /usr/local/netdisco/netdisco -p restart
+0 2 * * *       /usr/local/netdisco/netdisco -b -p restart
 
 # Refresh Graph every day
 0 3 * * *       /usr/local/netdisco/netdisco -b -g 2>&1 
