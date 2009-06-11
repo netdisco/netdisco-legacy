@@ -16,11 +16,11 @@ I found MAC address <% $arp->{mac} %> in use since <% $arp->{time_first} %>.
 <%perl>
 #XXX copied from public_map.html
 $ports = sql_rows('node',
-	    ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
-	    {mac => $arp->{mac}},
-	    undef,
-	    'order by time_first desc limit 10'
-	    );
+            ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
+            {mac => $arp->{mac}},
+            undef,
+            'order by time_first desc limit 10'
+            );
 # for efficiency: build up a set of 'ip', and use a single sql_rows()
 #  to get all of them.
 my %ipuniq = ();

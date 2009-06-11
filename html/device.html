@@ -649,7 +649,7 @@ foreach my $port (sort sort_port @$db_ports){
     #   allow people to turn those off.
     my $is_uplink   = (defined $remote_ip and !(defined $remote_type and $remote_type =~ /ip.phone/i)) ? 1 : 0;
     my $class = ($up eq 'down' or $up eq 'notPresent') ?
-						'port-down' : 'port-up';
+                'port-down' : 'port-up';
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking, but not down
     $class    = ($up ne 'down' and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;

@@ -257,7 +257,7 @@ my %MatchMAP = ('ip'      => 'MAC -> IP',
                 'swport'  => 'Switch Port',
                 'alias'   => 'Device IP w/out MAC',
                 'nbname'  => 'NetBIOS',
-		'wireless'=> 'Wireless Info',
+                'wireless'=> 'Wireless Info',
                );
 my $hex = "[0-9a-fA-F]";
 </%shared>
@@ -440,8 +440,8 @@ if ($node){
             # Get additional/other IPs for each MAC
             $m->comp('SELF:add_node_ips','where'=>$where);
 
-	    # Lookup wireless info associated with this MAC
-	    $m->comp('SELF:add_node_wireless','where'=>$where);
+            # Lookup wireless info associated with this MAC
+            $m->comp('SELF:add_node_wireless','where'=>$where);
 
             # Lookup NetBIOS names.
             my $nbnames = sql_rows('node_nbt',
@@ -881,9 +881,9 @@ $where
 <%perl>
 # Look up wireless info associated with this mac
 my $wireless = sql_rows('node_wireless',
-		['*','extract(epoch from time_last) as time_last', 'extract(epoch from time_last) - uptime as time_first'],
-		{ 'mac' => $where->{'mac'} }
-		);
+                ['*','extract(epoch from time_last) as time_last', 'extract(epoch from time_last) - uptime as time_first'],
+                { 'mac' => $where->{'mac'} }
+                );
 foreach my $wl (@$wireless) {
     $wl->{type} = 'wireless';
     $wl->{active} = 1;

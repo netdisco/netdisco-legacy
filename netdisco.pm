@@ -335,7 +335,7 @@ sub config {
 
     # Add custom types from caller outside netdisco
     foreach my $type qw(booleans array_refs hash_refs array_refs_mult hash_refs_mult) {
-	eval "push(\@$type, \@{\$args{config}{\$type}});";
+        eval "push(\@$type, \@{\$args{config}{\$type}});";
     }
 
     open(CONF, "<$file") or die "Can't open Config File $file. $!\n";
@@ -498,20 +498,20 @@ config if there's a problem with the config file.
 =cut
 
 sub updateconfig {
-	my $needupdate = 0;
+        my $needupdate = 0;
 
-	if (defined($CONFIG{'@file'}) && defined($CONFIG{'@mtime'})) {
-		if (-M $CONFIG{'@file'} < $CONFIG{'@mtime'}) {
-			$needupdate = 1;
-		}
-	}
-	if ($needupdate) {
-		eval { config($CONFIG{'@file'}); };
-		if ($@) {
-			carp($@);
-		}
-	}
-	$needupdate;
+        if (defined($CONFIG{'@file'}) && defined($CONFIG{'@mtime'})) {
+                if (-M $CONFIG{'@file'} < $CONFIG{'@mtime'}) {
+                        $needupdate = 1;
+                }
+        }
+        if ($needupdate) {
+                eval { config($CONFIG{'@file'}); };
+                if ($@) {
+                        carp($@);
+                }
+        }
+        $needupdate;
 }
 
 =item has_layer(bit string,layer) 
@@ -701,12 +701,12 @@ sub active_subnets {
     my $active = [];
 
     foreach my $row (@$subnets) {
-	my $net = $row->{net};
-	my $found = 0;
-	$found ||= sql_scalar('node_ip',['1 as yup'],{'ip' => \\"<< '$net'"});
-	$found ||= sql_scalar('device',['1 as yup'],{'ip' => \\"<< '$net'"});
-	$found ||= sql_scalar('device_ip',['1 as yup'],{'alias' => \\"<< '$net'"});
-	push(@$active, $net) if $found;
+        my $net = $row->{net};
+        my $found = 0;
+        $found ||= sql_scalar('node_ip',['1 as yup'],{'ip' => \\"<< '$net'"});
+        $found ||= sql_scalar('device',['1 as yup'],{'ip' => \\"<< '$net'"});
+        $found ||= sql_scalar('device_ip',['1 as yup'],{'alias' => \\"<< '$net'"});
+        push(@$active, $net) if $found;
     }
     return $active;
 }
@@ -1676,8 +1676,8 @@ sub sql_begin {
     $dbh->{AutoCommit} = 0;
     if (defined($tables)) {
         foreach my $table (@$tables) {
-	    sql_do("LOCK TABLE " . $table . " IN EXCLUSIVE MODE");
-	}
+            sql_do("LOCK TABLE " . $table . " IN EXCLUSIVE MODE");
+        }
     }
 }
 
@@ -1974,11 +1974,11 @@ sub sql_query {
                 } elsif (ref $value eq 'ARRAY'){
                     # Let's not modify passed argument.
                     my @val_copy = @$value;
-		    # Empty list?  Instead of forming a malformed
-		    # query, just return nothing.
-		    if (!@val_copy) {
-			return undef;
-		    }
+                    # Empty list?  Instead of forming a malformed
+                    # query, just return nothing.
+                    if (!@val_copy) {
+                        return undef;
+                    }
                     $con = 'IN';
                     my $newvalue = "(";
                     foreach my $inval (@val_copy){
@@ -2186,24 +2186,24 @@ sub tryuse($%) {
     my $msg = undef;
 
     if (defined($tryuseok{$mod})) {
-	($ok, $msg) = @{$tryuseok{$mod}};
+        ($ok, $msg) = @{$tryuseok{$mod}};
     } else {
-	if (defined($args{ver})) {
-	    eval "use $mod $args{ver}";
-	} else {
-	    eval "use $mod";
-	}
-	if ($@) {
-	    $msg = "You need the $mod perl module";
-	    if ($args{ver}) {
-		$msg .= ", version $args{ver} or newer";
-	    }
-	    $msg .= ".\nPlease install it and try again.\n\n" . $@;
-	    $ok = 0;
-	}
+        if (defined($args{ver})) {
+            eval "use $mod $args{ver}";
+        } else {
+            eval "use $mod";
+        }
+        if ($@) {
+            $msg = "You need the $mod perl module";
+            if ($args{ver}) {
+                $msg .= ", version $args{ver} or newer";
+            }
+            $msg .= ".\nPlease install it and try again.\n\n" . $@;
+            $ok = 0;
+        }
     }
     if ($ok == 0 && $args{die}) {
-	die $msg;
+        die $msg;
     }
     my $rv = [ $ok, $msg ];
     $tryuseok{$mod} = $rv;

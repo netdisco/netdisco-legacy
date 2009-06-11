@@ -148,7 +148,7 @@ if ($cmd eq 'search'){
     }
     $month++;
     if($month < 10) {
-    	$month = "0" . $month;
+        $month = "0" . $month;
     }
     $year += 1900;
     my $yearMonth = $year . "-" . $month;
@@ -169,19 +169,19 @@ if ($cmd eq 'search'){
         $where->{'p.up_admin'} = 'down';
     }
     if ($timeframe eq 'interval'){
-    	if ($timelength eq 'days'){
-		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber day\'";
-	} elsif ($timelength eq 'months'){
-		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber mon\'";
-	} else {
-		$where->{'age(l.creation)'} = \\"<= interval \'$timenumber year\'";
-	}
+        if ($timelength eq 'days'){
+                $where->{'age(l.creation)'} = \\"<= interval \'$timenumber day\'";
+        } elsif ($timelength eq 'months'){
+                $where->{'age(l.creation)'} = \\"<= interval \'$timenumber mon\'";
+        } else {
+                $where->{'age(l.creation)'} = \\"<= interval \'$timenumber year\'";
+        }
     } elsif ($timeframe eq 'today'){
-    	$where->{'l.creation'} = '%'.$yearMonthDay.'%';
+        $where->{'l.creation'} = '%'.$yearMonthDay.'%';
     } elsif ($timeframe eq 'week'){
-    	$where->{'age(l.creation)'} = \\"<= interval \'$weekDay day\'";
+        $where->{'age(l.creation)'} = \\"<= interval \'$weekDay day\'";
     } elsif ($timeframe eq 'month'){
-    	$where->{'l.creation'} = '%'.$yearMonth.'%';
+        $where->{'l.creation'} = '%'.$yearMonth.'%';
     }
     #$netdisco::SQLCARP=1;
     $matches = sql_rows($tables,$cols,$where) || [];

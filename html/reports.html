@@ -34,13 +34,13 @@ my $arg_report;
 </%shared>
 <%init>
 %title = (
-	device_inventory => "Device Inventory",
-	radio_power => "Access Point Channels and Power",
-	dns_mismatch => "Device Name / DNS mismatches",
-	ap_clients => "Clients per Access Point",
-	poe_status => "PoE Status",
-	radio_mac_location => "Radio MAC address and location",
-	radio_speed_ssid => "Wireless client speeds by SSID",
+        device_inventory => "Device Inventory",
+        radio_power => "Access Point Channels and Power",
+        dns_mismatch => "Device Name / DNS mismatches",
+        ap_clients => "Clients per Access Point",
+        poe_status => "PoE Status",
+        radio_mac_location => "Radio MAC address and location",
+        radio_speed_ssid => "Wireless client speeds by SSID",
 );
 $arg_report = $report;
 </%init>
@@ -58,13 +58,13 @@ $arg_report = $report;
 <%method report_device_inventory>
 <%perl>
 $columns = [
-	[ 'Name', 'name' ],
-	[ 'Location', 'location' ],
-	[ 'Serial No', 'serial' ],
-	[ 'Vendor', 'vendor' ],
-	[ 'Model', 'model' ],
-	[ 'OS Rev', 'os_ver' ]
-	   ];
+        [ 'Name', 'name' ],
+        [ 'Location', 'location' ],
+        [ 'Serial No', 'serial' ],
+        [ 'Vendor', 'vendor' ],
+        [ 'Model', 'model' ],
+        [ 'OS Rev', 'os_ver' ]
+           ];
 $results = sql_rows('device', ['*']);
 $results = [ sort { $a->{name} cmp $b->{name} } @$results ];
 </%perl>
@@ -72,87 +72,87 @@ $results = [ sort { $a->{name} cmp $b->{name} } @$results ];
 <%method report_dns_mismatch>
 <%perl>
 $columns = [
-	[ 'Device Name', 'name' ],
-	[ 'DNS Name', 'dns' ],
-	[ 'IP Address', 'ip' ]
-	   ];
+        [ 'Device Name', 'name' ],
+        [ 'DNS Name', 'dns' ],
+        [ 'IP Address', 'ip' ]
+           ];
 my $alldev = sql_rows('device', ['name', 'dns', 'ip']);
 $results = [];
 foreach my $dev (@$alldev) {
-	my $name = $dev->{name};
-	my $dns = $dev->{dns};
-	$name =~ s/\Q$netdisco::CONFIG{domain}\E//;
-	$dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
-	push(@$results, $dev) if (lc($name) ne lc($dns));
+        my $name = $dev->{name};
+        my $dns = $dev->{dns};
+        $name =~ s/\Q$netdisco::CONFIG{domain}\E//;
+        $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
+        push(@$results, $dev) if (lc($name) ne lc($dns));
 }
 </%perl>
 </%method>
 <%method report_ap_clients>
 <%perl>
 $columns = [
-	[ 'Name', 'name' ],
-	[ 'Location', 'location' ],
-	[ 'Port', 'port' ],
-	[ '# Clients', 'count' ]
-	   ];
+        [ 'Name', 'name' ],
+        [ 'Location', 'location' ],
+        [ 'Port', 'port' ],
+        [ '# Clients', 'count' ]
+           ];
 $results = sql_rows('device,node', ['device.name','device.location','node.port','count(node.port) as count'],
-	{ 'device.ip' => \'node.switch',
-		'device.name' => '%ap%',
-		'node.active' => 't',
-		'node.time_last' => \\'>= device.last_macsuck' },
-	0,
-	'group by device.name,device.location,node.port');
+        { 'device.ip' => \'node.switch',
+                'device.name' => '%ap%',
+                'node.active' => 't',
+                'node.time_last' => \\'>= device.last_macsuck' },
+        0,
+        'group by device.name,device.location,node.port');
 $results = [ sort { $b->{count} <=> $a->{count} } @$results ];
 </%perl>
 </%method>
 <%method report_radio_power>
 <%perl>
 $columns = [
-	[ 'Name', 'name' ],
-	[ 'Model', 'model' ],
-	[ 'Location', 'location' ],
-	[ 'Port', 'port' ],
-	[ 'Channel', 'channel' ],
-	[ 'Tx Power (mW)', 'power' ],
-	[ 'Tx Power (dBm)', 'power2' ]
-	   ];
+        [ 'Name', 'name' ],
+        [ 'Model', 'model' ],
+        [ 'Location', 'location' ],
+        [ 'Port', 'port' ],
+        [ 'Channel', 'channel' ],
+        [ 'Tx Power (mW)', 'power' ],
+        [ 'Tx Power (dBm)', 'power2' ]
+           ];
 $results = sql_rows('device d, device_port_wireless w',
-	[ 'distinct d.name', 'd.model', 'd.location', 'w.port', 'w.channel', 'w.power' ],
-	{ 'd.ip' => \'w.ip' });
+        [ 'distinct d.name', 'd.model', 'd.location', 'w.port', 'w.channel', 'w.power' ],
+        { 'd.ip' => \'w.ip' });
 $results = [ sort sortportname @$results ];
 foreach $r (@$results) {
-	next unless defined($r->{power}) && $r->{power};
-	$r->{power2} = sprintf("%.1f", 10.0*CORE::log($r->{power})/CORE::log(10));
+        next unless defined($r->{power}) && $r->{power};
+        $r->{power2} = sprintf("%.1f", 10.0*CORE::log($r->{power})/CORE::log(10));
 }
 
 sub sortportname {
-	sort_port($a,$b) or $a->{name} cmp $b->{name};
+        sort_port($a,$b) or $a->{name} cmp $b->{name};
 }
 </%perl>
 </%method>
 <%method report_poe_status>
 <%perl>
 $columns = [
-	[ 'Name', 'name' ],
-	[ 'Model', 'model' ],
-	[ 'Location', 'location' ],
-	[ 'PoE<br>Module', 'module' ],
-	[ 'Power<br>(W)', 'power' ],
-	[ 'Supply', 'status' ],
-	[ 'Capable<br>Ports', 'ports' ],
-	[ 'Supplied<br>Ports', 'on' ],
-	[ 'Disabled<br>Ports', 'disabled' ],
-	[ 'Power<br>Errors', 'err' ],
-	[ 'Committed<br>(W)', 'committed' ],
-	   ];
+        [ 'Name', 'name' ],
+        [ 'Model', 'model' ],
+        [ 'Location', 'location' ],
+        [ 'PoE<br>Module', 'module' ],
+        [ 'Power<br>(W)', 'power' ],
+        [ 'Supply', 'status' ],
+        [ 'Capable<br>Ports', 'ports' ],
+        [ 'Supplied<br>Ports', 'on' ],
+        [ 'Disabled<br>Ports', 'disabled' ],
+        [ 'Power<br>Errors', 'err' ],
+        [ 'Committed<br>(W)', 'committed' ],
+           ];
 $results = sql_rows('device d, device_power p',
-	[ 'd.ip', 'd.name', 'd.model', 'd.location', 'p.module', 'p.status', 'p.power' ],
-	{ 'd.ip' => \'p.ip' }, 0,
-	'order by d.name, p.module');
+        [ 'd.ip', 'd.name', 'd.model', 'd.location', 'p.module', 'p.status', 'p.power' ],
+        { 'd.ip' => \'p.ip' }, 0,
+        'order by d.name, p.module');
 foreach my $poe (@$results) {
     $m->comp('device.html:poe_stats', poe => $poe);
     foreach my $k (keys %{$poe->{stats}}) {
-	$poe->{$k} = $poe->{stats}->{$k};
+        $poe->{$k} = $poe->{stats}->{$k};
     }
 }
 </%perl>
@@ -160,28 +160,28 @@ foreach my $poe (@$results) {
 <%method report_radio_mac_location>
 <%perl>
 $columns = [
-	[ 'MAC', 'mac' ],
-	[ 'Location', 'location' ],
-	   ];
+        [ 'MAC', 'mac' ],
+        [ 'Location', 'location' ],
+           ];
 $results = sql_rows('device d, device_port p',
-	[ 'distinct p.mac', 'd.location' ],
-	{ 'd.ip' => \'p.ip', 'p.port' => '%Dot11Radio%' }, 0,
-	'order by d.location, p.mac');
+        [ 'distinct p.mac', 'd.location' ],
+        { 'd.ip' => \'p.ip', 'p.port' => '%Dot11Radio%' }, 0,
+        'order by d.location, p.mac');
 </%perl>
 </%method>
 <%method report_radio_speed_ssid>
 <%perl>
 $columns = [
-	[ 'SSID', 'ssid' ],
-	[ 'Technology', 'type' ],
-	[ 'Count', 'count' ],
-	   ];
+        [ 'SSID', 'ssid' ],
+        [ 'Technology', 'type' ],
+        [ 'Count', 'count' ],
+           ];
 $results = sql_rows('node_wireless nw, node n, device_port_ssid s, device d',
-	[ 'maxrate', 'count(maxrate) as count', 'n.port', 's.ssid' ],
-	{ 'n.mac' => \'nw.mac', 's.ip' => \'n.switch', 's.port' => \'n.port',
-	  'n.active' => 't', 'd.ip' => \'n.switch',
-	  'n.time_last' => \\'>= d.last_macsuck', }, 0,
-	'group by nw.maxrate,n.port,s.ssid order by count desc' );
+        [ 'maxrate', 'count(maxrate) as count', 'n.port', 's.ssid' ],
+        { 'n.mac' => \'nw.mac', 's.ip' => \'n.switch', 's.port' => \'n.port',
+          'n.active' => 't', 'd.ip' => \'n.switch',
+          'n.time_last' => \\'>= d.last_macsuck', }, 0,
+        'group by nw.maxrate,n.port,s.ssid order by count desc' );
 
 # Strip the subinterface, if any, from the port; then convert to a
 # technology.  This continues the assumption that Dot11Radio0 is

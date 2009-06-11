@@ -206,7 +206,7 @@ sub discover{
 
     # Walk Modules
     if (!defined($CONFIG{'store_modules'}) || $CONFIG{'store_modules'}) {
-	store_modules($device);
+        store_modules($device);
     }
 
     # Walk neighbors
@@ -457,9 +457,9 @@ sub topo_add_link {
             print "  topo_add_link() - Bad link! ", join(',',each %$link), "\n";
             next;
         }
-	my $from_descr = "$link->{from_name} ($link->{from}) / $link->{from_port}";
-	my $to_descr = "$link->{to_name} ($link->{to}) / $link->{to_port}";
-	my $link_descr = $from_descr . " --> " . $to_descr;
+        my $from_descr = "$link->{from_name} ($link->{from}) / $link->{from_port}";
+        my $to_descr = "$link->{to_name} ($link->{to}) / $link->{to_port}";
+        my $link_descr = $from_descr . " --> " . $to_descr;
             
         # Add link info
         print "  topo_add_link() $link_descr\n" if $DEBUG;
@@ -534,7 +534,7 @@ sub topo_load_file {
     $file = homepath('topofile') unless $file;
 
     my $dev;    # current config line
-    my $from;	# "name" of current device
+    my $from;   # "name" of current device
 
     print "Loading topology information from $file\n" if $DEBUG;
     open (DEVS,"<$file") or die "topo_load_file($file)  $!\n";
@@ -1210,9 +1210,9 @@ sub create_device {
     #  Even though the version numbers are now floats, previous
     #  versions reported as strings so we can't use "==".
     if ((!defined($args{BulkWalk})) &&
-	($SNMP::VERSION eq '5.0203' || $SNMP::VERSION eq '5.0301')) {
-	print "! Turning off bulkwalk due to buggy Net-SNMP $SNMP::VERSION\n";
-	$args{BulkWalk} = 0;
+        ($SNMP::VERSION eq '5.0203' || $SNMP::VERSION eq '5.0301')) {
+        print "! Turning off bulkwalk due to buggy Net-SNMP $SNMP::VERSION\n";
+        $args{BulkWalk} = 0;
     }
     $args{BulkRepeaters} = $CONFIG{bulkwalk_repeaters} if     defined $CONFIG{bulkwalk_repeaters};
     $args{AutoSpecify}   = defined $args{Class} ? 0 : 1;
@@ -1381,13 +1381,13 @@ sub find_neighbors {
             if ($remote_id) {
                 print "[$ip]  - Got unusable address ($remote_ip) on port $port, looking up $remote_id.\n";
                 my $try = sql_scalar('device',['ip'], {'name' => $remote_id});
-		# device name might be truncated with long domain name.
-		# Try removing the domain name altogether and use a wildcard
-		if (!defined($try)) {
-		    my $shortid = $remote_id;
-		    $shortid =~ s/\..*//;
-		    $try = sql_scalar('device',['ip'], {'name' => $shortid . '%'});
-		}
+                # device name might be truncated with long domain name.
+                # Try removing the domain name altogether and use a wildcard
+                if (!defined($try)) {
+                    my $shortid = $remote_id;
+                    $shortid =~ s/\..*//;
+                    $try = sql_scalar('device',['ip'], {'name' => $shortid . '%'});
+                }
                 if (defined($try)) {
                     $remote_ip = $try;
                     print "[$ip]  - found $remote_id with IP address $remote_ip.\n";
@@ -1985,7 +1985,7 @@ sub macsuck{
     mac_savecache($fw_cache,\%dbports);
 
     if (!defined($CONFIG{'store_wireless_client'}) || $CONFIG{'store_wireless_client'}) {
-	wireless_client_info($device, $ip);
+        wireless_client_info($device, $ip);
     }
 
     # Log This
@@ -2022,25 +2022,25 @@ sub wireless_client_info {
 
     sql_begin();
     foreach my $key (keys %$cd11_txrate) {
-	my $txrates = $cd11_txrate->{$key};
-	my $rates = $cd11_rateset->{$key};
-	my %store = ();
-	$store{mac} = $cd11_mac->{$key};
-	next unless defined($store{mac}); # There can sometimes be more rows in the txrate and
-					  # rateset columns than all others, so avoid getting NULLs
+        my $txrates = $cd11_txrate->{$key};
+        my $rates = $cd11_rateset->{$key};
+        my %store = ();
+        $store{mac} = $cd11_mac->{$key};
+        next unless defined($store{mac}); # There can sometimes be more rows in the txrate and
+                                          # rateset columns than all others, so avoid getting NULLs
     my $txrate = defined $txrates->[$#$txrates] ? int($txrates->[$#$txrates]) : undef;
     my $maxrate = defined $rates->[$#$rates] ? int($rates->[$#$rates]) : undef;
-	$store{txrate} = $txrate;
-	$store{maxrate} = $maxrate;
-	$store{uptime} = $cd11_uptime->{$key};
-	$store{sigstrength} = $cd11_sigstrength->{$key};
-	$store{sigqual} = $cd11_sigqual->{$key};
-	$store{rxpkt} = $cd11_rxpkt->{$key};
-	$store{txpkt} = $cd11_txpkt->{$key};
-	$store{rxbyte} = $cd11_rxbyte->{$key};
-	$store{txbyte} = $cd11_txbyte->{$key};
-	$store{time_last} = scalar(localtime);
-	insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
+        $store{txrate} = $txrate;
+        $store{maxrate} = $maxrate;
+        $store{uptime} = $cd11_uptime->{$key};
+        $store{sigstrength} = $cd11_sigstrength->{$key};
+        $store{sigqual} = $cd11_sigqual->{$key};
+        $store{rxpkt} = $cd11_rxpkt->{$key};
+        $store{txpkt} = $cd11_txpkt->{$key};
+        $store{rxbyte} = $cd11_rxbyte->{$key};
+        $store{txbyte} = $cd11_txbyte->{$key};
+        $store{time_last} = scalar(localtime);
+        insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
     }
 }
 
@@ -2139,20 +2139,20 @@ is only ever called from the end of F<macwalk>.
 sub send_monitor_email {
     my $node_monitor_email = $CONFIG{node_monitor_email};
     if (defined $node_monitor_email) {
-	# time_recent == time_last gets us to trigger exactly when the
-	# device [re-]arrives in the network.
+        # time_recent == time_last gets us to trigger exactly when the
+        # device [re-]arrives in the network.
         my $alerts = sql_rows('node_monitor nm, node n, device d, device_port dp',
-		[ 'nm.why', 'nm.cc', 'nm.date',
-		  'n.mac', 'n.switch', 'n.port',
-		  'd.name', 'd.location',
-		  'dp.name as portname' ],
-		{ 'nm.mac' => \'n.mac', 'nm.active' => 't',
-		  'd.ip' => \'n.switch',
-		  'dp.ip' => \'n.switch', 'dp.port' => \'n.port',
-		  'd.last_macsuck' => \\'<= n.time_last',
-		  'n.time_recent' => \'n.time_last' } );
-	foreach my $alert (@$alerts) {
-	    my $body = <<"end_body";
+                [ 'nm.why', 'nm.cc', 'nm.date',
+                  'n.mac', 'n.switch', 'n.port',
+                  'd.name', 'd.location',
+                  'dp.name as portname' ],
+                { 'nm.mac' => \'n.mac', 'nm.active' => 't',
+                  'd.ip' => \'n.switch',
+                  'dp.ip' => \'n.switch', 'dp.port' => \'n.port',
+                  'd.last_macsuck' => \\'<= n.time_last',
+                  'n.time_recent' => \'n.time_last' } );
+        foreach my $alert (@$alerts) {
+            my $body = <<"end_body";
 ........ n e t d i s c o .........
   Node    : $alert->{mac} ($alert->{why})
   When    : $alert->{date}
@@ -2161,12 +2161,12 @@ sub send_monitor_email {
   Location: $alert->{location}
 
 end_body
-	    my $to = $node_monitor_email;
-	    if ($alert->{cc}) {
-		$to .= "," . $alert->{cc};
-	    }
-	    &mail($to,"Saw mac $alert->{mac} ($alert->{why}) on $alert->{name} $alert->{port}",$body);
-	}
+            my $to = $node_monitor_email;
+            if ($alert->{cc}) {
+                $to .= "," . $alert->{cc};
+            }
+            &mail($to,"Saw mac $alert->{mac} ($alert->{why}) on $alert->{name} $alert->{port}",$body);
+        }
     }
 }
 
@@ -2267,8 +2267,8 @@ sub dispatcher {
                 exit;
             }
             while (1) {
-		set_status("worker %d looking for %s job", $i + 1, $action);
-		# Limit how many rows get locked, use offset to try and prevent
+                set_status("worker %d looking for %s job", $i + 1, $action);
+                # Limit how many rows get locked, use offset to try and prevent
                 # collision.  Don't use ORDER BY as we want unordered data to
                 # spread requests across network.
                 sql_begin();
@@ -2294,7 +2294,7 @@ sub dispatcher {
                 }
                 insert_or_update('process', $dev, { 'status' => 'running' });
                 sql_commit();
-		set_status("%s %s", $action, $dev->{device});
+                set_status("%s %s", $action, $dev->{device});
                 my $count = 0;
                 eval {
                     alarm($timeout);
@@ -2311,9 +2311,9 @@ sub dispatcher {
                         $status = 'error';
                         print "[$dev->{device}] !! $@\n";
                     }
-		    # If we timed out or errored in the middle of a
-		    # transaction, roll it back.
-		    sql_rollback();
+                    # If we timed out or errored in the middle of a
+                    # transaction, roll it back.
+                    sql_rollback();
                 }
                 $count ||= 0;
                 insert_or_update('process', $dev, { 'status' => $status, 'count' => $count });
@@ -2777,21 +2777,21 @@ sub store_vlans {
 
     foreach my $if (keys %$i_vlan_membership) {
         my $port = $interfaces->{$if};
-	next unless defined($port);
+        next unless defined($port);
         $v_count++;
-	foreach my $vlan (@{$i_vlan_membership->{$if}}) {
-	    $v_seen{$vlan} = 1;
-	    my %store = ();
-	    my $native = (defined($i_vlan->{$if}) && ($vlan eq $i_vlan->{$if})) ? "t" : "f";
-	    $store{ip} = $ip;
-	    $store{port} = $port;
-	    $store{vlan} = $vlan;
-	    $store{native} = $native;
-	    $store{last_discover} = 'now';
+        foreach my $vlan (@{$i_vlan_membership->{$if}}) {
+            $v_seen{$vlan} = 1;
+            my %store = ();
+            my $native = (defined($i_vlan->{$if}) && ($vlan eq $i_vlan->{$if})) ? "t" : "f";
+            $store{ip} = $ip;
+            $store{port} = $port;
+            $store{vlan} = $vlan;
+            $store{native} = $native;
+            $store{last_discover} = 'now';
 
-	    insert_or_update('device_port_vlan', {ip => $ip,
-		port => $port, vlan => $vlan}, \%store);
-	}
+            insert_or_update('device_port_vlan', {ip => $ip,
+                port => $port, vlan => $vlan}, \%store);
+        }
     }
 
     print "[$ip]   Scrubbing VLANs from device_vlan table... ";
@@ -2803,27 +2803,27 @@ sub store_vlans {
     my $v_index = $device->v_index();
     my %v_nseen = ();
     foreach my $idx (keys %$v_name) {
-	$v_ncount++;
-	my %store = ();
-	$store{ip} = $ip;
-	my($vlan) = $v_index->{$idx};
-	$store{vlan} = $vlan;
-	$store{description} = $v_name->{$idx};
-	$store{last_discover} = 'now';
-	insert_or_update('device_vlan', {ip => $ip,
-	    vlan => $vlan}, \%store);
+        $v_ncount++;
+        my %store = ();
+        $store{ip} = $ip;
+        my($vlan) = $v_index->{$idx};
+        $store{vlan} = $vlan;
+        $store{description} = $v_name->{$idx};
+        $store{last_discover} = 'now';
+        insert_or_update('device_vlan', {ip => $ip,
+            vlan => $vlan}, \%store);
 
-	$v_nseen{$vlan} = 1;
+        $v_nseen{$vlan} = 1;
     }
     foreach my $vlan (keys %v_seen) {
-	next if $v_nseen{$vlan};
-	my %store = ();
-	$store{ip} = $ip;
-	$store{vlan} = $vlan;
-	$store{description} = sprintf("VLAN %d", $vlan);;
-	$store{last_discover} = 'now';
-	insert_or_update('device_vlan', {ip => $ip,
-	    vlan => $vlan}, \%store);
+        next if $v_nseen{$vlan};
+        my %store = ();
+        $store{ip} = $ip;
+        $store{vlan} = $vlan;
+        $store{description} = sprintf("VLAN %d", $vlan);;
+        $store{last_discover} = 'now';
+        insert_or_update('device_vlan', {ip => $ip,
+            vlan => $vlan}, \%store);
     }
 
     sql_commit();
@@ -2848,8 +2848,8 @@ sub store_power {
 
     my $p_watts    = $device->peth_power_watts();
     if (!defined($p_watts)) {
-	print "[$ip]   0 Power Modules\n";
-	return;
+        print "[$ip]   0 Power Modules\n";
+        return;
     }
     my $p_status   = $device->peth_power_status();
 
@@ -2862,30 +2862,30 @@ sub store_power {
     sql_begin();
     sql_do(qq/DELETE from device_power where ip = '$ip'/);
     foreach my $module (keys %$p_watts) {
-	my %store = ();
-	$p_count++;
-	$store{ip} = $ip;
-	$store{module} = $module;
-	$store{power} = $p_watts->{$module};
-	$store{status} = $p_status->{$module};
-	insert_or_update('device_power', {ip => $ip,
-	    module => $module}, \%store);
+        my %store = ();
+        $p_count++;
+        $store{ip} = $ip;
+        $store{module} = $module;
+        $store{power} = $p_watts->{$module};
+        $store{status} = $p_status->{$module};
+        insert_or_update('device_power', {ip => $ip,
+            module => $module}, \%store);
     }
     sql_do(qq/DELETE from device_port_power where ip = '$ip'/);
     foreach my $port (keys %$p_ifindex) {
-	my %store = ();
-	my $portname = $interfaces->{$p_ifindex->{$port}};
-	next unless $portname;
-	$pp_count++;
-	my ($module) = split(/\./, $port);
-	$store{ip} = $ip;
-	$store{port} = $portname;
-	$store{module} = $module;
-	$store{admin} = $p_admin->{$port};
-	$store{status} = $p_pstatus->{$port};
-	$store{class} = $p_class->{$port};
-	insert_or_update('device_port_power', {ip => $ip,
-	    port => $portname}, \%store);
+        my %store = ();
+        my $portname = $interfaces->{$p_ifindex->{$port}};
+        next unless $portname;
+        $pp_count++;
+        my ($module) = split(/\./, $port);
+        $store{ip} = $ip;
+        $store{port} = $portname;
+        $store{module} = $module;
+        $store{admin} = $p_admin->{$port};
+        $store{status} = $p_pstatus->{$port};
+        $store{class} = $p_class->{$port};
+        insert_or_update('device_port_power', {ip => $ip,
+            port => $portname}, \%store);
     }
     sql_commit();
     print "[$ip]   $p_count Power Modules, $pp_count Power-Capable Ports\n";
@@ -3040,10 +3040,10 @@ sub nbtstat {
     
     print "nbtstat($host) :\n";
 
-	unless (defined $ip) {
-		print "[$host] No IP match.\n";
-		return 0;
-	}
+        unless (defined $ip) {
+                print "[$host] No IP match.\n";
+                return 0;
+        }
 
     my $ns = $nb->node_status($ip);
 
@@ -3059,9 +3059,9 @@ sub nbtstat {
     my $nbuser = '';
 
     for my $rr ($ns->names) {
-		my $suffix = defined $rr->suffix ? $rr->suffix : -1;
-		my $G      = defined $rr->G ? $rr->G : '';
-		my $name   = defined $rr->name ? $rr->name : '';
+                my $suffix = defined $rr->suffix ? $rr->suffix : -1;
+                my $G      = defined $rr->G ? $rr->G : '';
+                my $name   = defined $rr->name ? $rr->name : '';
 
         if ($suffix == 0 and $G eq "GROUP") {
             $domain = $name;
@@ -3309,8 +3309,8 @@ sub db_clean {
     # This query returns only rows from node that refer to a port
     #  that's not in device_port.
     my $sth = sql_query('node LEFT JOIN device_port ON device_port.ip=node.switch AND device_port.port=node.port',
-			['node.mac','node.switch','node.port'],
-			{'device_port.ip' => 'IS NULL'});
+                        ['node.mac','node.switch','node.port'],
+                        {'device_port.ip' => 'IS NULL'});
     while (my $row = $sth->fetchrow_hashref()) {
         my $mac  = $row->{mac};  
         my $ip   = $row->{switch};
@@ -3323,13 +3323,13 @@ sub db_clean {
         # If the deviec exists and doesn't have ports, do not delete it.  Probably a refresh() error.
         my $nuke = 0;
         if ($have_device){
-	    my $ports = sql_scalar('device_port',['count(*)'],{ip=>$ip});
-	    if (defined $ports and $ports){
-		print "    $mac \@ $ip/$port. Port no longer exists. Removed.\n";
-		$nuke++;
-	    } else {
-		print "    $mac \@ $ip/$port. Device has no ports.  Run -e $ip if appropriate.\n";
-	    }
+            my $ports = sql_scalar('device_port',['count(*)'],{ip=>$ip});
+            if (defined $ports and $ports){
+                print "    $mac \@ $ip/$port. Port no longer exists. Removed.\n";
+                $nuke++;
+            } else {
+                print "    $mac \@ $ip/$port. Device has no ports.  Run -e $ip if appropriate.\n";
+            }
         } else  {
             print "    $mac \@ $ip/$port. Device no longer exists. Removed.\n";
             $nuke++;
@@ -3912,7 +3912,7 @@ print << "end_print";
 #
 # Header
 #
-node	community	snmpport	net	devicetype	role	group	collect	active
+node    community       snmpport        net     devicetype      role    group   collect active
 #
 # Data
 #

@@ -13,10 +13,10 @@ my $err = '';
 
 if ($netdisco::CONFIG{apache_auth}) {
     if ($r->connection->user()) {
-	$err = $m->comp('login.html:login', user => $r->connection->user(),
-		how => 'http_login', done => $done);
+        $err = $m->comp('login.html:login', user => $r->connection->user(),
+                how => 'http_login', done => $done);
     } else {
-	$err = "Apache didn't pass me a username, did you set up netdisco_apache_dir.conf properly?";
+        $err = "Apache didn't pass me a username, did you set up netdisco_apache_dir.conf properly?";
     }
 } else {
     $err = "Apache authentication is not configured in netdisco.conf; add apache_auth: true";

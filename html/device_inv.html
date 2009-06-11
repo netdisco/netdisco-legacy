@@ -84,8 +84,8 @@
             <TH>Count</TH>
         </TR>
 <%perl>
-foreach my $row (@$part) {
-	next unless defined($row);
+    foreach my $row (@$part) {
+        next unless defined($row);
         # Change class if we change vendor
         if ($old_vendor ne $row->{vendor}){
             $odd++;
@@ -98,7 +98,7 @@ foreach my $row (@$part) {
             <TD class="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and&amp;os=show&amp;os_ver=show"><%$row->{model} || 'Unknown'|h%></A></TD>
             <TD class="match-<%$odd%2%>"><%$row->{count}%></TD>
         </TR>
-% }
+%   }
         </TABLE>
     </TD>
 % }
@@ -126,24 +126,24 @@ Total: <%$count%>
             <TH>Count</TH>
         </TR>
 <%perl>
-$odd = 1;
-my $old_os = '';
-foreach my $row (@$part) {
-    next unless defined($row);
-    if ($old_os ne $row->{os}) { 
-        $odd++;
-        $old_os = $row->{os};
-    }
-    $count += $row->{count};
-    # need either os or os_ver defined
-    next unless defined $row->{os} or defined $row->{os_ver};
+    $odd = 1;
+    my $old_os = '';
+    foreach my $row (@$part) {
+        next unless defined($row);
+        if ($old_os ne $row->{os}) { 
+            $odd++;
+            $old_os = $row->{os};
+        }
+        $count += $row->{count};
+        # need either os or os_ver defined
+        next unless defined $row->{os} or defined $row->{os_ver};
 </%perl>
         <TR>
             <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;models=show&amp;vendors=show"><% $row->{os} || 'Unknown' |h%></A></TD>
             <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?os=<%$row->{os}||'IS NULL'|u%>&amp;os_ver=<%$row->{os_ver}||'IS NULL'|u%>&amp;boolean=and&amp;models=show&amp;vendors=show"><% $row->{os_ver} || 'Unknown' |h%></a></TD>
             <TD CLASS="match-<%$odd%2%>"><% $row->{count} %></TD>
         </TR>
-% }
+%   }
         </TABLE>
     </TD>
 % }

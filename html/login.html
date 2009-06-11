@@ -65,7 +65,7 @@ my $db_user = sql_hash('users',['*'],{'username' => $user});
 
 if ($how eq 'login') {
     unless (defined $db_user->{username}){
-	$err .= "User Not Found.\n";
+        $err .= "User Not Found.\n";
     }
 
     if ($db_user->{ldap}) {
@@ -82,10 +82,10 @@ if ($how eq 'login') {
     $useuserdb = 1;
 } else {
     unless ($db_user) {
-	# Synthesized user with no privileges.
-	$db_user->{username} = $user;
-	$db_user->{port_control} = 0;
-	$db_user->{admin} = 0;
+        # Synthesized user with no privileges.
+        $db_user->{username} = $user;
+        $db_user->{port_control} = 0;
+        $db_user->{admin} = 0;
     }
 }
 
@@ -94,8 +94,8 @@ if ($err) {
 
     # Log Failed Attempt
     insert_or_update('user_log',{},
-	    {'username'=>$user,'event'=>'login_failure',
-	     'userip'=>$userip,'details'=>$err});
+            {'username'=>$user,'event'=>'login_failure',
+             'userip'=>$userip,'details'=>$err});
 
     delete $m->session->{user};
     delete $m->session->{user_port_ctl};
@@ -116,23 +116,23 @@ if ($err) {
     # Update record
     if ($useuserdb) {
         insert_or_update('users',{'username' => $m->session->{user}},
-		     {'last_on' => scalar(localtime)}
-		    );
+                     {'last_on' => scalar(localtime)}
+                    );
     }
 
     # Log Login
     insert_or_update('user_log',{},
-	    {'username'=>$m->session->{user},'event'=>$how,
-	     'userip'=>$userip,'details'=>$done});
+            {'username'=>$m->session->{user},'event'=>$how,
+             'userip'=>$userip,'details'=>$done});
 
     # Remove any login message
     $m->session->{_login_msg} = undef;
 
     # Redirect
     if (defined $done and length($done)) {
-	$m->redirect("$done");
+        $m->redirect("$done");
     } else {
-	$m->redirect('.'); 
+        $m->redirect('.'); 
     }   
 
     return undef;

@@ -386,10 +386,10 @@ You should see output similar to the below:
     Welcome to psql 8.0.6, the PostgreSQL interactive terminal.
 
     Type:  \copyright for distribution terms
-	   \h for help with SQL commands
-	   \? for help with psql commands
-	   \g or terminate with semicolon to execute query
-	   \q to quit
+           \h for help with SQL commands
+           \? for help with psql commands
+           \g or terminate with semicolon to execute query
+           \q to quit
 
     netdisco=>
     netdisco=> \q
@@ -480,9 +480,9 @@ binaries, using CPAN.  As of this writing, the current module on CPAN is 5.03010
 which does not have this bug.  Only try to use this module with a matching
 Net-SNMP version - i.e., if you get a warning like this when you try to install:
 
-	ERROR:
-	Net-SNMP installed version: 5.2.3 => 5.0203
-	Perl Module Version:        5.0301
+        ERROR:
+        Net-SNMP installed version: 5.2.3 => 5.0203
+        Perl Module Version:        5.0301
 
 then please try a different method.
 
