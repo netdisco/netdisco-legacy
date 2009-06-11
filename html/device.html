@@ -98,7 +98,8 @@ if ($ip) {
                          'ps2_status','fan','slots','vendor','log','os_ver','os','vtp_domain',
                          'extract(epoch from last_discover) as last_discover',
                          'extract(epoch from last_macsuck) as last_macsuck',
-                         'extract(epoch from last_arpnip) as last_arpnip' ],
+                         'extract(epoch from last_arpnip) as last_arpnip',
+                         'snmp_class' ],
                         {'ip'=>$devip});
 
 
@@ -419,8 +420,7 @@ if (defined $device) {
 </TR>
 <TR>
     <TH>Model / Serial</TH>
-    <TD><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&amp;models=<%$device->{model}|u%>&amp;boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A>
-    / <%$device->{serial} || 'Unknown'%>
+    <TD><A HREF="device_search.html?vendors=<%$device->{vendor}|u%>&amp;models=<%$device->{model}|u%>&amp;boolean=and" TITLE="List All Devices of this type."><%$device->{vendor}%> <%$device->{model}%></A><% defined $device->{snmp_class} ? ' ('.$device->{snmp_class}.')' :'' |h %> / <%$device->{serial} || 'Unknown'%>
     </TD>
 </TR>
 <TR>
