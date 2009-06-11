@@ -1861,14 +1861,14 @@ sub mac_getportmacs {
 =item macsuck() 
 
 Walks forwarding table for a specific device. 
-Gets mac addresses that are listed in physical ports that do not 
-have a neighbor listed.   If the device has VLANs, it will walk each
-VLAN and get the MAC addresses from there.
+
+Gets mac addresses that are listed in physical ports that do not have a
+neighbor listed.   If the device has VLANs, it will walk each VLAN and get the
+MAC addresses from there.
 
 =cut
 
 sub macsuck{
-    my $nodes = 0;
     my $hostname = shift;
 
     my $ip = getip($hostname);
@@ -1911,77 +1911,10 @@ sub macsuck{
     my $interfaces = $device->interfaces();
     my $fw_cache = {};
 
+    my $nodes = 0;
     $nodes += walk_fwtable($device,\%dbports,$interfaces,$fw_cache);
+    $nodes += macsuck_vlans($device,$hostname,\%dbports,$interfaces,$fw_cache);
 
-    # For certain Cisco switches you have to connect to each
-    # VLAN and get the forwarding table out of it.
-    #   Notably the Catalyst 5k, 6k, and 3500 series
-    my $cisco_comm_indexing = $device->cisco_comm_indexing() || 0;
-    if ($cisco_comm_indexing){
-        print "[$hostname] Device supports Cisco community string indexing. Connecting to each VLAN:\n";
-        my $v_name   = $device->v_name() || {};
-        my $i_vlan   = $device->i_vlan() || {};
-        my $ver      = $device->snmp_ver();
-        my $comm     = $device->snmp_comm();
-        my $obj      = $device->class();
-
-        # Get list of VLANs currently in use by ports
-        my %vlans;
-        foreach my $key (keys %$i_vlan){
-            my $vlan = $i_vlan->{$key};
-            $vlans{$vlan}++;
-        }
-
-        # Create a separate SNMP session to talk to the device
-        # for each VLAN.  We update the session using
-        # update() to change the community string
-        # (or context) to "connect" to each VLAN.
-        my %args = get_snmp_args($hostname, $ver, $comm);
-        $args{VersionForce} = 1;        # use exactly this version
-                                        # since we know it works
-        $args{Class} = $obj;
-        my $vlan_device = create_device(%args);
-    
-        # For each VLAN, connect and then macsuck
-        foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
-                                # Sort by VLAN id
-                                $aa <=> $bb
-                              }
-                         keys %$v_name)
-        {
-
-            my $vlan_name = $v_name->{$vid} || '(Unnamed)';
-            # VLAN id comes as 1.142 instead of 142
-            my $vlan = $vid;
-            $vlan =~ s/^\d+\.//;
-
-            if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
-                print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
-                next;
-            }
-
-            # Only macsuck VLAN if in use by port
-            #   but check to see if device serves us that list first
-            if (scalar keys(%$i_vlan) and !defined $vlans{$vlan}
-                and !$CONFIG{macsuck_all_vlans}){
-                print "[$hostname] VLAN:$vlan_name ($vlan) Skipped because not in use by a port.\n";
-                next;
-            }
-
-            unless (defined $vlan_device && $vlan_device != -1){
-                print "[$hostname] Could not connect for VLANs!\n";
-            }
-
-            print "[$hostname] VLAN:$vlan_name ($vlan) :\n";
-
-            if ($ver == 3) {
-                $vlan_device->update(Context => "vlan-$vlan");
-            } else {
-                $vlan_device->update(Community => $comm . '@' . $vlan);
-            }
-            $nodes += walk_fwtable($vlan_device,\%dbports,$interfaces,$fw_cache);
-        }
-    }
     mac_savecache($fw_cache,\%dbports);
 
     if (!defined($CONFIG{'store_wireless_client'}) || $CONFIG{'store_wireless_client'}) {
@@ -1992,6 +1925,100 @@ sub macsuck{
     my $started = localtime($time1);  my $time2 = time;
     insert_or_update('device',{'ip'=> $ip},{'last_macsuck'=>$started});
     print " Saw : ",$nodes, " forwarding table entries.  Took ",$time2-$time1," seconds.\n" if $DEBUG;
+    return $nodes;
+}
+
+=item macsuck_vlans(...)
+
+For certain Cisco switches you have to connect to each VLAN and get the
+forwarding table out of it.  Notably the Catalyst 5k, 6k, and 3500 series
+
+This sub checks to see if the device supports this and then interrogates each VLAN.
+
+Returns number of nodes discovered in forwarding tables.
+
+=cut
+
+sub macsuck_vlans {
+    my ($device,$hostname,$dbports,$interfaces,$fw_cache) = @_;
+
+    my $cisco_comm_indexing = $device->cisco_comm_indexing() || 0;
+    return 0 unless $cisco_comm_indexing;
+
+    print "[$hostname] Device supports Cisco community string indexing. Connecting to each VLAN:\n";
+
+    my $v_name   = $device->v_name() || {};
+    my $i_vlan   = $device->i_vlan() || {};
+    my $ver      = $device->snmp_ver();
+    my $comm     = $device->snmp_comm();
+    my $obj      = $device->class();
+
+    # Get list of VLANs currently in use by ports
+    my %vlans;
+    foreach my $key (keys %$i_vlan){
+        my $vlan = $i_vlan->{$key};
+        $vlans{$vlan}++;
+    }
+
+    unless (scalar keys %vlans) {
+        print "[$hostname] No VLANs found.\n";
+        return 0;
+    }
+
+    print "[$hostname] VLANS : ",join(',',sort keys %vlans),"\n"  if $DEBUG;
+
+    my $nodes = 0;
+
+    # Create a separate SNMP session to talk to the device
+    # for each VLAN.  We update the session using
+    # update() to change the community string
+    # (or context) to "connect" to each VLAN.
+    my %args = get_snmp_args($hostname, $ver, $comm);
+    $args{VersionForce} = 1;        # use exactly this version since we know it works
+    $args{Class} = $obj;
+    my $vlan_device = create_device(%args);
+
+    # For each VLAN, connect and then macsuck
+    foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
+                            # Sort by VLAN id
+                            $aa <=> $bb
+                          }
+                     keys %vlans)
+    {
+
+        my $vlan_name = $v_name->{$vid} || '(Unnamed)';
+
+        # VLAN id comes as 1.142 instead of 142
+        my $vlan = $vid;
+        $vlan =~ s/^\d+\.//;
+
+        if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
+            next;
+        }
+
+        # Only macsuck VLAN if in use by port
+        #   but check to see if device serves us that list first
+        if (scalar keys(%$i_vlan) and !defined $vlans{$vlan}
+            and !$CONFIG{macsuck_all_vlans}){
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped because not in use by a port.\n";
+            next;
+        }
+
+        unless (defined $vlan_device && $vlan_device != -1){
+            print "[$hostname] Could not connect for VLANs!\n";
+        }
+
+        print "[$hostname] VLAN:$vlan_name ($vlan) :\n";
+
+        if ($ver == 3) {
+            $vlan_device->update(Context => "vlan-$vlan");
+        } else {
+            $vlan_device->update(Community => $comm . '@' . $vlan);
+        }
+        $nodes += walk_fwtable($vlan_device,$dbports,$interfaces,$fw_cache);
+    }
+
     return $nodes;
 }
 
