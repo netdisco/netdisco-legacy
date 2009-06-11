@@ -1064,7 +1064,14 @@ sub arpnip {
         print "[$hostname] Name does not resolve with DNS.\n";
         return;
     }
+
     $ip = root_device($ip);
+
+    # all numeric host name (bad) looks like an IP but fails.
+    unless (defined $ip){
+        print "  IP not resolved.\n";
+        return;
+    }
 
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
 
@@ -1882,6 +1889,12 @@ sub macsuck{
 
     $ip = root_device($ip);
 
+    # all numeric host name (bad) looks like an IP but fails.
+    unless (defined $ip){
+        print "  IP not resolved.\n";
+        return;
+    }
+
     # Get the device info and its interfaces
     my $dev = sql_hash('device',['*'],{'ip'=>$ip});
     my $ports = sql_rows('device_port',['*'],
@@ -1947,22 +1960,36 @@ sub macsuck_vlans {
 
     print "[$hostname] Device supports Cisco community string indexing. Connecting to each VLAN:\n";
 
-    my $v_name   = $device->v_name() || {};
     my $i_vlan   = $device->i_vlan() || {};
     my $ver      = $device->snmp_ver();
     my $comm     = $device->snmp_comm();
     my $obj      = $device->class();
 
+    my (%vlans, %vlan_names);
+
     # Get list of VLANs currently in use by ports
-    my %vlans;
-    foreach my $key (keys %$i_vlan){
-        my $vlan = $i_vlan->{$key};
+    foreach my $iid (keys %$i_vlan){
+        my $vlan = $i_vlan->{$iid};
         $vlans{$vlan}++;
     }
 
     unless (scalar keys %vlans) {
         print "[$hostname] No VLANs found.\n";
         return 0;
+    }
+
+    # Get VLAN Names
+    my $v_name   = $device->v_name() || {};
+    foreach my $vid (keys %$v_name) {
+        # HACK : VLAN id comes as 1.142 instead of 142
+        my $vlan = $vid;
+        $vlan =~ s/^\d+\.//;
+
+        # add to known vlans in case v_name() pulls some that i_vlan() doesn't.
+        # This is probably over-kill
+        $vlans{$vlan}++;
+
+        $vlan_names{$vlan}=$v_name->{$vid};
     }
 
     print "[$hostname] VLANS : ",join(',',sort keys %vlans),"\n"  if $DEBUG;
@@ -1979,18 +2006,13 @@ sub macsuck_vlans {
     my $vlan_device = create_device(%args);
 
     # For each VLAN, connect and then macsuck
-    foreach my $vid (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
+    foreach my $vlan (sort { my $aa=$a; my $bb=$b; $aa=~ s/^\d+\.//;$bb=~ s/^\d+\.//;
                             # Sort by VLAN id
                             $aa <=> $bb
                           }
                      keys %vlans)
     {
-
-        my $vlan_name = $v_name->{$vid} || '(Unnamed)';
-
-        # VLAN id comes as 1.142 instead of 142
-        my $vlan = $vid;
-        $vlan =~ s/^\d+\.//;
+        my $vlan_name = $vlan_names{$vlan} || '(Unnamed)';
 
         if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
             print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
