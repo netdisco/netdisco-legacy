@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 # n e t  d i s c o
 # Created for UCSC
-# Changes from 0.92 on (C)2003-2005 Max Baker - All rights Reserved.
+# Changes in code from 0.92 on:
+# Copyright (c) 2003-2009 Max Baker and the Netdisco Developer Team - All Rights Reserved
 # (C) 2002,2003 UC Regents.  See bottom of this file.
 # $Id$
 
@@ -1519,7 +1520,7 @@ sub get_device {
 
     # Warn if we are using an alias
     if (defined $dev_ip and $dev_ip ne $ip){
-        print "!  $ip is an alias of $dev_ip.\n";
+        print "[$ip]    !is an alias of $dev_ip.\n";
     }
 
     # Call with stored comm/ver unless supplied $ver
@@ -4707,7 +4708,7 @@ _end_usage_
 =head1 COPYRIGHT AND LICENCE
 
 Changes in code from 0.92 on:
-Copyright (c) 2003,2004 Max Baker - All Rights Reserved
+Copyright (c) 2003-2009 Max Baker and the Netdisco Developer Team - All Rights Reserved
 
 Original Code:
 Copyright (c) 2002,2003 Regents of the University of California
