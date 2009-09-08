@@ -257,9 +257,9 @@ if ($specific =~ /alias/i){
     $where->{os}++;
     $where->{description}++;
     $matches = sql_rows(
-        'device d, device_vlan dv',
-        ['d.ip','d.dns','d.vendor','d.model','d.os','dv.description','dv.vlan'],
-        {'d.ip' => \'dv.ip', 'dv.vlan' => \"$vlan"}
+        'device d left join device_vlan dv on d.ip = dv.ip right join device_port_vlan dpv on (d.ip = dpv.ip and dv.vlan = dpv.vlan)',
+        ['distinct(d.ip)','d.dns','d.vendor','d.model','d.os','dv.description','dv.vlan'],
+        {'dv.vlan' => \"$vlan"}
     );
 
 } elsif ($specific =~ /vlan/i){

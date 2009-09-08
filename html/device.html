@@ -696,7 +696,7 @@ foreach my $port (sort sort_port @$db_ports){
 
     # vlan col needs wrapping with <BR>
     $vlan_ids =~ s/(\d+,\d+,\d+,)/$1<BR>/g;
-    $vlan_ids =~ s{(\d+)}{<A HREF="device_search.html?specific=vlan&vlan=$1">$1</A>}g;
+    $vlan_ids =~ s{(\d+)}{<A HREF="device_search.html?specific=vlan_dev&vlan=$1">$1</A>}g;
 </%perl>
         <TD CLASS="<%$rowclass%>"><SPAN CLASS="<%$class%>"> \
 % if (defined $vlan_ids) {
