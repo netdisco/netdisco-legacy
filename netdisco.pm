@@ -1414,25 +1414,34 @@ Select database handle in use by localizing C<$netdisco::DB>
 
 =cut
 
-sub dbh {
-    unless ($DBH{$DB} && $DBH{$DB}->ping) {
-        my $connect = $CONFIG{"db_$DB"}        or die "dbh() - db_$DB not found in config info.\n";
-        my $user    = $CONFIG{"db_${DB}_user"} or die "dbh() - db_${DB}_user not found in config info.\n";
-        my $pw      = $CONFIG{"db_${DB}_pw"}   or die "dbh() - db_${DB}_pw not found in config info.\n";
-        my $options = $CONFIG{"db_${DB}_opts"} || {};
-        my $env     = $CONFIG{"db_${DB}_env"} || '';
-        # Multiple environmental variables separated by commas.
-        foreach my $e (split(/\s*(?<!\\),\s*/,$env) ) {
-            $e =~ s!\\,!,!g;
-            my ($key,$val) = split(/\s*=>\s*/,$e);
-            next unless (defined $key and defined $val and $key and $val);
-            #warn "Setting ENV{$key} to $val\n";
-            $ENV{$key}=$val;
-        }
-        $DBH{$DB} = DBI->connect($connect,$user,$pw,$options)
-            or die "Can't connect to DB. $DBI::errstr\n";
+sub _make_connection {
+    my $connect = $CONFIG{"db_$DB"}        or die "dbh() - db_$DB not found in config info.\n";
+    my $user    = $CONFIG{"db_${DB}_user"} or die "dbh() - db_${DB}_user not found in config info.\n";
+    my $pw      = $CONFIG{"db_${DB}_pw"}   or die "dbh() - db_${DB}_pw not found in config info.\n";
+    my $options = $CONFIG{"db_${DB}_opts"} || {};
+    my $env     = $CONFIG{"db_${DB}_env"} || '';
+    # Multiple environmental variables separated by commas.
+    foreach my $e (split(/\s*(?<!\\),\s*/,$env) ) {
+        $e =~ s!\\,!,!g;
+        my ($key,$val) = split(/\s*=>\s*/,$e);
+        next unless (defined $key and defined $val and $key and $val);
+        #warn "Setting ENV{$key} to $val\n";
+        $ENV{$key}=$val;
     }
-    return $DBH{$DB}; 
+
+    my $h = DBI->connect($connect,$user,$pw,$options)
+        or die "Can't connect to DB. $DBI::errstr\n";
+    return $h;
+}
+
+sub dbh {
+    unless ($INC{'Apache/DBI.pm'} && $ENV{MOD_PERL}) {
+        unless ($DBH{$DB} && $DBH{$DB}->ping) {
+            $DBH{$DB} = &_make_connection;
+        }
+        return $DBH{$DB};
+    }
+    return &_make_connection;
 }
 
 

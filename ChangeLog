@@ -42,6 +42,7 @@ Features:
     + [1811821] Add ZGRViewer SVG File netmap support
 
 Bugfixes:
+    * [2838181] fix &netdisco::dbh to allow multiple instances
     * [2565682] Handle xxxx-xxxx-xxxx MAC address format (J R Binks)
     * [1605351] admin_dev.html could take a long time to load.
                 (only partially fixed)
