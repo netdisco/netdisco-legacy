@@ -563,7 +563,7 @@ sub getip {
     if ($hostname =~ /^\d+\.\d+\.\d+\.\d+(?:\/\d+)?$/) {
         $ip = $hostname;
     } else {
-        my $testhost = inet_aton($hostname);
+        my $testhost = inet_aton($hostname) || inet_aton($hostname . ($CONFIG{domain} || ''));
         return undef unless (defined $testhost and length $testhost);
         $ip = inet_ntoa($testhost);
     }

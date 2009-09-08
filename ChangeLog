@@ -40,6 +40,7 @@ Features:
     + [ 2081320 ] Search by Age fails to limit the search (dwpoon)
     + []        Add ignore_interfaces configuration option
     + [1811821] Add ZGRViewer SVG File netmap support
+    + []        Node search on hostname will fully qualify using configured domain
 
 Bugfixes:
     * []        Correct vlan search url params
