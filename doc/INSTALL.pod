@@ -1320,42 +1320,16 @@ used in this version of OpenSSL:
 
 =back
 
-=head2 Fedora
+=head2 Fedora / CentOS / Redhat
 
-Please try the great install script for Fedora from Walter Gould at
-L<http://www.auburn.edu/~gouldwp/netdisco>. 
+Netdisco 0.95 packages are available in the Fedora 11 repositories, and the
+EPEL repositories for RHEL/CentOS 5.
 
-=head2 CentOS / Redhat
+Newer releases may be available from the package author's website, at
+L<http://www.auburn.edu/~gouldwp/netdisco>.
 
-Please try the great install script for CentOS from Walter Gould at
-L<http://www.auburn.edu/~gouldwp/netdisco>.  Note that if you choose not to
-install/update the RPMs using C<yum>, you will have to do it yourself by hand.
-This script was reported working for AS 4. 
-
-In the case of Redhat Enterprise Linux (RHEL) AS as well as any of its clones,
-such as CentOS or Whitebox linux, most of the prerequisites are already
-included.  However, there are two main caveats:
-
-=over
-
-=item 1) Packages
-
-Some of the packages are not installed by default - you need to check them off
-in the installation process when customizing the packages to be installed.  If
-you choose all the packages to be installed, you'll only need to install a
-couple of Perl modules and Netdisco itself.  Alternatively, you could use C<yum> or
-C<up2date> to install the packages or download and install the packages manually. 
-
-RHEL version ES and WS do not have all the packages that AS has.  Some of these
-may be prerequisites for Netdisco, in which case you'll need to install the
-packages from a different RPM repository or install from source.
-
-=item 2) mod_perl
-
-You need to remove the C<mod_perl> RPM if it is installed, as it will conflict
-with the C<mod_perl2> package.
-
-=back
+We expect RPMs for Netdisco 1.0 and its dependencies to appear in the Fedora
+and EPEL repositories in due course.
 
 =head2 Mandrivia Linux
 
@@ -1364,11 +1338,11 @@ that the RPM for Netdisco 0.95 is marked at least 200611 or newer.
 
 =head2 Debian Linux
 
-Please try the great install script for Debian from Walter Gould at
-L<http://www.auburn.edu/~gouldwp/netdisco>. 
+Debian 5.0 (Lenny) contains the Netdisco 0.95 packages and all dependencies.
+Newer releases may be available at L<http://packages.debian.org/netdisco>.
 
-Also see the script F<bin/debian_install.sh>.  It is out of date, but is a good 
-starting point for everything you will need to do.
+We expect packages for Netdisco 1.0 and its dependencies to appear in the
+official repositories for Debian "Squeeze" in due course.
 
 =over
 

@@ -41,7 +41,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode $nprocs $controller/;
 
-$VERSION = '1.0-RC1';
+$VERSION = '1.0';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();

@@ -263,7 +263,7 @@ see if there are any security upgrades to apache or mod_perl.
 =head2 SNMP::Info
 
 When upgrading to any version, please make sure you have the
-newest version of SNMP::Info installed (at least 1.0):
+newest version of SNMP::Info installed (at least 2.01):
 
 =over
 

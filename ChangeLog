@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-1.0 ()
+1.0 (2009-10-15)
 Features:
     + []        Partial MAC search on an even number of hex digits
     + [1553561] (Optionally) display node NetBIOS info on device view page
