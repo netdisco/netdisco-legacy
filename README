@@ -1,11 +1,11 @@
 NAME
 
-    Netdisco 0.95 - README
+    Netdisco 1.0 - README
 
 AUTHOR
 
     Netdisco is maintained by a team of Open Source developers headed by
-    Eric Miller, Bill Fenner and Max Baker.
+    Eric Miller, Bill Fenner, Oliver Gorwits, and Max Baker.
 
 DESCRIPTION
 
@@ -17,9 +17,10 @@ DESCRIPTION
     MAC address. Data is stored using a SQL database for scalability and
     speed.
 
-    Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP), and
-    SynOptics Network Management Protocol (SONMP) optionally provide
-    automatic discovery of the network topology.
+    Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP), Link
+    Layer Discovery Protocol (LLDP), and SynOptics Network Management
+    Protocol (SONMP) optionally provide automatic discovery of the network
+    topology.
 
     The network is inventoried by both device model and operating system
     (like IOS). Netdisco uses router ARP tables and L2 switch MAC forwarding
@@ -35,7 +36,7 @@ DESCRIPTION
     Netdisco was created at the University of California, Santa Cruz (UCSC),
     Networking and Technology Services (NTS) department. UCSC continues to
     support the development of Netdisco by providing development servers and
-    financial support. The Netdisco project is hosted by Source Forge.
+    beer. The Netdisco project is hosted by Source Forge.
 
     See <http://www.netdisco.org>
 
@@ -49,7 +50,8 @@ FEATURES
     connected to an uplink port. With another click you can disable or
     enable the switch port, logging the reason, user and date.
 
-    * Central location to disable/enable switch ports.
+    *   Central location to disable/enable switch ports.
+
         Network administrators can disable and enable ports without having
         to know enable or privilege passwords. Reasons for switching on/off
         ports are logged for end-of-the-year auditing and reporting. Non-IOS
@@ -61,48 +63,64 @@ FEATURES
         port. Netdisco will also not allow people to switch off uplink ports
         by accident.
 
-    * Supports Cisco VLAN Community String indexing ("public@101")
-    * MAC Address to switch port resolution
-    * IP Address to switch port resolution
-    * Find Switch Ports with multiple nodes attached
-    * Find nodes using multiple IP addresses
-    * Find nodes by vendor (using MAC address OUI)
+    *   Supports Cisco VLAN Community String indexing ("public@101")
+
+    *   MAC Address to switch port resolution
+
+    *   IP Address to switch port resolution
+
+    *   Find Switch Ports with multiple nodes attached
+
+    *   Find nodes using multiple IP addresses
+
+    *   Find nodes by vendor (using MAC address OUI)
 
   Easy Administration
 
-    * Controllable through Web Interface or Command Line Interface (CLI)
-    * Database store for scalability and speed (Postgresql)
-    * Easily extendible to new network devices
-    * User system to restrict access and features
+    *   Controllable through Web Interface or Command Line Interface (CLI)
+
+    *   Database store for scalability and speed (Postgresql)
+
+    *   Easily extendible to new network devices
+
+    *   User system to restrict access and features
 
   Network Administration and Security
 
-    * Automatic inventory and search of network hardware
-    * Administratively enable/disable switch ports from web interface with
-    logging
-    * Duplex Mismatch Finder
-    * Find Wireless Access Points (APs) from wired-side of network
-    * Layer Two Traceroute
+    *   Automatic inventory and search of network hardware
+
+    *   Administratively enable/disable switch ports from web interface with
+        logging
+
+    *   Duplex Mismatch Finder
+
+    *   Find Wireless Access Points (APs) from wired-side of network
+
+    *   Layer Two Traceroute
 
   Reporting
 
-    * Graphing of network topology. Clickable image-map of devices. Link
-    speed shown
-    * Statistics for number of actual nodes connected to network
+    *   Graphing of network topology. Clickable image-map of devices. Link
+        speed shown
+
+    *   Statistics for number of actual nodes connected to network
 
   Inventory of Network Devices
 
-    * by Operating System (IOS,CatOS,HP...)
-    * by Model, Vendor, OSI Layer, DNS Name
-    * Find device ports that are blocking (via Spanning Tree Protocol)
-    * Find devices using IP's w/out DNS entries
+    *   by Operating System (IOS,CatOS,HP...)
+
+    *   by Model, Vendor, OSI Layer, DNS Name
+
+    *   Find device ports that are blocking (via Spanning Tree Protocol)
+
+    *   Find devices using IP's w/out DNS entries
 
   SUPPORTED DEVICES
 
     Netdisco supports any Network device that talks SNMP and has basic
     information available through MIB-II (RFC 1213). Additional
     vendor-specific information is available for a number of devices, but
-    especially for Cisco, HP, and Bay devices.
+    especially for Cisco, Extreme, Foundry, HP, and Nortel/Bay devices.
 
     Device support is handled through "SNMP::Info" -- a Perl module that is
     an integral part of Netdisco that handles device-specific code. See the
@@ -186,7 +204,7 @@ GLOSSARY
         machine. Otherwise you will not be able to resolve a MAC address to
         an IP address.
 
-    CDP / FDP / SONMP
+    CDP / FDP / LLDP / SONMP
         Having topology information is crucial for Netdisco to function. So.
         if you network does not support one of the above Layer2 discover
         protocols, you must put the information in the netdisco-topology.txt
@@ -204,8 +222,9 @@ GLOSSARY
         need to work with the netdisco-topology.txt file to create a layout
         of your network."
 
-        Note that FDP (Foundry) and SSOMP (Nortel/Bay) are both supported,
-        and anywhere you see CDP you can assume we mean FDP and SSOMP too.
+        Note that LLDP (IEEE Standard), FDP (Foundry), and SONMP
+        (Nortel/Bay) are supported, and anywhere you see CDP you can assume
+        we mean LLDP, FDP, and SONMP too.
 
         Security Warning
             WARNING! There is a potential community string exposure when
@@ -227,6 +246,10 @@ GLOSSARY
                 visible via CDP but not via SNMP. These may point out the
                 need to expand the range that is discoverable, or may be
                 instances of this class of attack.
+
+                Additionaly "discover_no_type" can be used to prevent
+                netdisco from visiting certain devices based on the
+                device_type returned by CDP.
 
             Disable CDP and other discovery protocols
                 This solution involves disabling CDP and other discovery
@@ -380,7 +403,8 @@ USING NETDISCO
         information. Use -T to only import Topology Information.
 
     -g || --graph
-        Graph. Creates graph -- both GIF and ImageMap.
+        Graph. Creates graph using GraphViz. Can create image output
+        (png,gif) or vector output (svg).
 
         NOTE: You can safely ignore all warnings about "size too small for
         label".
@@ -432,9 +456,10 @@ USING NETDISCO
         Control the Admin Daemon. Takes arguments
         (start,stop,status,restart).
 
-    -r || --discoverall root_device
-        Walk the network with the given root. Use -N to discover new devices
-        only. Given root device will always be discovered.
+    -r || --discoverall root_device_list
+        Walk the network with the given (comma-seperated) root(s). Use -N to
+        discover new devices only. Given root devices will always be
+        discovered.
 
     -R || --refresh
         Refresh devices. Will run a discover (-d) for each device in the
@@ -448,7 +473,7 @@ USING NETDISCO
         It is not necessary to do this after every change. This is only a
         convenience switch.
 
-    -u || --user [user] [password] [port_control?] [admin?]
+    -u || --user [user] [password] [port_control?] [admin?] ["full name"]
         Add or Change a User. Supply all four arguments (user pw
         port_control admin) for command-line control, or supply less for
         interactive prompts.
@@ -694,7 +719,7 @@ USING NETDISCO
                 df -h
 
         7. Restart Postgres (just for fun)
-                /usr/local/etc/rc.d/010.pgsql restart 
+                /usr/local/etc/rc.d/010.pgsql restart
 
             OR
 
@@ -759,6 +784,7 @@ USING NETDISCO
 
     #comment
         Comments are delimited with a "#" They can happen on any line.
+        Escape as "\#" if you need to use a literal pound sign.
 
     routername
         Any line that does not start with "link:" or "alias:" is assumed to
@@ -843,14 +869,21 @@ USING NETDISCO
 
     The default jobs are :
 
-    * MacSuck - Every 2 hours MacSuck all the devices in the database.
-    * ArpNip - Every 2 hours ArpNip all the devices in the database. (Offset
-    from Macsuck by 1 hours)
-    * Refresh Devices - Once a day refresh device information.
-    * Backup - Once a day backup information.
-    * Graph - Once a day re-create the graph.
-    * Walk Network - Once a week (Wed @ 14:00) try and discover new devices.
-    * Restart Admin Daemon - Once a day just for good measure.
+    *   MacSuck - Every 2 hours MacSuck all the devices in the database.
+
+    *   ArpNip - Every 2 hours ArpNip all the devices in the database.
+        (Offset from Macsuck by 1 hours)
+
+    *   Refresh Devices - Once a day refresh device information.
+
+    *   Backup - Once a day backup information.
+
+    *   Graph - Once a day re-create the graph.
+
+    *   Walk Network - Once a week (Wed @ 14:00) try and discover new
+        devices.
+
+    *   Restart Admin Daemon - Once a day just for good measure.
 
 Config File
 
@@ -879,6 +912,12 @@ Config File
     home
         PATH. Full path to where netdisco lives. Is the root path for all
         other files and paths.
+
+    customer
+        STRING. Name added to page titles and heading.
+
+    customericon
+        STRING. URL,width,height - replaces discoball icon with custom logo.
 
   Database Maintenance
 
@@ -931,6 +970,12 @@ Config File
         discovery. See bulkwalk_no for syntax, except that only hostnames,
         IP addresses and subnets are valid.
 
+    discover_no_type
+        REGEX:string. Place a pattern here to exclude the discovery of
+        certain devices based on the CDP device type information. Good for
+        excluding a whole device class like lightweight access points or IP
+        phones that have CDP but don't talk SNMP.
+
     discover_only
         LIST:string. If present, discovery will be limited to only IP
         addresses in this list. If you have a management VLAN, put that
@@ -938,13 +983,24 @@ Config File
         syntax, except that only hostnames, IP addresses and subnets are
         valid.
 
+    ignore_interfaces
+        LIST:STRING If present, device ports matching any of the items in
+        this list will be ignored by the discovery process. Note this may
+        have side effects - connected devices and nodes on those ports will
+        in turn also not be discovered.
+
+        Each item in the list is separated by a comma and may be a Perl
+        regular expression. A useful example for this option might be:
+
+         EOBC,unrouted VLAN,StackPort,Control Plane Interface,SPAN (S|R)P Interface,StackSub
+
     ignore_private_nets
         Not fully implemented.
 
         BOOLEAN. Set to true to ignore aliases that are part of private
         nets:
 
-            10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24  
+            10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24
 
     logextension
         STRING. The extension to add to log files.
@@ -990,6 +1046,19 @@ Config File
 
         Does not override macsuck_no_vlan.
 
+    max_procs
+        INTEGER. The number of simultaneous processes to use when collecting
+        data from devices. Using several processes speeds up data
+        collection, but uses more database resources. Be careful of using up
+        all of your database connection handles. Typical values are 15-25.
+
+        Note that the load average will be quite high with this option, very
+        nearly the same as the value of max_procs. However, that's because
+        each of these processes spends much of its time waiting for
+        responses from the device, so is ready to run. The high load average
+        doesn't affect the usability of the system in the same way that a
+        high load average caused by cpu-bound jobs would.
+
     nbt_days
         DAYS. The maximum age of a node for it to be checked for NetBIOS
         information. Default 7.
@@ -1019,10 +1088,28 @@ Config File
         nmis_port
             INT. SNMP Port to list in nmis_dump file. Default 161
 
+    node_monitor_email
+        STRING. If set, consult the node_monitor table for MAC addresses
+        that are being monitored after every macwalk. If any of the
+        monitored MAC addresses appear or move, send an email to the
+        node_monitor_email setting and any cc address listed in the
+        database. Note that the node_monitor table must currently be
+        maintained via raw sql access, there is no admin page for it.
+
     reverse_sysname
         BOOLEAN. Turn this on to have Netdisco do a reverse lookup of the
         sysName.0 field to use as the management IP address for a device.
         See bug 810939 and device_root() for more info. Default "false"
+
+    store_modules
+        BOOLEAN. Set to false to skip the module inventory on device
+        discovery. The module inventory can double the device discovery time
+        so if you aren't using the information you can skip it.
+
+    store_wireless_clients
+        BOOLEAN. Set to false to skip the wireless client information
+        gathering. This is captured at macsuck time, so if you aren't using
+        the information you can skip it.
 
     topofile
         FILE. Full path of the file that contains manual topology
@@ -1093,6 +1180,10 @@ Config File
         device. This slows things down, but might be necessary for problem
         devices.
 
+        Set to false to use BULKWALK even if netdisco thinks you have a
+        buggy version of Net-SNMP (e.g., because your installation is
+        patched)
+
         Other solutions include addding " sub bulkwalk_off { 1; } " to the
         device class that is misbehaving in SNMP::Info. This will turn off
         bulkwalk for a class of devices, not all.
@@ -1152,6 +1243,26 @@ Config File
 
         This is only necessary if you turn on the "port_control" command.
 
+    get_community
+        STRING. An external program to run to get the community string for a
+        given device. This is useful if, for example, you have you devices
+        already configured in another NMS and you want to use that
+        information instead of configuring "community" and/or "community_rw"
+        in this file.
+
+        The strings %IP% and %HOST% are replaced by the IP address and the
+        hostname (or IP address if no hostname is known) of the system being
+        contacted.
+
+        The command must return output in the following form:
+
+            community=<list of readonly-communities>
+            setCommunity=<list of write-communities>
+
+        If the community string is not known for the given system, the
+        command should return no output and the community strings configured
+        in netdisco will be used.
+
     mibdirs
         LIST:STRING. A comma separated list of directories to search for MIB
         files.
@@ -1178,8 +1289,7 @@ Config File
 
     snmpforce_v3
         LIST:STRING. A comma separated list of devices. Forces matching
-        devices to use SNMPv3. SNMPv3 is not fully supported yet but could
-        probably be made to work.
+        devices to use SNMPv3.
 
         See bulkwalk_no for syntax.
 
@@ -1193,6 +1303,44 @@ Config File
 
     snmpretries
         INT. Settings for 'Retries' field passed to SNMP::Session
+
+    v3_users
+        LIST. The users to try for SNMPv3 (like community for SNMPv1/SNMPv2)
+
+    v3_users_rw
+        LIST. The users to try for SNMPv3 read-write access.
+
+    v3_user STRING. Colon seperated values:
+    user:auth/enc[:authproto:authpass[:privproto:privpass]]
+        user is the SNMPv3 username, as listed in v3_users or v3_users_rw.
+
+        auth/enc specifies what levels of authorization/privacy you are
+        configuring. The possible values are:
+
+        none
+            only use noAuthNoPriv, the user has no authorization or privacy
+            configured.
+
+        auth
+            Use authNoPriv - authorization but no privacy.
+
+        enc Use authPriv - authorization and privacy for all requests.
+
+        auth,enc
+            Use authNoPriv for read and authPriv for write.
+
+        authproto is the authorization protocol, and can be any that the
+        underlying library supports, e.g., SHA or MD5.
+
+        authpass is the authorization pass phrase.
+
+        privproto is the privacy proto, e.g., DES or AES.
+
+        privpass is the privacy pass phrase.
+
+        No support is currently provided for providing hexadecimal keys
+        directly. Such support might use the prefix "0x" to identify a hex
+        key, so be careful how you choose your pass phrases.
 
   Port Control
 
@@ -1240,6 +1388,11 @@ Config File
         Requires web login, password changing and all admin functions to be
         run in secure space.
 
+    traceroute
+        BOOLEAN. If the traceroute button should be present in the top bar.
+        The L2 Traceroute function has limits and may be slow on large
+        networks, so the link to it can be disabled.
+
     web_console_models
         LIST:STRING. Comma separated list of models that want to use the Web
         Console
@@ -1264,6 +1417,65 @@ Config File
         admin access. There is another link on the sidebar, "Netdisco Login"
         to log in using the netdisco user database.
 
+   LDAP Settings
+
+    ldap_server
+        LIST:STRING. Comma separated list of LDAP servers. If using Active
+        Directory these would be domain controllers.
+
+    ldap_user_string
+        STRING. String to construct the user portion of the DN. %USER% is a
+        variable which will be replaced at runtime with the logon name
+        entered on the logon page of the application. Examples: cn=%USER%,
+        uid=%USER%. Active Directory users may use DOMAIN\%USER% and skip
+        all other options except ldap_server as this notation eliminates the
+        need to construct the full distinguished name.
+
+    ldap_base
+        STRING. String which indicates where in the hierarchy to begin
+        searches. If a proxy user is not defined and anonymous binds are not
+        enabled this value will be appended to the ldap_user_string to
+        construct the distinguished name for authentication.
+
+    ldap_proxy_user
+        STRING. User to bind with to perform searches. If defined as
+        anonymous, then anonymous binds will be performed and
+        ldap_proxy_pass will be ignored. For organizations with users in
+        multiple OU's this option can be used to search for the user and
+        construct the DN based upon the result.
+
+    ldap_proxy_pass
+        STRING. Proxy user password. Ignored if proxy user defined as
+        anonymous.
+
+    ldap_opts
+        HASH. Options to add to the connect string. Normally only needed if
+        server does not support LDAPv3.
+
+    ldap_tls_opts
+        HASH. If defined, the connection will use Transport Layer Security
+        (TLS) which provides an encrypted connection. TLS is the preferred
+        method of encryption, ldaps (port 636) is not supported. This is
+        only possible if using LDAPv3 and the server supports it. These are
+        the options for the TLS connection. See the Net::LDAP documentation
+        under start_tls for options, but the defaults should work in most
+        cases.
+
+    Example configuration to use Microsoft Active Directory
+         ldap_server          = AD-Domain-Controller1,AD-Domain-Controller2
+         ldap_user_string     = DOMAIN\%USER%
+
+        Note: Only one domain is currently supported in this configuration
+
+    Example configuration to use Novell E-Directory
+         ldap_server          = LDAP-Server-1,LDAP-Server-2
+         ldap_user_string     = cn=%USER%
+         ldap_base            = o=MYORGANIZATION
+         ldap_proxy_user      = anonymous
+
+        Note: This configuration will support users split across multiple
+        containers as long as the containers exist below MYORGANIZATION
+
    Graph Settings
 
     edge_color
@@ -1278,6 +1490,10 @@ Config File
 
     graph_color
         STRING. Text color for the graph
+
+    graph_default
+        STRING. Default type of graph to view in NetMap (svg,gif,png).
+        Optional, defaults to "svg".
 
     graph_epsilon
         INT. Sets the "epsilon" attribute in "GraphViz" used to control the
@@ -1408,16 +1624,22 @@ DESIGN
 
   Design Goals
 
-    * Use of SNMP Leaf Names only; No OIDs
-    * Easily extendible to new devices. No device-specific hacks in logic
-    * Modular back-end database front-end setup
-    * Security. Front-end abstraction from device manipulation means
-    sensitive network devices are not exposed to a web interface .
-    * Data Archiving. Data structures and backup routines to provide online
-    and offline storage of network structure and usage.
-    * Highly Configurable. Extract out all possible options to netdisco.conf
-    and avoid site-specific code.
-    * Administration available on both command line and web interfaces.
+    *   Use of SNMP Leaf Names only; No OIDs
+
+    *   Easily extendible to new devices. No device-specific hacks in logic
+
+    *   Modular back-end database front-end setup
+
+    *   Security. Front-end abstraction from device manipulation means
+        sensitive network devices are not exposed to a web interface .
+
+    *   Data Archiving. Data structures and backup routines to provide
+        online and offline storage of network structure and usage.
+
+    *   Highly Configurable. Extract out all possible options to
+        netdisco.conf and avoid site-specific code.
+
+    *   Administration available on both command line and web interfaces.
 
   Back-End Components
 
@@ -1511,7 +1733,10 @@ DESIGN
         administratively enabling and disabling ports.
 
     device_port_ssid
-        Holds SSID and channel information for wireless access points.
+        Holds SSID information for wireless access points.
+
+    device_port_wireless
+        Holds channel and power information for wireless access points.
 
     log Holds log entries for human use.
 
@@ -1527,6 +1752,27 @@ DESIGN
         node was seen. Keeps time stamps of when this is from. Data comes
         from ArpNipper. Archived data is similar to the node table, where
         ``active'' is set to false for archived data.
+
+    node_monitor
+        Lists MAC addresses that are to be monitored for presence on the
+        network; if one appears or moves at the end of a macwalk, send email
+        to node_monitor_email and the CC field in the node_monitor_table, if
+        set.
+
+    node_nbt
+        Maps a MAC address to an IP address and its NetBIOS information,
+        including NBT name, domain, and user. Archived data is similar to
+        the node table, where ``active'' is set to false for archived data.
+
+    node_wireless
+        Holds information about the a wireless station's radio -- maximum
+        possible rate, current transmit rate, signal strength and quality,
+        and rx/tx packets and bytes. This table has no archived data; it
+        only contains the most recent sample for a given MAC address.
+
+    process
+        This table is used to coordinate the work of multiple child
+        processes when performing parallel work.
 
     sessions
         Web sessions created by MasonX::Request::WithApacheSessions. Stores
@@ -1546,26 +1792,22 @@ THANKS
     I would like to thank the following people for their contributions to
     Netdisco :
 
-    Mark Boolootian (Through who's ideas Netdisco was born and shaped)
-    (UCSC), Jim Warner (UCSC), Mike Hunter (UCB), Brian Wilson (NCSU),
-    Bradley Baetz (bbaetz), David Temkin (sig.com), Edson Manners (FSU),
-    Dmitry Sergienko (Trifle Co, .ua) Remo Rickli (PSI, Switzerland),
+    Mark Boolootian and Jim Warner (Through who's ideas Netdisco was born
+    and shaped) (UCSC) , Mike Hunter (UCB), Brian Wilson (NCSU), Bradley
+    Baetz (bbaetz), David Temkin (sig.com), Edson Manners (FSU), Dmitry
+    Sergienko (Trifle Co, .ua), Remo Rickli (PSI, Switzerland),
     Jean-Philippe Luiggi (sagem.com), A.L.M Buxey (Loughborough University,
     UK), Kevin Cheek (UMICH), John Bigrow (bnl.gov), George Pavel
-    (llnl.gov), Charles Goldsmith (CompUSA), Douglas M. McKeown
+    (llnl.gov), Charles Goldsmith (wokka.org), Douglas M. McKeown
     (saintmarys.edu), Revital Shvarzman (York U, Ontario), Walter Gould
     (Auburn U), Lindsay Druet and Colin Palmer (U of Waikato, Hamilton NZ),
     Dusty Hall (Auburn U), Jon Monroe (center pointe), Eric Miller
-    (jeneric).
-
-    As well as these people for their donations :
-
-     Richard Silver (East Alabama Medical Center)
-     Linda Rosewood (UCSC)
-     "6pax4max!","31337" (???)
-     Dusty Hall     (Auburn University)
-     Walter Gould   (Auburn University)
-     Frank Chatham  (Auburn University)
+    (jeneric), Bill Fenner, Oliver Gorwits (Oxford U), Alexander Barthel
+    (http://archiv.tu-chemnitz.de/pub/2005/0045/), Bill Anderson, Carlos
+    Vicente (U Oregon), Alexander Hartmaier (t-systems.at), Justin Hunter
+    (Arizona State U), Jethro Binks (U of Strathclyde, Glasgow), Jordi
+    Guijarro (UAB.es), Sam Stickland (spacething.org), Stefan Radman
+    (CTBTO.org), Clint Wise, Max Kosmach, Bernhard Augenstein.
 
     And probably lots of other people I forgot to put in here. Not to
     mention the authors and communities of all the other software that

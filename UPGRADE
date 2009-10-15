@@ -33,6 +33,26 @@ UPGRADING
 
 VERSION SPECIFIC NOTES
 
+    v0.95 -> 1.0
+
+        New Perl Modules
+              Parallel::ForkManager
+              Net::LDAP (optional for LDAP authentication)
+              Net::SSLeay (optional for encrypted LDAP authentication)
+              IO::Socket::SSL (optional for encrypted LDAP authentication)
+
+        Update Database
+            You will have to run the following command to add new tables and
+            modify existing ones.
+
+             cd /usr/local/netdisco/sql
+             ./pg upgrade-0.95-to-1.0.sql
+
+            Note that it is safe to run the upgrade.sql scripts more than
+            once (in case you are running a CVS or RC version). Also note
+            that if you are upgrading from 0.94, you must run
+            "upgrade-0.94-to-0.95.sql" first.
+
     v.0.94 -> 0.95
 
         New and Updated Perl Modules
@@ -211,7 +231,7 @@ APPLICATION NOTES
   SNMP::Info
 
     When upgrading to any version, please make sure you have the newest
-    version of SNMP::Info installed (at least 1.0):
+    version of SNMP::Info installed (at least 2.01):
 
     CVS Version
         To update a CVS version of SNMP::Info :

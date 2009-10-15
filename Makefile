@@ -6,7 +6,9 @@ POD2TEXT = pod2text
 POD2MAN  = pod2man
 POD2HTML = pod2html --podroot=doc --podpath=.
 
-SNMPLIBS := $(shell find SNMP -name "*.pm" | grep -v blib)
+# OG - no longer required as we have SNMP::Info separately now?
+# SNMPLIBS := $(shell find SNMP -name "*.pm" | grep -v blib)
+SNMPLIBS := 
 
 all:
 	echo "Make sure you are using GNU Make (gmake).  If you're on Linux you are."

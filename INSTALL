@@ -5,18 +5,22 @@ NAME
 
 VERSION
 
-    Netdisco 0.95
+    Netdisco 1.0
 
 AUTHOR
 
-    Developed by team of Open Source authors headed by Eric Miller and Bill
-    Fenner. Originally created by Max Baker. See list at the end of README
-    of all the contributors.
+    Developed by team of Open Source authors headed by Eric Miller, Bill
+    Fenner, and Oliver Gorwits, originally created by Max Baker. See list at
+    the end of README of all the contributors.
 
     Netdisco was created at the University of California, Santa Cruz (UCSC),
     Networking and Technology Services (NTS) department. UCSC continues to
     support the development of Netdisco by providing development servers and
-    financial support.
+    beer.
+
+    The Netdisco project is hosted by Source Forge at
+    <https://sourceforge.net/projects/netdisco> and
+    <https://sourceforge.net/projects/snmp-info>.
 
 SUPPORT
 
@@ -38,12 +42,14 @@ SUPPORT
 
     To report a bug
         To report bugs, please use the Bug tracker on the Netdisco Source
-        Forge project page at <http://sourceforge.net/projects/netdisco>.
+        Forge project page at
+        <https://sourceforge.net/tracker2/?group_id=80033&atid=558508>
 
     To become a developer
         If you would like to help develop Netdisco, or have code to
-        contribute, please submit your code to the "patches" tracker on the
-        Source Forge Page and join us on the "netdisco-devel" mailing list.
+        contribute, please submit your code to the patches tracker at
+        <https://sourceforge.net/tracker2/?group_id=80033&atid=558510> and
+        join us on the "netdisco-devel" mailing list.
 
     To register your install of Netdisco
         The developers are now maintaining a registry of Netdisco installs.
@@ -54,35 +60,60 @@ SUPPORT
         have Netdisco up and running please spend a minute to let us know
         you're using it at <http://netdisco.org/register.html>.
 
+INSTALL FLAVORS
+
+    There are three general flavors of installs out there for Netdisco:
+
+    From Source
+        The most common way is to install it from source on your machine
+        using an install script (see bin/install and
+        http://www.auburn.edu/~gouldwp/netdisco/), or manually using this
+        document.
+
+    From Package
+        Netdisco is available as a package / port on a few flavors of Linux
+        and BSD. Check your favorite package repository first before going
+        to the trouble of installing it manually.
+
+    Virtual Machine / VMWARE Applicance
+        Charles Goldsmith maintains a VMWARE Appliance version of Netdisco
+        at <http://wokka.org/netdisco/>. This is by far the easiest way to
+        get up and running w/ Netdisco.
+
 REQUIREMENTS
 
     Netdisco is built using lots of fine Open-Source tools:
 
-    * Perl
-        5.6.1 and newer advised. Whatever version that comes with your
+    *   Perl
+
+        5.8.x and newer advised. Whatever version that comes with your
         distro should be fine.
 
-    * Perl Modules
+    *   Perl Modules
+
         Listed below
 
-    * Net-SNMP
+    *   Net-SNMP
+
         5.1.x and newer advised. Reported working on 5.0.x as well.
 
-    * Postgres SQL Server
-        Version 7.4 or higher required. Version 8.x suggested.
+    *   Postgres SQL Server
+
+        Version 8.x or higher suggested.
 
         Reported working for versions 7.2, 7.3, 7.4, 8.0, 8.1
 
-    * Mason
-        1.26 or newer required. 1.35 or newer advised, especially for
+    *   Mason
+
+        1.26 or newer required. 1.39 or newer advised, especially for
         Apache2 installs.
 
-    * Apache
-        Netdisco 0.95 now supports Apache2!
+    *   Apache
 
-        1.3.x and 2.x supported.
+        1.3.x and 2.x supported. 2.x strongly preferred.
 
-    * mod_perl
+    *   mod_perl
+
         Get the mod_perl version to match your Apache:
 
         Apache 1.3.x
@@ -92,8 +123,9 @@ REQUIREMENTS
             Do not install version 1.99! Make sure you have mod_perl version
             2.02 or later.
 
-    * GraphViz (Optional)
-        Version 2.8 or higher recommended.
+    *   GraphViz (Optional)
+
+        Version 2.22 or higher recommended.
 
     See INSTALL below for details on how to retrieve and install each
     prerequisite.
@@ -188,8 +220,7 @@ INSTALL
 
   4. Postgres
 
-    Netdisco runs Postgres as its database back-end. mySQL and Oracle ports
-    have been rumored but have not yet surfaced.
+    Netdisco runs Postgres SQL as its database back-end.
 
     [4.1] Install Postgres
         See the section "OS Specific Notes" below for any notes relating to
@@ -431,6 +462,7 @@ INSTALL
             make
             make install
 
+
          ********************************************************************
 
         DO NOT INSTALL the "SNMP::" or "Net::SNMP" modules off of CPAN.
@@ -503,7 +535,7 @@ INSTALL
    5.3.  MIBs
 
     MIBs that are required for SNMP::Info are included with Netdisco in the
-    mibs/ directory if you installed the "netdisco-0.95_with_mibs" package.
+    mibs/ directory if you installed the "netdisco-1.0_with_mibs" package.
 
     If you installed the "netdisco" package without included MIB files, then
     please download the "netdisco-mibs" package from
@@ -552,12 +584,17 @@ INSTALL
 
     [7.1] Apache2
         Using recent versions of Mason and mod_perl, Netdisco runs fine
-        under Apache2. Uncomment the lines at the top of
-        netdisco_apache.conf that are related to Apache2.
+        under Apache2.
 
     [7.2] Apache1
+        It is strongly advised to use Apache2. Consider section 7.2 as
+        historical.
+
         See the O/S specific notes at the bottom of this document for a
         binary install or install Apache 1.3.x From Scratch:
+
+        Comment out the lines at the top of netdisco_apache.conf that are
+        related to Apache2.
 
         Install Apache 1.3.x and mod_perl 1.x and mod_ssl
 
@@ -669,22 +706,6 @@ INSTALL
             Make sure you have this include line for the secure server
             virtual host *:443 at the bottom of http.conf.
 
-        [7.3.4] Apache2 additions
-            Make sure that something similar to the following "LoadModule"
-            commands are in your httpd.conf or netdisco_apache.conf:
-
-                LoadModule perl_module  libexec/apache2/mod_perl.so
-                LoadModule apreq_module libexec/apache2/mod_apreq2.so
-
-            (Note that these should have been done as part of installing
-            mod_perl and libapreq2, but not all installations do this).
-
-            Make sure the following two lines are included in the top of
-            netdisco_apache.conf.
-
-                PerlModule Apache2::compat
-                PerlModule Apache2::Request
-
     [7.4] Mason Data Directory
         Set the Mason data directory writable to the apache user that does
         the requests.
@@ -696,14 +717,18 @@ INSTALL
             chown nobody.netdisco /usr/local/netdisco/mason
 
         The name of the user is listed in "httpd.conf" under the "User"
-        directive. Some distros use the name "apache" as the web server unix
-        user.
+        directive. Some distros use the name "apache" or "www" as the web
+        server unix user.
 
   8. Perl Modules
 
     Below is a list of required modules for Netdisco, freely available from
     CPAN <http://www.cpan.org>. Many of these modules have prerequisite
-    modules.
+    modules. Many of these are available in distros already as packages.
+
+    PLEASE check that you have these in package form first to allow for
+    automatic updating of these dependency libraries. A good place to start
+    is the Mason library.
 
     [8.1] Install required Perl modules from CPAN
         Use the CPAN module that comes with Perl to install the modules and
@@ -724,7 +749,11 @@ INSTALL
                 install Graph        ( > 0.50 )
                 install GraphViz     ( > 2.02 )
                 install Compress::Zlib (probably already have this one)
-                install Net::NBName
+                install Parallel::ForkManager
+                install Net::NBName (optional for NetBIOS lookup on devices)
+                install Net::LDAP (optional for LDAP authentication)
+                install Net::SSLeay (optional for encrypted LDAP authentication)
+                install IO::Socket::SSL (optional for encrypted LDAP authentication)
 
         For Apache1 install these modules:
 
@@ -811,6 +840,13 @@ INSTALL
 
         cd /usr/local/netdisco
         netdisco -O
+
+    If you run into errors because of UTF-8 or other exotic characters in
+    oui.txt you may need to add this line to netdisco.conf.
+
+        db_Pg_env = PGCLIENTENCODING => iso8859-1
+
+    You may also try changing the above from "iso8859-1" to "UTF-8".
 
     [10.1] Updating oui.txt (Optional)
         The database of OUIs is needed by Netdisco and is available from the
@@ -954,10 +990,11 @@ OS Specific Notes
     sure that the port is up to date with this version of Netdisco. This is
     the best way to install Netdisco on FreeBSD.
 
-    * Postgres
+    *   Postgres
+
         Install Postgres from ports:
 
-            cd /usr/ports/databases/postgresql81-server
+            cd /usr/ports/databases/postgresql83-server
             make install
 
         Make sure Postgres is configured to start at system startup time by
@@ -975,28 +1012,33 @@ OS Specific Notes
 
             /usr/local/etc/rc.d/010.pgsql.sh start
 
-    * Net-SNMP
+    *   Net-SNMP
+
         Install Net-SNMP from ports.
 
             cd /usr/ports/net/net-snmp && make install
 
-    * Make
+    *   Make
+
         Anywhere in this document you see a reference to make you should run
         gmake.
 
-    * SNMP::Info
+    *   SNMP::Info
+
         SNMP::Info is available on ports. Please check that the version
         listed there is as new as the version required by Netdisco.
 
             cd /usr/ports/net-mgmt/p5-SNMP-Info
             make install
 
-    * GraphViz
+    *   GraphViz
+
         GraphViz is available on ports:
 
             cd /usr/ports/graphics/graphviz && make install
 
-    * Apache Restart
+    *   Apache Restart
+
         For the ports version of apache, to cold restart (ie. for Step 11)
         or for whenever you change the config file, use this command :
 
@@ -1015,7 +1057,8 @@ OS Specific Notes
 
         to /etc/rc.conf.
 
-    * Perl Modules
+    *   Perl Modules
+
         You can install these Perl modules from Ports
 
             www/p5-HTML-Mason
@@ -1025,14 +1068,16 @@ OS Specific Notes
             www/p5-Apache-Session
             www/p5-MasonX-Request-WithApacheSession
 
-    * Apache2
+    *   Apache2
+
         Install these ports
 
             www/apache22
             www/mod_perl2
             www/p5-libapreq2
 
-    * Apache1
+    *   Apache1
+
         If you choose to use apache1 from source you will need to install
         OpenSSL to provide a secure (https) server.
 
@@ -1051,15 +1096,18 @@ OS Specific Notes
 
   Mac OS X
 
-    * Postgres
+    *   Postgres
+
         See <http://developer.apple.com/internet/macosx/postgres.html> for
         detailed instructions on installing PostgreSQL with OS X.
 
-    * GraphViz
+    *   GraphViz
+
         It is reported to be in "DarwinPorts" or you can check out
         <http://www.phil.uu.nl/~js/graphviz/>.
 
-    * Apache1
+    *   Apache1
+
         See the very old, following three links in addition to this document
         to use Apache1 w/ OS X:
 
@@ -1073,7 +1121,8 @@ OS Specific Notes
     not listed here, look over the install scripts for other distros at
     <http://www.auburn.edu/~gouldwp/netdisco/> in the READMEs section.
 
-    * Net-SNMP
+    *   Net-SNMP
+
         If you have installed the Net-SNMP RPM from an "old" Redhat or
         Mandrake it does not include the Perl modules. Uninstall it and
         install a newer version by hand as below.
@@ -1083,7 +1132,8 @@ OS Specific Notes
         Same goes for Debian. DO NOT use the apt-get version of Net-SNMP,
         install by hand (it's easy!).
 
-    * GraphViz
+    *   GraphViz
+
         For Redhat and Mandrake systems you will make sure that a lot of
         "-devel" packages are installed. For example, if you see errors
         about not having a PNG or JPEG library you must install the "-devel"
@@ -1096,7 +1146,8 @@ OS Specific Notes
 
             urpmi gettext-devel
 
-    * Apache Restart
+    *   Apache Restart
+
         For most Linux distros where you use the built-in apache web server
         use one of these commands to cold restart Apache in Step 11 :
 
@@ -1110,7 +1161,8 @@ OS Specific Notes
 
         For the path try /etc/init.d or /etc/rc.d/init.d.
 
-    * Apache1
+    *   Apache1
+
         Warning: Some Linux distributions such as Redhat 6.x install
         mod_perl as a Dynamic Shared Object (DSO). This is known to be
         unstable, especially with Mason. Compile mod_perl statically using
@@ -1131,38 +1183,16 @@ OS Specific Notes
 
         (Thanks to David Martin for this info)
 
-  Fedora
+  Fedora / CentOS / Redhat
 
-    Please try the great install script for Fedora from Walter Gould at
+    Netdisco 0.95 packages are available in the Fedora 11 repositories, and
+    the EPEL repositories for RHEL/CentOS 5.
+
+    Newer releases may be available from the package author's website, at
     <http://www.auburn.edu/~gouldwp/netdisco>.
 
-  CentOS / Redhat
-
-    Please try the great install script for CentOS from Walter Gould at
-    <http://www.auburn.edu/~gouldwp/netdisco>. Note that if you choose not
-    to install/update the RPMs using "yum", you will have to do it yourself
-    by hand. This script was reported working for AS 4.
-
-    In the case of Redhat Enterprise Linux (RHEL) AS as well as any of its
-    clones, such as CentOS or Whitebox linux, most of the prerequisites are
-    already included. However, there are two main caveats:
-
-    1) Packages
-        Some of the packages are not installed by default - you need to
-        check them off in the installation process when customizing the
-        packages to be installed. If you choose all the packages to be
-        installed, you'll only need to install a couple of Perl modules and
-        Netdisco itself. Alternatively, you could use "yum" or "up2date" to
-        install the packages or download and install the packages manually.
-
-        RHEL version ES and WS do not have all the packages that AS has.
-        Some of these may be prerequisites for Netdisco, in which case
-        you'll need to install the packages from a different RPM repository
-        or install from source.
-
-    2) mod_perl
-        You need to remove the "mod_perl" RPM if it is installed, as it will
-        conflict with the "mod_perl2" package.
+    We expect RPMs for Netdisco 1.0 and its dependencies to appear in the
+    Fedora and EPEL repositories in due course.
 
   Mandrivia Linux
 
@@ -1171,13 +1201,15 @@ OS Specific Notes
 
   Debian Linux
 
-    Please try the great install script for Debian from Walter Gould at
-    <http://www.auburn.edu/~gouldwp/netdisco>.
+    Debian 5.0 (Lenny) contains the Netdisco 0.95 packages and all
+    dependencies. Newer releases may be available at
+    <http://packages.debian.org/netdisco>.
 
-    Also see the script bin/debian_install.sh. It is out of date, but is a
-    good starting point for everything you will need to do.
+    We expect packages for Netdisco 1.0 and its dependencies to appear in
+    the official repositories for Debian "Squeeze" in due course.
 
-    * GraphViz
+    *   GraphViz
+
         Jordi Guijarro reported that the version that comes with Woody is
         too old. Install a newer version from source.
 
@@ -1185,11 +1217,13 @@ OS Specific Notes
 
     Netdisco has been tested with Mandake 9.1
 
-    * Perl 5.8.1
+    *   Perl 5.8.1
+
         Perl 5.8.1 on Mandrake 9.x may be a problem (if you get an "out of
         memory" error, you may need to change to 5.6.1 or 5.8.3+).
 
-    * Postgres
+    *   Postgres
+
         Installing Postgres the easy way:
 
             urpmi postgresql postgresql-devel postgresql-server postgresql-docs
@@ -1213,7 +1247,8 @@ OS Specific Notes
 
         Remember this for the Apache setup too.
 
-    * Apache
+    *   Apache
+
         Mandrake 9.1 comes with Apache2. It also has the option of
         installing a version of Apache1/mod_perl on a different port and
         then reverse-proxying it.
@@ -1267,11 +1302,13 @@ OS Specific Notes
     See <http://www.saintmarys.edu/~dmckeown/netdisco_solaris10.htm> for a
     great document on getting Netdisco 0.94 to work with Solaris 10.
 
-    * Make
+    *   Make
+
         Anywhere in this document you see a reference to make you should run
         gmake.
 
-    * GraphViz
+    *   GraphViz
+
         Make the JPEG and EXPAT libraries first and when making the JPEG
         library make sure you have
 
