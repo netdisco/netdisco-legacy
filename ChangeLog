@@ -2,6 +2,10 @@
 # netdisco.org
 # $Id$
 
+1.1 ()
+Bugfixes:
+    * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
+
 1.0 (2009-10-15)
 Features:
     + []        Partial MAC search on an even number of hex digits

@@ -132,7 +132,7 @@ Reason why a port would be shutdown. These get fed into C<port_control_log>
 
 =cut
 
-$VERSION = '1.0';
+$VERSION = '1.1-cvs';
 
 =back
 
@@ -1008,15 +1008,12 @@ sub sort_port {
     my $letter_number  = qr{^([a-zA-Z]+)(\d+)$};
     my $wordcharword   = qr{^([^:\/.]+)[\ :\/\.]+([^:\/.]+)(\d+)?$}; #port-channel45
     my $ciscofast      = qr{^
-                            # Word Number (Gigabit0)
-                            (\D+)(\d+)
-                            # Groups of symbol float (/5.5/5.5/5.5)
-                            (?:                     # group, don't capture to $1 
-                              # /5.5
-                              [:\/\.]+([\d\.]+)     # capture float
-                            )+
-                              # Optional dash (-Bearer Channel)
-                            (-.*)?
+                            # Word Number slash (Gigabit0/)
+                            (\D+)(\d+)[\/:]
+                            # Groups of symbol float (/5.5/5.5/5.5), separated by slash or colon
+                            ([\/:\.\d]+)
+                            # Optional dash (-Bearer Channel)
+                            (-.*)? 
                             $}x;
 
     my @a = (); my @b = ();
@@ -1028,7 +1025,8 @@ sub sort_port {
     } elsif ($aval =~ $numbers) {
         @a = ($1);
     } elsif ($aval =~ $ciscofast) {
-        @a = ($1,$2,$3,$4,$5,$6);
+        @a = ($1,$2);
+        push @a, split(/[:\/]/,$3), $4;
     } elsif ($aval =~ $wordcharword) {
         @a = ($1,$2,$3);
     } else { 
@@ -1042,7 +1040,8 @@ sub sort_port {
     } elsif ($bval =~ $numbers) {
         @b = ($1);
     } elsif ($bval =~ $ciscofast) {
-        @b = ($1,$2,$3,$4,$5,$6);
+        @b = ($1,$2);
+        push @b, split(/[:\/]/,$3),$4;
     } elsif ($bval =~ $wordcharword) {
         @b = ($1,$2,$3);
     } else { 
