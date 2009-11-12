@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+#
+# Dump Device Table to .csv file
+# maxbaker - 11/12/09
+#
+# $Source$
+# $Id$
+
+use lib '/usr/local/netdisco';
+use netdisco ':all';
+
+config('/usr/local/netdisco/netdisco.conf');
+
+$devices = sql_rows('device',['*']);
+
+# Header Row - from first returned entry
+@keys = keys %{$devices->[0]};
+print join(',',@keys),"\n";
+
+# Device Rows
+foreach my $d (sort sort_ip @$devices) {
+    my @val;
+    foreach my $key (@keys) {
+        push @val, $d->{$key};
+    }
+    print join(',',@val),"\n";
+}
