@@ -41,6 +41,7 @@ my $arg_report;
         poe_status => "PoE Status",
         radio_mac_location => "Radio MAC address and location",
         radio_speed_ssid => "Wireless client speeds by SSID",
+        port_usage => "Ports up / recent down / long down",
 );
 $arg_report = $report;
 </%init>
@@ -196,6 +197,33 @@ foreach my $res (@$results) {
     my $info = sprintf("%s/%d", $port, $res->{maxrate});
     $res->{type} = $map{ $info } || $info;
 }
+</%perl>
+</%method>
+<%method report_port_usage>
+<%perl>
+$columns = [
+        [ 'DNS', 'dns' ],
+        [ 'IP', 'ip' ],
+        [ 'Up', 'up' ],
+        [ 'Down since<br>&lt; 90 days', 'recently_used' ],
+        [ 'Down since &gt;<br>90 days', 'not_recently_used' ],
+           ];
+$results = sql_rows('device d join device_port p using (ip)',
+        [ 
+            'dns', 
+            'ip',
+            'sum(case when up=\'up\' then 1 else 0 end) as up',
+            'sum(case when (up<>\'up\' and age(to_timestamp(extract(epoch from last_discover)-(uptime-lastchange)/100)) <= interval \'90 days\') then 1 else 0 end) as recently_used',
+            'sum(case when (up<>\'up\' and age(to_timestamp(extract(epoch from last_discover)-(uptime-lastchange)/100)) > interval \'90 days\') then 1 else 0 end) as not_recently_used',
+        ],
+        { }, 0,
+        'group by dns, ip order by dns');
+
+foreach my $res (@$results) {
+    my $ip = $res->{ip};
+    $res->{ip} = sprintf("<A HREF=device.html?ip=%s> %s </A>", $ip, $ip);
+}
+
 </%perl>
 </%method>
 <%method title>

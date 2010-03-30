@@ -3,6 +3,10 @@
 # $Id$
 
 1.1 ()
+Features:
+    + []        Added report with number of ports per device that are up, recently 
+                down and down for a longer time.
+
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
 
