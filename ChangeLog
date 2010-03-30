@@ -6,6 +6,9 @@
 Features:
     + []        Added report with number of ports per device that are up, recently 
                 down and down for a longer time.
+    + []        Allow selecting multiple devices in admin_dev.html for actions 
+                that don't require confirmation (eg macsuck, arpnip, refresh).
+                Based on patch by Michael Rubashenkov.
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb

@@ -96,16 +96,24 @@ $arg_debug = $debug; $arg_discover = $discover;
 @act_ignore = @act_ignore_default unless scalar @act_ignore ;
 %logs = map {$_ => 1} @logs;
 
+my @devs;
 
 #..................... Device Control .............................
 
 # Load dev from db if given
 if ($dev){
-    $dev = getip($dev);
-    my $dns = hostname($dev);
-    $dns =~ s/\Q$domain\E//;
-    $arg_dev_text = $dns if (defined $dev and defined $dns);
-    $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
+    if(ref($dev) eq "ARRAY"){
+        for my $i (@$dev){
+    	    my $dip=getip($i);
+    	    push @devs,sql_hash('device',['ip','dns','layers'],{'ip'=>$dip}) if $dip;
+    	}
+    } else {
+        $dev = getip($dev);
+        my $dns = hostname($dev);
+        $dns =~ s/\Q$domain\E//;
+        $arg_dev_text = $dns if (defined $dev and defined $dns);
+        $db_dev = sql_hash('device',['ip','dns','layers'],{'ip'=>$dev}) if $dev;
+    }
 } elsif ($dev_text){
     # Resolve user entered device name to device_ip
     $dev=getip($dev_text);
@@ -116,7 +124,14 @@ if ($dev){
 
 # Confirm Given Action if required
 if ($cmd eq 'add' and $actions{$action}->[1] and $confirm ne 'ok') {
-    $need_confirm++;
+    # Selecting multiple devices currently not supported on commands needing confirmation
+    if (@devs) {
+        $err .= "Selecting multiple devices not supported with $actions{$action}->[0] action.<BR>\n";
+        $action = undef;
+        $arg_dev = $dev = undef;
+    } else {
+        $need_confirm++;
+    }
 }
 
 # Maintenance Commands from admin.html
@@ -127,30 +142,49 @@ if ($cmd eq 'add' and $action =~ /^(expire_ips|graph|backup|clean_nodes|clean_al
 
 # Refresh / MacSuck / Arpnip
 if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/ and !$need_confirm){
-    # Verify device exists.
-    unless (defined $db_dev->{ip}){
-        $err .= "Device ($dev) not found in Database.<BR>\n";
-        $action = undef;
-        $arg_dev = $dev = undef;
+    if(@devs){
+        my $pos = 0;
+    	for my $i (@devs){
+	        my $layers = $i->{layers};
+    
+    	    if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
+        		$err .= sprintf("Device %s does not support mac_sucking, skipping.<BR>\n", $i->{ip});
+        		splice(@devs, $pos, 1);
+    	    }
+    
+    	    if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
+        		$err .= sprintf("Device %s does not support arp_niping, skipping.<BR>\n", $i->{ip});
+        		splice(@devs, $pos, 1);
+    	    }
+            # Add Entry to Queue
+            $commit++ unless $err;
+            $pos++;
+    	}
+    } else {
+        # Verify device exists.
+        unless (defined $db_dev->{ip}){
+            $err .= "Device ($dev) not found in Database.<BR>\n";
+            $action = undef;
+            $arg_dev = $dev = undef;
+        }
+    
+        # Verify macsuck/arpnip is possible on device.
+        my $layers = $db_dev->{layers};
+    
+        if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
+            $err .= "Device does not support mac_sucking.<BR>\n";
+            $action = undef;
+            $arg_dev = $dev = undef;
+        }
+    
+        if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
+            $err .= "Device does not support arp_niping.<BR>\n";
+            $action = undef;
+            $arg_dev = $dev = undef;
+        }
+        # Add Entry to Queue
+        $commit++ unless $err;
     }
-
-    # Verify macsuck/arpnip is possible on device.
-    my $layers = $db_dev->{layers};
-
-    if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
-        $err .= "Device does not support mac_sucking.<BR>\n";
-        $action = undef;
-        $arg_dev = $dev = undef;
-    }
-
-    if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
-        $err .= "Device does not support arp_niping .<BR>\n";
-        $action = undef;
-        $arg_dev = $dev = undef;
-    }
-
-    # Add Entry to Queue
-    $commit++ unless $err;
 }
 
 # Delete
@@ -208,14 +242,29 @@ if ($cmd eq 'add' and $action =~ /^(discover|discover_new|discover_run)$/ and !$
 
 # Add to Queue
 if ($commit) {
-    $err .= "Action Queued - $action";
-    $err .= " For Device $dev." if $dev;
-    $err .= "<BR>\n";
-    insert_or_update('admin',{},
-                     {'device'=>$dev,'action'=>$action, 'status' => 'queued',
-                      'username' => $user, 'debug' => ($debug eq 'yes' ? 1 : 0),
-                      'subaction' => $subaction }
-                    );
+    if(@devs){
+    	for my $i (@devs){
+            next unless defined $i;
+    	    $err .= "Action Queued - $action";
+    	    $err .= " For Device $i->{ip}.";
+    	    $err .= "<BR>\n";
+    	    insert_or_update('admin',{},
+                         {'device'=>$i->{ip},'action'=>$action, 'status' => 'queued',
+                          'username' => $user, 'debug' => ($debug eq 'yes' ? 1 : 0),
+                          'subaction' => $subaction }
+                        );
+    	}
+    } else {
+        $err .= "Action Queued - $action";
+        $err .= " For Device $dev." if $dev;
+        $err .= "<BR>\n";
+        insert_or_update('admin',{},
+                         {'device'=>$dev,'action'=>$action, 'status' => 'queued',
+                          'username' => $user, 'debug' => ($debug eq 'yes' ? 1 : 0),
+                          'subaction' => $subaction }
+                        );
+    }
+    @devs=undef;
     $action = undef;
     $arg_dev = $dev = undef;
 }
@@ -389,7 +438,7 @@ Debug Output
 %# list_dev() - Create <SELECT> list for devices
 %#
 <%method list_dev>
-<SELECT NAME="dev" SIZE=8>
+<SELECT MULTIPLE="1" NAME="dev" SIZE=8>
 % foreach my $dev (sort {$a->{dns} cmp $b->{dns}} @$devices){
 %   my $view = defined $dev->{dns} ? $dev->{dns} : $dev->{ip};
 %   $view =~ s/\Q$domain\E//;
