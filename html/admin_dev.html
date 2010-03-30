@@ -104,9 +104,9 @@ my @devs;
 if ($dev){
     if(ref($dev) eq "ARRAY"){
         for my $i (@$dev){
-    	    my $dip=getip($i);
-    	    push @devs,sql_hash('device',['ip','dns','layers'],{'ip'=>$dip}) if $dip;
-    	}
+            my $dip=getip($i);
+            push @devs,sql_hash('device',['ip','dns','layers'],{'ip'=>$dip}) if $dip;
+        }
     } else {
         $dev = getip($dev);
         my $dns = hostname($dev);
@@ -143,23 +143,22 @@ if ($cmd eq 'add' and $action =~ /^(expire_ips|graph|backup|clean_nodes|clean_al
 # Refresh / MacSuck / Arpnip
 if ($cmd eq 'add' and $action =~ /^(refresh|macsuck|arpnip)$/ and !$need_confirm){
     if(@devs){
-        my $pos = 0;
-    	for my $i (@devs){
-	        my $layers = $i->{layers};
+        my @devs_checked;
+        for my $i (@devs){
+            my $layers = $i->{layers};
     
-    	    if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
-        		$err .= sprintf("Device %s does not support mac_sucking, skipping.<BR>\n", $i->{ip});
-        		splice(@devs, $pos, 1);
-    	    }
-    
-    	    if ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
-        		$err .= sprintf("Device %s does not support arp_niping, skipping.<BR>\n", $i->{ip});
-        		splice(@devs, $pos, 1);
-    	    }
-            # Add Entry to Queue
-            $commit++ unless $err;
-            $pos++;
-    	}
+            if ($action eq 'macsuck' and !&netdisco::has_layer($layers,2) ){
+                $err .= sprintf("Device %s does not support mac_sucking, skipping.<BR>\n", $i->{ip});
+            } elsif ($action eq 'arpnip' and !&netdisco::has_layer($layers,3) ){
+                $err .= sprintf("Device %s does not support arp_niping, skipping.<BR>\n", $i->{ip});
+            } else {
+                push(@devs_checked, $i);
+            }
+        }
+        # Add Entries to Queue
+        @devs = @devs_checked;
+        $commit += scalar @devs;
+        @devs = $arg_dev = $dev = undef unless $commit;
     } else {
         # Verify device exists.
         unless (defined $db_dev->{ip}){
@@ -243,17 +242,17 @@ if ($cmd eq 'add' and $action =~ /^(discover|discover_new|discover_run)$/ and !$
 # Add to Queue
 if ($commit) {
     if(@devs){
-    	for my $i (@devs){
+        for my $i (@devs){
             next unless defined $i;
-    	    $err .= "Action Queued - $action";
-    	    $err .= " For Device $i->{ip}.";
-    	    $err .= "<BR>\n";
-    	    insert_or_update('admin',{},
+            $err .= "Action Queued - $action";
+            $err .= " For Device $i->{ip}.";
+            $err .= "<BR>\n";
+            insert_or_update('admin',{},
                          {'device'=>$i->{ip},'action'=>$action, 'status' => 'queued',
                           'username' => $user, 'debug' => ($debug eq 'yes' ? 1 : 0),
                           'subaction' => $subaction }
                         );
-    	}
+        }
     } else {
         $err .= "Action Queued - $action";
         $err .= " For Device $dev." if $dev;
