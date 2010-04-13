@@ -942,6 +942,10 @@ Config File
 
   Back-End Items
 
+    arpnip_min_age
+        SECONDS. Prevent a device from being arpnipped for this number of 
+        seconds after the last succesful run.
+
     arpnip_no
         LIST:string. Devices that won't be arpnipped. See "bulkwalk_no" for
         syntax. If you have any layer-3 devices that have been discovered by
@@ -964,6 +968,10 @@ Config File
     datadir
         PATH. Full or relative path to the directory that backups and logs
         will be stored in
+
+    discover_min_age
+        SECONDS. Prevent a device from being refreshed for this number of 
+        seconds after the last succesful run.
 
     discover_no
         LIST:string. IP addresses in this list will not be visited during
@@ -1009,6 +1017,10 @@ Config File
         BOOLEAN. Set to true will let nodes accumulate on uplink ports
         without topology information. This is a debug option to help you
         figure out your topology and generally should not be set.
+
+    macsuck_min_age
+        SECONDS. Prevent a device from being macsucked for this number of 
+        seconds after the last succesful run.
 
     macsuck_no
         LIST:string. Don't macsuck these devices. See "bulkwalk_no" for

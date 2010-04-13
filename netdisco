@@ -1031,12 +1031,34 @@ sub ok_to {
 
     my $no = $what . "_no";
     my $only = $what . "_only";
-
+    
     if (in_device($dev,$CONFIG{$no}) ||
         ($CONFIG{$only} && !in_device($dev,$CONFIG{$only}))) {
         print "[$name] Excluded from $what in config file.\n";
         return 0;
     }
+
+    my $min_age = $what . "_min_age";
+    if ($CONFIG{$min_age}) {
+        my $col = sprintf("extract( epoch from (age(now(), last_%s) ) )", $what);
+        my $val = $CONFIG{$min_age};
+        my $ip;
+
+        # Passed a sql_hash from the device table
+        if (ref($dev) eq 'HASH'){
+            $ip     = $dev->{ip};
+        # Passed as simple hostname/IP
+        } else {
+            $ip     = &getip($dev);
+        }
+        my $res = sql_scalar('device',[$col],{'ip'=>$ip});
+        if ($res and $res < $val) {
+            printf("[%s] skipped: last %s was %d seconds ago, which is less than specified in config file (%s = %s).\n",
+                $name, $what, $res, $min_age, $val);
+            return 0;
+        }
+    }
+        
     return 1;
 }
 
