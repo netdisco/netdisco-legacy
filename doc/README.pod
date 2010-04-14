@@ -1049,6 +1049,11 @@ of days will be removed.
 
 =over
 
+=item arpnip_min_age
+
+SECONDS. Prevent a device from being arpnipped for this number of seconds after the 
+last succesful run.
+
 =item arpnip_no
 
 LIST:string.  Devices that won't be arpnipped.  See C<bulkwalk_no> for syntax.
@@ -1072,6 +1077,11 @@ BOOLEAN. Compress log files?  See L<compress> entry above.
 =item datadir
 
 PATH. Full or relative path to the directory that backups and logs will be stored in
+
+=item discover_min_age
+
+SECONDS. Prevent a device from being refreshed for this number of seconds after the 
+last succesful run.
 
 =item discover_no
 
@@ -1122,6 +1132,11 @@ STRING. The extension to add to log files.
 
 BOOLEAN. Set to true will let nodes accumulate on uplink ports without topology information.
 This is a debug option to help you figure out your topology and generally should not be set. 
+
+=item macsuck_min_age
+
+SECONDS. Prevent a device from being macsucked for this number of seconds after the 
+last succesful run.
 
 =item macsuck_no
 

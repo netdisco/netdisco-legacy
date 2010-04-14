@@ -50,8 +50,7 @@ FEATURES
     connected to an uplink port. With another click you can disable or
     enable the switch port, logging the reason, user and date.
 
-    *   Central location to disable/enable switch ports.
-
+    * Central location to disable/enable switch ports.
         Network administrators can disable and enable ports without having
         to know enable or privilege passwords. Reasons for switching on/off
         ports are logged for end-of-the-year auditing and reporting. Non-IOS
@@ -63,57 +62,41 @@ FEATURES
         port. Netdisco will also not allow people to switch off uplink ports
         by accident.
 
-    *   Supports Cisco VLAN Community String indexing ("public@101")
-
-    *   MAC Address to switch port resolution
-
-    *   IP Address to switch port resolution
-
-    *   Find Switch Ports with multiple nodes attached
-
-    *   Find nodes using multiple IP addresses
-
-    *   Find nodes by vendor (using MAC address OUI)
+    * Supports Cisco VLAN Community String indexing ("public@101")
+    * MAC Address to switch port resolution
+    * IP Address to switch port resolution
+    * Find Switch Ports with multiple nodes attached
+    * Find nodes using multiple IP addresses
+    * Find nodes by vendor (using MAC address OUI)
 
   Easy Administration
 
-    *   Controllable through Web Interface or Command Line Interface (CLI)
-
-    *   Database store for scalability and speed (Postgresql)
-
-    *   Easily extendible to new network devices
-
-    *   User system to restrict access and features
+    * Controllable through Web Interface or Command Line Interface (CLI)
+    * Database store for scalability and speed (Postgresql)
+    * Easily extendible to new network devices
+    * User system to restrict access and features
 
   Network Administration and Security
 
-    *   Automatic inventory and search of network hardware
-
-    *   Administratively enable/disable switch ports from web interface with
-        logging
-
-    *   Duplex Mismatch Finder
-
-    *   Find Wireless Access Points (APs) from wired-side of network
-
-    *   Layer Two Traceroute
+    * Automatic inventory and search of network hardware
+    * Administratively enable/disable switch ports from web interface with
+    logging
+    * Duplex Mismatch Finder
+    * Find Wireless Access Points (APs) from wired-side of network
+    * Layer Two Traceroute
 
   Reporting
 
-    *   Graphing of network topology. Clickable image-map of devices. Link
-        speed shown
-
-    *   Statistics for number of actual nodes connected to network
+    * Graphing of network topology. Clickable image-map of devices. Link
+    speed shown
+    * Statistics for number of actual nodes connected to network
 
   Inventory of Network Devices
 
-    *   by Operating System (IOS,CatOS,HP...)
-
-    *   by Model, Vendor, OSI Layer, DNS Name
-
-    *   Find device ports that are blocking (via Spanning Tree Protocol)
-
-    *   Find devices using IP's w/out DNS entries
+    * by Operating System (IOS,CatOS,HP...)
+    * by Model, Vendor, OSI Layer, DNS Name
+    * Find device ports that are blocking (via Spanning Tree Protocol)
+    * Find devices using IP's w/out DNS entries
 
   SUPPORTED DEVICES
 
@@ -719,7 +702,7 @@ USING NETDISCO
                 df -h
 
         7. Restart Postgres (just for fun)
-                /usr/local/etc/rc.d/010.pgsql restart
+                /usr/local/etc/rc.d/010.pgsql restart 
 
             OR
 
@@ -869,21 +852,14 @@ USING NETDISCO
 
     The default jobs are :
 
-    *   MacSuck - Every 2 hours MacSuck all the devices in the database.
-
-    *   ArpNip - Every 2 hours ArpNip all the devices in the database.
-        (Offset from Macsuck by 1 hours)
-
-    *   Refresh Devices - Once a day refresh device information.
-
-    *   Backup - Once a day backup information.
-
-    *   Graph - Once a day re-create the graph.
-
-    *   Walk Network - Once a week (Wed @ 14:00) try and discover new
-        devices.
-
-    *   Restart Admin Daemon - Once a day just for good measure.
+    * MacSuck - Every 2 hours MacSuck all the devices in the database.
+    * ArpNip - Every 2 hours ArpNip all the devices in the database. (Offset
+    from Macsuck by 1 hours)
+    * Refresh Devices - Once a day refresh device information.
+    * Backup - Once a day backup information.
+    * Graph - Once a day re-create the graph.
+    * Walk Network - Once a week (Wed @ 14:00) try and discover new devices.
+    * Restart Admin Daemon - Once a day just for good measure.
 
 Config File
 
@@ -943,7 +919,7 @@ Config File
   Back-End Items
 
     arpnip_min_age
-        SECONDS. Prevent a device from being arpnipped for this number of 
+        SECONDS. Prevent a device from being arpnipped for this number of
         seconds after the last succesful run.
 
     arpnip_no
@@ -970,7 +946,7 @@ Config File
         will be stored in
 
     discover_min_age
-        SECONDS. Prevent a device from being refreshed for this number of 
+        SECONDS. Prevent a device from being refreshed for this number of
         seconds after the last succesful run.
 
     discover_no
@@ -1008,7 +984,7 @@ Config File
         BOOLEAN. Set to true to ignore aliases that are part of private
         nets:
 
-            10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24
+            10.0.0.0/8 172.16.0.0/16 and 192.168.0.0/24  
 
     logextension
         STRING. The extension to add to log files.
@@ -1019,7 +995,7 @@ Config File
         figure out your topology and generally should not be set.
 
     macsuck_min_age
-        SECONDS. Prevent a device from being macsucked for this number of 
+        SECONDS. Prevent a device from being macsucked for this number of
         seconds after the last succesful run.
 
     macsuck_no
@@ -1636,22 +1612,16 @@ DESIGN
 
   Design Goals
 
-    *   Use of SNMP Leaf Names only; No OIDs
-
-    *   Easily extendible to new devices. No device-specific hacks in logic
-
-    *   Modular back-end database front-end setup
-
-    *   Security. Front-end abstraction from device manipulation means
-        sensitive network devices are not exposed to a web interface .
-
-    *   Data Archiving. Data structures and backup routines to provide
-        online and offline storage of network structure and usage.
-
-    *   Highly Configurable. Extract out all possible options to
-        netdisco.conf and avoid site-specific code.
-
-    *   Administration available on both command line and web interfaces.
+    * Use of SNMP Leaf Names only; No OIDs
+    * Easily extendible to new devices. No device-specific hacks in logic
+    * Modular back-end database front-end setup
+    * Security. Front-end abstraction from device manipulation means
+    sensitive network devices are not exposed to a web interface .
+    * Data Archiving. Data structures and backup routines to provide online
+    and offline storage of network structure and usage.
+    * Highly Configurable. Extract out all possible options to netdisco.conf
+    and avoid site-specific code.
+    * Administration available on both command line and web interfaces.
 
   Back-End Components
 
