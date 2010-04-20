@@ -1353,6 +1353,92 @@ Install a newer version from source.
 
 =back
 
+=head2 Ubuntu 8.04 (Hardy)
+
+There is an old version of Netdisco in aptitutde.  So what we'll do is use that to install
+all the dependencies, then uninstall netdisco and use a version from Source.
+
+=over
+
+=item aptitude install netdisco-backend netdisco-frontend
+
+You may want to do this from install aptitude and select all of the optional packages so you get a full and robust GraphViz install.
+
+=item Now remove netdisco-backend netdisco-frontend netdisco-common and libnetsnmp
+
+BUT keep all the dependencies.
+
+=item Install Source
+
+Grab netdisco-with-mibs from L<https://sourceforge.net/projects/netdisco/files/>  and install into /usr/local/netdisco.
+
+=item Install SNMP::Info
+
+=item Change database passwords in F<netdisco.conf> and F<netdisco_apache.conf>
+
+=item Postgres
+
+You have a little bit of setup to do here.
+
+=over
+
+=item Edit F</etc/postgresql/8.3/main/pg_hba.conf> and relax all security for now.
+
+Comment out everything else and do this :
+
+ local   all  all  trust 
+ host all all 127.0.0.1/32 trust
+
+=item Run C</etc/init.d/postgresql-8.3 restart>
+
+=item Run /usr/local/netdisco/sql/pg --init
+
+=item Go back into F<pg_hba.conf> and reinstate security
+
+ local   all         all                               md5
+ local   all         all                               ident sameuser
+
+=item Run C</etc/init.d/postgresql-8.3 restart>
+
+=back
+
+=item Create an SSL certificate
+
+ mkdir /etc/apache2/ssl 
+ /usr/sbin/make-ssl-cert /usr/share/ssl-cert/ssleay.cnf /etc/apache2/ssl/apache.pem 
+
+=item Turn on a couple Apache modules you installed
+
+ a2enmod ssl
+ a2enmod apreq
+
+=item Create an apache config file to load Netdisco
+
+vim /etc/apache2/sites-available/netdisco
+
+  Include /usr/local/netdisco/netdisco_apache.conf
+  
+  NameVirtualHost *:443
+  NameVirtualHost *:80
+  
+  <VirtualHost *:80>
+  	ServerName your.server.com
+  	Include /usr/local/netdisco/netdisco_apache_dir.conf
+  </VirtualHost>
+  
+  <VirtualHost *:443>
+  	ServerName your.server.com
+          SSLEngine on
+          SSLCertificateFile /etc/apache2/ssl/apache.pem
+  	Include /usr/local/netdisco/netdisco_apache_dir.conf
+  </VirtualHost>
+
+Make sure to turn on the secure server option in C<netdisco.conf>.
+
+=item Run C</etc/init.d/apache2 restart>
+
+=back
+
 =head2 Mandrake Linux 9.1
 
 Netdisco has been tested with Mandake 9.1
