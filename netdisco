@@ -2,7 +2,7 @@
 # n e t  d i s c o
 # Created for UCSC
 # Changes in code from 0.92 on:
-# Copyright (c) 2003-2009 Max Baker and the Netdisco Developer Team - All Rights Reserved
+# Copyright (c) 2003-2010 Max Baker and the Netdisco Developer Team - All Rights Reserved
 # (C) 2002,2003 UC Regents.  See bottom of this file.
 # $Id$
 
@@ -4730,7 +4730,7 @@ _end_usage_
 =head1 COPYRIGHT AND LICENCE
 
 Changes in code from 0.92 on:
-Copyright (c) 2003-2009 Max Baker and the Netdisco Developer Team - All Rights Reserved
+Copyright (c) 2003-2010 Max Baker and the Netdisco Developer Team - All Rights Reserved
 
 Original Code:
 Copyright (c) 2002,2003 Regents of the University of California
