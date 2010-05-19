@@ -13,5 +13,6 @@ CREATE TABLE node_ip (
 
 -- Indexing speed ups.
 CREATE INDEX idx_node_ip_ip          ON node_ip(ip);
+CREATE INDEX idx_node_ip_ip_active   ON node_ip(ip,active);
 CREATE INDEX idx_node_ip_mac         ON node_ip(mac);
 CREATE INDEX idx_node_ip_mac_active  ON node_ip(mac,active);

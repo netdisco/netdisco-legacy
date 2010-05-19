@@ -158,7 +158,7 @@ sub add_arp {
 
     # Set the active flag to false to archive all other instances
     #   of this IP address
-    sql_do(qq/UPDATE node_ip SET active = 'f' WHERE ip='$ip'/);
+    sql_do(qq/UPDATE node_ip SET active = 'f' WHERE ip='$ip' AND active/);
 
     # Add this entry to node table. 
     my %hash = ('mac' => $mac, 'ip' => $ip);
