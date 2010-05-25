@@ -313,7 +313,9 @@ if ($node){
             $mac =~ s/:$/*/;
             $mac =~ s/^/*/;
         }
-        my $where = { 'mac' => is_mac($node) ? $node : sql_match($mac,0) };
+        # set mac to be either node or the partial matching string
+        $mac = is_mac($node) ? $node : sql_match($mac,0);
+        my $where = { 'mac' => $mac };
         $where->{'active'} = 1 unless $arg_archive;
 
         # Lookup IPs associated with this MAC
@@ -350,7 +352,7 @@ if ($node){
         # Check the posibilty that this could be a switch port's MAC
         my $switch_ports = sql_rows('device_port',
                 ['ip','port','mac','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
-                {'mac' => $node});
+                {'mac' => $mac});
 
         foreach my $sp (@$switch_ports){
             $sp->{type} = 'swport';
@@ -366,7 +368,7 @@ if ($node){
             # It could also be a device's base address
             my $device = sql_rows('device',
                 ['ip','mac','dns','extract(epoch from creation) as time_first', 'extract(epoch from creation) as time_last'],
-                {'mac' => $node});
+                {'mac' => $mac});
 
             foreach my $dev (@$device) {
                 $dev->{type}   = 'devmac';
