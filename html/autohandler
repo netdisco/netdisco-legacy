@@ -36,6 +36,7 @@
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="device"<%$s_type eq 'device'? ' CHECKED' : ''%>>Device
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="node"<%$s_type eq 'node'? ' CHECKED' : ''%>>Node
                 <INPUT TYPE="RADIO" NAME="stype" VALUE="vlan"<%$s_type eq 'vlan'? ' CHECKED' : ''%>>VLAN
+                <INPUT TYPE="RADIO" NAME="stype" VALUE="port"<%$s_type eq 'port'? ' CHECKED' : ''%>>Port
                 <INPUT TYPE="submit" class="topbutton" VALUE="Search">
             </DIV>
             </FORM>
