@@ -343,9 +343,9 @@ table.dev-ports td.connected {
     text-align: left;
 }
 
-table.dev-key,    table.dev-view,   table.node-search,
-table.port-key,   table.log-key,    table.devs-search,
-table.ips-search, table.adm-search, table.port-search {
+table.dev-key,    table.dev-view, table.node-search,
+table.port-key,   table.log-key,  table.devs-search,
+table.ips-search, table.adm-search {
     border-style: solid solid solid solid;
     border-width: 1px 1px 1px 1px;
     border-color: #191512;
