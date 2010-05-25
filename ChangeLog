@@ -11,6 +11,8 @@ Features:
                 Based on patch by Michael Rubashenkov.
     + []        Add arpnip_min_age, macsuck_min_age and discover_min_age config 
                 directives, which can be used to prevent polling devices too often.
+    + [2982386] Add port_search page so that users can search for ports based
+                on the configured description/name. -bldewolf
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb

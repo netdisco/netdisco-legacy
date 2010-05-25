@@ -345,7 +345,7 @@ table.dev-ports td.connected {
 
 table.dev-key,    table.dev-view, table.node-search,
 table.port-key,   table.log-key,  table.devs-search,
-table.ips-search, table.adm-search {
+table.ips-search, table.adm-search, table.port-search {
     border-style: solid solid solid solid;
     border-width: 1px 1px 1px 1px;
     border-color: #191512;
@@ -353,8 +353,8 @@ table.ips-search, table.adm-search {
     margin-bottom:15px;
 }
 table.dev-key    th, table.dev-view   th, table.node-search th, 
-table.port-key   th, table.log-key    th,
-table.ips-search th, table.adm-search th {
+table.port-key   th, table.log-key    th, table.ips-search th,
+table.adm-search th, table.port-search th {
     border: none;
     text-align:right;
     padding: 10px 5px 5px 5px;
@@ -362,13 +362,13 @@ table.ips-search th, table.adm-search th {
     font-size:110%;
 }
 
-table.node-search th {
+table.node-search th, table.port-search th {
     text-align:center;
 }
 
 table.dev-key    td, table.dev-view   td, table.node-search td, 
 table.port-key   td, table.log-key    td, table.devs-search td, 
-table.ips-search td, table.adm-search td {
+table.ips-search td, table.adm-search td, table.port-search td {
     border: none;
     padding: 2px 10px 2px 5px;
     vertical-align:middle;

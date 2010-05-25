@@ -13,6 +13,10 @@ if ($stype eq 'node') {
     $page  = 'node.html';
     $query = 'node';
 }
+if ($stype eq 'port') {
+    $page  = 'port_search.html';
+    $query = 'port';
+}
 my $dest = "$page?$query=$s";
 
 # save search term for display

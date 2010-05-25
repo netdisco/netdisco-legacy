@@ -1,0 +1,134 @@
+<& SELF:matches &>
+
+<h1 class="pagehead">Port Search</h1>
+<FORM ACTION="<%$r->uri%>" METHOD="get">
+<TABLE CLASS="port-search">
+<TR>
+    <TD>Approximate port description:</TD>
+    <TD><INPUT TYPE="text" name="port" maxlength=255 size=30 VALUE="<%$port || $m->session->{_s_term}  |h%>">
+            <BR><span class="smaller"><B>*</B> and <B>?</B> can be used as wildcards</span>
+
+    </TD>
+</TR>
+<TR>
+    <TD>&nbsp;</TD>
+    <TD>
+        <INPUT TYPE="submit" CLASS="navbutton" Value="Search" class="navbutton">
+        <A HREF="<%$r->uri%>" class="navbutton">Clear</A>
+    </TD>
+</TR>
+</TABLE>
+</FORM>
+
+<%args>
+$port      => ''
+$dates     => 1
+$specific  => ''
+</%args>
+<%shared>
+my $matches = []; my $Node_IP_Seen = {};
+my $domain = $netdisco::CONFIG{domain};
+my ($arg_port);
+my $odd=0; my $ran_query = 0;
+my @search = (); my $ouis = undef; my @cols = ();
+</%shared>
+<%init>
+# Pass the form argument to the global for <%methods>
+$arg_port = $port;
+
+
+# ----------------- Node Search -------------------------
+if ($port){
+    # Choose columns to show and order to show them in matches()
+    @cols = (['name','Name'],['descr','Description'],['vlan','Vlan'],['port','Port']);
+
+    $m->flush_buffer;
+
+    $port =~ s/^\s+//;
+    $port =~ s/\s+$//;
+
+    # Save search terms to session, change topbar
+    $m->session->{_s_term} = $port;
+    $m->session->{_s_type} = 'port';
+
+    # Search for ports
+    my $name = sql_match($port);
+    my $where = { 'descr/name'=>$name};
+    my $ports = sql_rows('device_port',
+                ['ip','port','descr','vlan','name'],
+                $where
+			);
+    my @foundports = ();
+
+    # Add info to each entry
+    foreach my $portinfo (@$ports){
+        $portinfo->{switch} = $portinfo->{ip};
+	$portinfo->{switchname} = sql_scalar('device',['dns'],{'ip'=>$portinfo->{switch}}) || '';
+        $portinfo->{switchname} =~ s/\Q$domain\E//;
+
+        push (@$matches,$portinfo);
+    }
+
+    $ran_query++;
+}
+
+</%init>
+%#
+%# matches() - Outputs each match depending on type
+%#
+<%method matches>
+% return unless $ran_query;
+<h1 class="pagehead">Search Results</H1>
+%unless (scalar @$matches){
+No results found.
+% return; }
+<TABLE class="port-search">
+<TR>
+% foreach my $c (@cols){
+    <TH><%$c->[1]%></TH>
+% }
+</TR>
+<%perl>
+
+my @sorted_matches = sort {$a->{name} cmp $b->{name}} @$matches;
+
+foreach my $match (@sorted_matches) {
+    $odd++;
+</%perl>
+<TR CLASS="match-<% $odd % 2 %>">
+%     foreach my $c (@cols) {
+%           my $col = $c->[0];
+<TD>\
+%if ($col eq 'port') {
+    <span class="nobr"><A HREF="device.html?ip=<% $match->{switch} |u%>&amp;port=<% $match->{port} |u%>"><% $match->{switch} %> [ <% $match->{port} %> ]</A></span>\
+    <span class="nobr">(<% $match->{switchname} ? $match->{switchname} : '[No DNS]' %>)</span>\
+%} else {
+    <% $match->{$col} %>\
+%}
+</TD>
+%   }
+</TR>
+% }
+</TABLE>
+Matched <% scalar $odd %> ports.
+</%method>
+%#
+%# FILTER: highlight search term
+%#
+<%filter>
+return $_ unless $arg_port;
+my $open = '<SPAN CLASS="highlight">';
+my $close = '</SPAN>';
+my $search = $arg_port;
+# Quote all special chars
+$search =~ s/(\W)/\\$1/g;
+# But turn back on ? and *
+$search =~ s/\\\*/[^<]*/g;
+$search =~ s/\\\?/[^<]/g;
+# find things after > but before < to make sure we don't mess w/
+#   the HTML.
+s{(>[^<]*)($search)([^<]*<)} {$1$open$2$close$3}ig;
+</%filter>
+%#
+%# $Id$
+%# vim:syntax=mason
