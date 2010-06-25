@@ -33,6 +33,15 @@ UPGRADING
 
 VERSION SPECIFIC NOTES
 
+    v1.0 -> 1.1
+
+        Update Database
+            You will have to run the following command to add new tables and
+            modify existing ones.
+
+             cd /usr/local/netdisco/sql
+             ./pg upgrade-1.0-to-1.1.sql
+
     v0.95 -> 1.0
 
         New Perl Modules
