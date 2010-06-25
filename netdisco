@@ -122,7 +122,7 @@ foreach my $c ($args{C},"$FindBin::Bin/netdisco.conf",'/usr/local/netdisco/netdi
 }
 
 unless (defined $configfile){
-    print "No Config file found!\n";
+    print "No Config file found, or permission denied!\n";
     exit;
 }
 
