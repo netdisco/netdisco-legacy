@@ -13,6 +13,7 @@ Features:
                 directives, which can be used to prevent polling devices too often.
     + [2982386] Add port_search page so that users can search for ports based
                 on the configured description/name. -bldewolf
+    + []        Added "Port Usage" report page. Work in progress. -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb

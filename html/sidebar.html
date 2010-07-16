@@ -43,7 +43,10 @@
     </li>
 % }
     <li CLASS="sidebar-<% ++$odd%2 %>">
-    <A CLASS="navbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Report</A>
+    <A CLASS="navbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Control Report</A>
+    </li>
+    <li CLASS="sidebar-<% ++$odd%2 %>">
+    <A class="navbutton" HREF="<%$path%>/port_usage.html" TITLE="Search and Report on switch ports that are (and have been) down for a certain amount of time.">Port Usage Report</A>
     </li>
     <li CLASS="sidebar-<% ++$odd%2 %>">
      <FORM ACTION="<%$path%>/device_search.html" METHOD=GET>

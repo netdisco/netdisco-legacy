@@ -55,7 +55,8 @@
         <TR><TD CLASS="navbot">
             REPORT:
             <A class="topbutton" HREF="<%$path%>/device_inv.html" TITLE="Device Inventory by Vendor and Model">Inventory</A>
-            <A class="topbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Ports</A>
+            <A class="topbutton" HREF="<%$path%>/port_report.html" TITLE="Search and Report on switch ports that have been administratively disabled.">Port Control</A>
+            <A class="topbutton" HREF="<%$path%>/port_usage.html" TITLE="Search and Report on switch ports that are (and have been) down for a certain amount of time.">Port Usage</A>
             <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of IP Address space">IP</A>
             <A class="topbutton" HREF="<%$path%>/ip_search.html" TITLE="Show inventory of Netbios Domains">SMB</A>
             <A class="topbutton" HREF="<%$path%>/log.html" TITLE="Backend Log">Log</A>
