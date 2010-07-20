@@ -1469,6 +1469,11 @@ Config File
     edge_color
         STRING. Default color for link between devices.
 
+    edge_color
+	STRING. A string appended to the style section of every edge.  This can
+	be used to change the edge thickness by using a string like
+	"setlinewidth(10)".
+
     graph
         FILE. Full path and name to the GIF graph of the network. Path
         should be the same as in the "netmap.html" component.

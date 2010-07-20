@@ -4196,6 +4196,11 @@ sub graph_each  {
             $edge{color} = 'cyan1';
         }
 
+        # Add extra styles to edges (mainly for modifying width)
+        if(defined $CONFIG{edge_style}) {
+            $edge{style} .= "," . $CONFIG{edge_style};
+        }
+
         $gv->add_edge($link => $dest, %edge );
     }
 
