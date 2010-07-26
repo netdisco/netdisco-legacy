@@ -1278,11 +1278,14 @@ sub create_device {
 
     # Test for connectivity
     my $layers = $device->layers() if defined $device;
+    $device->error() unless $layers; # Clear error status that might have been caused by device w/o sysServices
+
+    my $descr = $device->description() if defined $device;
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
     #   Don't try V1 if we're forcing a specific version
-    if ( (!defined $device or !defined $layers) and 
+    if ( (!defined $device or (!defined $layers and !defined $descr) ) and 
          $args{Version} != 1 and !$version_force ){
         
         print "[$args{DestHost}] [Trying SNMP Version 1]\n";

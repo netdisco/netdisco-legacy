@@ -15,6 +15,7 @@ Features:
                 on the configured description/name. -bldewolf
     + []        Added "Port Usage" report page. Work in progress. -jeroenvi
     + []        Add config option for adding edge styles for graphs. -bldewolf
+    + []        Small changes to support devices without sysServices ("layers")
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
