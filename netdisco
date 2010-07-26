@@ -1277,10 +1277,12 @@ sub create_device {
     
 
     # Test for connectivity
-    my $layers = $device->layers() if defined $device;
-    $device->error() unless $layers; # Clear error status that might have been caused by device w/o sysServices
-
-    my $descr = $device->description() if defined $device;
+    my ($layers , $descr);
+    if (defined $device) {
+        $layers = $device->layers();
+        $device->error() unless $layers; # Clear error status that might have been caused by device w/o sysServices
+        $descr = $device->description();
+    }
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
@@ -1558,7 +1560,7 @@ sub get_device {
             if $DEBUG;
 
         my %args = get_snmp_args($row, $version, $comm);
-
+        $args{VersionForce} = 1; # When using cached info, force use of cached snmp_ver without fallback
         $device = create_device(%args);
                                
         # a -1 return from create_device means that we *did*
