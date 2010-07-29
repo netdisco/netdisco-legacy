@@ -17,10 +17,14 @@ $archive    => 'off'
 $node_ip    => 'on'     # Show the IPs used by each MAC
 $node_dns   => 'on'     # Resolve IPs of connected devices
 $node_nbt   => 'on'     # Show the NetBIOS Name used by each MAC
+$timecount  => 3        # Ports that have been down for at least this many
+$timeunit   => 'months' # time units are considered to be "free"
 </%args>
 <%shared>
 my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip, $model, $arg_ports,
-    $arg_node_dns,$arg_node_nbt,$dns,$vendor,$want_web_link,$web_dns);
+    $arg_node_dns,$arg_node_nbt,$dns,$vendor,$want_web_link,$web_dns,
+    $arg_timecount,$arg_timeunit);
+my $valid_time_units = ['days', 'weeks', 'months', 'years'];
 my $db_ports = []; my $node_ips = {}; my $node_nbts = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
@@ -39,6 +43,7 @@ my %port_cols = (
                  'vlan'  =>  ['Native<br>VLAN',1],
                  'lastchange' => ['Last Change',0],
                  'stp' => ['Spanning Tree',0],
+                 'up' => ['Status',0],
                 );
 
 my %device_info = (
@@ -75,6 +80,19 @@ $arg_age  = $device_age; $arg_arch = $archive;
 @arg_port = @port; $arg_node_ip = $node_ip;
 $arg_node_dns = $node_dns; $arg_node_nbt = $node_nbt;
 $arg_ports = $ports;
+$arg_timecount = $timecount; $arg_timeunit = $timeunit;
+
+# Make sure that only valid time units are passed, reset to "months" if the check fails
+unless (scalar grep(/^$arg_timeunit$/, @$valid_time_units)) {
+    $arg_timeunit = 'months';
+    $timeunit = 'months';
+}
+
+# Make sure that a positive integer is passed as count, reset to "3" if the check fails
+unless ($arg_timecount =~ m/^\d+$/) {
+    $arg_timecount = 3;
+    $timecount = 3;
+}
 
 if ($ip) {
     # Save Search Term
@@ -122,6 +140,14 @@ if ($ip) {
         @port = @arg_port = (); 
     } 
 
+    # Most magic to mark ports as "free" after given time interval ($reftime, $refsql, $freecol) happens here
+    my $reftime = int( $device->{last_discover}  - ($device->{uptime} / 100) ) || 0;
+
+    # We need lastchange/100 but can't use it here... later on it will be used in the left hand side
+    # of a comparison in the WHERE-clause. sql_query() has a special interpretation for a slash in such a 
+    # query component; workaround in this case is to multiply by 0.01 instead of dividing by 100.
+    my $refsql = "age(to_timestamp($reftime + lastchange*0.01))";
+    my $freecol = "(case when (up<>\'up\' and $refsql > interval \'$arg_timecount $arg_timeunit\') then 1 else 0 end) as free";
 
     # Selected Ports 
     if (scalar @port) {
@@ -129,8 +155,8 @@ if ($ip) {
         foreach my $portreq (@port) {
             next unless defined $portreq;
         
-            my $p = sql_rows('device_port',['*'],
-                            {'ip'=>$devip,'port'=>$portreq});
+            my $p = sql_rows('device_port', ['*', $freecol], 
+                            {'ip'=>$devip,'port'=>$portreq} ) || [];
 
             # add our results to the list
             if (defined $p and scalar @$p){
@@ -143,7 +169,17 @@ if ($ip) {
     # All Ports
     if ($arg_ports eq 'all') {
         @arg_port = @port = ('all'); 
-        $db_ports = sql_rows('device_port',['*'],{'ip'=>$devip}) || [];         
+        $db_ports = sql_rows('device_port', ['*', $freecol], 
+                            {'ip'=>$devip} ) || [];         
+    } elsif ($arg_ports eq 'free') {
+        @arg_port = @port = ('free');
+        $db_ports = sql_rows('device_port', ['*', $freecol],
+                            {
+                                'ip'=>$devip, 
+                                'up'=>\\"<> 'up'", 
+                                $refsql => \\" > interval \'$arg_timecount $arg_timeunit\'"
+                            }
+        ) || [];
     } 
 
     # PORTS - Connected Nodes, addresses and log entries
@@ -319,6 +355,9 @@ if (defined $device) {
 % unless ($arg_ports eq 'all') {
 <A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=all">Show All Ports</A>
 % }
+% unless ($arg_ports eq 'free') {
+<A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=free">Show Free Ports</A>
+% }
 % if ( defined $db_ports and scalar @$db_ports) {
 <A class="navbutton" HREF="<%$r->uri%>?ip=<%$devip|u%>&amp;ports=">Hide Ports</A>
 % }
@@ -341,6 +380,8 @@ if (defined $device) {
     <INPUT TYPE="hidden" NAME="ip" VALUE="<%$devip|h%>">
 % if ($arg_ports eq 'all') {
     <INPUT TYPE="hidden" NAME="ports" VALUE="all">
+% }elsif ($arg_ports eq 'free') {
+    <INPUT TYPE="hidden" NAME="ports" VALUE="free">
 % } else {
 %   foreach my $p (@arg_port) {
     <INPUT TYPE="hidden" NAME="port" VALUE="<%$p|h%>">
@@ -393,6 +434,21 @@ if (defined $device) {
     </TD>
     <TH>&nbsp;</TH>
     <TD>&nbsp;</TD>
+</TR>
+<TR>
+    <TH>Mark ports free when down more than</TH>
+    <TD>
+        <SELECT NAME="timecount">
+% for (1..31) {
+            <OPTION VALUE="<%$_%>"<%$arg_timecount eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+        </SELECT>
+        <SELECT NAME="timeunit">
+% foreach (@$valid_time_units) {
+            <OPTION VALUE="<%$_%>"<%$arg_timeunit eq $_ ? ' SELECTED' : ''%>><%$_%>
+% }
+        </SELECT>
+    </TD>
 </TR>
 <TR>
     <TD>&nbsp;</TD>
@@ -650,6 +706,7 @@ foreach my $port (sort sort_port @$db_ports){
     my $is_uplink   = (defined $remote_ip and !(defined $remote_type and $remote_type =~ /ip.phone/i)) ? 1 : 0;
     my $class = ($up eq 'down' or $up eq 'notPresent') ?
                 'port-down' : 'port-up';
+    $class    = $port->{free} ? 'port-free' : $class;
     $class    = $up_admin eq 'down' ? 'port-off' : $class;
     # Check for STP blocking, but not down
     $class    = ($up ne 'down' and $stp =~ /(blocking|broken)/) ? 'port-block' : $class;
@@ -866,6 +923,7 @@ foreach my $port (sort sort_port @$db_ports){
     <TD>
     [ <SPAN CLASS="port-off">Admin Disabled</SPAN> ]
     [ <SPAN CLASS="port-down">Link Down</SPAN> ]
+    [ <SPAN CLASS="port-free">Down > <%$arg_timecount%> <%$arg_timeunit%></SPAN> ]
     [ <SPAN CLASS="port-block">Blocking</SPAN> ]
     [ <SPAN CLASS="ip-phone">IP Phone</SPAN> ]
     [ <SPAN CLASS="dead-link">Discovered Neighbor not accessible</SPAN> ]

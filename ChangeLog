@@ -4,7 +4,7 @@
 
 1.1 ()
 Features:
-    + []        Added report with number of ports per device that are up, recently 
+    + []        Add report with number of ports per device that are up, recently 
                 down and down for a longer time.
     + []        Allow selecting multiple devices in admin_dev.html for actions 
                 that don't require confirmation (eg macsuck, arpnip, refresh).
@@ -13,9 +13,10 @@ Features:
                 directives, which can be used to prevent polling devices too often.
     + [2982386] Add port_search page so that users can search for ports based
                 on the configured description/name. -bldewolf
-    + []        Added "Port Usage" report page. Work in progress. -jeroenvi
+    + []        Add "Port Usage" report page. Work in progress. -jeroenvi
     + []        Add config option for adding edge styles for graphs. -bldewolf
     + []        Small changes to support devices without sysServices ("layers")
+    + []        Add "show free ports" option to Device View. -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb

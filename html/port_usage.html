@@ -12,12 +12,12 @@
     <TD>
         <SELECT NAME="timecount">
 % for (1..31) {
-            <OPTION VALUE="<%$_%>"<%$timecount eq $_ ? ' SELECTED' : ''%>><%$_%>
+            <OPTION VALUE="<%$_%>"<%$arg_timecount eq $_ ? ' SELECTED' : ''%>><%$_%>
 % }
         </SELECT>
         <SELECT NAME="timeunit">
-% foreach (@$valid_units) {
-            <OPTION VALUE="<%$_%>"<%$timeunit eq $_ ? ' SELECTED' : ''%>><%$_%>
+% foreach (@$valid_time_units) {
+            <OPTION VALUE="<%$_%>"<%$arg_timeunit eq $_ ? ' SELECTED' : ''%>><%$_%>
 % }
         </SELECT>
     </TD>
@@ -54,27 +54,27 @@ $sort       => 'Free ports'
 <%shared>
 my $matches = undef;
 my $argsort = undef;
-my $argtcnt = undef;
-my $argunit = undef;
-my $valid_units = ['days', 'weeks', 'months', 'years'];
+my $arg_timecount = undef;
+my $arg_timeunit  = undef;
+my $valid_time_units = ['days', 'weeks', 'months', 'years'];
 </%shared>
 <%init>
 $argsort = $sort;
-$argtcnt = $timecount;
-$argunit = $timeunit;
+$arg_timecount = $timecount;
+$arg_timeunit  = $timeunit;
 
 # Search for ports
 if ($cmd eq 'search'){
 
     # Make sure that only valid time units are passed, reset to "months" if the check fails
-    unless (scalar grep(/^$argunit$/, @$valid_units)) {
-        $argunit = 'months';
+    unless (scalar grep(/^$arg_timeunit$/, @$valid_time_units)) {
+        $arg_timeunit = 'months';
         $timeunit = 'months';
     }
 
     # Make sure that a positive integer is passed as count, reset to "3" if the check fails
-    unless ($argtcnt =~ m/^\d+$/) {
-        $argtcnt = 3;
+    unless ($arg_timecount =~ m/^\d+$/) {
+        $arg_timecount = 3;
         $timecount = 3;
     }
     
@@ -87,8 +87,8 @@ if ($cmd eq 'search'){
         'd.ip',
         'd.location',
         'sum(case when up=\'up\' then 1 else 0 end) as active',
-        "sum(case when (up<>\'up\' and $port_age <= interval \'$argtcnt $argunit\') then 1 else 0 end) as recent",
-        "sum(case when (up<>\'up\' and $port_age > interval \'$argtcnt $argunit\') then 1 else 0 end) as free",
+        "sum(case when (up<>\'up\' and $port_age <= interval \'$arg_timecount $arg_timeunit\') then 1 else 0 end) as recent",
+        "sum(case when (up<>\'up\' and $port_age > interval \'$arg_timecount $arg_timeunit\') then 1 else 0 end) as free",
     ];
     my $group = 'group by d.dns, d.name, d.ip, d.location';
     my $where = {};
@@ -168,7 +168,7 @@ No results.<BR>
 %   $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
 %   $count++;
 <TR>
-    <TD CLASS="match-<%$count%2%>"><span class="small"><A HREF="device.html?ip=<%$dev->{ip}|u%>"><%$dns%></A></span></TD>
+    <TD CLASS="match-<%$count%2%>"><span class="small"><A HREF="device.html?ip=<%$dev->{ip}|u%>&ports=free&timecount=<%$arg_timecount%>&timeunit=<%$arg_timeunit%>"><%$dns%></A></span></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{location}%></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{active}%></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{recent}%></TD>

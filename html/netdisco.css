@@ -281,6 +281,7 @@ div.overview UL {
  ****************************************************************/
 .port-up     { color:black; }
 .port-down   { color:#a0a0a0; }
+.port-free   { color:#a0a0a0; font-style:italic; }
 .port-off    { color:red; }
 .port-block  { color:#33ccff; }
 .dead-link   { color:white; background-color:red; }
