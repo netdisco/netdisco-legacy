@@ -165,10 +165,11 @@ No results.<BR>
 % my $count = 0;
 % foreach my $dev (@$matches) {
 %   my $dns = $dev->{dns} || $dev->{name};
+%   my $linkargs = sprintf("&ports=free&timecount=%d&timeunit=%s", $arg_timecount, $arg_timeunit);
 %   $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
 %   $count++;
 <TR>
-    <TD CLASS="match-<%$count%2%>"><span class="small"><A HREF="device.html?ip=<%$dev->{ip}|u%>&ports=free&timecount=<%$arg_timecount%>&timeunit=<%$arg_timeunit%>"><%$dns%></A></span></TD>
+    <TD CLASS="match-<%$count%2%>"><span class="small"><A HREF="device.html?ip=<%$dev->{ip}|u%><%$linkargs%>"><%$dns%></A></span></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{location}%></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{active}%></TD>
     <TD CLASS="match-<%$count%2%>"><%$dev->{recent}%></TD>
