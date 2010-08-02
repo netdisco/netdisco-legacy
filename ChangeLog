@@ -17,6 +17,9 @@ Features:
     + []        Add config option for adding edge styles for graphs. -bldewolf
     + []        Small changes to support devices without sysServices ("layers")
     + []        Add "show free ports" option to Device View. -jeroenvi
+    + []        New version of device.html - more columns to be shown/hidden,
+                (hopefully) easier to maintain & extend. For testing purposes
+                added as "device-new.html". -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
