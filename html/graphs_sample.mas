@@ -1,0 +1,23 @@
+%#
+%# col_graphs() - pretty print links to external graphs for each port
+%#
+<%method col_graphs>
+<%args>
+    $dev
+    $port
+</%args>
+<%perl>
+    my $base = $netdisco::CONFIG{col_graphs_url};
+    my $img = $netdisco::CONFIG{col_graphs_img};
+    my $ip = $dev->{ip};
+    my $dns = $dev->{dns};
+    my $portid = $port->{port};
+    my $portname = $port->{name};
+    if (defined $ip and defined $portid) {
+</%perl>
+        <A HREF="<%$base%>?ip=<%$ip |u%>&dns=<%$dns |u%>&port=<%$portid |u%>&name=<%$portname |u%>"> <IMG SRC="<%$img |u%>"/></A>
+%   } else {
+        &nbsp; \
+%   }
+</%method>
+

@@ -53,136 +53,143 @@ my %modules = {};
 #    order - required, integer to indicate default display order for columns. 
 #    show - required, column is shown if this evaluates to a true value. Defaults here, can be overridden by arguments.
 #    data - optional, when data to display isn't just the value of a DB columns but comes from a sub or Mason component.
-#           (ref to scalar is interpreted as a Mason component name, coderef will be executed, scalar will be eval()'ed and executed)
+#           * scalar is interpreted as a Mason component name. Called with $dev, $port and $col arguments.
+#           * coderef if executed, with a hashref as argument containing dev, port and col keys.
 #    noesc - optional, don't perform "|h" HTML escaping on output
 #            (noesc on Mason component means the component will be scomp()'ed, not comp()'ed) 
 #
 # Actual processing is done in show_ports() component.
 my %port_cols = (
-    descr => 
+    port => 
         {
             header => 'Port',
             order => 1,
             show => 1,
         },
+    descr => 
+        {
+            header => 'Description',
+            order => 2,
+            show => 0,
+        },
     type =>
         {
             header => 'Type',
-            order => 2,
+            order => 3,
             show => 0,
         },
     duplex =>
         {
             header => 'Duplex<BR><span class="smaller">(Link/Admin)</span>',
             legend => 'Duplex',
-            order => 3,
+            order => 4,
             show => 1,
-            data => \'SELF:col_duplex',
+            data => 'SELF:col_duplex',
         },
     lastchange =>
         {
             header => 'Last Change',
-            order => 4,
+            order => 5,
             show => 0,
-            data => \'SELF:col_lastchange',
+            data => 'SELF:col_lastchange',
         },
     name =>
         {
             header => 'Name',
-            order => 5,
+            order => 6,
             show => 1,
         },
     speed => 
         {
             header => 'Speed',
-            order => 6,
+            order => 7,
             show => 1,
         },
     mac =>
         {
             header => 'Port Mac',
-            order => 7,
+            order => 8,
             show => 0,
         },
     mtu =>
         {
             header => 'MTU',
-            order => 8,
+            order => 9,
             show => 0
         },
     vlan =>
         {
             header => 'Native<br>VLAN',
             legend => 'Native VLAN',
-            order => 9,
+            order => 10,
             show => 1,
         },
     vmember =>
         {
             header => 'VLAN<br>Membership',
             legend => 'VLAN Membership',
-            order => 10,
+            order => 11,
             show => 1,
-            data => \'SELF:col_vmember',
+            data => 'SELF:col_vmember',
             noesc => 1,
         },
     connected =>
         {
             header => sprintf("Connected<br>Devices%s", $arg_age eq 'on' ? '<BR><span class="smaller">(Last Seen)</span>' : ''),
             legend => 'Connected Devices',
-            order => 11,
+            order => 12,
             show => 1,
-            data => \'SELF:col_connected',
+            data => 'SELF:col_connected',
             noesc => 1,
         },
     stp =>
         {
             header => 'Spanning Tree',
-            order => 12,
+            order => 13,
             show => 0,
         },
     up =>
         {
             header => 'Status',
-            order => 13,
+            order => 14,
             show => 0,
         },
     control =>
         {
             header => 'Port<br>Control',
             legend => 'Port Control',
-            order => 14,
+            order => 15,
             show => $port_control,
-            data => \'SELF:col_portcontrol',
+            data => 'SELF:col_portcontrol',
             noesc => 1,
         }, 
     graphs =>
         {
             header => 'Graphs',
-            order => 15,
-            show => $netdisco::CONFIG{col_graphs_show},
+            order => 16,
+            show => 0,
             data => $netdisco::CONFIG{col_graphs_data},
         },
     poe_admin =>
         {
             header => 'PoE Admin',
-            order => 16,
+            order => 17,
             show => 0,
-            data => \'SELF:col_poe_info',
+            data => 'SELF:col_poe_info',
         },
     poe_status =>
         {
             header => 'PoE Status',
-            order => 17,
+            order => 18,
             show => 0,
-            data => \'SELF:col_poe_info',
+            data => 'SELF:col_poe_info',
         },
     poe_class =>
         {
             header => 'PoE Class',
-            order => 18,
+            order => 19,
             show => 0,
-            data => \'SELF:col_poe_info',
+            data => 'SELF:col_poe_info',
         },
 );    
 
@@ -284,7 +291,7 @@ if ($ip) {
             next unless defined $portreq;
         
             my $p = sql_rows('device_port', ['*', $freecol], 
-                            {'ip'=>$devip,'port'=>$portreq} ) || [];
+                            {'ip'=>$devip,'port/name/descr'=>$portreq} ) || [];
 
             # add our results to the list
             if (defined $p and scalar @$p){
@@ -524,7 +531,7 @@ if (defined $device) {
 %   $i++;
 %   my $name  = $port_cols{$col}->{legend} || $port_cols{$col}->{header};
 %   my $check = $port_cols{$col}->{show};
-%   $name =~ s/<BR>.*$//;
+%   $name =~ s/<BR>|\s/&nbsp/g;
    <%$name%><INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>>&nbsp;
 %    $m->out("<BR>") if ($i % 5) == 0;
 % }
@@ -846,36 +853,24 @@ foreach my $port (sort sort_port @$db_ports){
                 if ($reftype eq 'CODE') {
                     # Execute coderef with device hash, port hash and key name as arguments
                     $val = &$coldata($device, $port, $col);
-                } elsif ($reftype eq 'SCALAR') {
-                    # if value passed is a ref to scalar, call it as a Mason component (if exists...)
-                    if ( $m->comp_exists($$coldata) ) {
-                        if ($port_cols{$col}->{noesc}) {
-                            # "noesc" property on a Mason component: let the component provide its own output.
-                            $val = $m->scomp($$coldata, dev => $device, port => $port, col => $col);
-                        } else {
-                            # Without "noesc" property, we'll just use the return val.
-                            $val = $m->comp($$coldata, dev => $device, port => $port, col => $col);
-                        }
-                    } else {
-                        # Not a component? Shouldn't happen; print the name in the column for debugging.
-                        $val = $$coldata;
-                    }
                 } else {
                     # other ref not implemented
                     $val = $reftype . ' ref not implemented';
                 }
             } elsif (ref(\$coldata) eq 'SCALAR') {
-                # value passed is scalar -> eval() & try to execute if it evals to a valid coderef
-                my $res = eval($coldata);
-                if ($res) {
-                    if (ref($res) eq 'CODE') {
-                        $val = &$res($device, $port, $col);
+                # value passed is scalar -> see if it's a Mason component & try to call it
+                if ( $m->comp_exists($coldata) ) {
+                    if ($port_cols{$col}->{noesc} || $netdisco::CONFIG{'col_'.$col.'_noesc'} ) {
+                        # "noesc" property on a Mason component: let the component provide its own output.
+                        $val = $m->scomp($coldata, dev => $device, port => $port, col => $col);
                     } else {
-                        $val = sprintf("Can't handle %s\n", (ref($res) eq '' ? ref(\$res) : ref($res).'ref'));
+                        # Without "noesc" property, we'll just use the return val.
+                        $val = $m->comp($coldata, dev => $device, port => $port, col => $col);
                     }
                 } else {
-                    $val = sprintf("Error: %s", $@);
-                } 
+                    # Not a component? Shouldn't happen; print the name in the column for debugging.
+                    $val = sprintf("[%s] is not a Mason component", $coldata);
+                }
             } else {
                 # Value passed was not a ref and not a scalar
                 $val = 'Don\'t know how to handle this...';
