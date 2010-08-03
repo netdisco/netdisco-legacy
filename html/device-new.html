@@ -463,6 +463,13 @@ if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {
         # Set the passed one as shown
         $port_cols{$col}->{show} = 1;
     }
+} else {
+    foreach my $key (keys %port_cols) {
+        my $config_override = $netdisco::CONFIG{'col_'.$key.'_show'};
+        if (defined $config_override) {
+             $port_cols{$key}->{show} = $config_override;
+        }
+    }
 }
 
 # Some constants used in the display
