@@ -30,6 +30,10 @@ PATH=/bin:/usr/bin:/usr/local/bin
 # Arp Nip every hour on the half hour
 30 * * * *  /usr/local/netdisco/netdisco -b -a 
 
+# Save configs every hour on the hour (only necessary if network includes
+# devices that do not permanently save SNMP changes, such as Cisco IOS)
+#0 * * * *  /usr/local/netdisco/netdisco -b -j 61
+
 # Mac Suck every 2 hours
 0 */2 * * * /usr/local/netdisco/netdisco -b -m 
 

@@ -78,6 +78,7 @@ GetOptions(\%args,'a|arpwalk',
                   'h|help',
                   'I|expireips',
                   'i|changeip=s',
+                  'j|saveconfigs=i',
                   'k|cleanalias',
                   'K|cleannodes',
                   'L|nologging',
@@ -110,7 +111,7 @@ defined $args{h} and &usage;
 defined $args{v} and &version;
 
 # Print Header
-&header if (grep(/^([aABdeEFgIikKmMOprRTu]|expire-nodes-subnet)$/,keys %args) and !$BatchMode);
+&header if (grep(/^([aABdeEFgIijkKmMOprRTu]|expire-nodes-subnet)$/,keys %args) and !$BatchMode);
 
 # Parse Config File - Check for -C, then in current dir, then in default dir.
 foreach my $c ($args{C},"$FindBin::Bin/netdisco.conf",'/usr/local/netdisco/netdisco.conf') {
@@ -156,6 +157,7 @@ defined $args{w} and &nbtwalk;
 defined $args{W} and &nbtstat($args{W});
 
 #   Other
+defined $args{j} and &save_dirty_configs($args{j});
 defined $args{K} and &db_clean;
 defined $args{k} and &alias_clean;
 defined $args{g} and &graph;
@@ -171,7 +173,7 @@ defined $args{u} and &add_user(@ARGV);
 defined $args{'expire-nodes-subnet'} and &expire_nodes_subnet($args{'expire-nodes-subnet'});
 
 # Make sure we ran a command, else spit out the usage
-&usage unless ( grep(/^([aABdeEFgiIkKmMnNOprRtTuwW]|expire-nodes-subnet)$/,keys %args) );
+&usage unless ( grep(/^([aABdeEFgiIjkKmMnNOprRtTuwW]|expire-nodes-subnet)$/,keys %args) );
 exit;
 
 =head1 FUNCTIONS
@@ -1740,7 +1742,7 @@ sub get_device_rw {
     }
 
     foreach my $comm (@{$list}) {
-        %args = get_snmp_args($hostname, $version, $comm, 1);
+        my %args = get_snmp_args($hostname, $version, $comm, 1);
         
         $device = create_device(%args);
 
@@ -4695,6 +4697,70 @@ sub admin_daemon_job {
     return undef;
 }
 
+=item save_dirty_configs(time)
+
+Looks at the job list for the previous $time minutes in the past and attempts to save the
+configuration on devices that finished a job in that time period.
+
+Currently only supporting copy_run_start() for CiscoConfig-supporting devices.
+
+=cut
+
+sub save_dirty_configs {
+    my $time = shift;
+    my $oldest = time - $time * 60;
+    my %devs;
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $month = sprintf("%d%02d",$year+1900,$mon+1);
+    &batch_mode("logs/$month/saveconfigs", 1);
+
+    printf "Starting configuration saving at %s for devices changed since %s (%d minutes).\n", scalar(localtime), scalar(localtime($oldest)), $time;
+
+    my $jobs = sql_rows('admin',['job', 'finished', 'device','action'],
+                        {'status' => 'done', 'action' => [['portcontrol','vlan']],
+                         'extract(epoch from finished)' => \\"> $oldest", } );
+
+    printf "Collecting devices from jobs during specified interval...\n";
+
+    foreach my $job (@$jobs) {
+        if ($DEBUG) {
+            printf "Found jobs:\n";
+            foreach my $key (keys %$job) {
+                printf "%s = %s, ", $key, $job->{$key} || "";
+            }
+            printf "\n";
+        }
+
+        printf "[%s] Adding to list.\n", $job->{"device"};
+        $devs{$job->{"device"}} = 1;
+    }
+
+    printf "Saving configurations on collected devices...\n";
+
+    foreach my $dev (keys %devs) {
+        printf "[%s] Saving configuration...\n", $dev;
+        my $rw = get_device_rw($dev);
+        if(!defined $rw) {
+            printf "[%s] Could not open as RW.\n", $dev;
+            next;
+        }
+        if($rw->can("copy_run_start")) {
+            if($rw->copy_run_start()) {
+                printf "[%s] Saved configuration.\n", $dev;
+            } else {
+                printf "[%s] Configuration save failed.\n", $dev;
+                my $error = $rw->error();
+                printf "[%s] Returned error: %s\n", $dev, $error if $error;
+            }
+        } else {
+            printf "[%s] Saving configuration not supported.\n", $dev;
+        }
+    }
+
+    printf "Finished configuration saving at %s.\n", scalar(localtime);
+}
+
 =back
 
 =cut
@@ -4758,6 +4824,7 @@ Device Commands:
 Administration:
     -B --backup                 Backups data and runs database cleanup 
     -g --graph                  Create network map files 
+    -j --saveconfigs  minutes   Saves configs on devices modified by jobs
     -k --cleanalias             Deletes devices listed as aliases of another
     -K --cleannodes             Clean out nodes listed on uplink ports
     -O --oui                    Import oui.txt into Netdisco

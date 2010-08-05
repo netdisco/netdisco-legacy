@@ -21,6 +21,9 @@ Features:
                 (hopefully) easier to maintain & extend. For testing purposes
                 added as "device-new.html". -jeroenvi
     + []        Detect wrapping in device uptime counter & compensate. -jeroenvi
+    + [2982390] Added command line option for saving configurations that have
+                been modified by jobs in the last x minutes.  Added commented
+                cronjob to call this hourly.
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
