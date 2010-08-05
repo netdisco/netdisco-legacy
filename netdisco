@@ -2732,7 +2732,24 @@ sub store_interfaces {
     my $i_pvid         = $device->i_pvid();
     my $i_lastchange   = $device->i_lastchange();
 
+    delete $device->{_uptime}; # Clear cached value of uptime, we need the actual current value here
+    my $dev_uptime = $device->uptime();
+    my $uptime_has_wrapped = 0;
+    my $calc_uptime;
+
     sql_begin();
+
+    foreach my $lastchange (values %$i_lastchange) {
+        if ($lastchange > $dev_uptime) {
+            $uptime_has_wrapped++;
+        }
+    }
+
+    if ($uptime_has_wrapped) {
+        printf("[%s]    Device uptime counter seems to have wrapped. Assuming one wrap, applying corrections.\n", $ip);
+        $calc_uptime = $dev_uptime + 2**32;
+        insert_or_update('device', { 'ip' => $ip }, { 'uptime' => $calc_uptime } );
+    }
 
     # Delete old interface information (for dynamic,vlan...)
     sql_do(qq/DELETE from device_port where ip = '$ip'/);
@@ -2770,6 +2787,21 @@ sub store_interfaces {
         $store{vlan}         = $i_vlan->{$if};
         $store{pvid}         = $i_pvid->{$if};
         $store{lastchange}   = $i_lastchange->{$if};
+
+        my $lc = $store{lastchange};
+        if ( $uptime_has_wrapped and defined $lc ) {
+            if ( $lc < $dev_uptime ) { # Ambiguous: lastchange could be sysUptime before or after wrapping...
+                if ( $dev_uptime > 30000 and $lc < 30000 ) {
+                    # Uptime wrap was more than 5 minutes ago but lastchange value was within 5 minutes after boot or wrap
+                    # -> assume that lastchange was directly after boot, so don't change.
+                } else {
+                    # Uptime wrap was less than 5 minutes ago or lastchange was more than 5 minutes after boot or wrap
+                    # -> to be on the safe side, assume that lastchange was after counter wrap, so add correction.
+                    $store{lastchange} = $lc + 2**32;
+                    printf("[%s]     Correcting LastChange for %s, assuming it's after sysUptime wrap\n", $ip, $port) if $DEBUG;
+                }
+            }
+        }
 
         insert_or_update('device_port', { 'ip' => $ip, 'port' => $store{port} }, 
                          \%store );        

@@ -20,6 +20,7 @@ Features:
     + []        New version of device.html - more columns to be shown/hidden,
                 (hopefully) easier to maintain & extend. For testing purposes
                 added as "device-new.html". -jeroenvi
+    + []        Detect wrapping in device uptime counter & compensate. -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
