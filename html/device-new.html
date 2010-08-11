@@ -538,7 +538,7 @@ if (defined $device) {
 %   $i++;
 %   my $name  = $port_cols{$col}->{legend} || $port_cols{$col}->{header};
 %   my $check = $port_cols{$col}->{show};
-%   $name =~ s/<BR>|\s/&nbsp/g;
+%   $name =~ s/<BR>|\s/&nbsp;/g;
    <%$name%><INPUT TYPE="checkbox" NAME="portcol" VALUE="<%$col%>" <%$check ? 'CHECKED' : ''%>>&nbsp;
 %    $m->out("<BR>") if ($i % 5) == 0;
 % }
