@@ -1164,6 +1164,87 @@ sub arpnip {
     # Fetch Subnets
     get_subnets($device);
 
+    # Try walking IPv6 Neighbor cache too
+    # FIXME: Temporary solution, perhaps arpnip6 should be a completely seperate action
+    &arpnip6($hostname);
+
+    return $arp_count;
+}
+
+=item arpnip6() 
+
+Connects to device and reads its IPv6 Neighbor cache. Then adds entries to C<node_ip> table. 
+
+Largely the same as arpnip().
+
+=cut
+
+sub arpnip6 {
+    my $hostname = shift;
+
+    my $ip = getip($hostname);
+
+    print "arpnip6($hostname) :\n";
+
+    unless (defined $ip){
+        print "[$hostname] Name does not resolve with DNS.\n";
+        return;
+    }
+
+    $ip = root_device($ip);
+
+    # all numeric host name (bad) looks like an IP but fails.
+    unless (defined $ip){
+        print "  IP not resolved.\n";
+        return;
+    }
+
+    my $dev = sql_hash('device',['*'],{'ip'=>$ip});
+
+    unless (defined $dev->{ip}) { 
+        print "  Device not found in database.  Try ``netdisco -N -r $hostname''\n";
+        return;
+    }
+
+    return unless ok_to($dev, $hostname, 'arpnip6');
+
+    my $device = get_device($hostname);
+    return unless defined $device;
+
+    &mac_getportmacs unless defined $PortMAC;
+
+    # Fetch IPv6 Neighbor Cache
+    my $phys_addr = $device->ipv6_n2p_mac();
+    my $net_addr = $device->ipv6_n2p_addr();
+
+    my $arp_count =0;
+    sql_begin(['node_ip']);
+    foreach my $arp (keys %$phys_addr){
+        my $mac = $phys_addr->{$arp};
+        my $ip = $net_addr->{$arp};
+
+        next unless defined $ip;
+
+        if (defined $PortMAC->{$mac}) {
+            print "[$hostname]  $mac is a port on device $PortMAC->{$mac} ... skipping\n"
+                if $DEBUG;
+            next;
+        }   
+
+        print "[$hostname]  $ip : $mac\n" if $DEBUG;
+        add_arp($mac,$ip);
+        $arp_count++;
+    }
+    sql_commit();
+    print "[$hostname]  Processed $arp_count IPv6 Neighbor Cache entries.\n";
+    
+    # FIXME: should we add a new field to the device table to hold last_arpnip6? Abuse last_arpnip? Don't store this value?
+    #insert_or_update('device',{'ip'=> $dev->{ip} },{'last_arpnip'=> scalar localtime});
+
+    # Fetch Subnets
+    # FIXME: no IPv6 equivalent yet
+    #get_subnets($device);
+
     return $arp_count;
 }
 

@@ -24,6 +24,7 @@ Features:
     + [2982390] Added command line option for saving configurations that have
                 been modified by jobs in the last x minutes.  Added commented
                 cronjob to call this hourly.
+    + []        Add support for IPv6 node address tracking. -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
