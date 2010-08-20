@@ -9,5 +9,6 @@ CREATE TABLE device_port_power (
     admin       text,   -- Admin power status
     status      text,   -- Detected power status
     class       text,   -- Detected class
+    power       integer,-- Sourced power in mW
     PRIMARY KEY(port,ip)
 );
