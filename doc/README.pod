@@ -1845,6 +1845,41 @@ STRING. IP address of a device to be used as the "center" of the graph.
 
 =back
 
+=head3 Device View preferences
+
+=over
+
+=item col_xxx_show
+
+BOOLEAN. Customize which columns are shown by default in de Device View page.
+The "xxx" part indicates the (internal) column name. Valid options are:
+"port", "descr", "type", "duplex", "lastchange", "name", "speed", "mac", "mtu",
+"vlan", "vmember", "connected", "stp", "up", "control", "graphs", "poe_admin",
+"poe_status", "poe_class" and "poe_power".
+
+Examples:
+
+    col_lastchange_show = 1     # Show the Last Change column by default
+    col_vmember_show = 0        # Hide the VLAN Membership column by default
+    col_graphs_show = 1         # Show the Graphs column by default 
+
+        (note: Netdisco doesn't offer port graphs by itself, but the Graphs column 
+         can be used to link against external graphing tools)
+
+
+=item col_graphs_data
+
+FILE. Should resolve to a Mason component which provides output for the Graphs column.
+An example component named "col_graphs" is included in html/graphs_sample.mas.
+
+Example:
+    col_graphs_data = graphs_sample.mas:col_graphs
+
+Linking Netdisco against external graphing tools requires a small amount of 
+programming. This is not in the scope of this manual.
+
+=back
+
 =head1 DESIGN
 
 =head2 Design Goals
@@ -1973,6 +2008,12 @@ to a port.
 
 Holds the interface (port) information for each device.  One row for each interface
 exists with information about the port status.
+
+=item device_port_power
+
+Holds PoE-related information for interfaces (ports) on each device capable of acting 
+as Power Sourcing Equipment (PSE).  One row for each power-capable interface exists with 
+information about the PoE status.
 
 =item device_port_log
 

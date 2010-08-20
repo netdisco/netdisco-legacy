@@ -25,6 +25,8 @@ Features:
                 been modified by jobs in the last x minutes.  Added commented
                 cronjob to call this hourly.
     + []        Add support for IPv6 node address tracking. -jeroenvi
+    + []        Add device_port_power.power column to store output power per 
+                PSE port in milliwatts. -jeroenvi
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
