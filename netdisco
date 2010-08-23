@@ -3048,6 +3048,7 @@ sub store_power {
     my $p_admin    = $device->peth_port_admin();
     my $p_pstatus  = $device->peth_port_status();
     my $p_class    = $device->peth_port_class();
+    my $p_power    = $device->peth_port_power();
     my $p_ifindex  = $device->peth_port_ifindex();
     my $interfaces = $device->interfaces();
 
@@ -3076,6 +3077,7 @@ sub store_power {
         $store{admin} = $p_admin->{$port};
         $store{status} = $p_pstatus->{$port};
         $store{class} = $p_class->{$port};
+        $store{power} = $p_power->{$port};
         insert_or_update('device_port_power', {ip => $ip,
             port => $portname}, \%store);
     }
