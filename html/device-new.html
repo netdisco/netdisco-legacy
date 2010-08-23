@@ -191,6 +191,14 @@ my %port_cols = (
             show => 0,
             data => 'SELF:col_poe_info',
         },
+    poe_power =>
+        {
+            header => 'PoE Power <BR><span class="smaller">(in mW)</span>',
+            legend => 'PoE Power',
+            order => 20,
+            show => 0,
+            data => 'SELF:col_poe_info',
+        },
 );    
 
 my %device_info = (
@@ -664,7 +672,9 @@ if (defined $device) {
     <%$poe->{stats}->{ports}%> power-capable ports,
     <%$poe->{stats}->{on}%> powered
     (<%$poe->{stats}->{disabled}%> admin disabled, <%$poe->{stats}->{err}%> errors),
-    <%$poe->{stats}->{committed}%>/<%$poe->{power}%> watts committed.
+    <span title="Accuracy: <%$poe->{stats}->{measured}%> ports measured, <%$poe->{stats}->{estimated}%> ports estimated by class">
+        <%$poe->{stats}->{committed}%>/<%$poe->{power}%> watts committed.
+    </span>
 %     }
 %   }
 
@@ -1218,7 +1228,7 @@ foreach my $port (sort sort_port @$db_ports){
 </%args>
 <%perl>
     my $poemax = { 'class0' => 12.95, 'class1' => '3.84', 'class2' => 6.49, 'class3' => 12.95 };
-    $poe->{stats} = { 'disabled' => 0, 'ports' => 0, 'on' => 0, 'err' => 0, 'committed' => 0 };
+    $poe->{stats} = { 'disabled' => 0, 'ports' => 0, 'on' => 0, 'err' => 0, 'committed' => 0, 'estimated' => 0, 'measured' => 0 };
     my $poeports = sql_rows('device_port_power',['*'],{'ip'=>$poe->{ip},'module'=>$poe->{module}});
     foreach my $pport (@{$poeports}) {
         $poe->{stats}->{ports}++;
@@ -1230,7 +1240,13 @@ foreach my $port (sort sort_port @$db_ports){
                 $poe->{stats}->{err}++;
             } elsif ($pport->{status} eq 'deliveringPower') {
                 $poe->{stats}->{on}++;
-                $poe->{stats}->{committed} += $poemax->{$pport->{class}};
+                if (defined $pport->{power}) {
+                    $poe->{stats}->{committed} += int($pport->{power}/1000);
+                    $poe->{stats}->{measured}++;
+                } else {
+                    $poe->{stats}->{committed} += $poemax->{$pport->{class}};
+                    $poe->{stats}->{estimated}++;
+                }
             }
         }
     }
