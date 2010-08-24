@@ -32,6 +32,7 @@ Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
     * [3002989] Performance improvement for add_arp SQL query. -bldewolf
     * [2991159] Fix complaints when doing a partial MAC search. -bldewolf
+    * []        Fix complaints from reports.html with no report type. -bldewolf
 
 1.0 (2009-10-15)
 Features:

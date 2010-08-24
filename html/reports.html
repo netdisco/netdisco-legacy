@@ -1,8 +1,8 @@
 % $m->comp('SELF:pickreport');
 % if ($report && defined($title{$report})) {
 %  $m->comp('SELF:report_' . $report);
-% }
 <h1 class="pagehead"><%$title{$report}%></h1>
+% }
 % if ($report && (!defined($results) || @$results == 0)) {
 No results returned.
 % } else {
