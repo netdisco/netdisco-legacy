@@ -537,9 +537,17 @@ Returns the DNS server entry for the given ip or hostname.
 
 sub hostname {
     my $ip = shift;
-
-    my @host = gethostbyaddr(inet_aton($ip), AF_INET);
-
+    my @host = ();
+    if ($ip =~ /^[0-9a-f:]+$/) {
+        my $cando_v6lookup = tryuse('Socket6', die => 0);
+        # IPv6 address passed
+        if ($cando_v6lookup->[0]) {
+            @host = gethostbyaddr(inet_pton(AF_INET6, $ip), AF_INET6);
+        }
+    } else {
+        # Assume IPv4 address was passed
+        @host = gethostbyaddr(inet_aton($ip), AF_INET);
+    }
     return $host[0];
 }
 

@@ -27,6 +27,10 @@ Features:
     + []        Add support for IPv6 node address tracking. -jeroenvi
     + []        Add device_port_power.power column to store output power per 
                 PSE port in milliwatts. -jeroenvi
+    + [2777415] Improved PoE support in new Device View with accurate PoE sourced 
+                power per port (if device supports it, fallback to class-based 
+                estimation). -jeroenvi
+    + []        IPv6 address to hostname resolving (quick hack by rkerr)
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb

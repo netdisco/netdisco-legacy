@@ -754,6 +754,7 @@ INSTALL
                 install Net::LDAP (optional for LDAP authentication)
                 install Net::SSLeay (optional for encrypted LDAP authentication)
                 install IO::Socket::SSL (optional for encrypted LDAP authentication)
+                install Socket6 (optional for resolving IPv6 addresses to host names)
 
         For Apache1 install these modules:
 
