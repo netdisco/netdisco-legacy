@@ -4227,7 +4227,7 @@ sub graph_each  {
                      'ranksep' => $CONFIG{graph_ranksep}   || 0.3,
                      'nodesep' => $CONFIG{graph_nodesep}   || 2,
                      'ratio'   => $CONFIG{graph_ratio}     || 'compress',
-                     'splines' => $CONFIG{graph_splines} ? 'true' : 'false',
+                     'splines' => ($CONFIG{graph_splines} ? 'true' : 'false'),
                      'fontcolor' => $CONFIG{node_fontcolor} || 'white',
                      'fontname'  => $CONFIG{node_font}      || 'lucon',
                      'fontsize'  => $CONFIG{node_fontsize}  || 12,
@@ -4239,7 +4239,7 @@ sub graph_each  {
                     'style'     => $CONFIG{node_style}     || 'filled',
                     'fontname'  => $CONFIG{node_font}      || 'lucon',
                     'fontsize'  => $CONFIG{node_fontsize}  || 12,
-                    'fixedsize' => $CONFIG{node_fixedsize} || 'true',
+                    'fixedsize' => ($CONFIG{node_fixedsize} ? 'true' || 'false'),
                     };
     $node_defs->{height} = $CONFIG{node_height} if defined $CONFIG{node_height};
     $node_defs->{width}  = $CONFIG{node_width}  if defined $CONFIG{node_width};
