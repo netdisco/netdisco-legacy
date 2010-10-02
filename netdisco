@@ -1663,7 +1663,7 @@ sub get_device {
         my ($version) = check_snmp_version($hostname);
 
         my $list;
-        if ($version == 3) {
+        if ($version and $version == 3) {
             # XXX should get_community do this instead?
             $list = $CONFIG{v3_users};
         } else {
