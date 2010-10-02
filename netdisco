@@ -4239,7 +4239,7 @@ sub graph_each  {
                     'style'     => $CONFIG{node_style}     || 'filled',
                     'fontname'  => $CONFIG{node_font}      || 'lucon',
                     'fontsize'  => $CONFIG{node_fontsize}  || 12,
-                    'fixedsize' => ($CONFIG{node_fixedsize} ? 'true' || 'false'),
+                    'fixedsize' => ($CONFIG{node_fixedsize} ? 'true' : 'false'),
                     };
     $node_defs->{height} = $CONFIG{node_height} if defined $CONFIG{node_height};
     $node_defs->{width}  = $CONFIG{node_width}  if defined $CONFIG{node_width};
