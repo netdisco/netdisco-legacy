@@ -3736,7 +3736,10 @@ sub expire_device {
     # Remove Ports
     print "  Removing Ports of $dns ($ip)...\n";
     sql_do(qq/DELETE from device_port where ip = '$ip'/);
+    sql_do(qq/DELETE from device_port_power where ip = '$ip'/);
     sql_do(qq/DELETE from device_port_ssid where ip = '$ip'/);
+    sql_do(qq/DELETE from device_port_vlan where ip = '$ip'/);
+    sql_do(qq/DELETE from device_port_wireless where ip = '$ip'/);
     # Remove Modules
     print "  Removing Modules of $dns ($ip)...\n";
     sql_do(qq/DELETE from device_module where ip = '$ip'/);
