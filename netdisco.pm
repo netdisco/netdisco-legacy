@@ -2205,7 +2205,11 @@ sub tryuse($%) {
         ($ok, $msg) = @{$tryuseok{$mod}};
     } else {
         if (defined($args{ver})) {
-            eval "use $mod $args{ver}";
+            {
+                # allow us to run with -cvs style versions
+                no warnings 'misc';
+                eval "use $mod $args{ver}";
+            }
         } else {
             eval "use $mod";
         }
