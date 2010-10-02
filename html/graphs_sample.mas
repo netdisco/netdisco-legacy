@@ -15,7 +15,7 @@
     my $portname = $port->{name};
     if (defined $ip and defined $portid) {
 </%perl>
-        <A HREF="<%$base%>?ip=<%$ip |u%>&dns=<%$dns |u%>&port=<%$portid |u%>&name=<%$portname |u%>"> <IMG SRC="<%$img |u%>"/></A>
+        <A HREF="<%$base%>?ip=<%$ip |u%>&dns=<%$dns |u%>&port=<%$portid |u%>&name=<%$portname |u%>"> <IMG SRC="<%$img%>"/></A>
 %   } else {
         &nbsp; \
 %   }
