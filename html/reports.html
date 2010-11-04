@@ -42,6 +42,7 @@ my $arg_report;
         radio_mac_location => "Radio MAC address and location",
         radio_speed_ssid => "Wireless client speeds by SSID",
         port_usage => "Ports up / recent down / long down",
+        undiscovered_neighbors => "Undiscovered neighbors",
 );
 $arg_report = $report;
 </%init>
@@ -222,6 +223,38 @@ $results = sql_rows('device d join device_port p using (ip)',
 foreach my $res (@$results) {
     my $ip = $res->{ip};
     $res->{ip} = sprintf("<A HREF=device.html?ip=%s> %s </A>", $ip, $ip);
+}
+
+</%perl>
+</%method>
+<%method report_undiscovered_neighbors>
+<%perl>
+$columns = [
+        [ 'Device', 'name' ],
+        [ 'IP', 'ip' ],
+        [ 'Port', 'port' ],
+        [ 'Remote Device', 'remote_id' ],
+        [ 'Remote IP', 'remote_ip' ],
+        [ 'Remote Port', 'remote_port' ],
+           ];
+$results = sql_rows('device_port p join device d using (ip) left join device_port dp on dp.ip = p.remote_ip',
+        [ 
+            'd.name', 
+            'd.ip',
+            'p.port',
+            'p.remote_id',
+            'p.remote_ip',
+            'p.remote_port',
+        ],
+        { 'p.remote_ip' => 'IS NOT NULL', 'dp.ip' => 'IS NULL' }, 0,
+        'order by dns');
+
+foreach my $res (@$results) {
+    my $ip = $res->{ip};
+    $res->{ip} = sprintf("<A HREF=device.html?ip=%s> %s </A>", $ip, $ip);
+    my $port = $res->{port};
+    $res->{port} = sprintf("<A HREF=device.html?ip=%s&amp;port=%s> %s </A>",
+                        $ip, $port, $port);
 }
 
 </%perl>
