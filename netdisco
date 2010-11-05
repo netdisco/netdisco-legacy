@@ -2680,6 +2680,75 @@ end_body
     return 0;
 }
 
+=item location_set({})
+
+Used to change sysLocation string.
+
+=cut
+
+sub location_set {
+    my $job = shift;
+
+    # Not sent from front-end via admin daemon
+    unless (defined $job){
+        
+    }
+    my $user     = $job->{username};
+    my $userip   = $job->{userip};
+    my $ip       = getip($job->{device});
+    my $cmd      = $job->{action};
+    my $location = $job->{subaction};
+    my $log      = $job->{log};
+    my $dns      = &hostname($ip);
+    my $rv	 = 1;
+   
+    print "location_set() - $user @ $userip. c:$cmd l:$location i:$ip d:$dns l:$log\n" if $DEBUG;
+
+    unless (defined $CONFIG{community_rw} and scalar @{$CONFIG{community_rw}}){
+        print "No read-write community string has been set. Please add a community_rw setting to the Config file.\n";
+        goto error;
+    }
+
+    # Check for device in DB
+    $ip    = root_device($ip);
+
+    # Get dev info from database
+    my $db_dev = sql_hash('device',['*'],{'ip' => $ip}) if defined $ip;
+
+    unless (defined $ip and defined $db_dev){
+        print "Device $job->{device} not found in netdisco.  Please discover device and try again.\n";
+        goto error;
+    } 
+    
+    # SNMP connect
+    my $snmp_ver = $db_dev->{snmp_ver} || $CONFIG{snmpver} || 2;
+    my $device = get_device_rw($ip,$snmp_ver);
+
+    unless (defined $device){
+        print "Could not connect to device with read-write community string.\n";
+        goto error; 
+    }
+
+    $rv = $device->set_location($location);
+    if (!defined($rv)){
+	my $error = $device->error() || '';
+        print "Set failed. $error\n";
+error:
+        print "\n[FAILED].\n";
+        $log = "[FAILED] - See admin queue job log. \n $log";
+        return 1;
+    }
+    insert_or_update('device', {'ip'=>$ip} , {'location'=>$location});
+    print "Succesfully set location:$location on $ip\n";
+
+    # Log
+    insert_or_update('device_port_log', {},
+                     {'ip'=>$ip,'port'=>'','log'=>$log,'userip'=>$userip,
+                      'username'=>$user,'action'=>$cmd,'reason'=>$location}
+                    ); 
+
+    return 0;
+}
 
 =item store_device() 
 
@@ -4709,6 +4778,10 @@ sub admin_daemon_job {
 
     elsif ($cmd eq 'portcontrol' or $cmd eq 'vlan'){
         $job_error = port_switch($job); 
+    }
+
+    elsif ($cmd eq 'location') {
+        $job_error = location_set($job);
     }
 
     # Discover Tasks

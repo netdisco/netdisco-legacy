@@ -621,6 +621,17 @@ if (defined $device) {
 <TR>
     <TH>Location / Contact</TH>
     <TD><A HREF="device_search.html?loc=<%$device->{location}||'IS NULL'|u%>&amp;exact=1" TITLE="All devices at this location"><%$device->{location} || '[Not Set]' |h%></A>
+% if ( $admin ) {
+        <SPAN id="loc_set" style="display: none">
+        <form action="portcontrol.html" method="post">
+        <input type="hidden" name="cmd" value="switch">
+        <input type="hidden" name="type" value="location">
+        <input type="hidden" name="ip" value="<%$devip%>">
+        <input name="location" value="<%$device->{location}|h%>">
+        </form>
+        </SPAN>
+        <A id="loc_change_button" HREF="javascript:document.getElementById('loc_set').style.display='inline';document.getElementById('loc_change_button').style.display='none'">[change]</A>
+% }
         / <%$device->{contact} || '[Not Set]' |h%>
     </TD>
 </TR>

@@ -14,6 +14,7 @@ $log  => undef
 $log_num => 5
 $reason => ''
 $vlan => undef
+$location => undef
 </%args>
 <%shared>
 # scope
@@ -43,13 +44,13 @@ $arg_cmd = $cmd;  $arg_ip = $ip;  $arg_port = $port;
 $arg_reason = $reason; $arg_log_num = $log_num;
 $arg_vlan = $vlan;
 
-if ($cmd eq 'switch' and !$reason and $type ne 'vlan' ){
+if ($cmd eq 'switch' and !$reason and ($type ne 'vlan' and $type ne 'location')){
     $cmd = 'err';
     $err .= "You must select a reason for bringing the port $type <BR>\n";
 }
 
 my $dbport;
-if ($cmd =~ /^(up|down|switch|vlan)$/){
+if ($cmd =~ /^(up|down|switch|vlan)$/ && $type ne 'location'){
     $dbport = sql_hash('device_port',['*'],{'ip'=>$ip, 'port'=>$port});
     my $remote_ip   = $dbport->{remote_ip};
     my $remote_type = $dbport->{remote_type};
@@ -66,7 +67,7 @@ if ($cmd =~ /^(up|down|switch|vlan)$/){
     }
 }
 
-if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
+if ($cmd eq 'switch' and $type =~ /^(up|down|vlan|location)$/) {
     my $dir = $type;
     $dir = 'enable' if $type eq 'up';
     $dir = 'disable' if $type eq 'down';
@@ -79,6 +80,10 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     if ($type eq 'vlan') {
         $action = 'vlan';
         $subaction = $vlan;
+    }
+    if ($type eq 'location') {
+        $action = 'location';
+        $subaction = $location;
     }
     
     # Add to admin queue
@@ -129,7 +134,11 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
 
     if (!$err and $status eq 'done'){
         $cmd = 'log';
-        $err = "Port was successfully $dir.<BR>\n";
+        if ($type eq 'location') {
+            $err = "Location was successfully set.<BR>\n";
+        } else {
+            $err = "Port was successfully $dir.<BR>\n";
+        }
     } elsif (!$err and $status eq 'error'){
         $cmd = 'err';
         $err = "[Failed] <P>$job->{log}<BR>\n";
@@ -142,9 +151,9 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
 </%init>
 <%method log>
 % my $logs = sql_rows('device_port_log', ['id','log','reason','username','userip','action','extract(epoch from creation) as creation'] , 
-%       {'ip'=>$arg_ip, 'port'=>$arg_port} );
+%       {'ip'=>$arg_ip, 'port'=>$arg_port || ''} );
 % my $queue = sql_rows('admin', ['extract(epoch from entered) as entered','extract(epoch from started) as started','action','subaction','username','userip'],
-%       {'device'=>$arg_ip, 'port'=>$arg_port, 'status'=>'queued'} );
+%       {'device'=>$arg_ip, 'port'=>$arg_port || '', 'status'=>'queued'} );
 % my $count = 0;
 % if ($err) {
 <h2 class="subheader"><%$err%></h2>
@@ -188,7 +197,7 @@ if ($cmd eq 'switch' and $type =~ /^(up|down|vlan)$/) {
     <TD><%$entry->{username}%> @ <%$entry->{userip}%></TD>
     <TD><%$entry->{action}%></TD>
     <TD><%scalar localtime($entry->{creation})%></TD>
-%   if ( $entry->{action} eq 'vlan' ) {
+%   if ( $entry->{action} eq 'vlan' || $entry->{action} eq 'location' ) {
     <TD><%$entry->{reason}%></TD>
 %   } else {
     <TD><A HREF="#<%$entry->{reason}%>"><%$Reasons{$entry->{reason}}->[0]%></A></TD>
