@@ -1,6 +1,14 @@
-% $m->comp('SELF:pickreport');
-% if ($report && defined($title{$report})) {
-%  $m->comp('SELF:report_' . $report);
+<%perl>
+$m->comp('SELF:pickreport');
+if ($report && defined($title{$report})) {
+  my $self = $m->request_comp;
+  my $comp = 'report_' . $report;
+  if ( $self->method_exists( $comp ) ) {
+    $m->comp( 'SELF:' . $comp );
+  } else {
+    $m->comp( 'reports_local.html:' . $comp );
+  }
+</%perl>
 <h1 class="pagehead"><%$title{$report}%></h1>
 % }
 % if ($report && (!defined($results) || @$results == 0)) {
@@ -43,7 +51,12 @@ my $arg_report;
         radio_speed_ssid => "Wireless client speeds by SSID",
         port_usage => "Ports up / recent down / long down",
         undiscovered_neighbors => "Undiscovered neighbors",
+        radio_channel_histo => "Access Point Channel Distribution",
 );
+if ( $m->comp_exists( 'reports_local.html' ) ) {
+    # Allow the reports_local page to add reports, if it exists.
+    $m->comp( 'reports_local.html:update_title', title => \%title );
+}
 $arg_report = $report;
 </%init>
 <%method pickreport>
@@ -146,6 +159,7 @@ $columns = [
         [ 'Disabled<br>Ports', 'disabled' ],
         [ 'Power<br>Errors', 'err' ],
         [ 'Committed<br>(W)', 'committed' ],
+        [ 'Delivering<br>(W)', 'delivering' ],
            ];
 $results = sql_rows('device d, device_power p',
         [ 'd.ip', 'd.name', 'd.model', 'd.location', 'p.module', 'p.status', 'p.power' ],
@@ -155,6 +169,9 @@ foreach my $poe (@$results) {
     $m->comp('device.html:poe_stats', poe => $poe);
     foreach my $k (keys %{$poe->{stats}}) {
         $poe->{$k} = $poe->{stats}->{$k};
+        if ($k eq 'delivering') {
+            $poe->{$k} = sprintf("%.2f", $poe->{$k} / 1000.0);
+        }
     }
 }
 </%perl>
@@ -257,6 +274,20 @@ foreach my $res (@$results) {
                         $ip, $port, $port);
 }
 
+</%perl>
+</%method>
+<%method report_radio_channel_histo>
+<%perl>
+$columns = [
+	[ 'Channel', 'channel' ],
+	[ 'Count', 'count' ],
+	   ];
+$results = sql_rows('device_port_wireless',
+	[
+		'channel',
+		'count(channel)'
+	],
+	{}, 0, 'group by channel order by count');
 </%perl>
 </%method>
 <%method title>
