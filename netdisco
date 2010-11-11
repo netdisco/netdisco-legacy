@@ -3918,18 +3918,14 @@ sub expire_nodes_subnet {
 
 =item expire_ips()
 
-Expires IPs not in use in node.
-
- delete from node_ip where 
-    mac not in
-        (select mac from node) 
+Expires MAC->IP mappings for MAC addresses not present in node table.
 
 =cut
 
 sub expire_ips {
     print "expire_ips()\n";
-            
-    my $rows = sql_do("DELETE FROM node_ip WHERE mac NOT IN (SELECT mac FROM node)");
+
+    my $rows = sql_do("DELETE FROM node_ip WHERE mac IN (SELECT DISTINCT mac FROM node_ip LEFT JOIN node USING (mac) WHERE port IS NULL)");
     $rows = $rows || 0;
     print "Deleted $rows rows.\n";
     sql_vacuum('node_ip','print'=>1);
