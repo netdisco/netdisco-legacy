@@ -69,6 +69,9 @@ my %actions = (
              'refresh'     => ['Refresh Device',0,1],
              'expire_ips'  => ['Database Cleanup - Expire IPs [-I]',1,0],
              'graph'       => ['Regenerate Graph',1,0],
+             'arpwalk'     => ['ArpNip whole network',1,0],
+             'macwalk'     => ['MacSuck whole network',1,0],
+             'nbtwalk'     => ['NBTWalk whole network',1,0],
              'backup'      => ['Run Nightly Backup',1,0],
              'clean_nodes' => ['Database Cleanup - Nodes [-K]',1,0],
              'clean_alias' => ['Database Cleanup - Aliases [-k]',1,0]
@@ -135,7 +138,7 @@ if ($cmd eq 'add' and $actions{$action}->[1] and $confirm ne 'ok') {
 }
 
 # Maintenance Commands from admin.html
-if ($cmd eq 'add' and $action =~ /^(expire_ips|graph|backup|clean_nodes|clean_alias)$/ and !$need_confirm){
+if ($cmd eq 'add' and $action =~ /^(expire_ips|arpwalk|macwalk|nbtwalk|graph|backup|clean_nodes|clean_alias)$/ and !$need_confirm){
     $dev = undef;
     $commit++;
 }
@@ -279,7 +282,7 @@ $devices = sql_rows('device',['ip','dns'], undef, undef,'order by ip asc') if no
 $old_jobs = 5 unless ($old_jobs =~ /^\d+$/);
 
 # Fetch action types - Changed to static values, be sure to add new ones here
-$action_types = ['arpnip', 'delete', 'delete+nodes', 'discover', 'graph', 'macsuck', 'portcontrol', 'refresh'];
+$action_types = ['arpnip', 'arpwalk', 'delete', 'delete+nodes', 'discover', 'graph', 'macsuck', 'macwalk', 'nbtwalk', 'portcontrol', 'refresh'];
 
 # Create NOT IN list if we are ignoring certain types.
 my $where = {};

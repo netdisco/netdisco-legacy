@@ -4800,6 +4800,18 @@ sub admin_daemon_job {
         &expire_ips;
     }
 
+    elsif ($cmd eq 'arpwalk') {
+        &arpwalk;
+    }
+
+    elsif ($cmd eq 'macwalk') {
+        &macwalk;
+    }
+
+    elsif ($cmd eq 'nbtwalk') {
+        &nbtwalk;
+    }
+
     elsif ($cmd eq 'graph'){
         &graph(1);    
     }

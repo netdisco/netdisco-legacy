@@ -31,6 +31,8 @@ Features:
                 power per port (if device supports it, fallback to class-based 
                 estimation). -jeroenvi
     + []        IPv6 address to hostname resolving (quick hack by rkerr)
+    + [3106690] Add "arpwalk", "macwalk" and "nbtwalk" to admin panel. Patch from
+                Nic Bernstein.
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
