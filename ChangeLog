@@ -33,6 +33,7 @@ Features:
     + []        IPv6 address to hostname resolving (quick hack by rkerr)
     + [3106690] Add "arpwalk", "macwalk" and "nbtwalk" to admin panel. Patch from
                 Nic Bernstein.
+    + [3148218] Detect Proxim wireless APs in WAP search (J R Binks)
 
 Bugfixes:
     * []        Fix sort_port() for ports like "GigabitEthernet2/2/3" -maxb
