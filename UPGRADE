@@ -1,17 +1,13 @@
 NAME
-
     Netdisco UPGRADE - Instructions on Upgrading between versions.
 
 AUTHOR
-
     Max Baker
 
 SUPPORT
-
     See INSTALL or README or <http://netdisco.org>
 
 UPGRADING
-
     Here are some hints for upgrading between versions of Netdisco.
 
     FIRST! Go read below where it says "Backup Database" and "Backup
@@ -32,7 +28,6 @@ UPGRADING
     Upgrade Procedures" sections.
 
 VERSION SPECIFIC NOTES
-
     v1.0 -> 1.1
 
         Update Database
@@ -231,16 +226,13 @@ VERSION SPECIFIC NOTES
             Make sure you have GraphViz 0.9 installed.
 
 APPLICATION NOTES
-
   Apache / Mod_perl
-
     You shouldn't have to upgrade apache, but now would be a good time to
     see if there are any security upgrades to apache or mod_perl.
 
   SNMP::Info
-
     When upgrading to any version, please make sure you have the newest
-    version of SNMP::Info installed (at least 2.01):
+    version of SNMP::Info installed (at least 2.04):
 
     CVS Version
         To update a CVS version of SNMP::Info :
@@ -259,7 +251,6 @@ APPLICATION NOTES
         <http://snmp-info.sourceforge.net> and install.
 
 General Upgrade Procedures
-
     Read INSTALL
         Read the INSTALL file that comes with the new version to see what
         has changed. Make sure you have all the Requirements listed.
