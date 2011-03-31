@@ -1,14 +1,11 @@
 NAME
-
     Netdisco INSTALL -- Instructions for setting up the Netdisco
     application.
 
 VERSION
-
-    Netdisco 1.0
+    Netdisco 1.1
 
 AUTHOR
-
     Developed by team of Open Source authors headed by Eric Miller, Bill
     Fenner, and Oliver Gorwits, originally created by Max Baker. See list at
     the end of README of all the contributors.
@@ -23,7 +20,6 @@ AUTHOR
     <https://sourceforge.net/projects/snmp-info>.
 
 SUPPORT
-
     Netdisco is an Open Source project created and maintained by volunteer
     developers.
 
@@ -61,7 +57,6 @@ SUPPORT
         you're using it at <http://netdisco.org/register.html>.
 
 INSTALL FLAVORS
-
     There are three general flavors of installs out there for Netdisco:
 
     From Source
@@ -81,7 +76,6 @@ INSTALL FLAVORS
         get up and running w/ Netdisco.
 
 REQUIREMENTS
-
     Netdisco is built using lots of fine Open-Source tools:
 
     *   Perl
@@ -131,7 +125,6 @@ REQUIREMENTS
     prerequisite.
 
   OS
-
     Netdisco was developed on a FreeBSD system but should work on any system
     that Postgres, Perl, Apache, and Net-SNMP run on.
 
@@ -145,18 +138,15 @@ REQUIREMENTS
     See "OS Specific Notes" below for details.
 
 UPGRADE
-
     If you are upgrading your copy of Netdisco, please read through this
     file and then read the "UPGRADE" document in this directory.
 
 INSTALL
-
     This is not a terribly easy install. If you aren't comfortable
     installing programs from source and using a text editor, get some help.
     Some packaged versions of Netdisco are available.
 
   1. Download Netdisco
-
     Get the newest version from <http://www.netdisco.org>.
 
     [1.1] Unarchive Netdisco
@@ -190,7 +180,6 @@ INSTALL
             netdisco_apache_dir.conf to match your new directory.
 
   2. Create a Unix User/Group for Netdisco
-
     [2.1] Create a user and group named "netdisco"
         Linux:
 
@@ -206,7 +195,6 @@ INSTALL
             chown -R netdisco.netdisco /usr/local/netdisco
 
   3. Add Unix Administrators to Netdisco Group
-
     Once Netdisco is up and running most administration can be done from the
     Web interface. Whoever will be doing the back-end administration will
     need to have write access and will need write access on Netdisco's
@@ -219,7 +207,6 @@ INSTALL
     Don't forget to logout and login after adding yourself to a group.
 
   4. Postgres
-
     Netdisco runs Postgres SQL as its database back-end.
 
     [4.1] Install Postgres
@@ -401,11 +388,9 @@ INSTALL
         file.
 
   5. SNMP
-
     There are three components to set up for SNMP:
 
    5.1.  Net-SNMP
-
     Net-SNMP lives at <http://net-snmp.sourceforge.net>.
 
     There are two known bad versions: 5.2.3 and 5.3.1 !
@@ -488,7 +473,6 @@ INSTALL
         /usr/local/share/snmp or wherever you put a custom install.
 
    5.2. SNMP::Info
-
     SNMP::Info is one half of the Netdisco application.
 
     SNMP::Info holds all the device-specific code to retrieve data from
@@ -533,7 +517,6 @@ INSTALL
         See "OS Specific Notes" below for details.
 
    5.3.  MIBs
-
     MIBs that are required for SNMP::Info are included with Netdisco in the
     mibs/ directory if you installed the "netdisco-1.0_with_mibs" package.
 
@@ -543,7 +526,6 @@ INSTALL
     these files in "/usr/local/netdisco/mibs".
 
   6. GraphViz  (Optional)
-
     GraphViz is used to create the Network Map.
 
     It lives at <http://www.graphviz.org/>.
@@ -581,7 +563,6 @@ INSTALL
         label".
 
   7. Setup Apache
-
     [7.1] Apache2
         Using recent versions of Mason and mod_perl, Netdisco runs fine
         under Apache2.
@@ -721,7 +702,6 @@ INSTALL
         server unix user.
 
   8. Perl Modules
-
     Below is a list of required modules for Netdisco, freely available from
     CPAN <http://www.cpan.org>. Many of these modules have prerequisite
     modules. Many of these are available in distros already as packages.
@@ -754,7 +734,6 @@ INSTALL
                 install Net::LDAP (optional for LDAP authentication)
                 install Net::SSLeay (optional for encrypted LDAP authentication)
                 install IO::Socket::SSL (optional for encrypted LDAP authentication)
-                install Socket6 (optional for resolving IPv6 addresses to host names)
 
         For Apache1 install these modules:
 
@@ -775,7 +754,6 @@ INSTALL
         version of Perl you would like to use.
 
   9. Netdisco Configuration
-
     [9.1] netdisco.conf
         Modify netdisco.conf to match your site.
 
@@ -831,7 +809,6 @@ INSTALL
          chmod 660 /usr/local/netdisco/*.conf
 
   10. OUI Database
-
     The "Organizationally Unique Identifier" (OUI) database allows Netdisco
     to identify the manufacture of a network card using the first 24 bits of
     the MAC address.
@@ -863,7 +840,6 @@ INSTALL
         "netdisco -O".
 
   11. Restart Apache
-
     Now that you have everything setup, "cold" restart the web-server.
 
         apachectl stop
@@ -873,7 +849,6 @@ INSTALL
     details.
 
   12. Discover a Device in Netdisco
-
     Pick a device that you can access with the command "snmpwalk". Tell
     Netdisco to discover that device:
 
@@ -885,7 +860,6 @@ INSTALL
     debugging info.
 
   13. Create Network Topology
-
     See README for a description of *Topology Information*.
 
     If your network uses a supported topology discovery protocol
@@ -902,7 +876,6 @@ INSTALL
     show up on uplink ports instead of end ports.
 
   14. Test Web Side
-
     First restart Apache so that Netdisco will see the changes that you have
     made in netdisco.conf. Note that a *graceful* restart will not re-read
     the configuration file. A full restart is required. See Step 11.
@@ -921,7 +894,6 @@ INSTALL
         tail /usr/local/apache/logs/error_log
 
   15. Add Cron Jobs
-
     Once you're sure Netdisco is setup correctly, modify netdisco.crontab.
 
      vi netdisco.crontab
@@ -948,7 +920,6 @@ INSTALL
         crontab -u netdisco /usr/local/netdisco/netdisco.crontab
 
   16. Start the Netdisco Admin Daemon
-
     The admin deaemon performs administration jobs that are requested from
     the web front-end. See README for a full description of the admin
     daemon.
@@ -984,9 +955,7 @@ INSTALL
                 /usr/local/netdisco/bin/netdisco_daemon start
 
 OS Specific Notes
-
   FreeBSD
-
     A port is available for FreeBSD in "/usr/ports/net-mgmt/netdisco". Make
     sure that the port is up to date with this version of Netdisco. This is
     the best way to install Netdisco on FreeBSD.
@@ -1096,7 +1065,6 @@ OS Specific Notes
                     --disable_rule=SSL_COMPAT
 
   Mac OS X
-
     *   Postgres
 
         See <http://developer.apple.com/internet/macosx/postgres.html> for
@@ -1117,7 +1085,6 @@ OS Specific Notes
          http://www.oreillynet.com/pub/a/mac/2003/02/07/libapreq_update.html
 
   Linux - Generic
-
     Here are some notes for installing Netdisco on Linux. If your distro is
     not listed here, look over the install scripts for other distros at
     <http://www.auburn.edu/~gouldwp/netdisco/> in the READMEs section.
@@ -1185,7 +1152,6 @@ OS Specific Notes
         (Thanks to David Martin for this info)
 
   Fedora / CentOS / Redhat
-
     Netdisco 0.95 packages are available in the Fedora 11 repositories, and
     the EPEL repositories for RHEL/CentOS 5.
 
@@ -1196,12 +1162,10 @@ OS Specific Notes
     Fedora and EPEL repositories in due course.
 
   Mandrivia Linux
-
     An RPM is available for Mandrivia Linux, but may be out of date. Please
     check that the RPM for Netdisco 0.95 is marked at least 200611 or newer.
 
   Debian Linux
-
     Debian 5.0 (Lenny) contains the Netdisco 0.95 packages and all
     dependencies. Newer releases may be available at
     <http://packages.debian.org/netdisco>.
@@ -1214,8 +1178,77 @@ OS Specific Notes
         Jordi Guijarro reported that the version that comes with Woody is
         too old. Install a newer version from source.
 
-  Mandrake Linux 9.1
+  Ubuntu 8.04 (Hardy)
+    There is an old version of Netdisco in aptitutde. So what we'll do is
+    use that to install all the dependencies, then uninstall netdisco and
+    use a version from Source.
 
+    aptitude install netdisco-backend netdisco-frontend
+        You may want to do this from install aptitude and select all of the
+        optional packages so you get a full and robust GraphViz install.
+
+    Now remove netdisco-backend netdisco-frontend netdisco-common and
+    libnetsnmp
+        BUT keep all the dependencies.
+
+    Install Source
+        Grab netdisco-with-mibs from
+        <https://sourceforge.net/projects/netdisco/files/> and install into
+        /usr/local/netdisco.
+
+    Install SNMP::Info
+    Change database passwords in netdisco.conf and netdisco_apache.conf
+    Postgres
+        You have a little bit of setup to do here.
+
+        Edit /etc/postgresql/8.3/main/pg_hba.conf and relax all security for
+        now.
+            Comment out everything else and do this :
+
+             local   all  all  trust 
+             host all all 127.0.0.1/32 trust
+
+        Run "/etc/init.d/postgresql-8.3 restart"
+        Run /usr/local/netdisco/sql/pg --init
+        Go back into pg_hba.conf and reinstate security
+             local   all         all                               md5
+             local   all         all                               ident sameuser
+
+        Run "/etc/init.d/postgresql-8.3 restart"
+
+    Create an SSL certificate
+         mkdir /etc/apache2/ssl 
+         /usr/sbin/make-ssl-cert /usr/share/ssl-cert/ssleay.cnf /etc/apache2/ssl/apache.pem
+
+    Turn on a couple Apache modules you installed
+         a2enmod ssl
+         a2enmod apreq
+
+    Create an apache config file to load Netdisco
+        vim /etc/apache2/sites-available/netdisco
+
+          Include /usr/local/netdisco/netdisco_apache.conf
+          
+  NameVirtualHost *:443
+          NameVirtualHost *:80
+          
+  <VirtualHost *:80>
+                ServerName your.server.com
+                Include /usr/local/netdisco/netdisco_apache_dir.conf
+          </VirtualHost>
+          
+  <VirtualHost *:443>
+                ServerName your.server.com
+                  SSLEngine on
+                  SSLCertificateFile /etc/apache2/ssl/apache.pem
+                Include /usr/local/netdisco/netdisco_apache_dir.conf
+          </VirtualHost>
+
+        Make sure to turn on the secure server option in "netdisco.conf".
+
+    Run "/etc/init.d/apache2 restart"
+
+  Mandrake Linux 9.1
     Netdisco has been tested with Mandake 9.1
 
     *   Perl 5.8.1
@@ -1299,7 +1332,6 @@ OS Specific Notes
             /etc/rc.d/init.d/httpd restart
 
   Solaris
-
     See <http://www.saintmarys.edu/~dmckeown/netdisco_solaris10.htm> for a
     great document on getting Netdisco 0.94 to work with Solaris 10.
 
@@ -1316,7 +1348,6 @@ OS Specific Notes
             ./configure --enabled-shared --enabled-static
 
 SUCCESS
-
     Now that you have spent ten hours of your life installing this go drink
     a Beer, you deserve it.
 

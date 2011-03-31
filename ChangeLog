@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-1.1 ()
+1.1 (2011-03-31)
 Features:
     + []        Add report with number of ports per device that are up, recently 
                 down and down for a longer time.
