@@ -2,6 +2,13 @@
 # netdisco.org
 # $Id$
 
+1.2 ()
+Features:
+
+Bugfixes:
+    * []        Report "Undiscovered neighbors" also showed neighbors advertising
+                an address not equal to their root_ip.
+
 1.1 (2011-03-31)
 Features:
     + []        Add report with number of ports per device that are up, recently 
