@@ -24,6 +24,7 @@ use lib $FindBin::Bin;
 use IO::File;            # For batch_mode()
 use POSIX qw/:errno_h setsid/;  # for Admin Daemon
 use Compress::Zlib;
+use File::Path;
 use netdisco qw/:all/;  
 tryuse('SNMP::Info', ver => '2.04', die => 1);
 
@@ -699,16 +700,10 @@ sub batch_mode{
     
     my $file = "$file_path/$file_name-$timestamp.$extension";
 
-    # Path is everything up to the last /
-    my $path = "";
-    my @path = split(m|/|, $file);
-    for (my $elem = 1; $elem < $#path; $elem++) {
-        $path .= "/" . $path[$elem];
-        # Make the target directory if not already there
-        unless (-d $path){
-            mkdir ($path,0775) or die "Can't make directory $path. $!\n";
-        }
-    }
+    # Ensure the directory exists
+    my $path = $file;
+    $path =~ s/\/[^\/]*$//;
+    mkpath($path);
 
     my $fh = new IO::File;
     my $old_umask = umask(0000);
