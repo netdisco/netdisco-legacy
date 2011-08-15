@@ -309,7 +309,7 @@ sub config {
                       port_info secure_server graph_clusters graph_splines portctl_uplinks
                       portctl_nophones portctl_vlans macsuck_all_vlans macsuck_bleed
                       bulkwalk_off vlanctl apache_auth nonincreasing store_modules
-                      vacuum_no store_wireless_client/;
+                      vacuum_no store_wireless_client reverse_lookup_ipv6/;
 
     # these will make array refs of their comma separated lists
     my @array_refs = qw/community community_rw mibdirs bulkwalk_no
@@ -538,7 +538,7 @@ Returns the DNS server entry for the given ip or hostname.
 sub hostname {
     my $ip = shift;
     my @host = ();
-    if ($ip =~ /^[0-9a-f:]+$/) {
+    if ($ip =~ /^[0-9a-f:]+$/ && $CONFIG{'reverse_lookup_ipv6'}) {
         my $cando_v6lookup = tryuse('Socket6', die => 0);
         # IPv6 address passed
         if ($cando_v6lookup->[0]) {

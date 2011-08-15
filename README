@@ -1662,6 +1662,14 @@ Config File
         Linking Netdisco against external graphing tools requires a small
         amount of programming. This is not in the scope of this manual.
 
+    reverse_lookup_ipv6
+        BOOLEAN. Controls whether Netdisco should do reverse DNS lookups for 
+        IPv6 addresses. Since it's common for IPv6 enabled hosts to have 
+        multiple addresses (link-local, global, possibly temporary addresses 
+        when RFC4941 Privacy Extensions are used), enabling reverse lookups
+        can slow down loading of web pages considerably.
+ 
+
 DESIGN
 
   Design Goals
