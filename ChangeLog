@@ -14,6 +14,8 @@ Bugfixes:
                 an address not equal to their root_ip.
     + []	Change job log dir creation to use mkpath to resolve potential
                 race condition.
+    + []        Fix wireless client info collection to properly manage its
+                transaction.
 
 1.1 (2011-03-31)
 Features:

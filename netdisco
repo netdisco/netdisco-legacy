@@ -2175,7 +2175,7 @@ sub wireless_client_info {
     my $cd11_rxbyte = $device->cd11_rxbyte();
     my $cd11_txbyte = $device->cd11_txbyte();
 
-    sql_begin();
+    sql_begin(['node_wireless']);
     foreach my $key (keys %$cd11_txrate) {
         my $txrates = $cd11_txrate->{$key};
         my $rates = $cd11_rateset->{$key};
@@ -2197,6 +2197,7 @@ sub wireless_client_info {
         $store{time_last} = scalar(localtime);
         insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
     }
+    sql_commit();
 }
 
 =item mac_savecache({},{})
