@@ -27,6 +27,13 @@
     </TD>
 </TR>
 <TR>
+    <TD>At specific date and time : </TD>
+    <TD><INPUT TYPE="text" name="on_date" maxlength=255 size=30 VALUE="<%$on_date %>">
+        <BR><span class="smaller">This should be of the form YYYY-MM-DDTHH:MM:SS.SSZ
+        <BR> Omit the Z to assume local timezone</span>
+    </TD>
+</TR>
+<TR>
     <TD>&nbsp;</TD>
     <TD>
         <INPUT TYPE="submit" CLASS="navbutton" Value="Search" class="navbutton">
@@ -70,11 +77,12 @@ $expandoui => 0
 @oui       => ()
 $specific  => ''
 $sort      => 'mac'
+$on_date   => ''
 </%args>
 <%shared>
 my $matches = []; my $Node_IP_Seen = {};
 my $domain = $netdisco::CONFIG{domain};
-my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node,$arg_sort);
+my ($arg_showdate, $arg_showoui, @arg_vendors, @arg_oui, $arg_archive, $arg_dates, $arg_node,$arg_sort, $arg_on_date);
 my $odd=1; my $ran_query = 0;
 my @search = (); my $ouis = undef; my @cols = ();
 my $vendors = {
@@ -265,13 +273,13 @@ my $hex = "[0-9a-fA-F]";
 <%init>
 # remove other search criteria if specific search
 if ($specific) {
-    @oui = (); $node=''; @vendors = (); $showoui=0;
+    @oui = (); $node=''; @vendors = (); $showoui=0; $on_date='';
 }
 
 # Pass the form argument to the global for <%methods>
 $arg_dates = $dates; @arg_vendors = @vendors; @arg_oui = @oui;
 $arg_archive = $archive; $arg_showoui = $showoui; $arg_node = $node;
-$arg_sort = $sort;
+$arg_sort = $sort; $arg_on_date = $on_date;
 
 
 # ----------------- Node Search -------------------------
@@ -305,6 +313,8 @@ if ($node){
     $m->session->{_s_term} = $node;
     $m->session->{_s_type} = 'node';
 
+    $arg_on_date = '' if($arg_on_date !~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{2}Z?$/);
+
     # Search by MAC Address
     if ($is_mac) {
         my $mac = $node;
@@ -317,7 +327,10 @@ if ($node){
         # set mac to be either node or the partial matching string
         $mac = is_mac($node) ? $node : sql_match($mac,0);
         my $where = { 'mac' => $mac };
+
         $where->{'active'} = 1 unless $arg_archive;
+        $where->{'time_first'} = \\("< " . dbh_quote($arg_on_date)) if $arg_on_date;
+        $where->{'time_last'} = \\("> " . dbh_quote($arg_on_date)) if $arg_on_date;
 
         # Lookup IPs associated with this MAC
         $m->comp('SELF:add_node_ips','where'=>$where);
@@ -429,6 +442,8 @@ if ($node){
         foreach my $mac (@foundmacs){
             $where = { 'mac' => $mac };
             $where->{'active'} = 1 unless $archive;
+            $where->{'time_first'} = \\("< " . dbh_quote($arg_on_date)) if $arg_on_date;
+            $where->{'time_last'} = \\("> " . dbh_quote($arg_on_date)) if $arg_on_date;
             my $ports = sql_rows('node',
                         ['mac','switch','port','active','oui','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                         $where
@@ -478,6 +493,8 @@ if ($node){
         # Find MACs associated with this NetBIOS Name or User
         my $where = { 'nbname/nbuser'=>sql_match($node)};
         $where->{'active'} = 1 unless $archive;
+        $where->{'time_first'} = \\("< " . dbh_quote($arg_on_date)) if $arg_on_date;
+        $where->{'time_last'} = \\("> " . dbh_quote($arg_on_date)) if $arg_on_date;
         my $macs = sql_rows('node_nbt',
                 ['ip','mac','nbname','domain','nbuser','active','extract(epoch from time_first) as time_first', 'extract(epoch from time_last) as time_last'],
                 $where

@@ -6,6 +6,8 @@
 Features:
     * []        Add config directive "reverse_lookup_ipv6" to control whether 
                 reverse DNS lookups should be performed for IPv6 addresses.
+    * []        Add option to node.html to search for entries only appearing on
+                a given date.
 
 Bugfixes:
     * []        Report "Undiscovered neighbors" also showed neighbors advertising
