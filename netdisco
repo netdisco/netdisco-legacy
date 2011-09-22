@@ -2120,7 +2120,7 @@ sub macsuck_vlans {
     {
         my $vlan_name = $vlan_names{$vlan} || '(Unnamed)';
 
-        if (defined $CONFIG{macsuck_no_vlan} and defined $CONFIG{macsuck_no_vlan}->{$vlan_name}){
+        if (defined $CONFIG{macsuck_no_vlan} and (defined $CONFIG{macsuck_no_vlan}->{$vlan_name} || defined $CONFIG{macsuck_no_vlan}->{$vlan})){
             print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
             next;
         }
