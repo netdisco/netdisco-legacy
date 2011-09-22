@@ -333,8 +333,12 @@ $odd++;
 %#
 <%method show_vlan>
 <%perl>
-my $vlan_count = sql_rows('device_vlan',['vlan','description','count(vlan)'],
-                        undef,undef,'group by vlan,description');
+my $vlan_count = sql_rows('device_vlan v, device_port_vlan pv',
+                 ['v.vlan','v.description','count(distinct pv.ip) as dcount',
+                    'count(pv.vlan) as pcount'],
+                 { 'v.vlan' => \'pv.vlan',
+                   'v.ip' => \'pv.ip'},
+                 undef,'group by v.vlan,v.description');
 my @m = sort { 
         $a->{vlan} <=> $b->{vlan} || 
         $a->{description} cmp $b->{description} 
@@ -350,7 +354,8 @@ $count = 0; $odd = 1; my $old_vlan = -1;
         <TR>
             <TH>VLAN ID</TH>
             <TH>VLAN Name</TH>
-            <TH>Count</TH>
+            <TH>Device Count</TH>
+            <TH>Port Count</TH>
         </TR>
 % foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
 %    # Change color if we change VLANs
@@ -361,7 +366,8 @@ $count = 0; $odd = 1; my $old_vlan = -1;
         <TR CLASS="match-<%$odd%2%>">
             <TD><A HREF="device_search.html?specific=vlan_dev&vlan=<%$row->{vlan}%>" TITLE="All devices with this VLAN"><%$row->{vlan} |h%></A> [<A HREF="device_search.html?vlan=<%$row->{vlan}|u%>&amp;specific=vlan" TITLE="All ports with this vlan">ports</A>]</TD>
             <TD><%$row->{description}%></TD>
-            <TD><%$row->{count}%></TD>
+            <TD><%$row->{dcount}%></TD>
+            <TD><%$row->{pcount}%></TD>
         </TR>
 % }
         </TABLE>
