@@ -8,6 +8,9 @@ Features:
                 reverse DNS lookups should be performed for IPv6 addresses.
     * []        Add option to node.html to search for entries only appearing on
                 a given date.
+    + []        Config directive "macsuck_no_vlan" now accepts both vlan names
+                and numbers (VIDs). Patch from Peter Hicks.
+
 
 Bugfixes:
     * []        Report "Undiscovered neighbors" also showed neighbors advertising

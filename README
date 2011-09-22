@@ -1032,8 +1032,8 @@ Config File
         "bulkwalk_no" for syntax.
 
     macsuck_no_vlan
-        LIST:Strings. Comma separated list of VLAN names not to visit when
-        MACsucking.
+        LIST:Strings. Comma separated list of VLANs not to visit when
+        MACsucking. Both VLAN names and numbers (VIDs) are allowed.
 
         This option was used to speed up MACsucking on certain Cisco
         Catalyst family devices where you have to connect to each VLAN with
