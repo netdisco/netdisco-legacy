@@ -38,9 +38,10 @@ $arg_port = $port;
 
 
 # ----------------- Node Search -------------------------
+my $num_vlt = 0;
 if ($port){
     # Choose columns to show and order to show them in matches()
-    @cols = (['name','Name'],['descr','Description'],['vlan','Vlan'],['port','Port']);
+    @cols = (['name','Name'],['descr','Description'],['vlan','Vlan'],['vlantype','Type'],['port','Port']);
 
     $m->flush_buffer;
 
@@ -53,9 +54,11 @@ if ($port){
 
     # Search for ports
     my $name = sql_match($port);
-    my $where = { 'descr/name'=>$name};
-    my $ports = sql_rows('device_port',
-                ['ip','port','descr','vlan','name'],
+    my $where = { 'descr/name'=>$name, 'device_port.ip'=>\'device_port_vlan.ip',
+                  'device_port.port'=>\'device_port_vlan.port'};
+    my $ports = sql_rows('device_port,device_port_vlan',
+                ['device_port.ip','device_port.port','descr','device_port.vlan',
+                 'name','vlantype'],
                 $where
 			);
     my @foundports = ();
@@ -65,11 +68,19 @@ if ($port){
         $portinfo->{switch} = $portinfo->{ip};
 	$portinfo->{switchname} = sql_scalar('device',['dns'],{'ip'=>$portinfo->{switch}}) || '';
         $portinfo->{switchname} =~ s/\Q$domain\E//;
+        $num_vlt++ if $portinfo->{vlantype};
 
         push (@$matches,$portinfo);
     }
 
     $ran_query++;
+}
+# remove vlantype column if nothing to display
+if ( ! $num_vlt ) {
+    foreach my $portinfo (@$matches){
+        delete $portinfo->{vlantype};
+    }
+    @cols = grep {$_->[0] ne 'vlantype'} @cols;
 }
 
 </%init>

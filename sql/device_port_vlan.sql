@@ -9,5 +9,6 @@ CREATE TABLE device_port_vlan (
     native      boolean not null default false, -- native or trunked
     creation    TIMESTAMP DEFAULT now(),
     last_discover TIMESTAMP DEFAULT now(),
+    vlantype    text,   -- Cisco Vlan Type (stat/dyn/multi)
     PRIMARY KEY(ip,port,vlan)
 );

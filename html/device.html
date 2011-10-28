@@ -199,6 +199,12 @@ my %port_cols = (
             show => 0,
             data => 'SELF:col_poe_info',
         },
+    vlantype =>
+        {
+            header => 'VLAN Type',
+            order => 21,
+            show => 1,
+        },
 );    
 
 my %device_info = (
@@ -237,6 +243,7 @@ unless ($arg_timecount =~ m/^\d+$/) {
     $timecount = 3;
 }
 
+my $num_vlt = 0;
 if ($ip) {
     # Save Search Term
     $match = $ip;
@@ -351,6 +358,11 @@ if ($ip) {
         # Get VLANs
         my $vlans = sql_rows('device_port_vlan',['vlan'],
             {'ip'=>$switch,'port'=>$port});
+        my $vlantypes = sql_rows('device_port_vlan',['vlantype'],
+            {'ip'=>$switch,'port'=>$port});
+        # there should be only one vlantype value
+        $portreq->{vlantype} = $vlantypes->[0]->{vlantype};
+        $num_vlt++ if $portreq->{vlantype};
         my $dev_vlans = sql_rows('device_vlan',['vlan'],
             {'ip'=>$switch});
 
@@ -455,6 +467,8 @@ if ($ip) {
         # TODO: Insert code here ?
     }
 }
+# do not display vlantype column if no content
+$port_cols{vlantype}->{show} = 0 if ! $num_vlt;
 
 # Change the columns of ports shown
 if (scalar @portcol and join('',@portcol) !~ /^\s*$/) {

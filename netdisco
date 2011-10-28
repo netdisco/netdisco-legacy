@@ -3023,6 +3023,7 @@ sub store_vlans {
 
     my $i_vlan = $device->i_vlan();
     my $i_vlan_membership = $device->i_vlan_membership();
+    my $i_vlan_type = $device->i_vlan_type();
     my $interfaces = $device->interfaces();
 
     my %v_seen = ();
@@ -3034,6 +3035,7 @@ sub store_vlans {
 
     foreach my $if (keys %$i_vlan_membership) {
         my $port = $interfaces->{$if};
+        my $vlantype = $i_vlan_type->{$if};
         next unless defined($port);
         $v_count++;
         foreach my $vlan (@{$i_vlan_membership->{$if}}) {
@@ -3044,6 +3046,7 @@ sub store_vlans {
             $store{port} = $port;
             $store{vlan} = $vlan;
             $store{native} = $native;
+            $store{vlantype} = $vlantype;
             $store{last_discover} = 'now';
 
             insert_or_update('device_port_vlan', {ip => $ip,
