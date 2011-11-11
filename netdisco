@@ -609,6 +609,40 @@ sub topo_load_file {
     close (DEVS);
 
     print scalar(keys(%DeviceTopo)) . " entries loaded \n" if $DEBUG;
+    &topo_load_db;
+}
+
+=back
+
+=item topo_load_db() 
+
+Loads and checks manual topology entries in the database.
+Information augments topo_load_file().
+
+=cut
+
+sub topo_load_db {
+    print "Loading manual topology information from database\n" if $DEBUG;
+    my $count = 0;
+    my $links = sql_rows('topology',['dev1', 'port1', 'dev2', 'port2']);
+
+    foreach my $link (@$links) {
+        my $from_ip   = $link->{dev1};
+        my $from_port = $link->{port1};
+        my $to_ip     = $link->{dev2};
+        my $to_port   = $link->{port2};
+
+        # Make sure we don't use an alias but the root IP
+        $from_ip = root_device($from_ip) || $from_ip;
+        $to_ip = root_device($to_ip) || $to_ip;
+    
+        # Save Link info both directions
+        push (@{$DeviceTopo{$from_ip}}, {'from' => $from_ip,'from_port' => $from_port, 'from_name' => '', 'to' => $to_ip,   'to_port' => $to_port,   'to_name' => ''});
+        push (@{$DeviceTopo{$to_ip}},   {'from' => $to_ip,  'from_port' => $to_port,   'from_name' => '', 'to' => $from_ip, 'to_port' => $from_port, 'to_name' => ''});
+        $count++;
+    }
+
+    printf("%d entries loaded \n", $count) if $DEBUG;
 
 }
 

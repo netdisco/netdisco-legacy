@@ -13,6 +13,8 @@ Features:
     * []        Collect and display "vmVlanType", indicating whether a VLAN is
                 static or dynamic on a switch port. Currently Cisco-specific.
                 Patch from Wolfgang Friebel.
+    * []        New database table "topology" to support adding topology links
+                without a discovery protocol or an external topology text file.
 
 Bugfixes:
     * []        Report "Undiscovered neighbors" also showed neighbors advertising

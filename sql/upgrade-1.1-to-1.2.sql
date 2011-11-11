@@ -4,3 +4,11 @@
 
 -- Add "vlantype" column to device_port_vlan table
 ALTER TABLE device_port_vlan ADD vlantype text;
+
+-- Add "topology" table to augment manual topo file
+CREATE TABLE topology (
+    dev1   inet not null,
+    port1  text not null,
+    dev2   inet not null,
+    port2  text not null
+);
