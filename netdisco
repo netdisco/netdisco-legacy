@@ -1707,6 +1707,10 @@ sub get_device {
 
             my %args = get_snmp_args($hostname, $version, $config_comm);
 
+            if(exists $CONFIG{snmpdiscover_timeout}) {
+                $args{Timeout} = $CONFIG{snmpdiscover_timeout};
+            }
+
             $device = create_device(%args);
 
             if (defined $device and $device == -1){
@@ -1853,6 +1857,10 @@ sub get_device_rw {
 
     foreach my $comm (@{$list}) {
         my %args = get_snmp_args($hostname, $version, $comm, 1);
+
+        if(exists $CONFIG{snmpdiscover_timeout}) {
+            $args{Timeout} = $CONFIG{snmpdiscover_timeout};
+        }
         
         $device = create_device(%args);
 

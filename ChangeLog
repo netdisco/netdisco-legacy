@@ -15,6 +15,9 @@ Features:
                 Patch from Wolfgang Friebel.
     * []        New database table "topology" to support adding topology links
                 without a discovery protocol or an external topology text file.
+    * []        New config option "snmpdiscover_timeout" to override SNMP
+                timeout during discovery.  This speeds up finding the correct
+                SNMP string when default timeout needs to be large.
 
 Bugfixes:
     * []        Report "Undiscovered neighbors" also showed neighbors advertising

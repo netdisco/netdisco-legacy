@@ -1314,6 +1314,11 @@ Config File
         Micro-seconds before retry, Default 1000000 micro-seconds = 1
         second.
 
+    snmpdiscover_timeout
+        INT. Overrides the setting for 'Timeout' field passed to SNMP::Session
+        when guessing the SNMP string for a device. Not set by default, same
+        format as snmptimeout.
+
     snmpretries
         INT. Settings for 'Retries' field passed to SNMP::Session
 
