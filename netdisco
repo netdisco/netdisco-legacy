@@ -3719,6 +3719,7 @@ sub dev_dump {
             my $port = $neighbor->{port};
             my $remote_ip = $neighbor->{remote_ip};
             my $remote_port = $neighbor->{remote_port};
+            $remote_port = "" if !defined $remote_port;
             print "\tlink:$port,$remote_ip,$remote_port\n";
         }
     }
