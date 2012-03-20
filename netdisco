@@ -1473,7 +1473,7 @@ sub device_root {
 
 =item find_neighbors() 
 
-Finds all the CDP information on the device and stores the results in device_node.  
+Finds all the CDP information on the device and stores the results in device_port.
 
 Adds to the @Discover_Queue
 
