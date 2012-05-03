@@ -800,7 +800,7 @@ $id
 %  if ($mod->{port}) {
 (<% $mod->{port} %>)
 %  }
-%  for my $f qw(fw hw sw) {
+%  for my $f (qw(fw hw sw)) {
 %    if ($mod->{"${f}_ver"}) {
 [<%$f%>: <%$mod->{"${f}_ver"}%>]
 %    }

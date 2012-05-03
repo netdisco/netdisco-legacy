@@ -26,6 +26,7 @@ Bugfixes:
                 race condition.
     + []        Fix wireless client info collection to properly manage its
                 transaction.
+    + []	Fix deprecated use of qw() in device view for Perl 5.14 (cstamas)
 
 1.1 (2011-03-31)
 Features:
