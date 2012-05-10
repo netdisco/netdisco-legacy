@@ -37,7 +37,7 @@
 </TR>
 <TR>
     <TH>Serial:</TH>
-    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="name" VALUE="<%$serial%>"></TD>
+    <TD><INPUT TYPE="text" size=30 maxlength=255 NAME="serial" VALUE="<%$serial%>"></TD>
     <TH>Class:</TH>
     <TD><SELECT MULTIPLE NAME="classes" size=<%scalar(keys %$classes) > $winsize ? $winsize : scalar(keys %$classes)%>>
 %       foreach my $class (sort keys %$classes){
