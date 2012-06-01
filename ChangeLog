@@ -28,6 +28,8 @@ Bugfixes:
                 transaction.
     + []	Fix deprecated use of qw() in device view for Perl 5.14 (cstamas)
     + []	Fix "Device Module Search" issue with searching on serial number.
+    + []        Fix error message during discovery to be more accurate and not
+                print variables that might be undef.
 
 1.1 (2011-03-31)
 Features:

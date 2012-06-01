@@ -1422,7 +1422,7 @@ sub create_device {
         
     if ($class eq 'SNMP::Info'){
         my $layers = $device->layers();
-        print "[$args{DestHost}]  Device Talks SNMP but only has layers $layers.  Skipping\n";
+        print "[$args{DestHost}]  Device talks SNMP but is not currently supported by SNMP::Info.  Skipping\n";
         return -1;
     }
 
