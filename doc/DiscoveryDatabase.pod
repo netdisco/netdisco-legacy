@@ -1,0 +1,85 @@
+=head1 Discovery Database
+
+These are some ideas that Bill had about how to handle having multiple sources
+of topology and neighbor information.
+
+One important distinction is that there are two bits of information here, which
+we're used to getting from one source:
+
+=over 4
+
+=item 1. This port is connected to that port
+
+=item 2. My neighbor's IP addresses are...
+
+=back
+
+The autodiscovery uses #2 to discover devices, and populates the remote_*
+columns with the topology information which is really #1.
+
+There are some topology discovery methods that don't give us #2 at all, but we
+can still use to get interconnectedness, e.g.:
+
+=over 4
+
+=item * STP "root port" -- at best, this gives us a MAC address of a neighbor.
+
+=item * Several vendors ship LLDP in a mode where we get the MAC address but not the IP address of the neighbor
+
+=back
+
+If we have two switches that we have discovered already, we can use these
+methods to determine how they're interconnected even though we couldn't use
+them for device discovery.
+
+An interesting aspect of having multiple potential sources for this info is:
+what if they conflict? E.g., CDP says that switch X is connected to switch Y on
+port P, while STP says that X is connected to Z on P. This is likely because
+switch Z is CDP-transparent. My idea for solving this is to give protocols
+priorities: CDP < LLDP < STP < manual config. (We can argue about the relative
+position of LLDP and STP.)
+
+You may have noticed "manual config" in there. Yes, netdisco-topology.txt can
+go away, replaced by "manual" entries in this topology database. This also
+means that we could build a GUI to help maintain the manual topology.
+
+With the set of CDP, LLDP, STP and manual config in mind, I think the columns
+of the topology discovery database are something like:
+
+=over 4
+
+
+=item * protocol
+
+=item * ip
+
+=item * port
+
+=item * instance
+
+=item * neighbor IP (can be NULL)
+
+=item * neighbor MAC (can be NULL)
+
+=item * neighbor other (can be NULL)
+
+=item * neighbor port info
+
+=back
+
+Note the instance. Imagine a network full of CDP speakers connected with
+CDP-transparent switches. That ends up meaning that each of the CDP speakers
+sees each of the others, so you have lots of CDP neighbors on one port. The
+current device_port table's remote_* fields can only handle one neighbor.
+
+The big open question is: what is it that takes the topology database and
+populates the remote_* fields from it? The key here is that when you get the
+topology discovery info, you may not *yet* be able to resolve it (e.g., you got
+a MAC address only). Once you discover the neighbor to whom that MAC address
+belongs, you can *then* resolve it into a connection. The easiest answer is
+"there is some uber process that resolves everything", but that significantly
+changes the netdisco usage model - I just want to "netdisco -d" a new device,
+not have to remember to "netdisco --uber-process" too. It's probably ok to
+attempt to re-resolve everything that's unresolved at the end of a discover
+(look for any of my MAC addresses in the 'neighbor mac' column).
+

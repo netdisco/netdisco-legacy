@@ -1,0 +1,46 @@
+=head1 IPv6 ArpNip
+
+There are two ways to use IETF MIBs to represent the IPv6 neighbor table:
+
+=over 4
+
+=item 1. RFC2465's IPV6-MIB::ipv6NetToMediaTable
+
+=item 2. RFC4293's IP-MIB::ipNetToPhysicalTable
+
+=back
+
+And, of course, Cisco has their own CISCO-IETF-IP-MIB::cInetNetToMediaTable ,
+which is based on an early draft of RFC4293.
+
+I think the steps we could take are:
+
+=over 4
+
+=item *
+
+In the default L3 code:
+
+try walking IP-MIB::ipNetToPhysicalTable and look for ipNetToPhysicalNetAddressType=InetAddressIpv6 ; if it's empty, try walking IPV6-MIB::ipv6NetToMediaTable
+
+=item *
+
+In the Cisco code:
+
+try walking IP-MIB::ipNetToPhysicalTable and look for ipNetToPhysicalNetAddressType=InetAddressIpv6 ; if it's empty, try walking CISCO-IETF-IP-MIB::cInetNetToMediaTable with cInetNetToMediaAddressType=InetAddressIpv6
+
+=back
+
+The problem with this approach is that the indexing is such that you can't get
+v6-only unless you walk each interface individually -- the index is [ ifIndex,
+addressType, address ] -- so we get all of the v4 entries at the same time as
+the v6 entries. Maybe this really means that we should do this differently --
+make an SNMP::Info method that returns both v4 and v6 entries, and do this by
+either walking the combined IP-MIB or walking both IPV6-MIB and older IP-MIB.
+
+There are some tricks to getting the returned value from an OID into an IPv6
+address. Bill wrote some of this code at an IETF meeting in Chicago (relatively
+useless info, I know, but it might help Bill find it again).
+
+postgres (8, anyway) inet and subnet fields don't mind whether it's a v6 or v4
+address.
