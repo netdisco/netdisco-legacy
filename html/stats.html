@@ -61,7 +61,7 @@ Statistics took <%$time9 - $time1 %> seconds to process.
 </TR>
 <TR>
     <TD><A HREF="http://www.perl.org">Perl</A> Version:</TD>
-    <TD><% join('.',map(ord,split(//,($^V)))) %> (<%$]%>)</TD>
+    <TD><% sprintf ("v%vd", $^V) %> (<%$]%>)</TD>
 </TR>
 <TR>
     <TD VALIGN=TOP><A HREF="http://www.postgresql.org">Postgres</A> Version:</TD>
