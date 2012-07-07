@@ -334,7 +334,7 @@ sub config {
     my @hash_refs_mult = qw/v3_user/;
 
     # Add custom types from caller outside netdisco
-    foreach my $type qw(booleans array_refs hash_refs array_refs_mult hash_refs_mult) {
+    foreach my $type (qw(booleans array_refs hash_refs array_refs_mult hash_refs_mult)) {
         eval "push(\@$type, \@{\$args{config}{\$type}});";
     }
 

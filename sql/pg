@@ -223,7 +223,7 @@ sub init {
 
     # UNIX
     if ($OS eq 'UNIX') {
-        foreach $user qw(postgres pgsql) {
+        foreach $user (qw(postgres pgsql)) {
             if (($SYS_DB_UID = getpwnam($user))) {
                 $SYS_DB_USER=$user;
                 last;
