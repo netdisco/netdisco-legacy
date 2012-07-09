@@ -1,0 +1,97 @@
+=head1 Wishlist
+
+=head2 Enhancements (less involved)
+
+=over 4
+
+=item * Inventory by Model + OS (744603)
+
+=item * Show port status changes not thru Netdisco Port Control (891560)
+
+=item * Ports in Cisco Portfast mode (896574)
+
+=item * Router interface (SVI?) control (982117)
+
+=item * Inventory canned searches for Nodes (988993)
+
+=item * Change port descr (or just use comment feature?) (1115058)
+
+=item * Network map by Vlan (or other) (1017449)
+
+=item * Use MAC Suck to update port status (1442329)
+
+=item * Support address ranges (etc) as well as CIDR in config (1604825) (1606309) (1811780)
+
+=item * Be smart about missing optional device info (1641847)
+
+=item * Retain reporting device for ARP entries (1670259)
+
+=item * Ship basic OUI info ourselves (1881336)
+
+=item * IPv6ArpNip
+
+=back
+
+=head2 Architecture (more work)
+
+=over 4
+
+=item * Allow CLI to perform same queries as Web UI (824523)
+
+=item * Support CGI, FCGI, etc, etc (2062645)
+
+=item * Job Queue management via CLI (836099)
+
+=item * Port-channel port memberships (891584)
+
+=item * Comments/custom field(s) for ports (1028312) (1124334) (1166156)
+
+=item * Locate a Node in real-time (1124341)
+
+=item * Better handling of clusters and stacks (eg serial nos) (1468145)
+
+=item * Better DiscoveryDatabase, such as
+
+=item * Collect Spanning Tree topology (1148846)
+
+=item * Allow pseudo-devices in topology (1595863) (2806898)
+
+=item * LLDP and more specifically what to do when LLDP and CDP disagree (booloo)
+
+=back
+
+=head2 User Interface
+
+=over 4
+
+=item * More colours for different device types (913089)
+
+=item * Icons for devices (and in map) (1158810)
+
+=item * Search on Port Name (descr) (1514491)
+
+=item * Print render CSS for Web UI (1596818)
+
+=item * Limit display of connected nodes (1690754)
+
+=item * Fancy port search queries (1699319)
+
+=item * Table column sorting (2818425)
+
+=item * A new interface, better styling (IPv6Freely)
+
+=back
+
+=head2 Potential Plugins
+
+=over 4
+
+=item * Interface graphing (740023)
+
+=item * RANCID or Cacti integration (just click throughs?) (886383) (1106505)
+
+=item * Front Panels (1811849)
+
+=item * User location infrastructure (the access-point stuff that Bill did at the IETF)
+
+=back
