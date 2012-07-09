@@ -1582,9 +1582,6 @@ sub find_neighbors {
             if (defined $remote_port) {
                 # get rid of any weird characters
                 $remote_port =~ s/[^\d\/\.,()\w:-]+//gi;
-
-                # Swap catalyst remote port as 2/1 to 2.1
-                $remote_port =~ s/\//\./ if ($remote_port =~ /^\d+\/\d+$/);
             } else {
                 print "[$ip]  No remote_port found for Port:$port connected to $remote_ip.\n";
             }

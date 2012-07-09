@@ -20,6 +20,7 @@ Features:
                 SNMP string when default timeout needs to be large.
 
 Bugfixes:
+    + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info
     * []        Report "Undiscovered neighbors" also showed neighbors advertising
                 an address not equal to their root_ip.
     + []	Change job log dir creation to use mkpath to resolve potential
