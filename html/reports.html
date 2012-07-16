@@ -254,7 +254,7 @@ $columns = [
         [ 'Remote IP', 'remote_ip' ],
         [ 'Remote Port', 'remote_port' ],
            ];
-$results = sql_rows('device_port p join device d using (ip) left join device_ip di on p.remote_ip = di.alias',
+$results = sql_rows('device_port p join device d using (ip)',
         [ 
             'd.name', 
             'd.ip',
@@ -263,7 +263,7 @@ $results = sql_rows('device_port p join device d using (ip) left join device_ip 
             'p.remote_ip',
             'p.remote_port',
         ],
-        { 'p.remote_ip' => 'IS NOT NULL', 'di.ip' => 'IS NULL' }, 0,
+        { 'p.remote_ip' => \\'NOT IN (SELECT ip AS dev_ips FROM device UNION SELECT alias FROM device_ip)' }, 0,
         'order by d.dns');
 
 foreach my $res (@$results) {
