@@ -2,6 +2,7 @@
 <A class="navbutton" HREF="#age">By Age</a>
 <A class="navbutton" HREF="#model">By Model</a>
 <A class="navbutton" HREF="#os">By OS</a>
+<A class="navbutton" HREF="#name">By Name</a>
 <A class="navbutton" HREF="#location">By Location</a>
 <A class="navbutton" HREF="#ssid">Wireless SSID</a>
 <A class="navbutton" HREF="#vlan">VLAN</a>
@@ -150,6 +151,13 @@ Total: <%$count%>
 </TR></TABLE>
 Total: <%$count%>
 
+<h2 class="subheader"><A NAME="name">By Name</A></h2>
+% if ($show_name) {
+<& SELF:show_name &>
+% } else {
+<A CLASS="navbutton" HREF="<%$r->uri%>?show_name=1#name">Show Inventory by Name</A>
+% }
+
 <h2 class="subheader"><A NAME="location">By Location</A></h2>
 % if ($show_loc) {
 <& SELF:show_loc &>
@@ -176,6 +184,7 @@ $age_type => 'last'
 $age_val  => 2
 $age_mul  => 'months'
 $age_bool => 'not in'
+$show_name => 0
 $show_loc => 0
 $show_ssid => 0
 $show_vlan => 0
@@ -187,13 +196,13 @@ $show_vlan => 0
 my $age = [];
 my $domain = $netdisco::CONFIG{domain};
 my $odd = 1;
-my ($arg_cmd,$arg_age_type,$count,$arg_show_loc);
+my ($arg_cmd,$arg_age_type,$count,$arg_show_name,$arg_show_loc);
 </%shared>
 %#
 %#
 %#
 <%init>
-$arg_cmd = $cmd; $arg_age_type = $age_type; $arg_show_loc = $show_loc;
+$arg_cmd = $cmd; $arg_age_type = $age_type; $arg_show_name = $show_name; $arg_show_loc = $show_loc;
 my $old_vendor = '';
 my $model_count = sql_rows('device',['vendor','model','count(*)'],
                            undef,undef,'GROUP by model,vendor');
@@ -376,6 +385,55 @@ $count = 0; $odd = 1; my $old_vlan = -1;
 </TR></TABLE>
 Total: <%scalar @m%>
 
+<A HREF="<%$r->uri%>" CLASS="navbutton">Hide</A>
+</%method>
+%#
+%# show_name() - Sorts and shows by name
+%#
+<%method show_name>
+<TABLE class="inv-main">
+<TR>
+    <TH>sysName</TH>
+    <TH>Location</TH>
+    <TH>IP Address</TH>
+    <TH>Vendor</TH>
+    <TH>Model</TH>
+</TR>
+<%perl>
+my $name_count = sql_rows('device',['location','dns','name','ip','vendor','model'],
+                        undef,undef,undef);
+$count = 0; $odd = 0; my $old_name = '';
+foreach my $row (sort
+    {
+        # Sort by Name => Location => IP Address => Vendor => Model
+        return $a->{name}     cmp $b->{name}     if $a->{name}     ne $b->{name};
+        return $a->{location} cmp $b->{location} if $a->{location} ne $b->{location};
+        return $a->{ip}       cmp $b->{ip}       if $a->{ip}       ne $b->{ip};
+        return $a->{vendor}   cmp $b->{vendor}   if $a->{vendor}   ne $b->{vendor};
+        return $a->{model}    cmp $b->{model}    if $a->{model}    ne $b->{model};
+    } @$name_count
+                ) {
+
+        $count += $row->{count};
+        $odd++ if $row->{name} ne $old_name;
+        $old_name = $row->{name};
+        my $ip = $row->{ip};
+</%perl>
+<TR>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$row->{name}|h%></A></TD>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?loc=<%$row->{location}||'IS NULL'|u%>&amp;e
+xact=1" TITLE="All devices at this location"><%$row->{location} || '[Not Set]'%></A></TD>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="device.html?ip=<%$row->{ip}|u%>" TITLE="Click to View Device"><%$ip|h%></A></TD>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>" TITLE="All devices from this vendor"><%$row->{vendor} || "Unknown"|h%></A></TD>
+    <TD CLASS="match-<%$odd%2%>"><A HREF="device_search.html?vendors=<%$row->{vendor}||'IS NULL'|u%>&amp;models=<%$row->{model}||'IS NULL'|u%>&amp;boolean=and" TITLE="All devices of this model"><%$row->{model} || "Unknown"|h%></A></TD>
+</TR>
+%                  } $odd++;
+<TR>
+    <TD CLASS="match-<%$odd%2%>" COLSPAN=3>&nbsp;</TD>
+    <TD CLASS="match-<%$odd%2%>">Total:</TD>
+    <TD CLASS="match-<%$odd%2%>"><%scalar(@$name_count)%></TD>
+</TR>
+</TABLE>
 <A HREF="<%$r->uri%>" CLASS="navbutton">Hide</A>
 </%method>
 %#
