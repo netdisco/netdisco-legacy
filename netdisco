@@ -2999,9 +2999,10 @@ sub store_interfaces {
 
     # Get SSIDs for wireless interfaces
     my $ssidlist = $device->i_ssidlist();
-    my ($ssidbcast, $channel, $power) = (undef, undef, undef);
+    my ($ssidbcast, $ssidmac, $channel, $power) = (undef, undef, undef, undef);
     if (defined($ssidlist)) {
         $ssidbcast = $device->i_ssidbcast();
+        $ssidmac = $device->i_ssidmac();
         $channel = $device->i_80211channel();
         $power = $device->dot11_cur_tx_pwr_mw();
     }
@@ -3023,6 +3024,7 @@ sub store_interfaces {
         $store{port}         = $port;
         $store{ssid}         = $ssidlist->{$ssididx};
         $store{broadcast}    = $ssidbcast->{$ssididx};
+        $store{bssid}        = $ssidmac->{$ssididx};
         insert_or_update('device_port_ssid', { 'ip' => $ip, 'port' => $store{port}, 'ssid' => $store{ssid} }, 
                          \%store );
     }

@@ -12,3 +12,6 @@ CREATE TABLE topology (
     dev2   inet not null,
     port2  text not null
 );
+
+-- Add "bssid" column to device_port_ssid table
+ALTER TABLE device_port_ssid ADD bssid macaddr;
