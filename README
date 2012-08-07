@@ -1043,6 +1043,11 @@ Config File
         VLANs listed here are overrided regardless of macsuck_all_vlans
         value.
 
+    macsuck_no_device_vlan
+        LIST:Strings. Comma separated list of hostname:vlan pairs containing
+        specific VLANs on specific hosts that should not be visited when
+        MACsucking.
+
     macsuck_timeout
         SECONDS. Timeout for devices when mac sucking.
 

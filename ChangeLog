@@ -21,6 +21,8 @@ Features:
                 timeout during discovery.  This speeds up finding the correct
                 SNMP string when default timeout needs to be large.
     * []        Add report "Inventory by Name", patch from Laurens Vets.
+    * []        Add config option for macsuck to ignore specific VLANs on 
+                specific devices (Peter Hicks)
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info
