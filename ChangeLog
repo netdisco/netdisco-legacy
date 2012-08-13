@@ -23,6 +23,8 @@ Features:
     * []        Add report "Inventory by Name", patch from Laurens Vets.
     * []        Add config option for macsuck to ignore specific VLANs on 
                 specific devices (Peter Hicks)
+    * []        Add config option for macsuck to ignore unnamed VLANs (Peter
+                Hicks)
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info

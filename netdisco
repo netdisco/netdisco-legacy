@@ -2159,10 +2159,21 @@ sub macsuck_vlans {
     {
         my $vlan_name = $vlan_names{$vlan} || '(Unnamed)';
 
-        if ((defined $CONFIG{macsuck_no_vlan} and (defined $CONFIG{macsuck_no_vlan}->{$vlan_name} || defined $CONFIG{macsuck_no_vlan}->{$vlan})) ||
-            (defined $CONFIG{macsuck_no_devicevlan} and 
-             ($CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan/ || $CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan_name/))) {
-            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
+        if (defined $CONFIG{macsuck_no_vlan} and (defined $CONFIG{macsuck_no_vlan}->{$vlan_name} || defined $CONFIG{macsuck_no_vlan}->{$vlan})) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_vlan).\n";
+            next;
+        }
+        if (defined $CONFIG{macsuck_no_devicevlan} and 
+             ($CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan/ || $CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan_name/)) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_devicevlan).\n";
+            next;
+        }
+        if ($CONFIG{macsuck_no_unnamed} and $vlan_name eq '(Unnamed)') {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_unnamed).\n";
+            next;
+        }
+        if ($vlan == 0 or $vlan > 4094) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped because it's invalid (valid range is 1..4094).\n";
             next;
         }
 

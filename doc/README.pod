@@ -1156,6 +1156,15 @@ default VLANs will not answer to SNMP, and Netdisco has to wait for them to time
 
 VLANs listed here are overrided regardless of L<macsuck_all_vlans> value.
 
+=item macsuck_no_devicevlan
+
+LIST:Strings.  Comma separated list of "hostname:VLAN" combinations to ignore when MACsucking.
+
+This option is similar to L<macsuck_no_vlan>, but only skips MACsucking for the given
+VLAN on the given device.
+
+VLANs listed here are overrided regardless of L<macsuck_all_vlans> value.
+
 =item macsuck_timeout
 
 SECONDS. Timeout for devices when mac sucking.
@@ -1170,6 +1179,13 @@ aren't in use on device ports is some how interfering.
 Setting this would revert macsuck to the same behavior as 0.93 and before.
 
 Does not override L<macsuck_no_vlan>.
+
+=item macsuck_no_unnamed
+
+BOOLEAN.  Set to true to skip MACsuck-ing on VLANs which have no name set.
+
+This option may be useful on Cisco Catalyst family devices where ports are a
+member of a VLAN which is not defined in the VLAN database.
 
 =item max_procs
 
