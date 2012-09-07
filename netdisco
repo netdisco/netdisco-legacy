@@ -3728,10 +3728,9 @@ sub dev_dump {
 
         foreach my $neighbor (sort {sort_ip} @$neighbors){
 
-            my $port = $neighbor->{port};
-            my $remote_ip = $neighbor->{remote_ip};
-            my $remote_port = $neighbor->{remote_port};
-            $remote_port = "" if !defined $remote_port;
+            my $port = $neighbor->{port} || 'unknown';
+            my $remote_ip = $neighbor->{remote_ip}; # should be defined, since we have 'remote_ip is not null' in our query
+            my $remote_port = $neighbor->{remote_port} || '';
             print "\tlink:$port,$remote_ip,$remote_port\n";
         }
     }
