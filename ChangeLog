@@ -39,6 +39,7 @@ Bugfixes:
     + []        Fix error message during discovery to be more accurate and not
                 print variables that might be undef.
     * []        Fix warnings about undef data when running netdisco -B
+    * []        VLAN inventory: with odd number of results, last row not displayed
 
 1.1 (2011-03-31)
 Features:

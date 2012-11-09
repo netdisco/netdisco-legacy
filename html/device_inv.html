@@ -356,7 +356,8 @@ $count = 0; $odd = 1; my $old_vlan = -1;
 </%perl>
 <TABLE CLASS="inv-cols">
 <TR>
-% my $m_half = int(scalar @m / 2);
+% my $total = scalar @m;                     # Number of elements
+% my $m_half = int($total / 2) + $total % 2; # Half the number, rounded (not truncated)
 % foreach my $h (0,1) {
     <TD>
         <TABLE CLASS="inv-main">
@@ -366,7 +367,10 @@ $count = 0; $odd = 1; my $old_vlan = -1;
             <TH>Device Count</TH>
             <TH>Port Count</TH>
         </TR>
-% foreach my $row (@m[($m_half*$h) .. ($m_half*($h+1)-1)]) {
+% my $start = $m_half * $h;              # Start is: 0 for first column, half way for second
+% my $end = ($h ? $total-1 : $m_half-1); # End is: half way - 1 for first column,  last element (zero based, so number of elements - 1) for second column
+
+% foreach my $row (@m[$start .. $end]) {
 %    # Change color if we change VLANs
 %    if ($row->{vlan} != $old_vlan) {
 %        $old_vlan = $row->{vlan};
