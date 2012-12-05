@@ -1954,7 +1954,7 @@ sub store_modules {
         $type = $e_type->{$key};
         # OID translation - SNMP::Info should do this
         #  but versions before 1.06 do not
-        if ($type =~ /^[0-9.]+$/) {
+        if (defined $type && $type =~ /^[0-9.]+$/) {
             my $trans = SNMP::translateObj($type);
             $type = $trans if defined($trans);
         }
