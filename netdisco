@@ -1342,12 +1342,14 @@ sub create_device {
     return undef unless defined $args{DestHost} and (defined $args{Community} || defined($args{SecLevel}));
 
     # Default Values
-    $args{Debug}         = $DEBUG;
-    $args{Version}       = $args{Version}       || $CONFIG{snmpver} || 2;
-    $args{Retries}       = $CONFIG{snmpretries} || 2   unless defined $args{Retries};
-    $args{Timeout}       = $CONFIG{snmptimeout} || 1000000 unless defined $args{Timeout};
-    $args{MibDirs}       = $CONFIG{mibdirs}            if     defined $CONFIG{mibdirs};
-    $args{BulkWalk}      = $CONFIG{bulkwalk_off} ? 0 : 1 if defined $CONFIG{bulkwalk_off};
+    $args{Debug}             = $DEBUG;
+    $args{Version}           = $args{Version}             || $CONFIG{snmpver} || 2;
+    $args{Retries}           = $CONFIG{snmpretries}       || 2   unless defined $args{Retries};
+    $args{Timeout}           = $CONFIG{snmptimeout}       || 1000000 unless defined $args{Timeout};
+    # netdisco.conf provides everything we need so ignore Net-SNMP configuration
+    $args{IgnoreNetSNMPConf} = $CONFIG{ignoresnmpconf}    || 1;
+    $args{MibDirs}           = $CONFIG{mibdirs}              if defined $CONFIG{mibdirs};
+    $args{BulkWalk}          = $CONFIG{bulkwalk_off} ? 0 : 1 if defined $CONFIG{bulkwalk_off};
     # Turn off bulkwalk automatically if we're using Net-SNMP 5.2.3 or 5.3.1.
     #  Even though the version numbers are now floats, previous
     #  versions reported as strings so we can't use "==".
