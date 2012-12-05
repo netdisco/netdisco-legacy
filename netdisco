@@ -2161,8 +2161,21 @@ sub macsuck_vlans {
     {
         my $vlan_name = $vlan_names{$vlan} || '(Unnamed)';
 
-        if (defined $CONFIG{macsuck_no_vlan} and (defined $CONFIG{macsuck_no_vlan}->{$vlan_name} || defined $CONFIG{macsuck_no_vlan}->{$vlan})){
-            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file.\n";
+        if (defined $CONFIG{macsuck_no_vlan} and (defined $CONFIG{macsuck_no_vlan}->{$vlan_name} || defined $CONFIG{macsuck_no_vlan}->{$vlan})) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_vlan).\n";
+            next;
+        }
+        if (defined $CONFIG{macsuck_no_devicevlan} and 
+             ($CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan/ || $CONFIG{macsuck_no_devicevlan} =~ /$hostname:$vlan_name/)) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_devicevlan).\n";
+            next;
+        }
+        if ($CONFIG{macsuck_no_unnamed} and $vlan_name eq '(Unnamed)') {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped by configuration file (macsuck_no_unnamed).\n";
+            next;
+        }
+        if ($vlan == 0 or $vlan > 4094) {
+            print "[$hostname] VLAN:$vlan_name ($vlan) Skipped because it's invalid (valid range is 1..4094).\n";
             next;
         }
 
@@ -3717,10 +3730,9 @@ sub dev_dump {
 
         foreach my $neighbor (sort {sort_ip} @$neighbors){
 
-            my $port = $neighbor->{port};
-            my $remote_ip = $neighbor->{remote_ip};
-            my $remote_port = $neighbor->{remote_port};
-            $remote_port = "" if !defined $remote_port;
+            my $port = $neighbor->{port} || 'unknown';
+            my $remote_ip = $neighbor->{remote_ip}; # should be defined, since we have 'remote_ip is not null' in our query
+            my $remote_port = $neighbor->{remote_port} || '';
             print "\tlink:$port,$remote_ip,$remote_port\n";
         }
     }

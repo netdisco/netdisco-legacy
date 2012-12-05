@@ -21,6 +21,10 @@ Features:
                 timeout during discovery.  This speeds up finding the correct
                 SNMP string when default timeout needs to be large.
     * []        Add report "Inventory by Name", patch from Laurens Vets.
+    * []        Add config option for macsuck to ignore specific VLANs on 
+                specific devices (Peter Hicks)
+    * []        Add config option for macsuck to ignore unnamed VLANs (Peter
+                Hicks)
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info
@@ -34,6 +38,8 @@ Bugfixes:
     + []	Fix "Device Module Search" issue with searching on serial number.
     + []        Fix error message during discovery to be more accurate and not
                 print variables that might be undef.
+    * []        Fix warnings about undef data when running netdisco -B
+    * []        VLAN inventory: with odd number of results, last row not displayed
 
 1.1 (2011-03-31)
 Features:
