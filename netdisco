@@ -2415,11 +2415,7 @@ sub parallel_init {
     }
     $pm = new Parallel::ForkManager($nprocs);
     print "Parallel mode enabled, forking $nprocs processes.\n";
-    #HACK to prevent SNMP::Info load mib-init in each forked process
-    my $dummy = new SNMP::Info( DestHost    => 'localhost',
-                                Version     => 1,
-                                AutoSpecify => 0,
-                                Debug       => 0,);
+
     sql_disconnect();   # parent shouldn't have a database handle
     set_status("parent forking %d children", $nprocs);
     return $pm;
