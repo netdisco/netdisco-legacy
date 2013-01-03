@@ -343,7 +343,7 @@ if ($ip) {
 
         # Get Nodes Attached
         my $nodes = sql_rows('node',
-            ['mac','active','extract (epoch from time_first) as time_first',
+            ['mac','active','vlan','extract (epoch from time_first) as time_first',
              'extract (epoch from time_last) as time_last'],
             {'switch' => $switch, 'port' => $port } );
         $portreq->{macs} = (defined $nodes and scalar @$nodes) ? $nodes : undef;
@@ -1167,6 +1167,8 @@ foreach my $port (sort sort_port @$db_ports){
         my $mac       = $node->{mac};
         my $active    = $node->{active};
         my $time_last = $node->{time_last};
+        my $show_node_vlan = ($node->{vlan} > 0) && ($node->{vlan} ne $port->{vlan});
+        my $nodevlan = $show_node_vlan ? " (on vlan $node->{vlan})" : "";
 
         # Connected Device Age Stamp?
         my $age = $now - $time_last;
@@ -1178,7 +1180,7 @@ foreach my $port (sort sort_port @$db_ports){
         $m->out("<BR>\n") if ((defined $remote_ip or @$portssids) and $seen_macs == 0);
         $seen_macs++;
 </%perl>
-        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%></A><%$show_age%><% $active ? '' : '*'%><BR>
+        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%><% $nodevlan%></A><%$show_age%><% $active ? '' : '*'%><BR>
 <%perl>
         # Show node_ips?
         if ($arg_node_ip eq 'on' and defined $node_ips->{$mac}) {

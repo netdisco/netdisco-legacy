@@ -4,6 +4,7 @@
 
 1.2 ()
 Features:
+    * [3598045] Collect VLAN in macsuck (Jiri Dvorak)
     * []        Capture BSSID, per AP MAC, associated with wireless SSID in
                 device_port_ssid table if available.
     * []        Add config directive "reverse_lookup_ipv6" to control whether 

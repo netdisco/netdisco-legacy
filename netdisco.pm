@@ -166,7 +166,7 @@ sub add_arp {
         { 'time_last' => scalar(localtime), 'active' => 1, %hash });
 }
 
-=item add_node(mac,ip,port) 
+=item add_node(mac,ip,port,vlan)
 
 Manipulates entries in C<node> table.
 
@@ -177,17 +177,17 @@ Adds a new entry or time stamps matching old entry.
 =cut
 
 sub add_node {
-    my ($mac,$ip,$port) = @_;
+    my ($mac,$ip,$port,$vlan) = @_;
     my $dbh = &dbh;
 
     my $oui = substr($mac,0,8);
     # Set the active flag to false to archive all other instances
     #   of this mac address
-    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND active AND NOT (switch = '$ip' AND port = '$port')/);
+    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND active AND NOT (switch = '$ip' AND port = '$port' AND vlan = '$vlan')/);
 
     # Add this entry to node table. 
-    my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port );
-    my %set = ('time_last' => 'now', 'active' => 1, 'oui' => $oui);
+    my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port, 'vlan' => $vlan);
+    my %set = ('vlan' => $vlan, 'time_last' => 'now', 'active' => 1, 'oui' => $oui);
     # if there was another node, set time_recent too.
     # NOTE: $other might be "0E0", so be careful how you test it.
     if ($other != 0) {

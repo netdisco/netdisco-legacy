@@ -2198,7 +2198,7 @@ sub macsuck_vlans {
         } else {
             $vlan_device->update(Community => $comm . '@' . $vlan);
         }
-        $nodes += walk_fwtable($vlan_device,$dbports,$interfaces,$fw_cache);
+        $nodes += walk_fwtable($vlan_device,$dbports,$interfaces,$fw_cache,$vlan);
     }
 
     return $nodes;
@@ -2289,7 +2289,8 @@ sub mac_savecache {
             my $macs = $fw_cache->{$ip}->{$port};
             print "  $ip -> $port : ", scalar keys %$macs, " nodes\n" if $DEBUG;
             foreach my $mac (keys %$macs){
-                add_node($mac,$ip,$port); 
+                my $vlan = $fw_cache->{$ip}->{$port}->{$mac};
+                add_node($mac,$ip,$port,$vlan);
             }
         }
     }
@@ -3214,11 +3215,12 @@ Returns the number of entries fetched.
 =cut
 
 sub walk_fwtable {
-    my ($device,$dbports,$interfaces,$fw_cache) = @_;
+    my ($device,$dbports,$interfaces,$fw_cache,$comm_vlan) = @_;
 
     my $ip = $device->{ip};
     my $fw_mac     = $device->fw_mac();
     my $fw_port    = $device->fw_port();
+    my $fw_vlan    = $device->qb_fw_vlan();
     my $bp_index   = $device->bp_index();
     my $nodes = 0;
 
@@ -3229,6 +3231,7 @@ sub walk_fwtable {
     foreach my $fw_index (keys %$fw_mac){    
         my $mac    = $fw_mac->{$fw_index};
         my $bp_id  = $fw_port->{$fw_index};
+        my $vlan   = $fw_vlan->{$fw_index} || $comm_vlan || '0';
 
         $nodes++;
 
@@ -3323,10 +3326,10 @@ sub walk_fwtable {
         next if uc($mac) eq 'FF:FF:FF:FF:FF:FF'; 
 
         if ($DEBUG) { 
-            print "  $mac: $bp_id -> $iid -> $port\n";
+            print "  $mac: $bp_id -> $iid -> $port -> vlan $vlan\n";
         }
-        
-        $fw_cache->{$ip}->{$port}->{$mac}++;
+
+        $fw_cache->{$ip}->{$port}->{$mac} = $vlan;
     }
 
     return $nodes;
