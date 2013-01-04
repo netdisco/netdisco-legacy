@@ -17,15 +17,16 @@ $archive    => 'off'
 $node_ip    => 'on'     # Show the IPs used by each MAC
 $node_dns   => 'on'     # Resolve IPs of connected devices
 $node_nbt   => 'on'     # Show the NetBIOS Name used by each MAC
+$node_ssid  => 'on'     # Show the SSID for wireless nodes
 $timecount  => 3        # Ports that have been down for at least this many
 $timeunit   => 'months' # time units are considered to be "free"
 </%args>
 <%shared>
-my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip, $model, $arg_ports,
-    $arg_node_dns,$arg_node_nbt,$dns,$vendor,$want_web_link,$web_dns,
-    $arg_timecount,$arg_timeunit);
+my ($arg_age,$arg_arch,$device,$devip,$arg_node_ip,$arg_node_ssid,$model,
+    $arg_ports,$arg_node_dns,$arg_node_nbt,$dns,$vendor,$want_web_link,
+    $web_dns,$arg_timecount,$arg_timeunit);
 my $valid_time_units = ['days', 'weeks', 'months', 'years'];
-my $db_ports = []; my $node_ips = {}; my $node_nbts = {};
+my $db_ports = []; my $node_ips = {}; my $node_nbts = {}; my $node_ssids = {};
 my @arg_port;
 my $domain = $netdisco::CONFIG{domain};
 my $now    = time;
@@ -226,7 +227,7 @@ my %device_info = (
 <%init>
 #  Parsing of Arguments
 $arg_age  = $device_age; $arg_arch = $archive; 
-@arg_port = @port; $arg_node_ip = $node_ip;
+@arg_port = @port; $arg_node_ip = $node_ip; $arg_node_ssid = $node_ssid;
 $arg_node_dns = $node_dns; $arg_node_nbt = $node_nbt;
 $arg_ports = $ports;
 $arg_timecount = $timecount; $arg_timeunit = $timeunit;
@@ -379,6 +380,7 @@ if ($ip) {
             my $mac = $node->{mac};
             $node_ips->{$mac}++;
             $node_nbts->{$mac}++;
+            $node_ssids->{$mac}++;
         }
 
         # Add addresses to display of port name
@@ -425,6 +427,22 @@ if ($ip) {
             my $mac = $macnbt->{mac};
             push ( @{$node_nbts->{$mac}},$macnbt);
 
+        }
+    }
+
+    # Get SSID of connected nodes
+    if ($node_ssid eq 'on'){
+        my @macs = keys %$node_ssids;
+        my $ssids = sql_rows('node_wireless',['mac','ssid'],
+                           {mac => [\@macs] }
+                          );
+        $node_ssids = {};
+        # Push SSID into list in %node_ssids hash
+        foreach my $macssid (@$ssids){
+            my $mac = $macssid->{mac};
+            if ( $macssid->{ssid} ne '' ) {
+                push ( @{$node_ssids->{$mac}},$macssid);
+            }
         }
     }
 
@@ -1169,6 +1187,7 @@ foreach my $port (sort sort_port @$db_ports){
         my $time_last = $node->{time_last};
         my $show_node_vlan = ($node->{vlan} > 0) && ($node->{vlan} ne $port->{vlan});
         my $nodevlan = $show_node_vlan ? " (on vlan $node->{vlan})" : "";
+        my $nodessid = "";
 
         # Connected Device Age Stamp?
         my $age = $now - $time_last;
@@ -1179,8 +1198,18 @@ foreach my $port (sort sort_port @$db_ports){
         next unless ($active or $arg_arch eq 'on');
         $m->out("<BR>\n") if ((defined $remote_ip or @$portssids) and $seen_macs == 0);
         $seen_macs++;
+
+        # Show node_ssid?
+        if ($arg_node_ssid eq 'on' and defined $node_ssids->{$mac}) {
+            $nodessid = " (SSID";
+            foreach my $ssid (sort @{$node_ssids->{$mac}}) {
+                $nodessid = $nodessid . " " . $ssid->{ssid};
+            }   # /each node_ssid
+            $nodessid = $nodessid . ")";
+        } # /if node_ssid
+
 </%perl>
-        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%><% $nodevlan%></A><%$show_age%><% $active ? '' : '*'%><BR>
+        <A HREF="node.html?node=<% $mac |u %>" TITLE="Node Info"><% $mac%><% $nodevlan%><% $nodessid%></A><%$show_age%><% $active ? '' : '*'%><BR>
 <%perl>
         # Show node_ips?
         if ($arg_node_ip eq 'on' and defined $node_ips->{$mac}) {

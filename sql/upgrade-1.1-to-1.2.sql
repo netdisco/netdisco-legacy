@@ -21,3 +21,9 @@ ALTER TABLE node ADD vlan text default '0';
 
 alter table node drop constraint node_pkey;
 alter table node add primary key (mac, switch, port, vlan);
+
+-- Add "ssid" column to node_wireless table
+ALTER TABLE node_wireless ADD ssid text default '';
+
+alter table node_wireless drop constraint node_wireless_pkey;
+alter table node_wireless add primary key (mac, ssid);

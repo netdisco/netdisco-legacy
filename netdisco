@@ -2228,6 +2228,7 @@ sub wireless_client_info {
     my $cd11_txpkt = $device->cd11_txpkt();
     my $cd11_rxbyte = $device->cd11_rxbyte();
     my $cd11_txbyte = $device->cd11_txbyte();
+    my $cd11_ssid = $device->cd11_ssid();
 
     sql_begin(['node_wireless']);
     foreach my $key (keys %$cd11_txrate) {
@@ -2249,6 +2250,7 @@ sub wireless_client_info {
         $store{rxbyte} = $cd11_rxbyte->{$key};
         $store{txbyte} = $cd11_txbyte->{$key};
         $store{time_last} = scalar(localtime);
+        $store{ssid} = $cd11_ssid->{$key} || 'unknown';
         insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}}, \%store);
     }
     sql_commit();
