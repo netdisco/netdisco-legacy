@@ -27,6 +27,8 @@ Features:
                 specific devices (Peter Hicks)
     * []        Add config option for macsuck to ignore unnamed VLANs (Peter
                 Hicks)
+    * []        Ignore devices with vendor "netdisco" - support for pseudo
+                devices to interconnect discovered devices/ports
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info

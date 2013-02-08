@@ -1063,6 +1063,22 @@ sub ok_to {
     my $no = $what . "_no";
     my $only = $what . "_only";
     
+    my $ip;
+    if (ref {} eq ref $dev) {
+        # Passed a sql_hash from the device table
+        $ip = $dev->{ip};
+    }
+    else {
+        # Passed as simple hostname/IP
+        $ip = &getip($dev);
+    }
+
+    my $vendor = sql_scalar('device',['vendor'],{'ip'=>$ip});
+    if ($vendor and $vendor eq 'netdisco')  {
+        print "[$name/$ip] Excluded from $what - is a pseudo device.\n";
+        return 0;
+    }
+
     if (in_device($dev,$CONFIG{$no}) ||
         ($CONFIG{$only} && !in_device($dev,$CONFIG{$only}))) {
         print "[$name] Excluded from $what in config file.\n";
@@ -1073,15 +1089,6 @@ sub ok_to {
     if ($CONFIG{$min_age}) {
         my $col = sprintf("extract( epoch from (age(now(), last_%s) ) )", $what);
         my $val = $CONFIG{$min_age};
-        my $ip;
-
-        # Passed a sql_hash from the device table
-        if (ref($dev) eq 'HASH'){
-            $ip     = $dev->{ip};
-        # Passed as simple hostname/IP
-        } else {
-            $ip     = &getip($dev);
-        }
         my $res = sql_scalar('device',[$col],{'ip'=>$ip});
         if ($res and $res < $val) {
             printf("[%s] skipped: last %s was %d seconds ago, which is less than specified in config file (%s = %s).\n",
