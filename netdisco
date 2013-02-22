@@ -2482,13 +2482,13 @@ sub dispatcher {
                 }
                 exit;
             }
+            my $offset = $i;
             while (1) {
                 set_status("worker %d looking for %s job", $i + 1, $action);
                 # Limit how many rows get locked, use offset to try and prevent
                 # collision.  Don't use ORDER BY as we want unordered data to
                 # spread requests across network.
                 sql_begin();
-                my $offset = $i;
                 my $sql = qq/LIMIT 1 OFFSET $offset FOR UPDATE/;
                 my $dev = sql_hash('process',['controller','action','device'],
                         {'controller' => $controller,

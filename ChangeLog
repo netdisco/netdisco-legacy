@@ -44,6 +44,8 @@ Bugfixes:
                 print variables that might be undef.
     * []        Fix warnings about undef data when running netdisco -B
     * []        VLAN inventory: with odd number of results, last row not displayed
+    * []        Fix infinite loop of later worker if earlier worker dies
+                before completing all his work.
 
 1.1 (2011-03-31)
 Features:
