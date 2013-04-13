@@ -30,6 +30,7 @@ Features:
     * []        Ignore devices with vendor "netdisco" - support for pseudo
                 devices to interconnect discovered devices/ports
     * []        Improved "multiple nodes on port" display (N. Bernstein)
+    * []        Default to _not_ vacuum db tables. Opt 'vacuum' to enable.
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info
