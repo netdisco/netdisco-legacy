@@ -29,6 +29,7 @@ Features:
                 Hicks)
     * []        Ignore devices with vendor "netdisco" - support for pseudo
                 devices to interconnect discovered devices/ports
+    * []        Improved "multiple nodes on port" display (N. Bernstein)
 
 Bugfixes:
     + [3541443] Remove port rename from find_neighbors() handle in SNMP::Info

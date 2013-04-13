@@ -539,11 +539,16 @@ foreach my $result (@sort_matches){
    my $vlan = $result->{vlan};
    $dns = defined $dns ? $dns : $ip;
    $dns =~ s/\Q$netdisco::CONFIG{domain}\E//;
-   $dns .= " ($port)" if defined $port;
+   if (defined $port && !exists $where->{count}) {
+    $dns .= " ($port)" ;
+   }
 </%perl>
     <TR>
 % if (defined $vlan) { # set up by specific=vlan_dev
         <TD CLASS="match-<%$count%2%>"><A HREF="device_search.html?specific=vlan&vlan=<%$vlan|u%>&ip=<%$ip|u%>&dns=<%$dns|u%>"><% $dns %></A></TD>
+% }
+% elsif (exists $where->{count}) { # set up by specific =~ /multiple/i
+        <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%>"><% $dns %></A></TD>
 % }
 % else { # general case
         <TD CLASS="match-<%$count%2%>"><A HREF="device.html?ip=<%$ip|u%><% defined $port ? '&port=' : ''%><% $port|u %>"><% $dns %></A></TD>
@@ -557,6 +562,8 @@ foreach my $result (@sort_matches){
         # Column Specfic stuff
         if ($col eq 'remote_ip') {
             $val = "<A HREF=\"node.html?node=$val\">$val</A>";
+        } elsif ($col eq 'port') {
+            $val = "<A HREF=\"device.html?ip=$ip&port=$port\">$val</A>";
         }
 </%perl>
        <TD CLASS="match-<%$count%2%>"><%$val%></TD>
