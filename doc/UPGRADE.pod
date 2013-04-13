@@ -35,6 +35,29 @@ sections.
 
 =over
 
+=item v1.1 -> 1.2
+
+=over
+
+=item Update Database
+
+You will have to run the following command to add new tables and modify existing
+ones.
+
+ cd /usr/local/netdisco/sql
+ ./pg upgrade-1.1-to-1.2.sql
+
+=item SNMP::Info
+
+Please make sure you have the newest verison of SNMP::Info available, version
+3.01 minimum.
+
+ perl -MCPAN -e shell install SNMP::Info
+
+=back
+
+=over
+
 =item v1.0 -> 1.1
 
 =over
@@ -262,6 +285,8 @@ settings right for all the C<session_*> directives.
 =item GraphViz
 
 Make sure you have GraphViz 0.9 installed.
+
+=back
 
 =back
 

@@ -1,6 +1,6 @@
 NAME
 
-    Netdisco 1.1 - README
+    Netdisco 1.2 - README
 
 AUTHOR
 
@@ -1032,8 +1032,8 @@ Config File
         "bulkwalk_no" for syntax.
 
     macsuck_no_vlan
-        LIST:Strings. Comma separated list of VLANs not to visit when
-        MACsucking. Both VLAN names and numbers (VIDs) are allowed.
+        LIST:Strings. Comma separated list of VLAN names not to visit when
+        MACsucking.
 
         This option was used to speed up MACsucking on certain Cisco
         Catalyst family devices where you have to connect to each VLAN with
@@ -1043,10 +1043,15 @@ Config File
         VLANs listed here are overrided regardless of macsuck_all_vlans
         value.
 
-    macsuck_no_device_vlan
-        LIST:Strings. Comma separated list of hostname:vlan pairs containing
-        specific VLANs on specific hosts that should not be visited when
-        MACsucking.
+    macsuck_no_devicevlan
+        LIST:Strings. Comma separated list of "hostname:VLAN" combinations
+        to ignore when MACsucking.
+
+        This option is similar to macsuck_no_vlan, but only skips MACsucking
+        for the given VLAN on the given device.
+
+        VLANs listed here are overrided regardless of macsuck_all_vlans
+        value.
 
     macsuck_timeout
         SECONDS. Timeout for devices when mac sucking.
@@ -1063,6 +1068,14 @@ Config File
         before.
 
         Does not override macsuck_no_vlan.
+
+    macsuck_no_unnamed
+        BOOLEAN. Set to true to skip MACsuck-ing on VLANs which have no name
+        set.
+
+        This option may be useful on Cisco Catalyst family devices where
+        ports are a member of a VLAN which is not defined in the VLAN
+        database.
 
     max_procs
         INTEGER. The number of simultaneous processes to use when collecting
@@ -1318,11 +1331,6 @@ Config File
         INT. Settings for 'Timeout' field passed to SNMP::Session.
         Micro-seconds before retry, Default 1000000 micro-seconds = 1
         second.
-
-    snmpdiscover_timeout
-        INT. Overrides the setting for 'Timeout' field passed to SNMP::Session
-        when guessing the SNMP string for a device. Not set by default, same
-        format as snmptimeout.
 
     snmpretries
         INT. Settings for 'Retries' field passed to SNMP::Session
@@ -1671,14 +1679,6 @@ Config File
 
         Linking Netdisco against external graphing tools requires a small
         amount of programming. This is not in the scope of this manual.
-
-    reverse_lookup_ipv6
-        BOOLEAN. Controls whether Netdisco should do reverse DNS lookups for 
-        IPv6 addresses. Since it's common for IPv6 enabled hosts to have 
-        multiple addresses (link-local, global, possibly temporary addresses 
-        when RFC4941 Privacy Extensions are used), enabling reverse lookups
-        can slow down loading of web pages considerably.
- 
 
 DESIGN
 

@@ -4,7 +4,7 @@ Netdisco INSTALL -- Instructions for setting up the Netdisco application.
 
 =head1 VERSION
 
-Netdisco 1.1
+Netdisco 1.2
 
 =head1 AUTHOR
 
@@ -570,7 +570,7 @@ You have four different options in installing SNMP::Info
 
 Download newest version from L<http://snmp-info.sourceforge.net>
 
-    tar xvfz SNMP-Info-1.x.tar.gz
+    tar xvfz SNMP-Info-3.01.tar.gz
     cd SNMP-Info-1.x
     perl Makefile.PL
     make install

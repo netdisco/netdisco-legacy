@@ -26,7 +26,7 @@ use POSIX qw/:errno_h setsid/;  # for Admin Daemon
 use Compress::Zlib;
 use File::Path;
 use netdisco qw/:all/;  
-tryuse('SNMP::Info', ver => '2.04', die => 1);
+tryuse('SNMP::Info', ver => '3.01', die => 1);
 
 $| = 1;
 
@@ -42,7 +42,7 @@ use vars qw/$DEBUG %CONFIG %Discovered %Discovered_Alias @Discover_Queue %NoCDP 
             @OldSTDOUT @LogFH @LogFile %DeviceTopo %args $configfile $BatchMode $Log
             $New_Only $VERSION $DaemonMode $nprocs $controller/;
 
-$VERSION = '1.1';
+$VERSION = '1.2';
 %Discovered = ();
 %Discovered_Alias = ();
 @Discover_Queue = ();

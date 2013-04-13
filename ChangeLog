@@ -2,7 +2,7 @@
 # netdisco.org
 # $Id$
 
-1.2 ()
+1.2 (2013-04-13)
 Features:
     * [3598045] Collect VLAN in macsuck (Jiri Dvorak)
     * [3598089] Collect SSID in macsuck (Jiri Dvorak)

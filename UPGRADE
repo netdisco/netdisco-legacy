@@ -1,13 +1,17 @@
 NAME
+
     Netdisco UPGRADE - Instructions on Upgrading between versions.
 
 AUTHOR
+
     Max Baker
 
 SUPPORT
+
     See INSTALL or README or <http://netdisco.org>
 
 UPGRADING
+
     Here are some hints for upgrading between versions of Netdisco.
 
     FIRST! Go read below where it says "Backup Database" and "Backup
@@ -28,209 +32,232 @@ UPGRADING
     Upgrade Procedures" sections.
 
 VERSION SPECIFIC NOTES
-    v1.0 -> 1.1
+
+    v1.1 -> 1.2
 
         Update Database
             You will have to run the following command to add new tables and
             modify existing ones.
 
              cd /usr/local/netdisco/sql
-             ./pg upgrade-1.0-to-1.1.sql
-
-    v0.95 -> 1.0
-
-        New Perl Modules
-              Parallel::ForkManager
-              Net::LDAP (optional for LDAP authentication)
-              Net::SSLeay (optional for encrypted LDAP authentication)
-              IO::Socket::SSL (optional for encrypted LDAP authentication)
-
-        Update Database
-            You will have to run the following command to add new tables and
-            modify existing ones.
-
-             cd /usr/local/netdisco/sql
-             ./pg upgrade-0.95-to-1.0.sql
-
-            Note that it is safe to run the upgrade.sql scripts more than
-            once (in case you are running a CVS or RC version). Also note
-            that if you are upgrading from 0.94, you must run
-            "upgrade-0.94-to-0.95.sql" first.
-
-    v.0.94 -> 0.95
-
-        New and Updated Perl Modules
-            This version of Netdisco is based around the new API for the
-            Graph module, so you need to have version 0.50 or greater and
-            GraphViz 2.02 or greater.
-
-            Also we are now using the Net::NBName module to scan nodes for
-            netbios information, and this module must be installed.
-
-             perl -MCPAN -e shell
-                    install Net::NBName
-                    install Graph
-                    install GraphViz
-
-            You should update all the Perl modules listed in INSTALL as
-            well.
+             ./pg upgrade-1.1-to-1.2.sql
 
         SNMP::Info
             Please make sure you have the newest verison of SNMP::Info
-            available, version 1.04 minimum.
+            available, version 3.01 minimum.
 
-             perl -MCPAN -e shell
-                    install SNMP::Info
+             perl -MCPAN -e shell install SNMP::Info
 
-        New SQL script
-            The pg_all, pg_init, pg_back, and pg_run commands have been
-            rolled into one new command : "sql/pg". This new command will
-            read the command line for arguments and then parse netdisco.conf
-            for the database user and password. Run "sql/pg --help" for more
-            options.
+        v1.0 -> 1.1
 
-        Database Upgrades
-            Now would be a great time to upgrade to Postgres 8.x if you
-            haven't already. There are some major speed, memory, and storage
-            benefits, and there is no INDEX bloat problem. Upgrading from
-            7.x does require a data base dump/restore. See Postgres
-            documentation and the "sql/pg_dump" command that you already
-            used to make a backup. Follow the instructions in INSTALL and
-            re-install the database related Perl modules after changing
-            versions.
+            Update Database
+                You will have to run the following command to add new tables
+                and modify existing ones.
 
-            You will have to run the following command to add new tables and
-            modify existing ones.
+                 cd /usr/local/netdisco/sql
+                 ./pg upgrade-1.0-to-1.1.sql
 
-             cd /usr/local/netdisco/sql
-             ./pg upgrade-0.94-to-0.95.sql
+        v0.95 -> 1.0
 
-            Note that it is safe to run the upgrade.sql scripts more than
-            once (in case you are running a CVS or RC version). Also note
-            that if you are upgrading from 0.93 or older, you must run
-            "upgrade-0.93-to-0.94.sql" first.
+            New Perl Modules
+                  Parallel::ForkManager
+                  Net::LDAP (optional for LDAP authentication)
+                  Net::SSLeay (optional for encrypted LDAP authentication)
+                  IO::Socket::SSL (optional for encrypted LDAP authentication)
 
-        Security Warning
-            WARNING! There is a potential community string exposure when
-            Netdisco is auto-discovering network equipment. If a malicious
-            host were to implement CDP and Netdisco were to discover that
-            host, Netdisco would send all read-only community strings to
-            that device in an attempt to add it to the topology.
+            Update Database
+                You will have to run the following command to add new tables
+                and modify existing ones.
 
-            To avoid this problem, limit the address range that netdisco
-            will discover or disable CDP and similar discovery protocols
-            from your end-ports. Be aware that in configurations with IP
-            phones, CDP may be necessary for certain aspects of phone
-            support. See "Security Warning" in README for more information.
+                 cd /usr/local/netdisco/sql
+                 ./pg upgrade-0.95-to-1.0.sql
 
-    v0.93 -> 0.94
+                Note that it is safe to run the upgrade.sql scripts more
+                than once (in case you are running a CVS or RC version).
+                Also note that if you are upgrading from 0.94, you must run
+                "upgrade-0.94-to-0.95.sql" first.
 
-        Autodetection of Uplink Ports
-            Macsuck will now autodetect some uplink ports. If it sees the
-            MAC addres of a known switch port or router, it will not collect
-            mac addresses on that port.
+        v.0.94 -> 0.95
 
-            Start checking the logs from your macwalk device (you can do it
-            from the web page now) and look for the uplink warnings. Fix
-            your topology file to match.
+            New and Updated Perl Modules
+                This version of Netdisco is based around the new API for the
+                Graph module, so you need to have version 0.50 or greater
+                and GraphViz 2.02 or greater.
 
-        SNMP::Info
-            You will need SNMP::Info v0.9 in order to support the new
-            netdisco-mibs package.
-
-        Database Upgrades
-            Now would be a great time to upgrade to Postgres 7.4 if you
-            haven't already. There are some great speed benefits, and there
-            is no INDEX bloat problem. Upgrading from 7.2 or 7.3 does
-            require a data base dump/restore. See Postgres documentation.
-
-            You will have to run the following command to add new tables and
-            modify existing ones.
-
-             cd /usr/local/netdisco/sql
-             ./pg_run upgrade-0.93-to-0.94.sql
-
-            Note that it is safe to run the upgrade.sql scripts more than
-            once (in case you are running a CVS or RC version).
-
-        GraphViz
-
-            Program
-                Make sure you have a relatively new version. If you get an
-                error similar to
-
-                  Creating CMAP : /usr/local/netdisco/html/netmap.map
-                    warning, language cmap not recognized, use one of: ps hpgl pcl mif...
-
-                You need a newer version of GraphViz
-
-            GraphViz.pm 2.01
-                The newest Perl interface to GraphViz (non-dependent on the
-                GraphViz release) has some better client map interfaces for
-                the Network Graph.
-
-                Please make sure this newest version is installed.
+                Also we are now using the Net::NBName module to scan nodes
+                for netbios information, and this module must be installed.
 
                  perl -MCPAN -e shell
-                    install GraphViz
+                        install Net::NBName
+                        install Graph
+                        install GraphViz
 
-                Double check the version.
+                You should update all the Perl modules listed in INSTALL as
+                well.
 
-                 perl -MGraphViz -e 'print $GraphViz::VERSION'
+            SNMP::Info
+                Please make sure you have the newest verison of SNMP::Info
+                available, version 1.04 minimum.
 
-        Perl Modules
-            A lot of the Perl modules that Netdisco depends on have released
-            newer (better) versions. Go to the INSTALL and follow Part 8.1
-            "Perl Modules and Mason". If you use CPAN, it will upgrade all
-            the dependency modules for you too.
+                 perl -MCPAN -e shell
+                        install SNMP::Info
 
-        Bay Switches
-            If you have bay switches, note that the naming scheme for the
-            ports has changed from 1 to 1.1 as they were folded into the new
-            Nortel classes. The above upgrade script will do the renaming
-            for you, so you won't lose data.
+            New SQL script
+                The pg_all, pg_init, pg_back, and pg_run commands have been
+                rolled into one new command : "sql/pg". This new command
+                will read the command line for arguments and then parse
+                netdisco.conf for the database user and password. Run
+                "sql/pg --help" for more options.
 
-    v0.92 -> 0.93
+            Database Upgrades
+                Now would be a great time to upgrade to Postgres 8.x if you
+                haven't already. There are some major speed, memory, and
+                storage benefits, and there is no INDEX bloat problem.
+                Upgrading from 7.x does require a data base dump/restore.
+                See Postgres documentation and the "sql/pg_dump" command
+                that you already used to make a backup. Follow the
+                instructions in INSTALL and re-install the database related
+                Perl modules after changing versions.
 
-        GraphViz 0.10
-            You may want to install this latest version of GraphViz
+                You will have to run the following command to add new tables
+                and modify existing ones.
 
-        Database Upgrades
-            For some of the new features, fields have been added to some of
-            the database tables. A .sql file has been made to make the
-            changes for you. Please run :
+                 cd /usr/local/netdisco/sql
+                 ./pg upgrade-0.94-to-0.95.sql
 
-             cd /usr/local/netdisco/sql
-             ./pg_run upgrade-0.92-to-0.93.sql
+                Note that it is safe to run the upgrade.sql scripts more
+                than once (in case you are running a CVS or RC version).
+                Also note that if you are upgrading from 0.93 or older, you
+                must run "upgrade-0.93-to-0.94.sql" first.
 
-            IGNORE the warning about nuking all the data in the table. It
-            won't. But even if you did, YOU ALREADY MADE A BACKUP RIGHT?
-            ("sql/pg_back")
+            Security Warning
+                WARNING! There is a potential community string exposure when
+                Netdisco is auto-discovering network equipment. If a
+                malicious host were to implement CDP and Netdisco were to
+                discover that host, Netdisco would send all read-only
+                community strings to that device in an attempt to add it to
+                the topology.
 
-        New MIB Files
-            If you insist on using this old version of netdisco, at least
-            download the "netdisco-mibs" package and use that.
+                To avoid this problem, limit the address range that netdisco
+                will discover or disable CDP and similar discovery protocols
+                from your end-ports. Be aware that in configurations with IP
+                phones, CDP may be necessary for certain aspects of phone
+                support. See "Security Warning" in README for more
+                information.
 
-    v0.91 -> 0.92
-        Make sure you run "Database Cleanup" or "-K" when you are done
-        upgrading. The bug where the MAC address of switch ports showing up
-        on their own port has been fixed. SNMP::Info Version 0.7 required.
+        v0.93 -> 0.94
 
-    v0.90 -> 0.91
+            Autodetection of Uplink Ports
+                Macsuck will now autodetect some uplink ports. If it sees
+                the MAC addres of a known switch port or router, it will not
+                collect mac addresses on that port.
 
-        netdisco_apache.conf
-            Double check that your copy of netdisco_apache.conf has the
-            settings right for all the "session_*" directives.
+                Start checking the logs from your macwalk device (you can do
+                it from the web page now) and look for the uplink warnings.
+                Fix your topology file to match.
 
-        GraphViz
-            Make sure you have GraphViz 0.9 installed.
+            SNMP::Info
+                You will need SNMP::Info v0.9 in order to support the new
+                netdisco-mibs package.
+
+            Database Upgrades
+                Now would be a great time to upgrade to Postgres 7.4 if you
+                haven't already. There are some great speed benefits, and
+                there is no INDEX bloat problem. Upgrading from 7.2 or 7.3
+                does require a data base dump/restore. See Postgres
+                documentation.
+
+                You will have to run the following command to add new tables
+                and modify existing ones.
+
+                 cd /usr/local/netdisco/sql
+                 ./pg_run upgrade-0.93-to-0.94.sql
+
+                Note that it is safe to run the upgrade.sql scripts more
+                than once (in case you are running a CVS or RC version).
+
+            GraphViz
+
+                Program
+                    Make sure you have a relatively new version. If you get
+                    an error similar to
+
+                      Creating CMAP : /usr/local/netdisco/html/netmap.map
+                        warning, language cmap not recognized, use one of: ps hpgl pcl mif...
+
+                    You need a newer version of GraphViz
+
+                GraphViz.pm 2.01
+                    The newest Perl interface to GraphViz (non-dependent on
+                    the GraphViz release) has some better client map
+                    interfaces for the Network Graph.
+
+                    Please make sure this newest version is installed.
+
+                     perl -MCPAN -e shell
+                        install GraphViz
+
+                    Double check the version.
+
+                     perl -MGraphViz -e 'print $GraphViz::VERSION'
+
+            Perl Modules
+                A lot of the Perl modules that Netdisco depends on have
+                released newer (better) versions. Go to the INSTALL and
+                follow Part 8.1 "Perl Modules and Mason". If you use CPAN,
+                it will upgrade all the dependency modules for you too.
+
+            Bay Switches
+                If you have bay switches, note that the naming scheme for
+                the ports has changed from 1 to 1.1 as they were folded into
+                the new Nortel classes. The above upgrade script will do the
+                renaming for you, so you won't lose data.
+
+        v0.92 -> 0.93
+
+            GraphViz 0.10
+                You may want to install this latest version of GraphViz
+
+            Database Upgrades
+                For some of the new features, fields have been added to some
+                of the database tables. A .sql file has been made to make
+                the changes for you. Please run :
+
+                 cd /usr/local/netdisco/sql
+                 ./pg_run upgrade-0.92-to-0.93.sql
+
+                IGNORE the warning about nuking all the data in the table.
+                It won't. But even if you did, YOU ALREADY MADE A BACKUP
+                RIGHT? ("sql/pg_back")
+
+            New MIB Files
+                If you insist on using this old version of netdisco, at
+                least download the "netdisco-mibs" package and use that.
+
+        v0.91 -> 0.92
+            Make sure you run "Database Cleanup" or "-K" when you are done
+            upgrading. The bug where the MAC address of switch ports showing
+            up on their own port has been fixed. SNMP::Info Version 0.7
+            required.
+
+        v0.90 -> 0.91
+
+            netdisco_apache.conf
+                Double check that your copy of netdisco_apache.conf has the
+                settings right for all the "session_*" directives.
+
+            GraphViz
+                Make sure you have GraphViz 0.9 installed.
 
 APPLICATION NOTES
+
   Apache / Mod_perl
+
     You shouldn't have to upgrade apache, but now would be a good time to
     see if there are any security upgrades to apache or mod_perl.
 
   SNMP::Info
+
     When upgrading to any version, please make sure you have the newest
     version of SNMP::Info installed (at least 2.04):
 
@@ -251,6 +278,7 @@ APPLICATION NOTES
         <http://snmp-info.sourceforge.net> and install.
 
 General Upgrade Procedures
+
     Read INSTALL
         Read the INSTALL file that comes with the new version to see what
         has changed. Make sure you have all the Requirements listed.
