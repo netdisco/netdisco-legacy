@@ -783,6 +783,7 @@ Checks for types :
 
 sub is_mac{
     my $mac = shift;
+    return 0 if !defined $mac;
     my $hex = "[0-9a-fA-F]";
     
     #'08002b:010203', '08002b-010203'
