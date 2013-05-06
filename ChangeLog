@@ -5,6 +5,7 @@
 1.3 ()
 Bugfixes:
     * []        Undefined MAC would make is_mac() die (N. Giefing)
+    * []        Apply quotemeta to avoid Inventory explosion (T. Gerlach)
 
 1.2 (2013-04-13)
 Features:

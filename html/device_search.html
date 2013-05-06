@@ -57,7 +57,7 @@
         </SELECT>
         <SELECT MULTIPLE NAME="os_ver" SIZE=<%scalar(keys %$os_vers) > $winsize ? $winsize : scalar(keys %$os_vers)%>>
 % foreach my $this_os_ver (sort keys %$os_vers) {
-            <OPTION VALUE="<%$this_os_ver%>" <% grep(/^$this_os_ver$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
+            <OPTION VALUE="<%$this_os_ver%>" <% grep(/^\Q$this_os_ver\E$/,@os_ver) ? 'SELECTED' : ''%>><%$this_os_ver%>
 % }
         </SELECT>
     </TD>
