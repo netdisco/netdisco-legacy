@@ -1,0 +1,607 @@
+<%text>
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#network_discovery">Network Discovery</a></li>
+		<li><a href="#utility_functions">Utility Functions</a></li>
+		<li><a href="#snmp_functions">SNMP Functions</a></li>
+		<li><a href="#netbios_functions">NetBIOS Functions</a></li>
+		<li><a href="#maintenance_functions">Maintenance Functions</a></li>
+		<li><a href="#graphing_functions">Graphing Functions</a></li>
+		<li><a href="#admin_daemon">Admin Daemon</a></li>
+	</ul>
+
+	<li><a href="#copyright_and_licence">COPYRIGHT AND LICENCE</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>netdisco - Internal API</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is the inside guts of the Netdisco executable.  You should be looking in 
+README for how to use Netdisco.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="network_discovery">Network Discovery</a></h2>
+<dl>
+<dt><strong><a name="discover" class="item">discover(host)</a></strong></dt>
+
+<dd>
+<p>Discovers one device, stores its info, interfaces, and neighbors, and returns.</p>
+</dd>
+<dt><strong><a name="refresh_all" class="item"><code>refresh_all()</code></a></strong></dt>
+
+<dd>
+<p>Calls <a href="#discover"><code>discover()</code></a> for each file already in device table.</p>
+</dd>
+<dt><strong><a name="run" class="item"><code>run()</code></a></strong></dt>
+
+<dd>
+<p>Event loop that calls <a href="#discover"><code>discover()</code></a> as long as the @Discover_Queue has something in it.</p>
+</dd>
+<dt><strong><a name="schlop" class="item">schlop(file,topo_only_flag)</a></strong></dt>
+
+<dd>
+<p>Used to start a discovery based on topography file.  Will then proceed to do an initial <code>mac_suck()</code> and <code>arp_nip()</code> unless the topo_only_flag is set.</p>
+</dd>
+<dt><strong><a name="queue_process" class="item">queue_process(device, action, [status])</a></strong></dt>
+
+<dd>
+<p>Queue a request for this controller to perform an action.</p>
+</dd>
+<dt><strong><a name="topo_add_link" class="item">topo_add_link([{},{}])</a></strong></dt>
+
+<dd>
+<p>Pass reference to array of hash references holding link: lines from 
+manual topology info.  Adds information to device_port table.</p>
+</dd>
+<dt><strong><a name="topo_load_file" class="item">topo_load_file(filename)</a></strong></dt>
+
+<dd>
+<p>Loads and parses manual topography file.</p>
+</dd>
+<dt><strong><a name="topo_load_db" class="item"><code>topo_load_db()</code></a></strong></dt>
+
+<dd>
+<p>Loads and checks manual topology entries in the database.
+Information augments <a href="#topo_load_file"><code>topo_load_file()</code></a>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="utility_functions">Utility Functions</a></h2>
+<dl>
+<dt><strong><a name="add_user" class="item"><code>add_user()</code></a></strong></dt>
+
+<dd>
+<p>Takes 4 optional arguments from @ARGV = (user,pw,port,admin)</p>
+<p>If all 4 are not there, then interactive mode is entered and prompts are given.</p>
+</dd>
+<dt><strong><a name="batch_mode" class="item">batch_mode(name,time_too?)</a></strong></dt>
+
+<dd>
+<p>Redirects STDOUT to a log file with timestamp.</p>
+<p>Can be called recursively.  call <a href="#batch_mode_end"><code>batch_mode_end()</code></a> to return to previous Output.</p>
+</dd>
+<dt><strong><a name="batch_mode_end" class="item">batch_mode_end(no_compress_flag)</a></strong></dt>
+
+<dd>
+<p>Returns control of stdout to previous value, optionally compresses 
+the finished output file.</p>
+<p>Function returns file name of closed output file.</p>
+<p>Pass something as first parameter to force no compression.</p>
+</dd>
+<dt><strong><a name="end_int_handler" class="item">end_int_handler</a></strong></dt>
+
+<dt><strong><a name="end" class="item"><code>end()</code></a></strong></dt>
+
+<dd>
+<p>Cleanup routine that is called upon interrupt (ctrl-c) or end of routines.</p>
+<p>Prints various statistics to stdout or <code>batch_redirect()</code> and calls Netdisco::log().</p>
+</dd>
+<dt><strong><a name="load_old_devices" class="item"><code>load_old_devices()</code></a></strong></dt>
+
+<dd>
+<p>Populates %Old_Devices with which devices are in the database.</p>
+</dd>
+<dt><strong><a name="load_old_nodes" class="item">load_old_nodes(days)</a></strong></dt>
+
+<dd>
+<p>Populates %Old_Nodes with which nodes are in the database.</p>
+<p>Nodes will have to have been seen in the last DAYS days.</p>
+</dd>
+<dt><strong><a name="parse_oui" class="item"><code>parse_oui()</code></a></strong></dt>
+
+<dd>
+<p>Parses file oui.txt in current directory.  Uses contents to stuff
+table &quot;oui&quot;.</p>
+</dd>
+<dt><strong><a name="timeout" class="item"><code>timeout()</code></a></strong></dt>
+
+<dd>
+<p>Signal handler for SIGALARM</p>
+</dd>
+<dt><strong><a name="ok_to" class="item">ok_to(dev,name,what)</a></strong></dt>
+
+<dd>
+<p>Given a device or IP address, a display name (hostname or IP address),
+and an action (arpnip, macsuck, discover), check the configuration
+file for _no and _only configurations.  Return 1 if it's OK, or 0
+if it's not OK.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="snmp_functions">SNMP Functions</a></h2>
+<dl>
+<dt><strong><a name="arpnip" class="item"><code>arpnip()</code></a></strong></dt>
+
+<dd>
+<p>Connects to device and reads its ARP cache. Then adds entries to <code>node_ip</code> table.</p>
+<p>Cheers to Jim Warner for the original arpnip.</p>
+</dd>
+<dt><strong><a name="arpnip6" class="item">arpnip6()</a></strong></dt>
+
+<dd>
+<p>Connects to device and reads its IPv6 Neighbor cache. Then adds entries to <code>node_ip</code> table.</p>
+<p>Largely the same as <a href="#arpnip"><code>arpnip()</code></a>.</p>
+</dd>
+<dt><strong><a name="arpwalk" class="item"><code>arpwalk()</code></a></strong></dt>
+
+<dd>
+<p>Visits every Layer 3 device and trys to get its ARP Cache.</p>
+<p>Calls <a href="#arpnip"><code>arpnip()</code></a> for each device.</p>
+</dd>
+<dt><strong><a name="create_device" class="item"><code>create_device(%args)</code></a></strong></dt>
+
+<dd>
+<p>All %args are passed straight through to SNMP::Info except 'Class' which when set 
+turns off <code>AutoSpecify</code>.</p>
+<pre>
+ my $dev = create_device(
+            'DestHost'     =&gt; host,
+            'Community'    =&gt; public,
+            'Version'      =&gt; 2,
+            'Retries'      =&gt; 2,
+            'Class'        =&gt; 'SNMP::Info::Layer2',
+            'VersionForce' =&gt; 1,</pre>
+<p>Connect to a device via SNMP::Info with a given host and community string.</p>
+<p>If optional <code>Version</code> and <code>Class</code> are given, no device type discovery is done.</p>
+<p>If a more specific device type is not found <code>-1</code> is returned.
+The target device is probably not a network device.</p>
+<p>If <code>VersionForce</code> is true, no fallback to snmpv1 will happen.</p>
+</dd>
+<dt><strong><a name="device_root" class="item"><code>device_root()</code></a></strong></dt>
+
+<dd>
+<p>Looks to see if the device has a master IP instead of the one given.  
+Checks for <code>root_ip()</code> method, then tries to lookup the reverse entry for sysName.0</p>
+</dd>
+<dt><strong><a name="find_neighbors" class="item"><code>find_neighbors()</code></a></strong></dt>
+
+<dd>
+<p>Finds all the CDP information on the device and stores the results in device_port.</p>
+<p>Adds to the @Discover_Queue</p>
+</dd>
+<dt><strong><a name="get_device" class="item">get_device(host)</a></strong></dt>
+
+<dd>
+<p>Calls <a href="#create_device"><code>create_device()</code></a> with a community string</p>
+<p>If cached values are stored in the database for the SNMP version and community strings,
+they are used.</p>
+<p>If no cached values are available, or if they fail, then the values from the config file are
+tried.</p>
+</dd>
+<dt><strong><a name="check_snmp_version" class="item">check_snmp_version(device,[version])</a></strong></dt>
+
+<dd>
+<p>Check for a forced SNMP version by the configuration file arguments
+snmpforce_v1, snmpforce_v2, snmpforce_v3
+=cut</p>
+<p>sub check_snmp_version {
+    <code>my($device,$version)</code> = @_;
+    my $versionForce;
+    my $dev_ip;
+    if (ref($device)) {
+        $dev_ip = $device-&gt;{ip};
+    } else {
+        $dev_ip = $device;
+    }</p>
+<pre>
+    if (!defined($version)) {
+        $version = $CONFIG{snmpver};
+    }
+    $versionForce = 0;</pre>
+<pre>
+    # Check for forced SNMP Verison
+    if (in_device($device,$CONFIG{snmpforce_v1}) ) {
+        print &quot;! [$dev_ip]  Forcing SNMPv1 by config file.\n&quot;;
+        $version      = 1;
+        $versionForce = 1;
+    }
+    if (in_device($device,$CONFIG{snmpforce_v2}) ) {
+        print &quot;! [$dev_ip]  Forcing SNMPv2c by config file.\n&quot;;
+        $version      = 2;
+        $versionForce = 1;
+    }
+    if (in_device($device,$CONFIG{snmpforce_v3}) ) {
+        print &quot;! [$dev_ip]  Forcing SNMPv3 by config file.\n&quot;;
+        $version      = 3;
+        $versionForce = 1;
+    }
+    return ($version, $versionForce);
+}</pre>
+</dd>
+<dt><strong><a name="get_snmp_args" class="item">get_snmp_args(device,version,comm/user,rw)</a></strong></dt>
+
+<dd>
+<p>Returns the args used to connect to device with version</p>
+</dd>
+<dt><strong><a name="get_device_rw" class="item">get_device_rw(device[,version])</a></strong></dt>
+
+<dd>
+<p>Returns a SNMP::Info object for a given device, using the Read-Write Community
+Strings in the config file.</p>
+<p>Returns undef or -1 on error.</p>
+</dd>
+<dt><strong><a name="get_subnets" class="item">get_subnets(device)</a></strong></dt>
+
+<dd>
+<p>Grab netmask and ip from device interfaces.  Determine device subnets
+mathematically based upon the interface information.</p>
+</dd>
+<dt><strong><a name="store_modules" class="item"><code>store_modules()</code></a></strong></dt>
+
+<dd>
+<p>Gets all the physical module information using Table Methods in SNMP::Info.</p>
+<p>Deletes the old module entries in device_module and puts in new ones.</p>
+</dd>
+<dt><strong><a name="mac_getportmacs" class="item"><code>mac_getportmacs()</code></a></strong></dt>
+
+<dd>
+<p>Fills the global %PortMAC with MAC addresses of ports already discovered.  
+This is to make sure we don't mac-suck existing ports, such as VLANs.</p>
+</dd>
+<dt><strong><a name="macsuck" class="item"><code>macsuck()</code></a></strong></dt>
+
+<dd>
+<p>Walks forwarding table for a specific device.</p>
+<p>Gets mac addresses that are listed in physical ports that do not have a
+neighbor listed.   If the device has VLANs, it will walk each VLAN and get the
+MAC addresses from there.</p>
+</dd>
+<dt><strong><a name="macsuck_vlans" class="item">macsuck_vlans(...)</a></strong></dt>
+
+<dd>
+<p>For certain Cisco switches you have to connect to each VLAN and get the
+forwarding table out of it.  Notably the Catalyst 5k, 6k, and 3500 series</p>
+<p>This sub checks to see if the device supports this and then interrogates each VLAN.</p>
+<p>Returns number of nodes discovered in forwarding tables.</p>
+</dd>
+<dt><strong><a name="wireless_client_info" class="item">wireless_client_info</a></strong></dt>
+
+<dd>
+<p>Walks Cisco dot11 client associations, if present, and stores per-client
+association information.</p>
+</dd>
+<dt><strong><a name="mac_savecache" class="item">mac_savecache({},{})</a></strong></dt>
+
+<dd>
+<p>Does two things  :</p>
+<p>1. Checks for detected uplinks, warns of such and removes nodes on these uplinks from additions list</p>
+<p>2. Stores the found forwarding table entries to the database.</p>
+</dd>
+<dt><strong><a name="macwalk" class="item"><code>macwalk()</code></a></strong></dt>
+
+<dd>
+<p>Grabs all the devices out of the database. 
+Runs <a href="#macsuck"><code>macsuck()</code></a> on each device that has layer2 capabilites.</p>
+</dd>
+<dt><strong><a name="send_monitor_email" class="item"><code>send_monitor_email()</code></a></strong></dt>
+
+<dd>
+<p>If there is an email address configured in netdisco.conf under
+node_monitor_email, look for any rows in the node_monitor table
+that are being monitored and if the mac address has arrived or
+moved, send the appropriate email.  This function only works
+immediately after macsuck; if another macsuck happens in between
+this will not detect the arrival.  Therefore, this function
+is only ever called from the end of <em class="file">macwalk</em>.</p>
+</dd>
+<dt><strong><a name="set_status" class="item"><code>set_status()</code></a></strong></dt>
+
+<dd>
+<p>Sets $0 to a status string.  Use sprintf-style arguments.
+=cut</p>
+<p>sub <a href="#set_status"><code>set_status($@)</code></a> {
+    <code>my($fmt)</code> = shift;
+    $0 = &quot;netdisco: &quot; . sprintf($fmt, @_);
+}</p>
+</dd>
+<dt><strong><a name="parallel_init" class="item"><code>parallel_init()</code></a></strong></dt>
+
+<dd>
+<p>Initializes parallelization with the maximum number of simultaneously running processes
+set in configuration file. Creates a dummy SNMP::Info object to load MIBs only once for each child.
+Disconnects the database handle so that it's not held open across a fork.</p>
+</dd>
+<dt><strong><a name="dispatcher" class="item">dispatcher(action, subroutine)</a></strong></dt>
+
+<dd>
+<p>Multi-process dispatcher that handles the &quot;standard&quot; case of
+multiple macsuck/arpnip/nbtstat.  It uses Parallel::ForkManager
+in a slightly unusual way, in that it forks off long-lived
+worker children that service the queue themselves, similar to
+Apache.</p>
+</dd>
+<dt><strong><a name="port_control" class="item">port_control(switch,port,direction)</a></strong></dt>
+
+<dt><strong><a name="port_switch" class="item">port_switch({})</a></strong></dt>
+
+<dd>
+<p>Used to shut ports on and off and to change VLANs.</p>
+</dd>
+<dt><strong><a name="location_set" class="item">location_set({})</a></strong></dt>
+
+<dd>
+<p>Used to change sysLocation string.</p>
+</dd>
+<dt><strong><a name="store_device" class="item"><code>store_device()</code></a></strong></dt>
+
+<dd>
+<p>Calls all the global methods and sends the results off to the database</p>
+</dd>
+<dt><strong><a name="store_interfaces" class="item"><code>store_interfaces()</code></a></strong></dt>
+
+<dd>
+<p>Gets all the interface information using Table Methods in SNMP::Info.</p>
+<p>Deletes the old interface entries in device_port and puts in new ones.</p>
+</dd>
+<dt><strong><a name="store_vlans" class="item"><code>store_vlans()</code></a></strong></dt>
+
+<dd>
+<p>Gets all the VLAN information using Table Methods in SNMP::Info.</p>
+<p>Deletes the old VLAN entries in device_port_vlan and puts in new ones.</p>
+</dd>
+<dt><strong><a name="store_power" class="item"><code>store_power()</code></a></strong></dt>
+
+<dd>
+<p>Gets all the Power-over-Ethernet information using Table Methods in SNMP::Info.</p>
+<p>Deletes the old PoE entries in device_power and device_port_power and puts in new ones.</p>
+</dd>
+<dt><strong><a name="walk_fwtable" class="item"><code>walk_fwtable()</code></a></strong></dt>
+
+<dd>
+<p>Walks the Forwarding table from the <code>BRIDGE-MIB</code>
+for the given device, and then adds MAC addresses to the <code>node</code> table.
+Returns the number of entries fetched.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="netbios_functions">NetBIOS Functions</a></h2>
+<dl>
+<dt><strong><a name="nbtstat" class="item">nbtstat(host)</a></strong></dt>
+
+<dd>
+<p>Connects to node and gets NetBIOS information. Then adds entries to node_nbt table.</p>
+<p>Returns whether a node is answering netbios calls or not.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="maintenance_functions">Maintenance Functions</a></h2>
+<dl>
+<dt><strong><a name="alias_clean" class="item"><code>alias_clean()</code></a></strong></dt>
+
+<dd>
+<p>Routine to clean out devices that are now listed as aliases of another device. This is
+usually necessary after a device has been merged into another one.</p>
+</dd>
+<dt><strong><a name="arp_dump" class="item">arp_dump(dir)</a></strong></dt>
+
+<dd>
+<p>Dumps node_ip table to files arp_current and arp_archive.</p>
+</dd>
+<dt><strong><a name="change_device_ip" class="item">change_device_ip(from_ip, to_ip)</a></strong></dt>
+
+<dd>
+<p>Used to move move over all the information from one device 
+to a new IP address.  First tries to discover new device, then
+proceeds to move over old information.</p>
+</dd>
+<dt><strong><a name="db_clean" class="item"><code>db_clean()</code></a></strong></dt>
+
+<dd>
+<p>Removes all the entries in <code>node</code> that are switch ports.</p>
+<p>Checks for nodes on non existant ports and prints a warning</p>
+<p>Removes nodes that are on uplink ports.</p>
+</dd>
+<dt><strong><a name="dev_dump" class="item"><code>dev_dump()</code></a></strong></dt>
+
+<dd>
+<p>Dumps out the device,device_ip, and topology info from device_port to file 'devices'.</p>
+</dd>
+<dt><strong><a name="expire_data" class="item">expire_data(type,days,archive_only)</a></strong></dt>
+
+<dd>
+<p><code>type</code> can be : node,device,process</p>
+<p><code>days</code> is a positive integer number of days in which an entry
+has not been updated.</p>
+<p><code>archive_only</code> for node only.</p>
+<p>Removes devices and nodes that haven't been updated in <code>days</code> days or
+processes created <code>days</code> days ago.  Process table clean up is for crashed or
+improperly terminated jobs still in the table.  Called from <a href="#nightly"><code>nightly()</code></a> and
+controlled through the <code>expire_*</code> directives in the config file.</p>
+<p>Cheers to Brian Wilson for his patch for the start of this feature.</p>
+</dd>
+<dt><strong><a name="expire_device" class="item">expire_device(device,expire_nodes?)</a></strong></dt>
+
+<dd>
+<p>Removes device from the database</p>
+<p>Set second argument to true to remove all the connected nodes and their 
+IP mappings as well.</p>
+</dd>
+<dt><strong><a name="expire_nodes" class="item">expire_nodes(device,archive_only,port)</a></strong></dt>
+
+<dd>
+<p>Removes entries from node and node_ip for a given device.</p>
+<p>Set port to limit the expiration to a specific port.</p>
+<p>Set archive_only to 1 to archive the nodes on the device.</p>
+</dd>
+<dt><strong><a name="expire_nodes_subnet" class="item">expire_nodes_subnet(subnet)</a></strong></dt>
+
+<dd>
+<p>Subnet is in CIDR format, or any other format that Postgres likes.</p>
+<pre>
+    192.168.0.0/24</pre>
+<p>Runs expire_ips afterwards to cleanup.</p>
+</dd>
+<dt><strong><a name="expire_ips" class="item"><code>expire_ips()</code></a></strong></dt>
+
+<dd>
+<p>Expires MAC-&gt;IP mappings for MAC addresses not present in node table.</p>
+</dd>
+<dt><strong><a name="mac_dump" class="item"><code>mac_dump()</code></a></strong></dt>
+
+<dd>
+<p>Dumps the node table out to mac_current.txt and mac_archive.txt.
+Adds a day stamp, no time-stamp.</p>
+</dd>
+<dt><strong><a name="netbios_dump" class="item"><code>netbios_dump()</code></a></strong></dt>
+
+<dd>
+<p>Dumps the node_nbt table out to netbios_current.txt and netbios_archive.txt.
+Adds a day stamp, no time-stamp.</p>
+</dd>
+<dt><strong><a name="nightly" class="item">nightly(no_batch)</a></strong></dt>
+
+<dd>
+<p>Nightly maintance routine that creates backups of the device,node, and node_ip tables.</p>
+<p>Calls <a href="#expire_data"><code>expire_data()</code></a>, <a href="#nmis_dump"><code>nmis_dump()</code></a>,
+<a href="#mac_dump"><code>mac_dump()</code></a>, <a href="#arp_dump"><code>arp_dump()</code></a>, <a href="#dev_dump"><code>dev_dump()</code></a>, <a href="#netbios_dump"><code>netbios_dump()</code></a>,
+<a href="#db_clean"><code>db_clean()</code></a> and VACUUM ANALYZE</p>
+</dd>
+<dt><strong><a name="nmis_dump" class="item"><code>nmis_dump()</code></a></strong></dt>
+
+<dd>
+<p>Dumps the device table out to NMIS (http://www.sins.com.au/nmis/) style config file.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="graphing_functions">Graphing Functions</a></h2>
+<dl>
+<dt><strong><a name="graph" class="item">graph(no_batch)</a></strong></dt>
+
+<dd>
+<p>Creates netmap of network.  Calls Netdisco::make_graph() and <a href="#graph_each"><code>graph_each()</code></a></p>
+</dd>
+<dt><strong><a name="graph_each" class="item">graph_each(Graph_obj, name)</a></strong></dt>
+
+<dd>
+<p>Generates subgraph. Called from <a href="#graph"><code>graph()</code></a>.  Calls <code>graph_node()</code>.</p>
+<p>Does actual GraphViz calls.</p>
+</dd>
+<dt><strong><a name="graph_addnode" class="item">graph_addnode(graphviz_obj,node_ip)</a></strong></dt>
+
+<dd>
+<p>Checks for mapping settings in config file and adds node to the GraphViz object.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="admin_daemon">Admin Daemon</a></h2>
+<dl>
+<dt><strong><a name="admin_daemon_ctl" class="item">admin_daemon_ctl(cmd)</a></strong></dt>
+
+<dd>
+<p>start,stop,restart,status</p>
+</dd>
+<dt><strong><a name="admin_daemon_status" class="item">admin_daemon_status(pid)</a></strong></dt>
+
+<dd>
+<p>Returns 0 if daemon is not running or returns pid number if running.</p>
+<p>pid argument is optional, used in stop function</p>
+</dd>
+<dt><strong><a name="admin_daemon" class="item"><code>admin_daemon()</code></a></strong></dt>
+
+<dd>
+<p>Resident copy of netdisco to handle requests from the admin panel.</p>
+</dd>
+<dt><strong><a name="admin_daemon_pid" class="item">admin_daemon_pid(pid_to_write)</a></strong></dt>
+
+<dd>
+<p>If not supplied arguments, Reads pid of daemon pid from <em class="file">netdisco_daemon.pid</em></p>
+<p>If supplied arguments, writes the pid out to that file.</p>
+</dd>
+<dt><strong><a name="admin_daemon_job" class="item">admin_daemon_job(job_obj)</a></strong></dt>
+
+<dd>
+<p>Runs each job. Redirects output to data/admin/job-num-date.log
+job_obj is the sql hash object for each job.</p>
+</dd>
+<dt><strong><a name="save_dirty_configs" class="item">save_dirty_configs(time)</a></strong></dt>
+
+<dd>
+<p>Looks at the job list for the previous $time minutes in the past and attempts to save the
+configuration on devices that finished a job in that time period.</p>
+<p>Currently only supporting <code>copy_run_start()</code> for CiscoConfig-supporting devices.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_licence">COPYRIGHT AND LICENCE</a></h1>
+<p>Changes in code from 0.92 on:
+Copyright (c) 2003-2010 Max Baker and the Netdisco Developer Team - All Rights Reserved</p>
+<p>Original Code:
+Copyright (c) 2002,2003 Regents of the University of California
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:</p>
+<pre>
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of the University of California, Santa Cruz nor the 
+      names of its contributors may be used to endorse or promote products 
+      derived from this software without specific prior written permission.
+
+</pre>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+
+</%text>

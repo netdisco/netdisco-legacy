@@ -1,0 +1,445 @@
+NAME
+    netdisco - Internal API
+
+DESCRIPTION
+    This is the inside guts of the Netdisco executable. You should be
+    looking in README for how to use Netdisco.
+
+FUNCTIONS
+  Network Discovery
+    discover(host)
+        Discovers one device, stores its info, interfaces, and neighbors,
+        and returns.
+
+    refresh_all()
+        Calls discover() for each file already in device table.
+
+    run()
+        Event loop that calls discover() as long as the @Discover_Queue has
+        something in it.
+
+    schlop(file,topo_only_flag)
+        Used to start a discovery based on topography file. Will then
+        proceed to do an initial mac_suck() and arp_nip() unless the
+        topo_only_flag is set.
+
+    queue_process(device, action, [status])
+        Queue a request for this controller to perform an action.
+
+    topo_add_link([{},{}])
+        Pass reference to array of hash references holding link: lines from
+        manual topology info. Adds information to device_port table.
+
+    topo_load_file(filename)
+        Loads and parses manual topography file.
+
+    topo_load_db()
+        Loads and checks manual topology entries in the database.
+        Information augments topo_load_file().
+
+  Utility Functions
+    add_user()
+        Takes 4 optional arguments from @ARGV = (user,pw,port,admin)
+
+        If all 4 are not there, then interactive mode is entered and prompts
+        are given.
+
+    batch_mode(name,time_too?)
+        Redirects STDOUT to a log file with timestamp.
+
+        Can be called recursively. call batch_mode_end() to return to
+        previous Output.
+
+    batch_mode_end(no_compress_flag)
+        Returns control of stdout to previous value, optionally compresses
+        the finished output file.
+
+        Function returns file name of closed output file.
+
+        Pass something as first parameter to force no compression.
+
+    end_int_handler
+    end()
+        Cleanup routine that is called upon interrupt (ctrl-c) or end of
+        routines.
+
+        Prints various statistics to stdout or batch_redirect() and calls
+        Netdisco::log().
+
+    load_old_devices()
+        Populates %Old_Devices with which devices are in the database.
+
+    load_old_nodes(days)
+        Populates %Old_Nodes with which nodes are in the database.
+
+        Nodes will have to have been seen in the last DAYS days.
+
+    parse_oui()
+        Parses file oui.txt in current directory. Uses contents to stuff
+        table "oui".
+
+    timeout()
+        Signal handler for SIGALARM
+
+    ok_to(dev,name,what)
+        Given a device or IP address, a display name (hostname or IP
+        address), and an action (arpnip, macsuck, discover), check the
+        configuration file for _no and _only configurations. Return 1 if
+        it's OK, or 0 if it's not OK.
+
+  SNMP Functions
+    arpnip()
+        Connects to device and reads its ARP cache. Then adds entries to
+        "node_ip" table.
+
+        Cheers to Jim Warner for the original arpnip.
+
+    arpnip6()
+        Connects to device and reads its IPv6 Neighbor cache. Then adds
+        entries to "node_ip" table.
+
+        Largely the same as arpnip().
+
+    arpwalk()
+        Visits every Layer 3 device and trys to get its ARP Cache.
+
+        Calls arpnip() for each device.
+
+    create_device(%args)
+        All %args are passed straight through to SNMP::Info except 'Class'
+        which when set turns off "AutoSpecify".
+
+         my $dev = create_device(
+                    'DestHost'     => host,
+                    'Community'    => public,
+                    'Version'      => 2,
+                    'Retries'      => 2,
+                    'Class'        => 'SNMP::Info::Layer2',
+                    'VersionForce' => 1,
+
+        Connect to a device via SNMP::Info with a given host and community
+        string.
+
+        If optional "Version" and "Class" are given, no device type
+        discovery is done.
+
+        If a more specific device type is not found -1 is returned. The
+        target device is probably not a network device.
+
+        If "VersionForce" is true, no fallback to snmpv1 will happen.
+
+    device_root()
+        Looks to see if the device has a master IP instead of the one given.
+        Checks for root_ip() method, then tries to lookup the reverse entry
+        for sysName.0
+
+    find_neighbors()
+        Finds all the CDP information on the device and stores the results
+        in device_port.
+
+        Adds to the @Discover_Queue
+
+    get_device(host)
+        Calls create_device() with a community string
+
+        If cached values are stored in the database for the SNMP version and
+        community strings, they are used.
+
+        If no cached values are available, or if they fail, then the values
+        from the config file are tried.
+
+    check_snmp_version(device,[version])
+        Check for a forced SNMP version by the configuration file arguments
+        snmpforce_v1, snmpforce_v2, snmpforce_v3
+
+    get_snmp_args(device,version,comm/user,rw)
+        Returns the args used to connect to device with version
+
+    get_device_rw(device[,version])
+        Returns a SNMP::Info object for a given device, using the Read-Write
+        Community Strings in the config file.
+
+        Returns undef or -1 on error.
+
+    get_subnets(device)
+        Grab netmask and ip from device interfaces. Determine device subnets
+        mathematically based upon the interface information.
+
+    store_modules()
+        Gets all the physical module information using Table Methods in
+        SNMP::Info.
+
+        Deletes the old module entries in device_module and puts in new
+        ones.
+
+    mac_getportmacs()
+        Fills the global %PortMAC with MAC addresses of ports already
+        discovered. This is to make sure we don't mac-suck existing ports,
+        such as VLANs.
+
+    macsuck()
+        Walks forwarding table for a specific device.
+
+        Gets mac addresses that are listed in physical ports that do not
+        have a neighbor listed. If the device has VLANs, it will walk each
+        VLAN and get the MAC addresses from there.
+
+    macsuck_vlans(...)
+        For certain Cisco switches you have to connect to each VLAN and get
+        the forwarding table out of it. Notably the Catalyst 5k, 6k, and
+        3500 series
+
+        This sub checks to see if the device supports this and then
+        interrogates each VLAN.
+
+        Returns number of nodes discovered in forwarding tables.
+
+    wireless_client_info
+        Walks Cisco dot11 client associations, if present, and stores
+        per-client association information.
+
+    mac_savecache({},{})
+        Does two things :
+
+        1. Checks for detected uplinks, warns of such and removes nodes on
+        these uplinks from additions list
+
+        2. Stores the found forwarding table entries to the database.
+
+    macwalk()
+        Grabs all the devices out of the database. Runs macsuck() on each
+        device that has layer2 capabilites.
+
+    send_monitor_email()
+        If there is an email address configured in netdisco.conf under
+        node_monitor_email, look for any rows in the node_monitor table that
+        are being monitored and if the mac address has arrived or moved,
+        send the appropriate email. This function only works immediately
+        after macsuck; if another macsuck happens in between this will not
+        detect the arrival. Therefore, this function is only ever called
+        from the end of macwalk.
+
+    set_status()
+        Sets $0 to a status string. Use sprintf-style arguments.
+
+    parallel_init()
+        Initializes parallelization with the maximum number of
+        simultaneously running processes set in configuration file. Creates
+        a dummy SNMP::Info object to load MIBs only once for each child.
+        Disconnects the database handle so that it's not held open across a
+        fork.
+
+    dispatcher(action, subroutine)
+        Multi-process dispatcher that handles the "standard" case of
+        multiple macsuck/arpnip/nbtstat. It uses Parallel::ForkManager in a
+        slightly unusual way, in that it forks off long-lived worker
+        children that service the queue themselves, similar to Apache.
+
+    port_control(switch,port,direction)
+    port_switch({})
+        Used to shut ports on and off and to change VLANs.
+
+    location_set({})
+        Used to change sysLocation string.
+
+    store_device()
+        Calls all the global methods and sends the results off to the
+        database
+
+    store_interfaces()
+        Gets all the interface information using Table Methods in
+        SNMP::Info.
+
+        Deletes the old interface entries in device_port and puts in new
+        ones.
+
+    store_vlans()
+        Gets all the VLAN information using Table Methods in SNMP::Info.
+
+        Deletes the old VLAN entries in device_port_vlan and puts in new
+        ones.
+
+    store_power()
+        Gets all the Power-over-Ethernet information using Table Methods in
+        SNMP::Info.
+
+        Deletes the old PoE entries in device_power and device_port_power
+        and puts in new ones.
+
+    walk_fwtable()
+        Walks the Forwarding table from the "BRIDGE-MIB" for the given
+        device, and then adds MAC addresses to the "node" table. Returns the
+        number of entries fetched.
+
+  NetBIOS Functions
+    nbtstat(host)
+        Connects to node and gets NetBIOS information. Then adds entries to
+        node_nbt table.
+
+        Returns whether a node is answering netbios calls or not.
+
+    nbtwalk()
+        Visits every node and trys to get its NetBIOS information.
+
+        Calls nbtstat() for each device.
+
+  Maintenance Functions
+    alias_clean()
+        Routine to clean out devices that are now listed as aliases of
+        another device. This is usually necessary after a device has been
+        merged into another one.
+
+    arp_dump(dir)
+        Dumps node_ip table to files arp_current and arp_archive.
+
+    change_device_ip(from_ip, to_ip)
+        Used to move move over all the information from one device to a new
+        IP address. First tries to discover new device, then proceeds to
+        move over old information.
+
+    db_clean()
+        Removes all the entries in "node" that are switch ports.
+
+        Checks for nodes on non existant ports and prints a warning
+
+        Removes nodes that are on uplink ports.
+
+    dev_dump()
+        Dumps out the device,device_ip, and topology info from device_port
+        to file 'devices'.
+
+    expire_data(type,days,archive_only)
+        "type" can be : node,device,process
+
+        "days" is a positive integer number of days in which an entry has
+        not been updated.
+
+        "archive_only" for node only.
+
+        Removes devices and nodes that haven't been updated in "days" days
+        or processes created "days" days ago. Process table clean up is for
+        crashed or improperly terminated jobs still in the table. Called
+        from nightly() and controlled through the "expire_*" directives in
+        the config file.
+
+        Cheers to Brian Wilson for his patch for the start of this feature.
+
+    expire_device(device,expire_nodes?)
+        Removes device from the database
+
+        Set second argument to true to remove all the connected nodes and
+        their IP mappings as well.
+
+    expire_nodes(device,archive_only,port)
+        Removes entries from node and node_ip for a given device.
+
+        Set port to limit the expiration to a specific port.
+
+        Set archive_only to 1 to archive the nodes on the device.
+
+    expire_nodes_subnet(subnet)
+        Subnet is in CIDR format, or any other format that Postgres likes.
+
+            192.168.0.0/24
+
+        Runs expire_ips afterwards to cleanup.
+
+    expire_ips()
+        Expires MAC->IP mappings for MAC addresses not present in node
+        table.
+
+    mac_dump()
+        Dumps the node table out to mac_current.txt and mac_archive.txt.
+        Adds a day stamp, no time-stamp.
+
+    netbios_dump()
+        Dumps the node_nbt table out to netbios_current.txt and
+        netbios_archive.txt. Adds a day stamp, no time-stamp.
+
+    nightly(no_batch)
+        Nightly maintance routine that creates backups of the device,node,
+        and node_ip tables.
+
+        Calls expire_data(), nmis_dump(), mac_dump(), arp_dump(),
+        dev_dump(), netbios_dump(), db_clean() and VACUUM ANALYZE
+
+    nmis_dump()
+        Dumps the device table out to NMIS (http://www.sins.com.au/nmis/)
+        style config file.
+
+  Graphing Functions
+    graph(no_batch)
+        Creates netmap of network. Calls Netdisco::make_graph() and
+        graph_each()
+
+    graph_each(Graph_obj, name)
+        Generates subgraph. Called from graph(). Calls graph_node().
+
+        Does actual GraphViz calls.
+
+    graph_addnode(graphviz_obj,node_ip)
+        Checks for mapping settings in config file and adds node to the
+        GraphViz object.
+
+  Admin Daemon
+    admin_daemon_ctl(cmd)
+        start,stop,restart,status
+
+    admin_daemon_status(pid)
+        Returns 0 if daemon is not running or returns pid number if running.
+
+        pid argument is optional, used in stop function
+
+    admin_daemon()
+        Resident copy of netdisco to handle requests from the admin panel.
+
+    admin_daemon_pid(pid_to_write)
+        If not supplied arguments, Reads pid of daemon pid from
+        netdisco_daemon.pid
+
+        If supplied arguments, writes the pid out to that file.
+
+    admin_daemon_job(job_obj)
+        Runs each job. Redirects output to data/admin/job-num-date.log
+        job_obj is the sql hash object for each job.
+
+    save_dirty_configs(time)
+        Looks at the job list for the previous $time minutes in the past and
+        attempts to save the configuration on devices that finished a job in
+        that time period.
+
+        Currently only supporting copy_run_start() for
+        CiscoConfig-supporting devices.
+
+COPYRIGHT AND LICENCE
+    Changes in code from 0.92 on: Copyright (c) 2003-2010 Max Baker and the
+    Netdisco Developer Team - All Rights Reserved
+
+    Original Code: Copyright (c) 2002,2003 Regents of the University of
+    California All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+        * Redistributions of source code must retain the above copyright notice,
+          this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above copyright notice,
+          this list of conditions and the following disclaimer in the documentation
+          and/or other materials provided with the distribution.
+        * Neither the name of the University of California, Santa Cruz nor the 
+          names of its contributors may be used to endorse or promote products 
+          derived from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+    TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+    PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+    OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

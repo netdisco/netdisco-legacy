@@ -1,0 +1,661 @@
+<%text>
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#globals">GLOBALS</a></li>
+	<li><a href="#exportable_functions">Exportable Functions</a></li>
+	<ul>
+
+		<li><a href="#general_functions">General Functions</a></li>
+		<li><a href="#user_functions">User Functions</a></li>
+		<li><a href="#sql_functions">SQL Functions</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>netdisco.pm - Utility functions used for back and front ends</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides utility functions for use with netdisco in both 
+the front and backend.  Front-end specific features are limited to the
+mason (.html) files, and the back-end specific features are limited to
+netdisco.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Max Baker</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="globals">GLOBALS</a></h1>
+<dl>
+<dt><strong><a name="_netdisco__dbh" class="item">%netdisco::DBH</a></strong></dt>
+
+<dd>
+<p>Holds Database Handles, key is db name as set in config file.</p>
+</dd>
+<dt><strong><a name="_netdisco__db" class="item">%netdisco::DB</a></strong></dt>
+
+<dd>
+<p>Index of current Database Handle.  Default <code>'Pg'</code>;</p>
+</dd>
+<dt><strong><a name="_netdisco__config" class="item">%netdisco::CONFIG</a></strong></dt>
+
+<dd>
+<p>Holds config info from <code>netdisco.conf</code></p>
+</dd>
+<dt><strong><a name="_netdisco__graph" class="item">%netdisco::GRAPH</a></strong></dt>
+
+<dd>
+<p>Holds vertex information for <a href="#make_graph"><code>make_graph()</code></a></p>
+</dd>
+<dt><strong><a name="_netdisco__sendmail" class="item">$netdisco::SENDMAIL</a></strong></dt>
+
+<dd>
+<p>Full path to sendmail executable</p>
+</dd>
+<dt><strong><a name="_netdisco__sqlcarp" class="item">$netdisco::SQLCARP - Carps SQL!</a></strong></dt>
+
+<dd>
+<p>This will <code>carp()</code> the SQL sent off to the server for Debugging.</p>
+<p>If running under mason, the output of <code>carp()</code> goes to the Apache
+Error Log.  From the shell it goes to STDERR.</p>
+<p>Note that if you set this on a MASON page, the value will remain
+cached across most of the current httpd proccesses.  Make sure you set it 
+back to 0 via mason when you're done, unless you like watching Apache's
+error_log grow.</p>
+</dd>
+<dt><strong><a name="_port_control_reasons" class="item">%PORT_CONTROL_REASONS</a></strong></dt>
+
+<dd>
+<p>Reason why a port would be shutdown. These get fed into <code>port_control_log</code></p>
+</dd>
+<dt><strong><a name="_version" class="item">$VERSION - Sync'ed with Netdisco releases</a></strong></dt>
+
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="exportable_functions">Exportable Functions</a></h1>
+<p>
+</p>
+<h2><a name="general_functions">General Functions</a></h2>
+<dl>
+<dt><strong><a name="add_arp" class="item">add_arp(mac,ip)</a></strong></dt>
+
+<dd>
+<p>Manipulates entries in 'node_ip' table.</p>
+<p>Expires old entries for given IP address.</p>
+<p>Adds new entry or time stamps matching one.</p>
+</dd>
+<dt><strong><a name="add_node" class="item">add_node(mac,ip,port,vlan)</a></strong></dt>
+
+<dd>
+<p>Manipulates entries in <code>node</code> table.</p>
+<p>Expires old entries matching given arguments.</p>
+<p>Adds a new entry or time stamps matching old entry.</p>
+</dd>
+<dt><strong><a name="add_nbt" class="item">add_nbt(ip,mac,nbname,domain,server,nbuser)</a></strong></dt>
+
+<dd>
+<p>Manipulates entries in 'node_nbt' table.</p>
+<p>Expires old entries for given MAC address.</p>
+<p>Adds new entry or time stamps matching one.</p>
+</dd>
+<dt><strong><a name="bits_to_mask" class="item">bits_to_mask(bits)</a></strong></dt>
+
+<dd>
+<p>Takes a CIDR style network mask in number of bits (/24) and returns the older style 
+bitmask.</p>
+</dd>
+<dt><strong><a name="get_community" class="item">get_community(type,host,ip)</a></strong></dt>
+
+<dd>
+<p>Get Community depending on type (ro,rw).
+If <a href="#get_community"><code>get_community</code></a> is defined, then get the try to get the community from
+shell-command. If <a href="#get_community"><code>get_community</code></a> is undefined or nothing
+is returned from the command use <code>community</code> or 
+<code>community_rw</code>.</p>
+<p>The command specified in <a href="#get_community"><code>get_community</code></a> must return in stdout a string like</p>
+<pre>
+    community=&lt;list of readonly-communities&gt;
+    setCommunity=&lt;list of write-communities&gt;</pre>
+<p>Returns Community-List as Array reference</p>
+<p>Options:
+    type =&gt; 'ro'|'rw' for the type of community
+    host =&gt; name of the device
+    ip   =&gt; device ip-address</p>
+</dd>
+<dt><strong><a name="config" class="item"><code>config()</code></a></strong></dt>
+
+<dd>
+<p>Reads the config file and fills the <code>%CONFIG</code> hash.</p>
+</dd>
+<dt><strong><a name="updateconfig" class="item"><code>updateconfig()</code></a></strong></dt>
+
+<dd>
+<p>Checks the modification time of the configuration file and
+re-reads it if needed.  (Note: for now, defaults are not
+reset - i.e., if there was an item in the config file before,
+and it is missing when we reread it, it keeps its old value
+and doesn't get set to the default.)</p>
+<p>Uses eval to run config, so that we can keep running with the old
+config if there's a problem with the config file.</p>
+</dd>
+<dt><strong><a name="has_layer" class="item">has_layer(bit string,layer)</a></strong></dt>
+
+<dd>
+<p>Takes ascii encoded string of eight bits, and checks for the specific
+layer being true.  Most significant bit first.</p>
+<pre>
+    has_layer(00000100,3) = true</pre>
+</dd>
+<dt><strong><a name="hostname" class="item">hostname(ip)</a></strong></dt>
+
+<dd>
+<p>Returns the DNS server entry for the given ip or hostname.</p>
+</dd>
+<dt><strong><a name="getip" class="item">getip(host)</a></strong></dt>
+
+<dd>
+<p>Returns the IP Address of a given IP or hostname. If the 
+given argument appears to be in dotted octet notation, it
+does no DNS hits and just returns it.</p>
+<p>It also just returns an IP address with a subnet mask.
+Subnet masks are not permitted on host names.</p>
+</dd>
+<dt><strong><a name="in_device" class="item">in_device(device,to_match)</a></strong></dt>
+
+<dd>
+<p>First argument can either be:</p>
+<pre>
+    1. plain text IP or hostname
+    2. A row from the device table as returned from sql_hash</pre>
+<p>Second argument is an array ref as returned from config, eg. <code>bulkwalk_no</code>.</p>
+</dd>
+<dt><strong><a name="in_subnet" class="item">in_subnet(subnet,ip)</a></strong></dt>
+
+<dd>
+<p>Returns Boolean.  Checks to see if IP address is in subnet.  Subnet
+is defined as single IP address, or CIDR block.  Partial CIDR format
+(192.168/16) is NOT supported.</p>
+<pre>
+ in_subnet('192.168.0.0/24','192.168.0.3') = 1;
+ in_subnet('192.168.0.3','192.168.0.3') = 1;</pre>
+</dd>
+<dt><strong><a name="in_subnets" class="item">in_subnets(ip,config_directive)</a></strong></dt>
+
+<dd>
+<p>Returns Boolean.  Checks a given IP address against all the IPs and subnet
+blocks listed for a config file directive.</p>
+<pre>
+ print in_subnets('192.168.0.1','macsuck_no');</pre>
+</dd>
+<dt><strong><a name="active_subnets" class="item"><code>active_subnets()</code></a></strong></dt>
+
+<dd>
+<p>Returns array ref containing all rows from the subnets table that
+have a node or device in them.</p>
+</dd>
+<dt><strong><a name="dump_subnet" class="item">dump_subnet(cidr style subnet)</a></strong></dt>
+
+<dd>
+<p>Serves you all the possible IP addresses in a subnet.</p>
+<p>Returns reference to hash.  Keys are IP addresses
+in dotted decimal that are in the subnet.</p>
+<p>Gateway and Broadcast (.0 .255) addresses are not included.</p>
+<pre>
+  $hash_ref = dump_subnet('192.168.0.0/24');
+  scalar keys %$hash_ref == 254;</pre>
+<p>Also accepted :</p>
+<pre>
+  dump_subnet('14.0/16');
+  dump_subnet('4/24');</pre>
+</dd>
+<dt><strong><a name="is_mac" class="item">is_mac(mac)</a></strong></dt>
+
+<dd>
+<p>Returns Boolean.  Checks if argument appears to be a mac address.</p>
+<p>Checks for types :</p>
+<pre>
+    08002b:010203
+    08002b-010203
+    0800.2b01.0203
+    08-00-2b-01-02-03
+    08:00:2b:01:02:03</pre>
+</dd>
+<dt><strong><a name="log" class="item">log(class,text)</a></strong></dt>
+
+<dd>
+<p>Inserts an entry in the <a href="#log"><code>log</code></a> table.</p>
+<pre>
+    log('error',&quot;this is an error&quot;);</pre>
+</dd>
+<dt><strong><a name="mail" class="item">mail(to,subject,body)</a></strong></dt>
+
+<dd>
+<p>Sends an E-Mail as Netdisco</p>
+</dd>
+<dt><strong><a name="is_private" class="item">is_private(ip)</a></strong></dt>
+
+<dd>
+<p>Returns true if a given IP address is in the <a href="http://www.ietf.org/rfc/rfc1918.txt" class="rfc">RFC1918</a> private
+address range.</p>
+</dd>
+<dt><strong><a name="cidr" class="item">cidr(ip, mask)</a></strong></dt>
+
+<dd>
+<p>Takes an IP address and netmask and returns the CIDR format
+subnet.</p>
+</dd>
+<dt><strong><a name="mask_to_bits" class="item">mask_to_bits(mask)</a></strong></dt>
+
+<dd>
+<p>Takes a netmask and returns the CIDR integer number of bits.</p>
+<pre>
+    mask_to_bits('255.255.0.0') = 16</pre>
+</dd>
+<dt><strong><a name="is_secure" class="item">is_secure</a></strong></dt>
+
+<dd>
+<p>To be run under mason only.</p>
+<p>Returns true if the server want's to be secure and is, or true if the server doesn't want to be secure.</p>
+<p>Returns false if the server is not secure but wants to be.</p>
+</dd>
+<dt><strong><a name="url_secure" class="item">url_secure(url)</a></strong></dt>
+
+<dt><strong><a name="sort_ip" class="item"><code>sort_ip()</code></a></strong></dt>
+
+<dd>
+<p>Used by <code>sort {}</code> calls to sort by IP octet.</p>
+<p>If passed two hashes, will sort on the key <code>ip</code> or <code>remote_ip</code>.</p>
+</dd>
+<dt><strong><a name="sort_port" class="item"><code>sort_port()</code></a></strong></dt>
+
+<dd>
+<p>Used by <code>sort()</code> - Sort port names with the following formatting types :</p>
+<pre>
+    A5
+    5
+    FastEthernet0/1
+    FastEthernet0/1-atm
+    5.5
+    Port:3</pre>
+<p>Works on hashes if a key named port exists.</p>
+<p>Cheers to Bradley Baetz (bbaetz) for improvements in this sub.</p>
+</dd>
+<dt><strong><a name="make_graph" class="item"><code>make_graph()</code></a></strong></dt>
+
+<dd>
+<p>Returns <code>Graph::Undirected</code> object that represents the discovered
+network.</p>
+<p>Graph is made by loading all the <code>device_port</code> entries
+that have a neighbor, using them as edges. Then each device seen in those
+entries is added as a vertex.</p>
+<p>Nodes without topology information are not included.</p>
+</dd>
+<dt><strong><a name="root_device" class="item">root_device(ip)</a></strong></dt>
+
+<dd>
+<p>If the given IP Address matches a device IP, returns it.</p>
+<p>If the given IP Address matches an alias of a device, returns
+the IP of the device the alias belongs to.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="user_functions">User Functions</a></h2>
+<dl>
+<dt><strong><a name="user_add" class="item"><code>user_add(user,%args)</code></a></strong></dt>
+
+<dd>
+<p>Adds or changes a user account.</p>
+<p><code>%args</code> can have key values of { pw, admin, port, ldap, full_name, note }</p>
+<p>Returns error message if problem.</p>
+</dd>
+<dt><strong><a name="user_del" class="item">user_del(user)</a></strong></dt>
+
+<dd>
+<p>Deletes a user from netdisco.</p>
+<p>Returns result from <code>DBI-&gt;do()</code></p>
+<p>Integer for number of rows deleted, or undef if error.</p>
+</dd>
+<dt><strong><a name="user_ldap_verify" class="item">user_ldap_verify(user,password)</a></strong></dt>
+
+<dd>
+<p>Test a user from netdisco.</p>
+<p>Returns 1 if user and password are OK, or undef if error.</p>
+</dd>
+<dt><strong><a name="ldap_search" class="item">ldap_search(filter,attrs,user,pass)</a></strong></dt>
+
+<dd>
+<p>Perform an LDAP search from the configured ldap_base with the specified filter.</p>
+<p>Uses an anonymous bind if the user is 'anonymous' or undefined.</p>
+<p>Returns reference to an array of Net::LDAP::Entry objects which match the
+search filter.  Each entry will contain the accessible attributes as defined
+in attrs array reference.  If attrs is undefined, then the server will return
+the attributes that are specified as accessible by default given the bind
+credentials.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="sql_functions">SQL Functions</a></h2>
+<dl>
+<dt><strong><a name="dbh" class="item"><code>dbh()</code></a></strong></dt>
+
+<dd>
+<p>Creates and returns a database handle. Creates once, then 
+returns the cached copy.</p>
+<p>Select database handle in use by localizing <code>$netdisco::DB</code></p>
+</dd>
+<dt><strong><a name="dbh_quote" class="item"><code>dbh_quote($text)</code></a></strong></dt>
+
+<dd>
+<p>Runs DBI::dbh-&gt;<code>quote()</code> on the text and returns it.</p>
+</dd>
+<dt><strong><a name="hash_diff" class="item"><code>hash_diff($hashref_orig,$hashref_new)</code></a></strong></dt>
+
+<dd>
+<p>Sees if items to change in second hash are different or new compared to first.</p>
+</dd>
+<dt><strong><a name="insert_or_update" class="item">insert_or_update(table, {matching}, {values} )</a></strong></dt>
+
+<dd>
+<p>Checks for Existing entry in table using <code>\%matching</code> and either
+updates or inserts into table with <code>\%values</code> accodringly.</p>
+<pre>
+    insert_or_update('device', { 'ip'=&gt;'127.0.0.1' },
+                     { 'ip' =&gt; '127.0.0.1', dns =&gt; 'dog' }
+                    );</pre>
+<p>First time called it will insert the new entry</p>
+<p>Second time called it will modify the entry with the values.</p>
+<p>Supports</p>
+<pre>
+    * Auto Quoting of Values</pre>
+<p>Returns undef if problem.</p>
+<p>On inserts in PostgreSQL, returns the OID of the row inserted.</p>
+<p>Or returns value from <code>DBD::St::execute()</code></p>
+</dd>
+<dt><strong><a name="sql_column" class="item">sql_column(table,[key_col,val_col],{where})</a></strong></dt>
+
+<dd>
+<p>Returns reference to hash.  Hash has form <code>$hash{key_val}={val_val}</code></p>
+<p>If multiple matches are found for key_col, only the last one is kept.</p>
+<p>Usage is the same as <a href="#sql_rows"><code>sql_rows()</code></a> -- See for Usage.</p>
+<pre>
+    $OldDevices = sql_column('device',['ip','layers']);</pre>
+<p>Creates the hash %$OldDevices where the key is the IP address and the Value is the Layers</p>
+</dd>
+<dt><strong><a name="sql_columns" class="item">sql_columns(table,[key_col,val_col,...],{where})</a></strong></dt>
+
+<dd>
+<p>Returns reference to hash.  Hash has form <code>$hash{key_val}=hash of all columns}</code></p>
+<p>If multiple matches are found for key_col, only the last one is kept.</p>
+<p>Usage is the same as <a href="#sql_rows"><code>sql_rows()</code></a> -- See for Usage.</p>
+<pre>
+    $OldDevices = sql_columns('device',['ip','layers','dns']);</pre>
+<p>Creates the hash %$OldDevices where the key is the IP address and the Value is a hash
+with the keys 'ip', 'layers' and 'dns'.</p>
+</dd>
+<dt><strong><a name="sql_do" class="item">sql_do(sql)</a></strong></dt>
+
+<dd>
+<p>Simple wrapper to <code>$dbh-&gt;do()</code></p>
+<p>No quoting.</p>
+</dd>
+<dt><strong><a name="sql_begin" class="item"><code>sql_begin()</code></a></strong></dt>
+
+<dd>
+<p>Start an SQL transaction.</p>
+<p>Pass an array reference to the list of tables that should be
+locked in EXCLUSIVE mode for this transaction.  Normally, row
+locking is sufficient, so no tables need be locked.  However,
+netdisco's macsuck and arpnip processes perform statements like</p>
+<pre>
+    UPDATE table SET active='f' WHERE (ip|mac)='foo'</pre>
+<p>If two such statements are executed concurrently for the
+same value of 'foo', they can visit the same rows in different
+order, resulting in a deadlock.  It's tempting to say that
+you can solve this by making the UPDATE only touch one row at
+a time by adding &quot;AND active&quot; to the WHERE clause; however,
+it's possible to get multiple rows with active=true and open
+up the window for deadlock again.  Without a significant
+rewrite, the best option is to lock the appropriate table in
+exclusive mode (which still allows readers, such as the web
+front end, but blocks any inserts or updates).  Since netdisco
+performs updates in bulk, the table will not spend a significant
+amount of time locked.</p>
+</dd>
+<dt><strong><a name="sql_commit" class="item"><code>sql_commit()</code></a></strong></dt>
+
+<dd>
+<p>Finish an SQL transaction and return to AutoCommit mode</p>
+</dd>
+<dt><strong><a name="sql_rollback" class="item"><code>sql_rollback()</code></a></strong></dt>
+
+<dd>
+<p>If an SQL transaction is in progress, roll it back
+and return to AutoCommit mode.  Suitable to be called
+in a generic error situation when you don't know what
+has been done, since it is a noop if there is no transaction
+occurring.</p>
+</dd>
+<dt><strong><a name="sql_disconnect" class="item"><code>sql_disconnect()</code></a></strong></dt>
+
+<dd>
+<p>Disconnect from the SQL database, e.g., before forking.</p>
+</dd>
+<dt><strong><a name="sql_hash" class="item">sql_hash(table, [columns], {where})</a></strong></dt>
+
+<dd>
+<p>Returns reference to hash representing single row.</p>
+<p>Usage is the same as <a href="#sql_rows"><code>sql_rows()</code></a> -- See for Usage.</p>
+<pre>
+    my $hashref = sql_hash('device',['ip','ports'], {'ip'=&gt;'127.0.0.1'});</pre>
+</dd>
+<dt><strong><a name="sql_match" class="item">sql_match(text,exact_flag)</a></strong></dt>
+
+<dd>
+<p>Parses text to substitue wildcards * and ? for % and _</p>
+<p>Optional exact_flag specifies whether or not to search for that exact text
+search or to do a *text*.</p>
+<p>Default is non_exact.</p>
+</dd>
+<dt><strong><a name="sql_rows" class="item">sql_rows(table, [columns] , {where} ,OR, orderbystring)</a></strong></dt>
+
+<dd>
+<p>Returns a reference to an array of hash references. Each hash reference is the
+return of <code>$dbh-&gt;fetchrow_hashref</code></p>
+<p>Supports</p>
+<pre>
+    * Joins
+    * Pattern Matching
+    * NULL/NOT NULL 
+    * Boolean OR or AND criteria
+    * Auto-Quotes all values and Override
+    * IN (list) and NOT IN (list) clauses</pre>
+<p>Pass a true value for the OR argument to join constraints in the WHERE clause by 
+OR instead of AND.</p>
+<dl>
+<dt><strong><a name="simple_query" class="item">SIMPLE QUERY:</a></strong></dt>
+
+<dd>
+<p>Select info for every device:</p>
+<pre>
+    $matches = sql_rows('device',['ip','dns','uptime]);</pre>
+</dd>
+<dt><strong><a name="disable_autoquoting" class="item">DISABLE AUTOQUOTING:</a></strong></dt>
+
+<dd>
+<p>Pass the where value as a reference:</p>
+<pre>
+    sql_rows('device d, device e',['d.ip,d.dns,e.ip,e.dns'],
+            {'d.dns' =&gt; \'e.dns'});</pre>
+<p>Creates the SQL:</p>
+<pre>
+    SELECT d.ip,d.dns,e.ip,e.dns FROM device d, device e WHERE d.dns = e.dns;</pre>
+<p>This also leaves a security hole if the where value is coming from the outside
+world because someone could stuff in <code>'dog'</code>;delete from node where true;...&gt;
+as a value.   If you turn off quoting make sure the program is feeding the where
+value.</p>
+</dd>
+<dt><strong><a name="disable_autoquoting_and_connector" class="item">DISABLE AUTOQUOTING AND CONNECTOR</a></strong></dt>
+
+<dd>
+<p>Pass the where value as a double scalar reference:</p>
+<pre>
+    sql_rows('device',['*'], {'age(creation)' =&gt; \\&quot;&lt; interval '1 day'&quot;})</pre>
+<p>Creates the sql:</p>
+<pre>
+   SELECT * FROM device WHERE age(creation) &lt; interval '1 day';</pre>
+</dd>
+<dt><strong><a name="null_values" class="item">NULL VALUES</a></strong></dt>
+
+<dd>
+<p>Select all the devices without reverse dns entries:</p>
+<pre>
+  $matches = sql_rows('device',['ip','name'],{'dns'=&gt;'IS NULL'});</pre>
+</dd>
+<dt><strong><a name="joins" class="item">JOINS</a></strong></dt>
+
+<dd>
+<pre>
+    $matches = sql_rows('device d left join device_ip i on d.ip = i.ip',
+                        ['distinct(d.ip)','d.dns','i.alias','i.ip'],
+                        {'d.ip/i.alias'=&gt;'127.0.0.1', 'd.dns/i.dns' =&gt; 'dog%'},
+                        1);</pre>
+<p>Selects all rows within <code>device</code> and <code>device_ip</code> where 
+<code>device_ip.alias</code> or <code>device.ip</code> are <code>localhost</code>
+or <code>device_ip.dns</code> or <code>device.dns</code> has <code>dog</code> in it.</p>
+<p>Where columns with slashes are split into separate search terms combined with <code>OR</code>:</p>
+<pre>
+   { 'd.ip/i.alias' =&gt; '127.0.0.1' }</pre>
+<p>Creates the SQL</p>
+<pre>
+   &quot;WHERE (d.ip = '127.0.0.1' OR i.alias = '127.0.0.1')&quot;</pre>
+</dd>
+<dt><strong><a name="multiple_contstraints_on_same_column" class="item">MULTIPLE CONTSTRAINTS ON SAME COLUMN</a></strong></dt>
+
+<dd>
+<p>Pass the where values as an array reference</p>
+<pre>
+    $matches = sql_rows('device',['ip'],{'dns' =&gt; ['cat%','-g%'] },1 );</pre>
+<p>Creates the SQL:</p>
+<pre>
+    SELECT ip FROM device WHERE (dns like 'cat%') OR (dns like '-g%');</pre>
+</dd>
+<dt><strong><a name="in" class="item">IN (list) CLAUSE</a></strong></dt>
+
+<dd>
+<p>Pass the value as a double array reference. Values are auto-quoted.</p>
+<p>Single array reference is for creating multiple <code>WHERE</code> entries (see above)</p>
+<pre>
+    $matches = sql_rows('node',['mac'], {'substr(mac,1,8)' =&gt; [['00:00:00','00:00:0c']]})</pre>
+<p>Creates the SQL:</p>
+<pre>
+    SELECT mac FROM node WHERE (substr(mac,1,8) IN ('00:00:00','00:00:0c'));</pre>
+</dd>
+<dt><strong>NOT IN (list)</strong></dt>
+
+<dd>
+<p>Pass the value as a double array reference.  Prepend one of the array values with a <code>!</code></p>
+<pre>
+    $matches = sql_rows('device',['name'], {'vendor' =&gt; [['!cisco','hp']]  });</pre>
+<p>Will find all devices that are neither cisco or hp.</p>
+</dd>
+<dt><strong><a name="order_by_clause" class="item">ORDER BY CLAUSE</a></strong></dt>
+
+<dd>
+<pre>
+    $matches = sql_rows('device',['ip','dns'], undef, undef, 'order by dns limit 10');</pre>
+</dd>
+</dl>
+</dd>
+<dt><strong><a name="sql_query" class="item">sql_query(table, [columns] , {where} ,OR, orderbystring)</a></strong></dt>
+
+<dd>
+<p>Returns a DBI state handle on which the SQL query has been prepare()d and
+execute()d.  This function is good for large queries instead of
+<a href="#sql_rows"><code>sql_rows()</code></a>, as the whole result set does not need to be read into
+memory.</p>
+<p>Code such as</p>
+<pre>
+    my $nodes = sql_rows(...);
+    foreach my $row (@$nodes) {
+        ...
+    }</pre>
+<p>can be replaced by</p>
+<pre>
+    my $sth = sql_query(...);
+    while (my $row = $sth-&gt;fetchrow_hashref()) {
+        ...
+    }</pre>
+<p>The arguments are exactly the same as <a href="#sql_rows"><code>sql_rows()</code></a>.</p>
+</dd>
+<dt><strong><a name="sql_scalar" class="item">sql_scalar(table,[column],{where})</a></strong></dt>
+
+<dd>
+<p>Returns a scalar of value of first column given.</p>
+<p>Internally calls <a href="#sql_hash"><code>sql_hash()</code></a> which calls <a href="#sql_rows"><code>sql_rows()</code></a></p>
+<p>All arguments are passed directly to <a href="#sql_hash"><code>sql_hash()</code></a></p>
+<pre>
+    my $count_ip = sql_scalar('device',['COUNT(ip)'],{'name' =&gt; 'dog'});</pre>
+</dd>
+<dt><strong><a name="sql_vacuum" class="item"><code>sql_vacuum(table,%opts)</code></a></strong></dt>
+
+<dd>
+<p>Runs a VACUUM ANALYZE if we are Postgres</p>
+<p>Pass the table name as '' if you want to vacuum all tables.</p>
+<p>Options:</p>
+<pre>
+    verbose =&gt; 1  (set if DEBUG)
+    full    =&gt; 1</pre>
+</dd>
+<dt><strong><a name="homepath" class="item">homepath(config,[default])</a></strong></dt>
+
+<dd>
+<p>Return the full path of the given file as specified
+in the config file by prepending $CONFIG{home} to it, if
+it doesn't already start with a slash.  If no value is specified
+in the config file, the default is used.</p>
+</dd>
+<dt><strong><a name="tryuse" class="item"><code>tryuse(module,%opts)</code></a></strong></dt>
+
+<dd>
+<p>Try to use the given module.</p>
+<p>Returns two values: success / failure, and the error message if failure.
+Caches values if it's non fatal.</p>
+<p>Options:</p>
+<pre>
+    ver =&gt; version of module required
+    die =&gt; 1 if you want to die instead of recover yourself
+
+</pre>
+</dd>
+</dl>
+
+</%text>
