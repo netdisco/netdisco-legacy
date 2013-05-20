@@ -6,6 +6,7 @@
 Bugfixes:
     * []        Undefined MAC would make is_mac() die (N. Giefing)
     * []        Apply quotemeta to avoid Inventory explosion (T. Gerlach)
+    * [94]      Netdisco -O does not import oui.txt due to spaces in oui.txt
 
 1.2 (2013-04-13)
 Features:

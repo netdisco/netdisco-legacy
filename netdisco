@@ -1016,7 +1016,7 @@ sub parse_oui {
     open (OUI, "<$oui_file") or die "Can't open OUI. $!\n";
     while (my $line = <OUI>){
         chomp $line;
-        if ($line =~ /^(.{2}-.{2}-.{2})\s+\(hex\)\s+(.*)\s*$/i){
+        if ($line =~ /^\s*(.{2}-.{2}-.{2})\s+\(hex\)\s+(.*)\s*$/i){
             $OUI{$1}=$2;
         } 
     }
