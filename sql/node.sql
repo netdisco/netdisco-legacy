@@ -6,12 +6,13 @@ CREATE TABLE node (
     mac         macaddr,
     switch      inet,
     port        text,
+    vlan        text default '0',
     active      boolean,
     oui         varchar(8),  -- fe:9a:57
     time_first  timestamp default now(),
     time_recent timestamp default now(),
     time_last   timestamp default now(),
-    PRIMARY KEY(mac,switch,port) 
+    PRIMARY KEY(mac,switch,port,vlan) 
 );
 
 -- Indexes speed things up a LOT
