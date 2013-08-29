@@ -2,6 +2,10 @@
 # netdisco.org
 # $Id$
 
+1.3.2 (2013-08-29)
+Bugfixes:
+    * [113]     Collect SSID in macsuck (Jiri)
+
 1.3.1 (2013-07-08)
 Bugfixes:
     * []        Include 'topology' table when DB is (re)created
