@@ -2829,6 +2829,7 @@ sub store_device {
     }
 
     my $ip_index   = $device->ip_index();
+    my $ip_table   = $device->ip_table();
     my $interfaces = $device->interfaces();
     my $ip_netmask = $device->ip_netmask();
 
@@ -2838,7 +2839,9 @@ sub store_device {
     sql_do(qq/DELETE from device_ip where ip = '$devip'/);
 
     # Store all our IPs
-    foreach my $ip (keys %$ip_index){
+    foreach my $idx (keys %$ip_index){
+        
+        my $ip = $ip_table->{$idx};
         next if $ip eq '0.0.0.0';
         # Local Host
         next if $ip =~ /^127\.0\.0\./;
@@ -2848,10 +2851,10 @@ sub store_device {
             next;
         }
 
-        my $iid  = $ip_index->{$ip};
+        my $iid  = $ip_index->{$idx};
         my $port = $interfaces->{$iid}; 
         my $dns  = &hostname($ip);
-        my $netmask = $ip_netmask->{$ip} || '0.0.0.0';
+        my $netmask = $ip_netmask->{$idx} || '0.0.0.0';
         my $subnet  = $netmask eq '0.0.0.0' ? undef : cidr($ip, $netmask);
 
         insert_or_update('device_ip', {'ip' => $devip,  'alias' => $ip},
