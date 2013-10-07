@@ -2256,7 +2256,7 @@ sub wireless_client_info {
         $store{txbyte} = $cd11_txbyte->{$key};
         $store{time_last} = scalar(localtime);
         $store{ssid} = $cd11_ssid->{$key} || 'unknown';
-        insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}, 'ssid' => $cd11_ssid->{$key}}, \%store);
+        insert_or_update('node_wireless', {'mac' => $cd11_mac->{$key}, 'ssid' => $store{ssid}}, \%store);
     }
     sql_commit();
 }
