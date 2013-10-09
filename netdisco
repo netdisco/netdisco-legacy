@@ -1405,9 +1405,9 @@ sub create_device {
 
     # Try Version 1 if we haven't already
     #   V1 screws up some HP switches that support 2, so we stick w/ 2 first
-    #   Don't try V1 if we're forcing a specific version
+    #   Don't try V1 if we're SNMPv3 or forcing a specific version
     if ( (!defined $device or (!defined $layers and !defined $descr) ) and 
-         $args{Version} != 1 and !$version_force ){
+         $args{Version} != 3 and $args{Version} != 1 and !$version_force ){
         
         print "[$args{DestHost}] [Trying SNMP Version 1]\n";
         printf("create_device(%s,%s,1)\n",$args{DestHost},$print_comm) if $DEBUG;
@@ -1693,39 +1693,50 @@ sub get_device {
 
     # Stored community not available, or didn't work. 
     if (!defined $device){
-        my ($version) = check_snmp_version($hostname);
+        my ($version, $versionForce) = check_snmp_version($hostname);
 
-        my $list;
-        if ($version and $version == 3) {
-            # XXX should get_community do this instead?
-            $list = $CONFIG{v3_users};
+        my (@versions);
+        if ($versionForce || $version < 3) {
+            @versions = ( $version );
         } else {
-            $list = get_community('ro',$hostname);
+            # Not forced, and trying SNMPv3.  We also need to
+            # fall back to SNMPv2 (which will then fall back to
+            # SNMPv1 inside create_device).
+            @versions = ( 3, 2 );
         }
+        version: foreach $version (@versions) {
+           my $list;
+           if ($version and $version == 3) {
+               # XXX should get_community do this instead?
+               $list = $CONFIG{v3_users};
+           } else {
+               $list = get_community('ro',$hostname);
+           }
 
-        # Try each community string
-        foreach my $config_comm (@{$list}) {
+           # Try each community string
+           foreach my $config_comm (@{$list}) {
 
-            # Don't bother retrying the failed one.
-            next if (defined $comm and ($config_comm eq $comm));
+               # Don't bother retrying the failed one.
+               next if (defined $comm and ($config_comm eq $comm));
 
-            my %args = get_snmp_args($hostname, $version, $config_comm);
+               my %args = get_snmp_args($hostname, $version, $config_comm);
 
-            if(exists $CONFIG{snmpdiscover_timeout}) {
-                $args{Timeout} = $CONFIG{snmpdiscover_timeout};
-            }
+               if(exists $CONFIG{snmpdiscover_timeout}) {
+                   $args{Timeout} = $CONFIG{snmpdiscover_timeout};
+               }
 
-            $device = create_device(%args);
+               $device = create_device(%args);
 
-            if (defined $device and $device == -1){
-                $device = undef;
-                last;
-            } elsif (defined $device){
-                # refresh the db with new data
-                print "! Storing device details back to database - new community string found.\n";
-                store_device($device);
-                last;
-            }
+               if (defined $device and $device == -1){
+                   $device = undef;
+                   last version;
+               } elsif (defined $device){
+                   # refresh the db with new data
+                   print "! Storing device details back to database - new community string found.\n";
+                   store_device($device);
+                   last version;
+               }
+           }
         }
     }
     unless (defined $device) {
