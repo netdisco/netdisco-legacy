@@ -2948,6 +2948,7 @@ sub store_interfaces {
     my $i_vlan         = $device->i_vlan();
     my $i_pvid         = $device->i_pvid();
     my $i_lastchange   = $device->i_lastchange();
+    my $agg_ports      = $device->agg_ports();
 
     delete $device->{_uptime}; # Clear cached value of uptime, we need the actual current value here
     my $dev_uptime = $device->uptime();
@@ -3023,6 +3024,15 @@ sub store_interfaces {
         insert_or_update('device_port', { 'ip' => $ip, 'port' => $store{port} }, 
                          \%store );        
 
+        if ($agg_ports->{$if}) {
+            %store = ();
+            $store{ip} = $ip;
+            $store{port} = $interfaces->{$if};
+            $store{aggregate} = $interfaces->{$agg_ports->{$if}};
+            $store{last_seen} = 'now';
+            insert_or_update('device_port_agg', { 'ip' => $ip, 'port' => $store{ port } },
+                             \%store );
+        }
     }
     sql_commit();
     print "[$ip]   $i_count Interfaces.\n";
@@ -3287,7 +3297,16 @@ sub walk_fwtable {
         #If we dont see the device in the db, but there is a neighbor, then we capture anyways,
         #   since we want all the macs at the other end. 
 
-        my $remote_ip = $dbports->{$port}->{remote_ip};
+        my $remote_ip;
+        my $is_agg_port = sql_scalar('device_port_agg', ['DISTINCT(aggregate)'], { 'ip' => $ip, 'aggregate' => $port});
+        if (defined $is_agg_port) {
+            $remote_ip = sql_scalar('device_port',['DISTINCT(remote_ip)'],{
+                                                   'ip'=>$ip,
+                                                   'port'=>\\"IN (SELECT port FROM device_port_agg WHERE ip = '$ip' AND aggregate = '$port')"});
+        } else {
+            $remote_ip = $dbports->{$port}->{remote_ip};
+        }
+
         if (defined $remote_ip) {
             if (defined $OldDevices->{$remote_ip} or defined $Aliases->{$remote_ip}) {
                 my $ip = $Aliases->{$remote_ip} || $remote_ip;
@@ -3302,12 +3321,6 @@ sub walk_fwtable {
             } 
         }
 
-        # Check if Port Channel
-        if ($port =~ /port.channel/i) {
-            print "  Port ($port) is a Port Channel Interface.  Skipped.\n" if $DEBUG;
-            next;
-        }
-        
         # Check if MAC is a switch port
         if (defined $PortMAC->{$mac}) {
             my $switch_ip = $PortMAC->{$mac};
@@ -3685,7 +3698,17 @@ sub db_clean {
                  'device_port.ip'=>\'node.switch',
                  'device_port.port'=>\'node.port'});
 
-    foreach my $dev_port (@$dev_ports){
+    # This query uses the aggregate table to look for
+    #  neighbors on ports that have the node on an aggregate.
+    my $agg_ports = sql_rows('device_port, node, device_port_agg',
+                ['distinct device_port.ip','device_port_agg.aggregate as port','remote_ip'],
+                {'remote_ip' => 'IS NOT NULL',
+                 'device_port.ip'=>\'node.switch',
+                 'device_port_agg.ip'=>\'node.switch',
+                 'device_port.port'=>\'device_port_agg.port',
+                 'device_port_agg.aggregate'=>\'node.port'});
+
+    foreach my $dev_port (@$dev_ports, @$agg_ports){
         my $ip        = $dev_port->{ip};
         my $port      = $dev_port->{port};
         my $remote_ip = $dev_port->{remote_ip};

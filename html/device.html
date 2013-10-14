@@ -1165,6 +1165,56 @@ foreach my $port (sort sort_port @$db_ports){
 <%perl>
     } 
 
+    # Is it an aggregate?
+    my $agg_ports = sql_rows('device_port_agg', ['port'], { 'ip' => $devip, 'aggregate' => $port->{port}});
+    if (@$agg_ports) {
+        # 1. what are the ports?
+        $m->out( "[" );
+        my $first = 1;
+        foreach my $ap (@$agg_ports) {
+            if ($first) {
+                $first = 0;
+            } else {
+                $m->out( ", " );
+            }
+            $m->out( $ap->{port} );
+        }
+        $m->out( "]<BR>" );
+        # 2. What are the neighbors?
+        my $agg_nbrs = sql_rows('device_port left join device_port_agg on device_port_agg.ip = device_port.remote_ip and device_port_agg.port = device_port.remote_port',
+            ['distinct(device_port.remote_ip)','device_port_agg.aggregate'],
+            { 'device_port.ip' => $devip,
+              # hate this subselect!
+              # Can we do this with a straight join on device_port_agg?
+              'device_port.port' => \\"IN (SELECT port FROM device_port_agg WHERE ip = '$devip' AND aggregate= '$port->{port}')" });
+        $first = 1;
+        foreach my $an (@$agg_nbrs) {
+            my $remote_dev = sql_hash('device',['ip','dns'],
+                        {'ip'=>$an->{remote_ip}});
+            # TODO: device_ip.alias
+            my $name = $remote_dev->{'dns'};
+            $name = defined $name ? $name : $an->{remote_ip}; 
+            $name =~ s/\Q$domain\E//;
+            if ($an->{aggregate}) {
+                $name .= " ($an->{aggregate})";
+            }
+            $name = "<SPAN CLASS=\"device-link\">$name</SPAN>";
+            my $link = "device.html?ip=$an->{remote_ip}&amp;port=$an->{aggregate}";
+            if ($first) {
+                $first = 0;
+            } else {
+                $m->out( "," );
+            }
+</%perl>
+            <A HREF="<%$link%>"><%$name%></A>\
+<%perl>
+        }
+
+        # Hack: make sure that the code below knows that we
+        # printed something here.
+        $remote_ip = "aggregate";
+    }
+
     # Show SSIDs
     my $portssids = $port->{ssids} || [];
     my $ssidbr = defined($remote_ip);
