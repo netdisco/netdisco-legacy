@@ -182,12 +182,15 @@ sub add_node {
 
     my $oui = substr($mac,0,8);
     # Set the active flag to false to archive all other instances
-    #   of this mac address
-    my $other = sql_do(qq/UPDATE node SET active = 'f' WHERE mac = '$mac' AND active AND NOT (switch = '$ip' AND port = '$port' AND vlan = '$vlan')/);
+    #   of this mac address on this VLAN
+    my $other = sql_do(qq/UPDATE node SET active = 'f'
+        WHERE mac = '$mac' AND vlan = '$vlan' AND active
+            AND NOT (switch = '$ip' AND port = '$port')
+    /);
 
     # Add this entry to node table. 
     my %hash = ('switch' => $ip, 'mac' => $mac, 'port' => $port, 'vlan' => $vlan);
-    my %set = ('vlan' => $vlan, 'time_last' => 'now', 'active' => 1, 'oui' => $oui);
+    my %set = ('time_last' => 'now', 'active' => 1, 'oui' => $oui);
     # if there was another node, set time_recent too.
     # NOTE: $other might be "0E0", so be careful how you test it.
     if ($other != 0) {
