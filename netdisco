@@ -1173,10 +1173,14 @@ sub arpnip {
         # them show up in the node table.
         next if uc($mac) eq '00:00:00:00:00:01';
     
-        # Skip VRRP addresses - don't want them showing up as nodes.  Don't know
-        # what else to do with these right now.  What about HSRP IP's?
+        # Skip VRRP / HSRP addresses - don't want them showing up as nodes. 
+        # Don't know what else to do with these right now.
         if ($mac =~ /^00:00:5e:00:/i) {
             print "[$hostname] $mac is a VRRP address ... skipping\n" if $DEBUG;
+            next;
+        }
+        if ($mac =~ /^00:00:0c:07:ac:/i) {
+            print "[$hostname] $mac is a HSRP address ... skipping\n" if $DEBUG;
             next;
         }
 
